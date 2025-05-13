@@ -183,6 +183,27 @@ const config = {
               },
             ],
           },
+          {
+            title: "Social",
+            items: [
+              {
+                label: "LinkedIn",
+                href: "https://linkedin.com/company/llm-d",
+              },
+              {
+                label: "Slack",
+                href: "https://llm-d.slack.com",
+              },
+              {
+                label: "GitHub",
+                href: "https://github.com/llm-d/llm-d-website.github.io/tree/main/",
+              },
+              {
+                label: "X"
+                href: "https://x.com/_llm_d_",
+              },
+            ],
+          },
         ],
         // copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
       },
