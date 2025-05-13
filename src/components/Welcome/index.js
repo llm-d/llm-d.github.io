@@ -17,27 +17,7 @@ export default function Welcome() {
             <em>have</em>
           </b>
         </h2>
-        <div className="hidden-for-mobile">
-          <p>
-            While some distributed AI solutions rely on a single vendor's
-            hardware, If you have a heterogeneous compute environment that
-            includes AMD or Intel accelerators in addition to NVIDIA GPUs, you
-            want a distributed inference solution based on vLLM.
-          </p>
-
-          <ul className="ul-bulleted">
-            <li>
-              <strong>llm-d</strong> is a toolbox of components which together
-              enable distributed inference in just such a heterogenous compute
-              environment.
-            </li>
-            <li>
-              <strong>llm-d</strong> allows you to achieve distributed AI
-              inference with the compute resources you <em>have</em> rather than
-              the resources someone wishes to <em>sell</em>
-            </li>
-          </ul>
-        </div>
+        
 
         <div className="button-group">
           <button className="static-button">
@@ -61,6 +41,29 @@ export default function Welcome() {
             </a>
           </button>
         </div>
+
+        <div className="hidden-for-mobile">
+          <p>
+            While some distributed AI solutions rely on a single vendor's
+            hardware, If you have a heterogeneous compute environment that
+            includes AMD or Intel accelerators in addition to NVIDIA GPUs, you
+            want a distributed inference solution based on vLLM.
+          </p>
+
+          <ul className="ul-bulleted">
+            <li>
+              <strong>llm-d</strong> is a toolbox of components which together
+              enable distributed inference in just such a heterogenous compute
+              environment.
+            </li>
+            <li>
+              <strong>llm-d</strong> allows you to achieve distributed AI
+              inference with the compute resources you <em>have</em> rather than
+              the resources someone wishes to <em>sell</em>
+            </li>
+          </ul>
+        </div>
+        
       </div>
     </div>
   );
