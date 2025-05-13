@@ -127,17 +127,16 @@ img.llm-d-logo {
   display: block;
   text-align: center;
   padding: 5% 10%;
-  margin: 25%;
-  background-color: rgba(255, 255, 255, 0.75);
+  margin: 15% 15%;
+  background-color: rgba(255, 255, 255);
   border-radius: 40px;
   @media screen and (max-width: 1024px) and (orientation: landscape) {
-    padding: 10%;
     margin: 10%;
   }
 }
 
 [data-theme="dark"] .welcome-info {
-  background-color: rgba(38, 38, 38, 0.75);
+  background-color: rgba(38, 38, 38);
   color: #fff;
 }
 
@@ -177,23 +176,17 @@ img.llm-d-logo {
   border-radius: 15px;
   border: 1px solid transparent;
   margin: 12.5px 12.5px;
-  padding: 1rem 2rem;
+  padding: 1rem;
   font-size: 1rem;
   font-weight: 700;
   font-family: inherit;
   background-color: #7f317f;
   cursor: pointer;
   transition: border-color 0.25s;
-  width: 70%;
-  /* @media screen and (max-width: 1024px) {
-    max-width: 100%;
+  width: 100%;
+  @media screen and (max-width: 1024px) {
     margin: 5% 0;
-    @media screen and (max-width: 500px) {
-      padding: 0.3rem 0.75rem;
-      font-size: 0.7rem;
-      width: 100%;
-    }
-  } */
+  }
 }
 
 .static-button:hover {
