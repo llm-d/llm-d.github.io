@@ -21,7 +21,7 @@ const config = {
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   //baseUrl: "/",
-  baseUrl: "/webdocs/",
+    baseUrl: "/webdocs/",
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
@@ -29,13 +29,13 @@ const config = {
   //IF YOU ARE DEPLOYING PREVIEW PAGES via GITHUB PAGES FOR THE MAIN REPO
   // UNCOMMENT THE NEXT TWO LINES AND COMMENT OUT THE FORK SECTION BELOW
   organizationName: "llm-d", // Usually your GitHub org/user name.
-  projectName: "webdocs", // Usually your repo name.
+  //projectName: "webdocs", // Usually your repo name.
 
   //IF YOU ARE DEPLOYING PREVIEW PAGES VIA GITHUB PAGES FOR A BRANCH OF A FORK IN YOUR ACCOUNT
   //EDIT THESE LINES APPROPRIATELY
   //organizationName: "jessicachitas", // Usually your GitHub org/user name.
   //organizationName: "kproche", // Usually your GitHub org/user name.
-  //projectName: "llm-d-website-new", // Usually your repo name.
+  projectName: "webdocs", // Usually your repo name.
 
   trailingSlash: false,
   onBrokenLinks: "warn",
