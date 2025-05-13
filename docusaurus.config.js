@@ -120,7 +120,7 @@ const config = {
           { to: "/blog", label: "News", position: "left" },
           //{ to: "./community", label: "Community", position: "left"},
           {
-            href: "https://github.com/llm-d/llm-d-website.github.io/tree/main/",
+            href: "https://github.com/llm-d/webdocs",
             label: "GitHub",
             position: "right",
           },
@@ -179,7 +179,7 @@ const config = {
               },
               {
                 label: "GitHub",
-                href: "https://github.com/llm-d/llm-d-website.github.io/tree/main/",
+                href: "https://github.com/llm-d/",
               },
             ],
           },
@@ -195,11 +195,7 @@ const config = {
                 href: "https://llm-d.slack.com",
               },
               {
-                label: "GitHub",
-                href: "https://github.com/llm-d/llm-d-website.github.io/tree/main/",
-              },
-              {
-                label: "X"
+                label: "X",
                 href: "https://x.com/_llm_d_",
               },
             ],
