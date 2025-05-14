@@ -66,11 +66,11 @@
 }
 
 .github {
-  background-image: url("@site/static/img/social/github-mark.png");
+  background-image: url("@site/static/img/new-social/github-mark.png");
 }
 
 [data-theme="dark"] .github {
-  background-image: url("@site/static/img/social/github-mark-white.png");
+  background-image: url("@site/static/img/new-social/github-mark-white.png");
 }
 
 .header {
