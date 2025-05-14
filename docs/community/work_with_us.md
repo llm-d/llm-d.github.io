@@ -8,6 +8,7 @@ There are several ways you can join the community effort to develop and enhance 
 
 - Via the [**Github pages for llm-d:** https://github.com/llm-d](https://github.com/llm-d)**
 - Via our [**Slack Workspace:** https://llm-d.slack.com](https://llm-d.slack.com)
+- Via [**Reddit**: Reddit:https://www.reddit.com/r/llm_d/](Reddit:https://www.reddit.com/r/llm_d/)
     
 You can also find us on
     

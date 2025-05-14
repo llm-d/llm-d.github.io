@@ -200,6 +200,10 @@ const config = {
                 href: "https://llm-d.slack.com",
               },
               {
+                label: "Reddit",
+                href: "https://www.reddit.com/r/llm_d/",
+              },
+              {
                 label: "X",
                 href: "https://x.com/_llm_d_",
               },
