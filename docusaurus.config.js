@@ -119,10 +119,15 @@ const config = {
           },
           { to: "/blog", label: "News", position: "left" },
           //{ to: "./community", label: "Community", position: "left"},
+          // {
+          //   href: "https://github.com/llm-d/webdocs",
+          //   label: "GitHub",
+          //   position: "right",
+          // },
           {
             href: "https://github.com/llm-d/webdocs",
-            label: "GitHub",
             position: "right",
+            className: "github",
           },
         ],
       },

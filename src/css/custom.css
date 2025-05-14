@@ -49,6 +49,30 @@
   background-color: #262626;
 }
 
+.github {
+  width: 28px;
+  height: 28px;
+  margin: 0 10px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.25s, transform 0.25s;
+}
+
+.github:hover {
+  transform: scale(1.1);
+}
+
+.github {
+  background-image: url("@site/static/img/social/github-mark.png");
+}
+
+[data-theme="dark"] .github {
+  background-image: url("@site/static/img/social/github-mark-white.png");
+}
+
 .header {
   display: flex;
   align-content: center;
