@@ -1,4 +1,6 @@
 //import styles from "./styles.module.css"
+//import count1URL from '/docs/assets/counting-01.png';
+
 
 export default function Install() {
   return (
@@ -13,16 +15,38 @@ export default function Install() {
 
           {/* ----------- Modular Section (copy and paste as many as needed) ---------- */}
           <h3 className="install-h3">
+            <img
+              //className="llm-d-logo"
+              width="50px"
+              valign="middle"
+              alt="1. "
+              src={require('/docs/assets/counting-01.png').default}
+              ></img>
             <a className="link" href="docs/guide/installation/quickstart#hardware-profiles">
-              1. Check the Prerequisites
+              Check the Prerequisites
             </a>
           </h3>
           <h3 className="install-h3">
+            <img
+              //className="llm-d-logo"
+              width="50px"
+              valign="middle"
+              alt="2. "
+              src={require('/docs/assets/counting-02.png').default}
+              ></img>
             <a className="link" href="docs/guide/installation/quickstart#llm-d-installation">
-              2. Run the Quickstart
+              Run the Quickstart
             </a>
           </h3>
-          <h3 className="install-h3">3. Explore llm-d!</h3>
+          <h3 className="install-h3">
+            <img
+              //className="llm-d-logo"
+              width="50px"
+              valign="middle"
+              alt="3. "
+              src={require('/docs/assets/counting-03.png').default}
+              ></img>
+              <a className="link" href="docs/guide/installation/quickstart#validation">Explore llm-d!</a></h3>
           {/* -------------------------------------------------------------------------- */}
           <button className="static-button install-button" role="button" href="#">
             <a className="button-link" href="docs/guide">

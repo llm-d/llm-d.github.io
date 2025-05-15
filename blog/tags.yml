@@ -18,6 +18,11 @@ llm-d:
   permalink: /llm-d
   description: llm-d tag description
 
+news:
+  label: News Releases!
+  permalink: /news-releases
+  description: Used for "official" news releases in the blog
+
 docusaurus:
   label: Docusaurus
   permalink: /docusaurus

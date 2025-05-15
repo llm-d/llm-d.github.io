@@ -6,6 +6,14 @@
 
 import { themes as prismThemes } from "prism-react-renderer";
 
+//import GHiconUrl from "./docs/assets/github-mark-white.svg";
+//import LIiconURL from "./docs/assets/linkedin-mark-white.svg";
+//import SlackiconURL from "./docs/assets/slack-mark-white.png";
+//import RedditiconURL from "./docs/assets/reddit-mark-white-png";
+//import XiconURL from "./docs/assets/x-mark-white.png";
+
+
+
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 /** @type {import('@docusaurus/types').Config} */
@@ -159,10 +167,11 @@ const config = {
                 label: "How to Join in",
                 href: "docs/community",
               },
-              {
+/*              {
                 label: "Partners",
                 href: "docs/partners",
               },
+*/  
               //     {
               //       label: "X",
               //       href: "https://x.com/docusaurus",
@@ -179,7 +188,9 @@ const config = {
               {
                 html: `
                 <a href="https://github.com/llm-d/" target="_blank" rel="noreferrer noopener" aria-label="GitHub Icon">
-                  <img class="github-footer" src="img/new-social/github-mark-white.png" alt="GitHub Icon" width="30px" height="auto" margin="5px"/>
+                  <img class="github-footer" 
+                  src="https://raw.githubusercontent.com/KPRoche/iconography/refs/heads/main/assets/github-mark-white.png" 
+                  alt="GitHub Icon" width="30px" height="auto" margin="5px"/>
                 </a>
               `,
               },
@@ -191,28 +202,46 @@ const config = {
               {
                 html: `
                 <a href="https://linkedin.com/company/llm-d" target="_blank" rel="noreferrer noopener" aria-label="LinkedIn Icon">
-                  <img class="linkedin" src="img/new-social/linkedin-mark-white.png" alt="LinkedIn Icon" width="30px" height="auto" margin="5px"/>
+                  <img 
+                    class="linkedin" 
+                    src="https://raw.githubusercontent.com/KPRoche/iconography/refs/heads/main/assets/linkedin-mark-white.png" 
+                    alt="LinkedIn Icon" 
+                    width="30px" 
+                    height="auto" 
+                    margin="5px"/>
+
                 </a>
               `,
               },
               {
                 html: `
                 <a href="https://llm-d.slack.com" target="_blank" rel="noreferrer noopener" aria-label="Slack Icon">
-                  <img class="slack" src="img/new-social/slack-mark-white.png" alt="Slack Icon" width="30px" height="auto" margin="5px"/>
+                  <img class="slack" 
+                  src="https://raw.githubusercontent.com/KPRoche/iconography/refs/heads/main/assets/slack-mark-white.png" 
+                  alt="Slack Icon" width="30px" height="auto" margin="5px"/>
                 </a>
               `,
               },
               {
                 html: `
                 <a href="https://www.reddit.com/r/llm_d/" target="_blank" rel="noreferrer noopener" aria-label="Reddit Icon">
-                  <img class="reddit" src="img/new-social/reddit-mark-white.png" alt="Reddit Icon" width="30px" height="auto" margin="5px"/>
+                  <img class="reddit" 
+                    src="https://raw.githubusercontent.com/KPRoche/iconography/refs/heads/main/assets/reddit-mark-white.png" 
+                    alt="Reddit Icon" 
+                    width="30px" 
+                    height="auto" 
+                    margin="5px"/>
                 </a>
               `,
               },
               {
                 html: `
                 <a href="https://x.com/_llm_d_" target="_blank" rel="noreferrer noopener" aria-label="X Icon">
-                  <img class="x" src="img/new-social/x-mark-white.png" alt="X Icon" width="30px" height="auto" margin="5px"/>
+                  <img class="x" 
+                  src="https://raw.githubusercontent.com/KPRoche/iconography/refs/heads/main/assets/x-mark-white.png" 
+                  alt="X Icon" 
+                  width="30px" 
+                  height="auto" margin="5px"/>
                 </a>
               `,
               },

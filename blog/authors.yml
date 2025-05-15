@@ -11,3 +11,12 @@ Louie:
   name: Lewellyn
   title: That one in green
 
+kahuna:
+  name: Big kahuna
+  title: The one in charge
+
+redhat-author:
+  name: RedHat
+  title: One of the sponsors
+  url: https://redhat.com
+  image_url: https://www.redhat.com/rhdc/managed-files/Logo-Red_Hat-Hat_icon-Standard-RGB.svg
