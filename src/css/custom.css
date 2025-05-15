@@ -50,27 +50,44 @@
 }
 
 .github {
+  background-image: url("@site/static/img/new-social/github-mark.png");
+}
+
+[data-theme="dark"] .github {
+  background-image: url("@site/static/img/new-social/github-mark-white.png");
+}
+
+.github,
+.linkedin,
+.slack,
+.reddit,
+.x {
   width: 28px;
   height: 28px;
-  margin: 0 10px;
-  background-size: cover;
-  background-position: center;
+  margin: 10px 0;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background-color 0.25s, transform 0.25s;
 }
 
-.github:hover {
-  transform: scale(1.1);
-}
-
 .github {
-  background-image: url("@site/static/img/new-social/github-mark.png");
+  margin: 0 10px;
+  background-size: cover;
+  background-position: center;
 }
 
-[data-theme="dark"] .github {
-  background-image: url("@site/static/img/new-social/github-mark-white.png");
+.github-footer {
+  margin: 0;
+}
+
+.github:hover,
+.github-footer:hover,
+.linkedin:hover,
+.slack:hover,
+.reddit:hover,
+.x:hover {
+  transform: scale(1.1);
 }
 
 .header {

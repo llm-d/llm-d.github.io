@@ -118,12 +118,6 @@ const config = {
             label: "Community",
           },
           { to: "/blog", label: "News", position: "left" },
-          //{ to: "./community", label: "Community", position: "left"},
-          // {
-          //   href: "https://github.com/llm-d/webdocs",
-          //   label: "GitHub",
-          //   position: "right",
-          // },
           {
             href: "https://github.com/llm-d/webdocs",
             position: "right",
@@ -183,8 +177,11 @@ const config = {
                 to: "/blog",
               },
               {
-                label: "GitHub",
-                href: "https://github.com/llm-d/",
+                html: `
+                <a href="https://github.com/llm-d/" target="_blank" rel="noreferrer noopener" aria-label="GitHub Icon">
+                  <img class="github-footer" src="img/new-social/github-mark-white.png" alt="GitHub Icon" width="30px" height="auto" margin="5px"/>
+                </a>
+              `,
               },
             ],
           },
@@ -192,20 +189,32 @@ const config = {
             title: "Social",
             items: [
               {
-                label: "LinkedIn",
-                href: "https://linkedin.com/company/llm-d",
+                html: `
+                <a href="https://linkedin.com/company/llm-d" target="_blank" rel="noreferrer noopener" aria-label="LinkedIn Icon">
+                  <img class="linkedin" src="img/new-social/linkedin-mark-white.png" alt="LinkedIn Icon" width="30px" height="auto" margin="5px"/>
+                </a>
+              `,
               },
               {
-                label: "Slack",
-                href: "https://llm-d.slack.com",
+                html: `
+                <a href="https://llm-d.slack.com" target="_blank" rel="noreferrer noopener" aria-label="Slack Icon">
+                  <img class="slack" src="img/new-social/slack-mark-white.png" alt="Slack Icon" width="30px" height="auto" margin="5px"/>
+                </a>
+              `,
               },
               {
-                label: "Reddit",
-                href: "https://www.reddit.com/r/llm_d/",
+                html: `
+                <a href="https://www.reddit.com/r/llm_d/" target="_blank" rel="noreferrer noopener" aria-label="Reddit Icon">
+                  <img class="reddit" src="img/new-social/reddit-mark-white.png" alt="Reddit Icon" width="30px" height="auto" margin="5px"/>
+                </a>
+              `,
               },
               {
-                label: "X",
-                href: "https://x.com/_llm_d_",
+                html: `
+                <a href="https://x.com/_llm_d_" target="_blank" rel="noreferrer noopener" aria-label="X Icon">
+                  <img class="x" src="img/new-social/x-mark-white.png" alt="X Icon" width="30px" height="auto" margin="5px"/>
+                </a>
+              `,
               },
             ],
           },
@@ -220,3 +229,25 @@ const config = {
 };
 
 export default config;
+
+// {
+//             title: "Social",
+//             items: [
+//               {
+//                 className: "linkedin",
+//                 href: "https://linkedin.com/company/llm-d",
+//               },
+//               {
+//                 className: "slack",
+//                 href: "https://llm-d.slack.com",
+//               },
+//               {
+//                 className: "reddit",
+//                 href: "https://www.reddit.com/r/llm_d/",
+//               },
+//               {
+//                 className: "x",
+//                 href: "https://x.com/_llm_d_",
+//               },
+//             ],
+//           },
