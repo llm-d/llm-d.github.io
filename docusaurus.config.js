@@ -28,8 +28,7 @@ const config = {
   url: "https://llm-d.github.io/",
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  //baseUrl: "/",
-  baseUrl: "/webdocs/",
+  baseUrl: "/",
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
@@ -43,7 +42,7 @@ const config = {
   //EDIT THESE LINES APPROPRIATELY
   //organizationName: "jessicachitas", // Usually your GitHub org/user name.
   //organizationName: "kproche", // Usually your GitHub org/user name.
-  projectName: "webdocs", // Usually your repo name.
+  projectName: "llm-d.github.io", // Usually your repo name.
 
   trailingSlash: false,
   onBrokenLinks: "warn",
