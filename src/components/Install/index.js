@@ -22,7 +22,7 @@ export default function Install() {
               alt="1. "
               src={require('/docs/assets/counting-01.png').default}
               ></img>
-            <a className="link" href="docs/guide/installation/prerequisites#hardware">
+            <a className="link" href="docs/guide/installation/prerequisites#compute">
               Check the Prerequisites
             </a>
           </h3>

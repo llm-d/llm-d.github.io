@@ -8,7 +8,7 @@ sidebar_position: 1
 
 ## Compute Resources
 
-<a name="hardware"></a>
+<a name="compute"></a>
 
 ### Hardware Profiles
 
@@ -25,6 +25,7 @@ The QuickStart has been tested on:
 
 
 ### Target Platforms
+
 
 #### Kubernetes
 
@@ -45,8 +46,8 @@ sudo docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
 
 - OpenShift - This quickstart was tested on OpenShift 4.18. Older versions may work but have not been tested.
 - NVIDIA GPU Operator and NFD Operator - The installation instructions can be found [here](https://docs.nvidia.com/datacenter/cloud-native/openshift/latest/steps-overview.html).
-- OpenShift Data Foundation - The installation instructions can be found [here](https://docs.redhat.com/en/documentation/red_hat_openshift_data_foundation/4.17/html/deploying_and_managing_openshift_data_foundation_using_red_hat_openstack_platform/deploying_openshift_data_foundation_on_red_hat_openstack_platform_in_internal_mode).  OF is not required, but a ReadWriteMany storage class is required.
-- NO Service Mesh or Istio installation as it will conflict with the gateway
+- NO Service Mesh or Istio installation as Istio CRDs will conflict with the gateway
+
 
 ## Software prerequisites -- Client Configuration
 

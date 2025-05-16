@@ -1,29 +1,90 @@
 ---
 sidebar_position: 2
+sidebar_label: Quick Start installer
 ---
 
 # Trying llm-d via the Quick Start installer
 
-This guide will walk you through the steps to install and deploy the llm-d quickstart demo on a Kubernetes cluster.
+For more information on llm-d, see the llm-d git repository [here](https://github.com/llm-d/llm-d) and website [here](https://llmd.io).
 
-**What is llm-d?**
+## Overview
 
-llm-d is an open source project providing distributed inferencing for GenAI runtimes on any Kubernetes cluster. Its highly performant, scalable architecture helps reduce costs through a spectrum of hardware efficiency improvements. The project prioritizes ease of deployment+use as well as SRE needs + day 2 operations associated with running large GPU clusters.
+This guide will walk you through the steps to install and deploy llm-d on a Kubernetes cluster, using an opinionated flow in order to get up and running as quickly as possible.
 
-It includes:
+## Client Configuration
 
-- Prefill/decode disaggregation
-- KV Cache distribution, offloading and storage hierarchy
-- AI-aware router with plug points for customizable scorers
-- Operational telemetry for production, prometheus/grafana
-- Kubernetes-based, works on OCP, minikube, and other k8s distributions
-- NIXL inference transfer library
+### Required tools
 
-[For more information check out the Architecture Documentation](/architecture/00_architecture.md)
+Following prerequisite are required for the installer to work.
 
-## Prerequisites
+- [yq (mikefarah) – installation](https://github.com/mikefarah/yq?tab=readme-ov-file#install)
+- [jq – download & install guide](https://stedolan.github.io/jq/download/)
+- [git – installation guide](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+- [Helm – quick-start install](https://helm.sh/docs/intro/install/)
+- [Kustomize – official install docs](https://kubectl.docs.kubernetes.io/installation/kustomize/)
+- [kubectl – install & setup](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 
-  Check the [prerequisites](./prerequisites.md) for the [compute resources](./prerequisites.md#compute-resources), and [client configuration](./prerequisites.md#software-prerequisites----client-configuration) required to run this demonstration.
+You can use the installer script that installs all the required dependencies.  Currently only Linux is supported.
+
+```bash
+# Currently Linux only
+./install-deps.sh
+```
+
+### Required credentials and configuration
+
+- [llm-d-deployer GitHub repo – clone here](https://github.com/llm-d/llm-d-deployer.git)
+- [ghcr.io Registry – credentials](https://github.com/settings/tokens) You must have a GitHub account and a "classic" personal access token with `read:packages` access to the llm-d-deployer repository.
+- [Red Hat Registry – terms & access](https://access.redhat.com/registry/)
+- [HuggingFace HF_TOKEN](https://huggingface.co/docs/hub/en/security-tokens) with download access for the model you want to use.  By default the sample application will use [meta-llama/Llama-3.2-3B-Instruct](https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct).
+
+> ⚠️ Your Hugging Face account must have access to the model you want to use.  You may need to visit Hugging Face [meta-llama/Llama-3.2-3B-Instruct](https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct) and
+> accept the usage terms if you have not already done so.
+
+Registry Authentication: The installer looks for an auth file in:
+
+```bash
+~/.config/containers/auth.json
+# or
+~/.config/containers/config.json
+```
+
+If not found, you can create one with the following commands:
+
+Create with Docker:
+
+```bash
+docker --config ~/.config/containers/ login ghcr.io
+```
+
+Create with Podman:
+
+```bash
+podman login ghcr.io --authfile ~/.config/containers/auth.json
+```
+
+### Target Platforms
+
+#### Kubernetes
+
+This can be run on a minimum ec2 node type [g6e.12xlarge](https://aws.amazon.com/ec2/instance-types/g6e/) (4xL40S 48GB but only 2 are used by default) to infer the model meta-llama/Llama-3.2-3B-Instruct that will get spun up.
+
+> ⚠️ If your cluster has no available GPUs, the **prefill** and **decode** pods will remain in **Pending** state.
+
+Verify you have properly installed the container toolkit with the runtime of your choice.
+
+```bash
+# Podman
+podman run --rm --security-opt=label=disable --device=nvidia.com/gpu=all ubuntu nvidia-smi
+# Docker
+sudo docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
+```
+
+#### OpenShift
+
+- OpenShift - This quickstart was tested on OpenShift 4.18. Older versions may work but have not been tested.
+- NVIDIA GPU Operator and NFD Operator - The installation instructions can be found [here](https://docs.nvidia.com/datacenter/cloud-native/openshift/latest/steps-overview.html).
+- NO Service Mesh or Istio installation as Istio CRDs will conflict with the gateway
 
 <a name="install"></a>
 
@@ -37,7 +98,6 @@ The llmd-installer.sh script aims to simplify the installation of llm-d using th
 - Installing the GAIE infrastructure
 - Creating the namespace with any special configurations
 - Creating the pull secret to download the images
-- Creating storage and downloading the model
 - Creating the model service CRDs
 - Applying the helm charts
 - Deploying the sample app (model service)
@@ -56,30 +116,29 @@ The installer needs to be run from the `llm-d-deployer/quickstart` directory.
 
 ### Flags
 
-| Flag                       | Description                                                                                             | Example                                                   |
-|----------------------------|---------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
-| `--hf-token TOKEN`         | HuggingFace API token (or set `HF_TOKEN` env var)                                                       | `./llmd-installer.sh --hf-token "abc123"`                        |
-| `--auth-file PATH`         | Path to your registry auth file ig not in one of the two listed files in the auth section of the readme | `./llmd-installer.sh --auth-file ~/.config/containers/auth.json` |
-| `--storage-size SIZE`      | Size of storage volume (default: 7Gi)                                                                   | `./llmd-installer.sh --storage-size 15Gi`                        |
-| `--storage-class CLASS`    | Storage class to use (default: efs-sc)                                                                  | `./llmd-installer.sh --storage-class ocs-storagecluster-cephfs`  |
-| `--namespace NAME`         | Kubernetes namespace to use (default: `llm-d`)                                                          | `./llmd-installer.sh --namespace foo`                            |
-| `--values NAME`            | Absolute path to a Helm values.yaml file (default: llm-d-deployer/charts/llm-d/values.yaml)             | `./llmd-installer.sh --values /path/to/values.yaml`              |
-| `--uninstall`              | Uninstall llm-d and cleanup resources                                                                   | `./llmd-installer.sh --uninstall`                                |
-| `-h`, `--help`             | Show help and exit                                                                                      | `./llmd-installer.sh --help`                                     |
+| Flag                           | Description                                                                                             | Example                                                          |
+|--------------------------------|---------------------------------------------------------------------------------------------------------|------------------------------------------------------------------|
+| `--hf-token TOKEN`             | HuggingFace API token (or set `HF_TOKEN` env var)                                                       | `./llmd-installer.sh --hf-token "abc123"`                        |
+| `--auth-file PATH`             | Path to your registry auth file ig not in one of the two listed files in the auth section of the readme | `./llmd-installer.sh --auth-file ~/.config/containers/auth.json` |
+| `--storage-size SIZE`          | Size of storage volume (default: 7Gi)                                                                   | `./llmd-installer.sh --storage-size 15Gi`                        |
+| `--skip-download-model`        | Skip downloading the model to PVC if modelArtifactURI is pvc based                                      | `./llmd-installer.sh --skip-download-model`                      |
+| `--storage-class CLASS`        | Storage class to use (default: efs-sc)                                                                  | `./llmd-installer.sh --storage-class ocs-storagecluster-cephfs`  |
+| `--namespace NAME`             | Kubernetes namespace to use (default: `llm-d`)                                                          | `./llmd-installer.sh --namespace foo`                            |
+| `--values-file NAME`           | Absolute path to a Helm values.yaml file (default: llm-d-deployer/charts/llm-d/values.yaml)             | `./llmd-installer.sh --values-file /path/to/values.yaml`         |
+| `--uninstall`                  | Uninstall llm-d and cleanup resources                                                                   | `./llmd-installer.sh --uninstall`                                |
+| `--disable-metrics-collection` | Disable metrics collection (Prometheus will not be installed)                                           | `./llmd-installer.sh --disable-metrics-collection`               |
+| `-h`, `--help`                 | Show help and exit                                                                                      | `./llmd-installer.sh --help`                                     |
 
 ## Examples
 
 ### Install llm-d on an Existing Kubernetes Cluster
-
-The storage class used for AWS ec2 is `efs-sc`. Modify [model-storage-rwx-pvc.yaml](../helpers/k8s/model-storage-rwx-pvc.yaml)
-for a different type.
 
 ```bash
 export HF_TOKEN="your-token"
 ./llmd-installer.sh
 ```
 
-### Install on OpenShift with OF installed
+### Install on OpenShift
 
 Before running the installer, ensure you have logged into the cluster.  For example:
 
@@ -87,62 +146,189 @@ Before running the installer, ensure you have logged into the cluster.  For exam
 oc login --token=sha256~yourtoken --server=https://api.yourcluster.com:6443
 ```
 
-The installer will create a ReadWriteMany PVC and download the model to it, if you are using OF, you can pass in the `--storage-class ocs-storagecluster-cephfs` flag.
-
 ```bash
 export HF_TOKEN="your-token"
-./llmd-installer.sh --storage-class ocs-storagecluster-cephfs --storage-size 15Gi
+./llmd-installer.sh
 ```
+
 <a name="explore"></a>
 
 ### Validation
 
-#### A simple request
+The inference-gateway serves as the HTTP ingress point for all inference requests in our deployment.
+It’s implemented as a Kubernetes Gateway (`gateway.networking.k8s.io/v1`) using either kgateway or istio as the
+gatewayClassName, and sits in front of your inference pods to handle path-based routing, load balancing, retries,
+and metrics. This example validates that the gateway itself is routing your completion requests correctly.
+You can execute the [`test-request.sh`](test-request.sh) script to test on the cluster.
 
-For GPU-enabled clusters, you can quickly verify the setup. Once both the prefill and
-decode pods are running and ready, simply send a curl request to the gateway to confirm that chat
-completions are working.  You can execute the `test-request.sh` script to test the chat completions, or run the following on your own.
-If everything is working as expected, you should receive a response.  You should also see activity in the epp pod.
+In addition, if you're using an OpenShift Cluster or have created an ingress, you can test the endpoint from an external location.
 
 ```bash
-NAMESPACE=llm-d
-MODEL_ID=Llama-32-3B-Instruct
-GATEWAY_ADDRESS=$(kubectl get gateway -n ${NAMESPACE} | tail -n 1 | awk '{print $3}')
-kubectl run --rm -i curl-temp --image=curlimages/curl --restart=Never -- \
-  curl -X POST \
-  "http://${GATEWAY_ADDRESS}/v1/chat/completions" \
+INGRESS_ADDRESS=$(kubectl get ingress -n "$NAMESPACE" | tail -n1 | awk '{print $3}')
+
+curl -sS -X GET "http://${INGRESS_ADDRESS}/v1/models" \
+    -H 'accept: application/json' \
+    -H 'Content-Type: application/json'
+
+MODEL_ID=meta-llama/Llama-3.2-3B-Instruct
+
+curl -sS -X POST "http://${INGRESS_ADDRESS}/v1/completions" \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
-    "model": "'${MODEL_ID}'",
-    "messages": [{"content": "Who are you?", "role": "user"}],
-    "stream": false
+    "model":"'"$MODEL_ID"'",
+    "prompt": "You are a helpful AI assistant. Please introduce yourself in one sentence.",
   }'
 ```
 
-For additional troubleshooting, you can check to see if the prefill and decode pods responding to requests.
+> If you receive an error indicating PodSecurity "restricted" violations when running the smoke-test script, you
+> need to remove the restrictive PodSecurity labels from the namespace. Once these labels are removed, re-run the
+> script and it should proceed without PodSecurity errors.
+> Run the following command:
 
 ```bash
-NAMESPACE=llm-d
-MODEL_ID=Llama-3.2-3B-Instruct
-POD_IP=$(kubectl get pods -n ${NAMESPACE} -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.podIP}{"\n"}{end}' | grep decode | awk '{print $2}')
-kubectl run --rm -i curl-temp --image=curlimages/curl --restart=Never -- \
-  curl -X POST \
-  "http://${POD_IP}:8000/v1/chat/completions" \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "model": "'${MODEL_ID}'",
-    "messages": [{"content": "Who are you?", "role": "user"}],
-    "stream": false
-  }'
+kubectl label namespace <NAMESPACE> \
+  pod-security.kubernetes.io/warn- \
+  pod-security.kubernetes.io/warn-version- \
+  pod-security.kubernetes.io/audit- \
+  pod-security.kubernetes.io/audit-version-
 ```
 
-After the p/d pods are running, you can view the models being run on the GPUs on the host to verify activity.
+### Bring Your Own Model
+
+There is a default sample application that by loads [`meta-llama/Llama-3.2-3B-Instruct`](https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct)
+based on the sample application [values.yaml](../charts/llm-d/values.yaml) file. If you want to swap that model out with
+another [vllm compatible model](https://docs.vllm.ai/en/latest/models/supported_models.html). Simply modify the
+values file with the model you wish to run.
+
+Here is an example snippet of the default model values being replaced with
+[`meta-llama/Llama-3.2-1B-Instruct`](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct).
 
 ```yaml
-nvidia-smi --query-gpu=index,name,utilization.gpu,utilization.memory,memory.used,memory.total --format=csv
+  model:
+    # -- Fully qualified pvc URI: pvc://<pvc-name>/<model-path>
+    modelArtifactURI: pvc://llama-3.2-1b-instruct-pvc/models/meta-llama/Llama-3.2-1B-Instruct
+
+    # # -- Fully qualified hf URI: pvc://<pvc-name>/<model-path>
+    # modelArtifactURI: hf://meta-llama/Llama-3.2-3B-Instruct
+
+    # -- Name of the model
+    modelName: "Llama-3.2-1B-Instruct"
+
+    # -- Aliases to the Model named vllm will serve with
+    servedModelNames: []
+
+    auth:
+      # -- HF token auth config via k8s secret. Required if using hf:// URI or not using pvc:// URI with `--skip-download-model` in quickstart
+      hfToken:
+        # -- If the secret should be created or one already exists
+        create: true
+        # -- Name of the secret to create to store your huggingface token
+        name: llm-d-hf-token
+        # -- Value of the token. Do not set this but use `envsubst` in conjunction with the helm chart
+        key: HF_TOKEN
 ```
+
+### Metrics Collection
+
+llm-d includes built-in support for metrics collection using Prometheus and Grafana. This feature is enabled by default but can be disabled using the
+`--disable-metrics-collection` flag during installation. In OpenShift, llm-d applies ServiceMonitors for llm-d components that trigger Prometheus
+scrape targets for the built-in user workload monitoring Prometheus stack.
+
+#### Accessing the Metrics UIs
+
+If running in OpenShift, skip to [Option 3: OpenShift](#option-3-openshift).
+
+##### Option 1: Port Forwarding (Default)
+
+Once installed, you can access the metrics UIs through port-forwarding:
+
+- Prometheus UI (port 9090):
+
+```bash
+kubectl port-forward -n llm-d-monitoring --address 0.0.0.0 svc/prometheus-kube-prometheus-prometheus 9090:9090
+```
+
+- Grafana UI (port 3000):
+
+```bash
+kubectl port-forward -n llm-d-monitoring --address 0.0.0.0 svc/prometheus-grafana 3000:80
+```
+
+Access the UIs at:
+
+- Prometheus: ```<http://YOUR_IP:9090>```
+- Grafana: ```<http://YOUR_IP:3000> (default credentials: admin/admin)```
+
+##### Option 2: Ingress (Optional)
+
+For production environments, you can configure ingress for both Prometheus and Grafana. Add the following to your values.yaml:
+
+```yaml
+prometheus:
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx
+    hosts:
+      - prometheus.your-domain.com
+    tls:
+      - secretName: prometheus-tls
+        hosts:
+          - prometheus.your-domain.com
+
+grafana:
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx
+    hosts:
+      - grafana.your-domain.com
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.your-domain.com
+```
+
+##### Option 3: OpenShift
+
+If you're using OpenShift with user workload monitoring enabled, you can access the metrics through the OpenShift console:
+
+1. Navigate to the OpenShift console
+2. In the left navigation bar, click on "Observe"
+3. You can access:
+   - Metrics: Click on "Metrics" to view and query metrics using the built-in Prometheus UI
+   - Targets: Click on "Targets" to see all monitored endpoints and their status
+
+The metrics are automatically integrated into the OpenShift monitoring stack, providing a seamless experience for viewing and analyzing your llm-d metrics.
+The llm-d-deployer does not install Grafana in OpenShift, but it's recommended that users install Grafana to view metrics and import dashboards.
+
+Follow the [OpenShift Grafana setup guide](https://github.com/llm-d/llm-d/blob/dev/observability/openshift/README.md#step-2-set-up-grafana-optional)
+The guide includes manifests to install the following:
+
+- Grafana instance
+- Grafana Prometheus datasource from user workload monitoring stack
+- Grafana llm-d dashboard
+
+#### Available Metrics
+
+The metrics collection includes:
+
+- Model inference performance metrics
+- Request latency and throughput
+- Resource utilization (CPU, memory, GPU)
+- Cache hit/miss rates
+- Error rates and types
+
+#### Security Note
+
+When running in a cloud environment (like EC2), make sure to:
+
+1. Configure your security groups to allow inbound traffic on ports 9090 and 3000 (if using port-forwarding)
+2. Use the `--address 0.0.0.0` flag with port-forward to allow external access
+3. Consider setting up proper authentication for production environments
+4. If using ingress, ensure proper TLS configuration and authentication
+5. For OpenShift, consider using the built-in OAuth integration for Grafana
 
 ### Troubleshooting
 
