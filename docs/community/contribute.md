@@ -77,7 +77,7 @@ All pull requests will be reviewed by the lead core Maintainer. Feedback will be
 
 ## License
 
-By contributing to llm-d, you agree that your contributions will be licensed under the [Apache 2.0 License](LICENSE).
+By contributing to llm-d, you agree that your contributions will be licensed under the [Apache 2.0 License](@site/docs/assets/files/LICENSE).
 
 ## Code of Conduct
 

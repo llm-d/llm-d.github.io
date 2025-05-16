@@ -32,3 +32,8 @@ hola:
   label: Hola
   permalink: /hola
   description: Hola tag description
+
+blog:
+  label: just a blog
+  permalink: /blog
+  description: everyday blog posts

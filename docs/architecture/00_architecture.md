@@ -72,4 +72,4 @@ Visit our [GitHub Releases page](https://github.com/llm-d/llm-d-deployer/release
 
 ## License
 
-This project is licensed under Apache License 2.0. See the [LICENSE file](../assets/files/LICENSE) for details.
+This project is licensed under Apache License 2.0. See the [LICENSE file](@site/docs/assets/files/LICENSE) for details.

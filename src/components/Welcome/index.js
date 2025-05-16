@@ -12,7 +12,7 @@ export default function Welcome() {
         ></img>
 
         <h2 className="welcome-h2">
-          Kubernetes-Native Distributed Inference at Scale
+          llm-d: a Kubernetes-native high-performance distributed LLM inference framework
         </h2>
         
 
@@ -41,10 +41,9 @@ export default function Welcome() {
 
         <div className="hidden-for-mobile">
           <p>
-            llm-d is a Kubernetes-native distributed inference serving stack - 
-            a well-lit path for anyone to serve at scale, with the fastest 
-            time-to-value and competitive performance per dollar for most models 
-            across most hardware accelerators.
+            llm-d is a well-lit path for anyone to serve at scale, 
+            with the fastest time-to-value and competitive performance per dollar, 
+            for most models across a diverse and comprehensive set of hardware accelerators.
           </p>
 
         </div>

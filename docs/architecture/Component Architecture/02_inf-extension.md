@@ -5,7 +5,7 @@ sidebar_label: Inference Extension
 
 [![Go Report Card](https://goreportcard.com/badge/sigs.k8s.io/gateway-api-inference-extension)](https://goreportcard.com/report/sigs.k8s.io/gateway-api-inference-extension)
 [![Go Reference](https://pkg.go.dev/badge/sigs.k8s.io/gateway-api-inference-extension.svg)](https://pkg.go.dev/sigs.k8s.io/gateway-api-inference-extension)
-[![License](https://img.shields.io/github/license/kubernetes-sigs/gateway-api-inference-extension)](/LICENSE)
+[![License](https://img.shields.io/github/license/kubernetes-sigs/gateway-api-inference-extension/LICENSE)]
 
 # Gateway API Inference Extension
 
@@ -26,7 +26,7 @@ The following specific terms to this project:
   inference workloads.
 - **Inference Scheduler**: An extendable component that makes decisions about which endpoint is optimal (best cost /
   best performance) for an inference request based on `Metrics and Capabilities`
-  from [Model Serving](/docs/proposals/003-model-server-protocol/README.md).
+  from [Model Serving](https://github.com/kubernetes-sigs/gateway-api-inference-extension/tree/main/docs/proposals/003-model-server-protocol/README.md).
 - **Metrics and Capabilities**: Data provided by model serving platforms about
   performance, availability and capabilities to optimize routing. Includes
   things like [Prefix Cache] status or [LoRA Adapters] availability.
@@ -50,7 +50,7 @@ this project:
   particularly for training and inference tasks.
 
 
-For deeper insights and more advanced concepts, refer to our [proposals](/docs/proposals).
+For deeper insights and more advanced concepts, refer to our [proposals](https://github.com/kubernetes-sigs/gateway-api-inference-extension/tree/main/docs/proposals).
 
 [Inference]:https://www.digitalocean.com/community/tutorials/llm-inference-optimization
 [Gateway API]:https://github.com/kubernetes-sigs/gateway-api
@@ -98,7 +98,7 @@ As Inference Gateway builds towards a GA release. We will continue to expand our
 
 ## End-to-End Tests
 
-Follow this [README](./test/e2e/epp/README.md) to learn more about running the inference-extension end-to-end test suite on your cluster.
+Follow this link to the [e2e README](https://github.com/kubernetes-sigs/gateway-api-inference-extension/blob/main/test/e2e/epp/README.md) to learn more about running the inference-extension end-to-end test suite on your cluster.
 
 ## Contributing
 
@@ -106,8 +106,8 @@ Our community meeting is weekly at Thursday 10AM PDT ([Zoom](https://zoom.us/j/9
 
 We currently utilize the [#wg-serving](https://kubernetes.slack.com/?redir=%2Fmessages%2Fwg-serving) slack channel for communications.
 
-Contributions are readily welcomed, follow the [dev guide](./docs/dev.md) to start contributing!
+Contributions are readily welcomed, follow the [dev guide](https://github.com/kubernetes-sigs/gateway-api-inference-extension/blob/main/docs/dev.md) to start contributing!
 
 ### Code of conduct
 
-Participation in the Kubernetes community is governed by the [Kubernetes Code of Conduct](code-of-conduct.md).
+Participation in the Kubernetes community is governed by the [Kubernetes Code of Conduct](https://github.com/kubernetes-sigs/gateway-api-inference-extension/blob/main/code-of-conduct.md).

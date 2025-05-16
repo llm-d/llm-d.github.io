@@ -152,25 +152,26 @@ const config = {
             items: [
               {
                 label: "Overview",
-                to: "docs/architecture",
+                to: "docs/architecture/architecture",
               },
-              {
+/*              {
                 label: "FAQ",
                 to: "docs/architecture/faq.md",
               },
-            ],
+*/
+              ],
           },
           {
             title: "Community",
             items: [
               {
                 label: "Contact us",
-                href: "docs/community/contact_us.md",
+                href: "/docs/community/contact_us",
               },
 
               { 
                 label: "Contributing",
-                href: "docs/contribute"
+                href: "/docs/community/contribute"
               },
               {
                 label: "Code of Conduct",

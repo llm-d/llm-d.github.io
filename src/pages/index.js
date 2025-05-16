@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <Layout
       title={`Welcome to the ${siteConfig.title} website!`}
-      description="When we go live a useful description will go into this tag">
+      description="llm-d: a Kubernetes-native high-performance distributed LLM inference framework">
       <main>
         <Welcome />
         {/* <About /> */}

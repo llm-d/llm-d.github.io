@@ -159,7 +159,7 @@ The inference-gateway serves as the HTTP ingress point for all inference request
 It’s implemented as a Kubernetes Gateway (`gateway.networking.k8s.io/v1`) using either kgateway or istio as the
 gatewayClassName, and sits in front of your inference pods to handle path-based routing, load balancing, retries,
 and metrics. This example validates that the gateway itself is routing your completion requests correctly.
-You can execute the [`test-request.sh`](test-request.sh) script to test on the cluster.
+You can execute the [`test-request.sh`](https://github.com/llm-d/llm-d-deployer/blob/main/quickstart/test-request.sh) script to test on the cluster.
 
 In addition, if you're using an OpenShift Cluster or have created an ingress, you can test the endpoint from an external location.
 
@@ -197,7 +197,7 @@ kubectl label namespace <NAMESPACE> \
 ### Bring Your Own Model
 
 There is a default sample application that by loads [`meta-llama/Llama-3.2-3B-Instruct`](https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct)
-based on the sample application [values.yaml](../charts/llm-d/values.yaml) file. If you want to swap that model out with
+based on the sample application [values.yaml](https://github.com/llm-d/llm-d-deployer/blob/main/charts/llm-d/values.yaml) file. If you want to swap that model out with
 another [vllm compatible model](https://docs.vllm.ai/en/latest/models/supported_models.html). Simply modify the
 values file with the model you wish to run.
 
