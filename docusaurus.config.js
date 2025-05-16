@@ -43,6 +43,7 @@ const config = {
   //organizationName: "jessicachitas", // Usually your GitHub org/user name.
   //organizationName: "kproche", // Usually your GitHub org/user name.
   projectName: "llm-d.github.io", // Usually your repo name.
+  deploymentBranch: "gh-pages",
 
   trailingSlash: false,
   onBrokenLinks: "warn",
