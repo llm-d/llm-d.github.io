@@ -49,6 +49,10 @@
   background-color: #262626;
 }
 
+.hidden {
+display: none !important;
+}
+
 .github {
   background-image: url("@site/static/img/new-social/github-mark.png");
 }

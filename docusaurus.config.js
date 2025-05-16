@@ -64,7 +64,7 @@ const config = {
       ({
         docs: {
           sidebarPath: "./sidebars.js",
-
+          sidebarCollapsible: false,
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           //  editUrl:
@@ -109,15 +109,15 @@ const config = {
         items: [
           {
             type: "docSidebar",
-            sidebarId: "guideSidebar",
-            position: "left",
-            label: "User Guide",
-          },
-          {
-            type: "docSidebar",
             sidebarId: "structureSidebar",
             position: "left",
             label: "What is llm-d?",
+          },
+          {
+            type: "docSidebar",
+            sidebarId: "guideSidebar",
+            position: "left",
+            label: "User Guide",
           },
           {
             type: "docSidebar",
@@ -164,18 +164,23 @@ const config = {
             title: "Community",
             items: [
               {
-                label: "How to Join in",
-                href: "docs/community",
+                label: "Contact us",
+                href: "docs/community/contact_us.md",
               },
-/*              {
-                label: "Partners",
-                href: "docs/partners",
+
+              { 
+                label: "Contributing",
+                href: "docs/contribute"
               },
-*/  
-              //     {
-              //       label: "X",
-              //       href: "https://x.com/docusaurus",
-              //     },
+              {
+                label: "Code of Conduct",
+                href: "https://github.com/llm-d/llm-d/blob/dev/CODE_OF_CONDUCT.md",
+              },
+  
+              {
+                  label: "X",
+                  href: "https://x.com/docusaurus",
+              },
             ],
           },
           {

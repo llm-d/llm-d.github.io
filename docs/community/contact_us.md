@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# Work with us on llm-d!
+# Talk to us!
 
 There are several ways you can join the community effort to develop and enhance llm-d
 

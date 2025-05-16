@@ -12,17 +12,14 @@ export default function Welcome() {
         ></img>
 
         <h2 className="welcome-h2">
-          Distributed AI inference with the compute resources you{" "}
-          <b>
-            <em>have</em>
-          </b>
+          Kubernetes-Native Distributed Inference at Scale
         </h2>
         
 
         <div className="button-group">
           <button className="static-button">
             <a className="button-link" href="docs/architecture/architecture">
-              About llm-d
+              Architecture
             </a>
           </button>
           <button className="static-button">
@@ -44,24 +41,12 @@ export default function Welcome() {
 
         <div className="hidden-for-mobile">
           <p>
-            While some distributed AI solutions rely on a single vendor's
-            hardware, If you have a heterogeneous compute environment that
-            includes AMD or Intel accelerators in addition to NVIDIA GPUs, you
-            want a distributed inference solution based on vLLM.
+            llm-d is a Kubernetes-native distributed inference serving stack - 
+            a well-lit path for anyone to serve at scale, with the fastest 
+            time-to-value and competitive performance per dollar for most models 
+            across most hardware accelerators.
           </p>
 
-          <ul className="ul-bulleted">
-            <li>
-              <strong>llm-d</strong> is a toolbox of components which together
-              enable distributed inference in just such a heterogenous compute
-              environment.
-            </li>
-            <li>
-              <strong>llm-d</strong> allows you to achieve distributed AI
-              inference with the compute resources you <em>have</em> rather than
-              the resources someone wishes to <em>sell</em>
-            </li>
-          </ul>
         </div>
         
       </div>

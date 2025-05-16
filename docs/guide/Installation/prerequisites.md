@@ -8,6 +8,8 @@ sidebar_position: 1
 
 ## Compute Resources
 
+<a name="hardware"></a>
+
 ### Hardware Profiles
 
 The QuickStart has been tested on:

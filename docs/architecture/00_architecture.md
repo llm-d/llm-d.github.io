@@ -3,44 +3,73 @@ sidebar_position: 0
 label: llm-d Architecture
 ---
 # Overview of llm-d architecture
-**What is llm-d?**
+`llm-d` is a Kubernetes-native distributed inference serving stack - a well-lit path for anyone to serve at scale, with the fastest time-to-value and competitive performance per dollar for most models across most hardware accelerators.
 
-llm-d is an open source project providing distributed inferencing for GenAI runtimes on any Kubernetes cluster. Its highly performant, scalable architecture helps reduce costs through a spectrum of hardware efficiency improvements. The project prioritizes ease of deployment+use as well as SRE needs + day 2 operations associated with running large GPU clusters.
+With `llm-d`, users can operationalize GenAI deployments with a modular solution that leverages the latest distributed inference optimizations like KV-cache aware routing and disaggregated serving, co-designed and integrated with the Kubernetes operational tooling in [Inference Gateway (IGW)](https://github.com/kubernetes-sigs/gateway-api-inference-extension).
 
-It includes:
+Built by leaders in the Kubernetes and vLLM projects, `llm-d` is a community-driven, Apache-2 licensed project with an open development model.
 
-- Prefill/decode disaggregation
-- KV Cache distribution, offloading and storage hierarchy
-- AI-aware router with plug points for customizable scorers
-- Operational telemetry for production, prometheus/grafana
-- Kubernetes-based, works on OCP, minikube, and other k8s distributions
-- NIXL inference transfer library
+##  Architecture
 
-**llm-d consists of the following components:**
+`llm-d` adopts a layered architecture on top of industry-standard open technologies: vLLM, Kubernetes, and Inference Gateway.
 
-- Gateway API Inference Extension (GIE) - This extension upgrades an ext-proc-capable proxy or gateway - such as Envoy Gateway, kGateway, or the GKE Gateway - to become an inference gateway - supporting inference platform teams self-hosting large language models on Kubernetes. This integration makes it easy to expose and control access to your local OpenAI-compatible chat completion endpoints to other workloads on or off cluster, or to integrate your self-hosted models alongside model-as-a-service providers in a higher level AI Gateway like LiteLLM, Solo AI Gateway, or Apigee.
-  The inference gateway:
-  - Improves the tail latency and throughput of LLM completion requests against Kubernetes-hosted model servers using an extendable request scheduling algorithm that is kv-cache and request cost aware, avoiding evictions or queueing as load increases
-  - Provides Kubernetes-native declarative APIs to route client model names to use-case specific LoRA adapters and control incremental rollout of new adapter versions, A/B traffic splitting, and safe blue-green base model and model server upgrades
-  - Adds end to end observability around service objective attainment
-  - Ensures operational guardrails between different client model names, allowing a platform team to safely serve many different GenAI workloads on the same pool of shared foundation model servers for higher utilization and fewer required accelerators
 
-- Distributed KV Cache
-  - LMCache (in llm-d container)
-  - NIXL (in llm-d container)
-  - KVCache Indexer
-  - Redis
+![llm-d Architecture](../assets/images/llm-d-arch.svg)
+    
 
-- Model Service Controller - ModelService is a Kubernetes operator (CRD + controller) that enables the creation of vllm pods and routing resources for a given model.
-  - Enables disaggregated prefill
-  - Supports creation of Gateway API Inference Extension resources for routing
-  - Supports auto-scaling with HPA
-  - Supports independent scaling of prefill and decode instances
-  - Supports independent node affinities for prefill and decode instances
-  - Supports model loading from OCI images, HuggingFace public and private registries, and PVCs
 
-- Metrics Service (Prometheus)
+Key features of `llm-d` include:
 
-### Architecture
+- **vLLM-Optimized Inference Scheduler:** `llm-d` builds on IGW's pattern for customizable “smart” load-balancing via the Endpoint Picker Protocol (EPP) to define vLLM-optimized scheduling. Leveraging operational telemetry, Inference Scheduler implements and scoring algorithms to make decisions with P/D-, KV-cache-, SLA-, and load-awareness. Advanced teams can implement their own scorers to further customize, while benefiting from other features in IGW, like flow control and latency-aware balancing. [See our Northstar design](https://docs.google.com/document/d/1kE1LY8OVjiOgKVD9-9Po96HODbTIbgHp4qgvw06BCOc/edit?tab=t.0#heading=h.4rgkvvo5gnle)
 
-![llm-d Architecture](../guide/Installation/arch.jpg)
+- **Disaggregated Serving with vLLM:** `llm-d` leverages vLLM’s support for disaggregated serving to run prefill and decode on independent instances, using high-performance transport libraries like NVIDIA’s NIXL. In `llm-d`, we plan to support latency-optimized implementation using fast interconnects (IB, RDMA, ICI) and throughput optimized implementation using data-center networking. [See our Northstar design](https://docs.google.com/document/d/1FNN5snmipaTxEA1FGEeSH7Z_kEqskouKD1XYhVyTHr8/edit?tab=t.0)
+
+- **Disaggregated Prefix Caching with vLLM:** `llm-d` uses vLLM's KVConnector API to provide a pluggable cache for previous calculations, including offloading KVs to host, remote storage, and systems like LMCache. We plan to support two KV caching schemes. [See our Northstar design](https://docs.google.com/document/d/1inTneLEZTv3rDEBB9KLOB9K6oMq8c3jkogARJqdt_58/edit?tab=t.0)
+    - *Independent* (north-south) caching with offloading to local memory and disk, providing a zero operational cost mechanism for offloading.
+    - *Shared* (east-west) caching with KV transfer between instances and shared storage with global indexing, providing potential for higher performance at the cost of a more operationally complex system.
+
+- **Variant Autoscaling over Hardware, Workload, and Traffic** (🚧): We plan to implement a traffic- and hardware-aware autoscaler that (a) measures the capacity of each model server instance, (b) derive a load function that takes into account different request shapes and QoS, and (c) assesses recent traffic mix (QPS, QoS, and shapes)
+Using the recent traffic mix to calculate the optimal mix of instances to handle prefill, decode, and latency-tolerant requests, enabling use of HPA for SLO-level efficiency. [See our Northstar design](https://docs.google.com/document/d/1inTneLEZTv3rDEBB9KLOB9K6oMq8c3jkogARJqdt_58/edit?tab=t.0)
+
+
+## Getting Started
+
+`llm-d` can be installed as a full solution, customizing enabled features, or through its individual components for experimentation.
+
+### Deploying as as solution
+
+llm-d's deployer can be used to that installed it as a solution using a single Helm chart on Kubernetes.
+
+**Tip**
+See the guided experience with our [quickstart](https://github.com/neuralmagic/llm-d-deployer/blob/main/quickstart/README.md).
+
+### Experimenting and developing with llm-d
+
+llm-d is repo is a metaproject with subcomponents can that can be cloned individually.
+
+To clone all the components:
+```
+    git clone --recurse-submodules https://github.com/llm-d/llm-d.git 
+``` 
+
+**Tip**
+As a customization example, see [here](https://github.com/llm-d/llm-d/tree/dev) a template for adding a scheduler scorer. 
+
+## Releases
+
+Visit our [GitHub Releases page](https://github.com/llm-d/llm-d-deployer/releases) and review the release notes to stay updated with the latest releases.
+
+
+## Contribute
+
+### Guidelines
+- See [our project overview](https://github.com/llm-d/llm-d/blob/dev/PROJECT.md) for more details on our development process and governance.
+
+### Connect
+- We use Slack to discuss development across organizations. Please join: [ https://llm-d.slack.com](https://llm-d.slack.com)
+- We host a weekly standup for contributors on Wednesdays at 1230pm ET. Please join: [Meeting Details](https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=NG9yZ3AyYTN0N3VlaW01b21xbWV2c21uNjRfMjAyNTA1MjhUMTYzMDAwWiByb2JzaGF3QHJlZGhhdC5jb20&tmsrc=robshaw%40redhat.com&scp=ALL)
+- We use Google Groups to share architecture diagrams and other content. Please join: [Google Group](https://groups.google.com/g/llm-d-contributors)
+
+## License
+
+This project is licensed under Apache License 2.0. See the [LICENSE file](../assets/files/LICENSE) for details.

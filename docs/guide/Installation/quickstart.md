@@ -25,6 +25,8 @@ It includes:
 
   Check the [prerequisites](./prerequisites.md) for the [compute resources](./prerequisites.md#compute-resources), and [client configuration](./prerequisites.md#software-prerequisites----client-configuration) required to run this demonstration.
 
+<a name="install"></a>
+
 ## llm-d Installation
 
 The llm-d-deployer contains all the helm charts necessary to deploy llm-d. To facilitate the installation of the helm charts, the `llmd-installer.sh` script is provided. This script will populate the necessary manifests in the `manifests` directory.
@@ -91,6 +93,7 @@ The installer will create a ReadWriteMany PVC and download the model to it, if y
 export HF_TOKEN="your-token"
 ./llmd-installer.sh --storage-class ocs-storagecluster-cephfs --storage-size 15Gi
 ```
+<a name="explore"></a>
 
 ### Validation
 

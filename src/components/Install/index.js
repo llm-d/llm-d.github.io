@@ -11,7 +11,7 @@ export default function Install() {
           <div className="install-header">
             <h1 className="install-h1">Try the Quickstart Demo </h1>
           </div>
-          <h2 className="install-h2">Want to kick the tires?<br/>It's as easy as 1...2...llm-d!</h2>
+          <h2 className="install-h2">It's as easy as 1...2...llm-d!</h2>
 
           {/* ----------- Modular Section (copy and paste as many as needed) ---------- */}
           <h3 className="install-h3">
@@ -22,7 +22,7 @@ export default function Install() {
               alt="1. "
               src={require('/docs/assets/counting-01.png').default}
               ></img>
-            <a className="link" href="docs/guide/installation/quickstart#hardware-profiles">
+            <a className="link" href="docs/guide/installation/prerequisites#hardware">
               Check the Prerequisites
             </a>
           </h3>
@@ -34,7 +34,7 @@ export default function Install() {
               alt="2. "
               src={require('/docs/assets/counting-02.png').default}
               ></img>
-            <a className="link" href="docs/guide/installation/quickstart#llm-d-installation">
+            <a className="link" href="docs/guide/installation/quickstart#install">
               Run the Quickstart
             </a>
           </h3>
@@ -46,7 +46,7 @@ export default function Install() {
               alt="3. "
               src={require('/docs/assets/counting-03.png').default}
               ></img>
-              <a className="link" href="docs/guide/installation/quickstart#validation">Explore llm-d!</a></h3>
+              <a className="link" href="docs/guide/installation/quickstart#explore">Explore llm-d!</a></h3>
           {/* -------------------------------------------------------------------------- */}
           <button className="static-button install-button" role="button" href="#">
             <a className="button-link" href="docs/guide">
