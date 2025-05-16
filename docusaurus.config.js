@@ -18,7 +18,7 @@ import { themes as prismThemes } from "prism-react-renderer";
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "llm-d Website",
+  title: "llm-d",
   tagline: "Powered by Docusaurus",
   favicon: "img/llm-d-favicon.png",
 
