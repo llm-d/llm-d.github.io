@@ -32,7 +32,7 @@ export default function Welcome() {
             </a>
           </button>
           <button className="static-button">
-            <a className="button-link" href="docs/community/work_with_us">
+            <a className="button-link" href="docs/community/contribute">
               {/* Link to Community tab */}
               Community
             </a>
