@@ -177,11 +177,6 @@ const config = {
                 label: "Code of Conduct",
                 href: "https://github.com/llm-d/llm-d/blob/dev/CODE_OF_CONDUCT.md",
               },
-  
-              {
-                  label: "X",
-                  href: "https://x.com/docusaurus",
-              },
             ],
           },
           {
