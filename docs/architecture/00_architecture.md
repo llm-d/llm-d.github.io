@@ -41,7 +41,7 @@ Using the recent traffic mix to calculate the optimal mix of instances to handle
 llm-d's deployer can be used to that installed it as a solution using a single Helm chart on Kubernetes.
 
 **Tip**
-See the guided experience with our [quickstart](https://github.com/neuralmagic/llm-d-deployer/blob/main/quickstart/README.md).
+See the guided experience with our [quickstart](https://github.com/llm-d/llm-d-deployer/blob/main/quickstart/README.md).
 
 ### Experimenting and developing with llm-d
 
