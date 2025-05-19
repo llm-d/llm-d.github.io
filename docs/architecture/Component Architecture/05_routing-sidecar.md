@@ -2,10 +2,18 @@
 sidebar_position: 5
 sidebar_label: Routing Sidecar
 ---
-# P/D Routing Proxy
+# P/D Routing Sidecar
 
 This project provides a reverse proxy redirecting incoming requests
 to the prefill worker specified in the `x-prefiller-url` HTTP request header.
+
+This is a prototype of a vLLM-native protocol for disaggregated serving. The
+inference scheduler determines the best decode worker when it determines the
+prefill worker, then informs the prefill worker where to direct the K/V transfer
+as a single transaction. This ensures request cancellation or failures release
+resources on both workers promptly.
+
+See the [disaggregated serving Northstar](https://docs.google.com/document/d/1FNN5snmipaTxEA1FGEeSH7Z_kEqskouKD1XYhVyTHr8/edit?tab=t.0#heading=h.ycwld2oth1kj) for more.
 
 ## Getting Started
 
