@@ -5,7 +5,7 @@ sidebar_label: Contribute to llm-d
 
 # Contribute to llm-d
 
-**NOTE: the definitive version of these guidelines may always be found in the GitHub project at [https://github.com/llm-d/llm-d/blob/dev/CONTRIBUTING.md](https://github.com/llm-d/llm-d/blob/dev/CONTRIBUTING.md)**
+**NOTE: the definitive version of these guidelines may always be found in the GitHub project at [https://github.com/llm-d/llm-d/blob/dev/PROJECT.md](https://github.com/llm-d/llm-d/blob/dev/PROJECT.md)**
 
 # Contributing Guidelines
 
