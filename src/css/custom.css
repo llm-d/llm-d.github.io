@@ -290,6 +290,7 @@ img.llm-d-logo {
   font-size: 150%;
   @media screen and (max-width: 1024px) {
     font-size: 75%;
+    margin: 0;
   }
 }
 
