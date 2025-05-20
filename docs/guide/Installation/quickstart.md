@@ -59,7 +59,6 @@ The installer needs to be run from the `llm-d-deployer/quickstart` directory as 
 
 | Flag                                 | Description                                                   | Example                                                          |
 |--------------------------------------|---------------------------------------------------------------|------------------------------------------------------------------|
-| `-a`, `--auth-file PATH`             | Path to containers auth.json                                  | `./llmd-installer.sh --auth-file ~/.config/containers/auth.json` |
 | `-z`, `--storage-size SIZE`          | Size of storage volume                                        | `./llmd-installer.sh --storage-size 15Gi`                        |
 | `-c`, `--storage-class CLASS`        | Storage class to use (default: efs-sc)                        | `./llmd-installer.sh --storage-class ocs-storagecluster-cephfs`  |
 | `-n`, `--namespace NAME`             | K8s namespace (default: llm-d)                                | `./llmd-installer.sh --namespace foo`                            |
@@ -101,6 +100,7 @@ It’s implemented as a Kubernetes Gateway (`gateway.networking.k8s.io/v1`) usin
 gatewayClassName, and sits in front of your inference pods to handle path-based routing, load balancing, retries,
 and metrics. This example validates that the gateway itself is routing your completion requests correctly.
 You can execute the [`test-request.sh`](https://github.com/llm-d/llm-d-deployer/blob/main/quickstart/test-request.sh) script in the quickstart folder to test on the cluster.
+
 
 > If you receive an error indicating PodSecurity "restricted" violations when running the smoke-test script, you
 > need to remove the restrictive PodSecurity labels from the namespace. Once these labels are removed, re-run the
@@ -209,8 +209,8 @@ kubectl port-forward -n llm-d-monitoring --address 0.0.0.0 svc/prometheus-grafan
 
 Access the UIs at:
 
-- Prometheus: [http://YOUR_IP:9090](#)
-- Grafana: [http://YOUR_IP:3000](#) (default credentials: admin/admin)
+- Prometheus: \<http://YOUR_IP:9090\>
+- Grafana: \<http://YOUR_IP:3000\> (default credentials: admin/admin)
 
 ##### Option 2: Ingress (Optional)
 
