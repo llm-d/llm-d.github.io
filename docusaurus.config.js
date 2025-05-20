@@ -25,7 +25,7 @@ const config = {
   // Set the production url of your site here
   //url: "https://kproche.github.io/",
   // url: "https://jessicachitas.github.io/",
-  url: "https://llm-d.github.io/",
+  url: "https://llm-d.ai/",
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: "/",
