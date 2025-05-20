@@ -458,10 +458,10 @@ img.llm-d-logo {
   width: 100%;
 }
 
-ul li {
+/* ul li {
   list-style: none;
   padding: 0;
-}
+} */
 
 .ul-bulleted {
   list-style-type: disc;
