@@ -19,7 +19,7 @@ llm-d:
   description: llm-d tag description
 
 news:
-  label: News Releases!
+  label: News Releases
   permalink: /news-releases
   description: Used for "official" news releases in the blog
 
@@ -34,6 +34,12 @@ hola:
   description: Hola tag description
 
 blog:
-  label: just a blog
+  label: blog posts
   permalink: /blog
   description: everyday blog posts
+
+  
+announce:
+  label: Announcements
+  permalink: /announce
+  description: Announcements that aren't news releases

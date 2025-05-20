@@ -46,7 +46,7 @@ export default function Install() {
               alt="3. "
               src={require('/docs/assets/counting-03.png').default}
               ></img>
-              <a className="link" href="docs/guide/installation/quickstart#explore">Explore llm-d!</a></h3>
+              <a className="link" href="docs/guide/installation/quickstart#examples">Explore llm-d!</a></h3>
           {/* -------------------------------------------------------------------------- */}
           <button className="static-button install-button" role="button" href="#">
             <a className="button-link" href="docs/guide">

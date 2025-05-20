@@ -1,22 +1,26 @@
-Huey:
-  name: Huw
-  title: The Nephew in Red
-
-Dewey:
-  name: Dewydd
-  title: The one in Blue
-
-
-Louie:
-  name: Lewellyn
-  title: That one in green
-
-kahuna:
-  name: Big kahuna
-  title: The one in charge
-
-redhat-author:
+redhat:
   name: RedHat
-  title: One of the sponsors
   url: https://redhat.com
   image_url: https://www.redhat.com/rhdc/managed-files/Logo-Red_Hat-Hat_icon-Standard-RGB.svg
+
+
+robshaw:
+  name: Robert Shaw
+  title: Director of Engineering, Red Hat
+  url: https://github.com/robertgshaw2-redhat
+  image_url: https://avatars.githubusercontent.com/u/114415538?v=4
+  email: robshaw@redhat.com
+
+smarterclayton:
+  name: Clayton Coleman
+  title: Distinguished Engineer, Google
+  url: https://github.com/smarterclayton
+  image_url: https://avatars.githubusercontent.com/u/1163175?v=4
+  email: claytoncoleman@google.com
+
+chcost:
+  name: Carlos Costa
+  title: Distinguished Engineer, IBM
+  url: https://github.com/chcost
+  image_url: https://avatars.githubusercontent.com/u/26551701?v=4
+  email: chcost@us.ibm.com
