@@ -127,7 +127,7 @@ const config = {
           },
           { to: "/blog", label: "News", position: "left" },
           {
-            href: "https://github.com/llm-d/webdocs",
+            href: "https://github.com/llm-d/",
             position: "right",
             className: "github",
           },
