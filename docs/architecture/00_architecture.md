@@ -14,7 +14,7 @@ Built by leaders in the Kubernetes and vLLM projects, `llm-d` is a community-dri
 `llm-d` adopts a layered architecture on top of industry-standard open technologies: vLLM, Kubernetes, and Inference Gateway.
 
 
-![llm-d Architecture](../assets/images/llm-d-arch.svg)
+![llm-d Architecture](../assets/images/llm-d-arch-simplified.svg)
     
 
 
