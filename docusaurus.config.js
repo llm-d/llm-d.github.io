@@ -28,6 +28,7 @@ const config = {
   url: "https://llm-d.ai/",
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
+  //baseUrl: "/llm-d.github.io/",
   baseUrl: "/",
 
   // GitHub pages deployment config.
@@ -214,6 +215,7 @@ const config = {
                 </a>
               `,
               },
+              
               {
                 html: `
                 <a href="https://llm-d.slack.com" target="_blank" rel="noreferrer noopener" aria-label="Slack Icon">
@@ -223,6 +225,17 @@ const config = {
                 </a>
               `,
               },
+              {
+                html: `
+                <a href="https://inviter.co/llm-d-slack" target="_blank" rel="noreferrer noopener" aria-label="Inviter Icon">
+                  <span class="button-link">Join our Slack</span>    
+                  <img class="inviter"
+                    src="https://raw.githubusercontent.com/KPRoche/iconography/refs/heads/main/assets/inviter-logo.png" 
+                    alt="Slack Inviter link" width="30px" height="auto" margin="5px"/>
+                </a>
+              `,
+              },
+              
               {
                 html: `
                 <a href="https://www.reddit.com/r/llm_d/" target="_blank" rel="noreferrer noopener" aria-label="Reddit Icon">
