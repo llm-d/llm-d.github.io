@@ -79,6 +79,6 @@ By contributing to llm-d, you agree that your contributions will be licensed und
 
 ## Code of Conduct
 
-Please note that we expect all contributors to adhere to a respectful and professional code of conduct. Detailed documentation can be found [here](https://github.com/llm-d/llm-d/blob/dev/CODE_OF_CONDUCT.md)
+Please note that we expect all contributors to adhere to a respectful and professional code of conduct. Detailed documentation can be found [here](https://github.com/llm-d/llm-d/blob/dev/CODE_OF_CONDUCT.md).
 
 Thank you again for your interest in llm-d! Your contributions, in any form, are valuable.
