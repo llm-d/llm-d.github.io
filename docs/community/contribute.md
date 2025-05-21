@@ -66,14 +66,12 @@ All pull requests will be reviewed by the lead core Maintainer. Feedback will be
 
 ## Community and Communication 
 
-* **Developer Slack:** Join our developer Slack workspace at [ llm-d.slack.com ] to connect with the core maintainers and other contributors, ask questions, and participate in discussions. 
-* **Weekly Meetings:**Project updates, ongoing work discussions, and Q&A will be covered in our weekly project meeting. Details regarding the day, time, and meeting link will be shared soon!
-
-
+* **Developer Slack:** [Join our developer Slack workspace](https://inviter.co/llm-d-slack) to connect with the core maintainers and other contributors, ask questions, and participate in discussions. 
+* **Weekly Meetings:** Project updates, ongoing work discussions, and Q&A will be covered in our weekly project meeting. Details regarding the day, time, and meeting link will be shared soon!
 * **Social Media:** Follow us on social media for the latest news, announcements, and updates: 
-* **X:** [https://x.com/\_llm_d\_](https://x.com/_llm_d_)
-* **LinkedIn:** [https://linkedin.com/company/llm-d ](https://linkedin.com/company/llm-d)
-* **Reddit:** [https://www.reddit.com/r/llm_d/](https://www.reddit.com/r/llm_d/)
+  * **X:** [https://x.com/\_llm_d\_](https://x.com/_llm_d_)
+  * **LinkedIn:** [https://linkedin.com/company/llm-d ](https://linkedin.com/company/llm-d)
+  * **Reddit:** [https://www.reddit.com/r/llm_d/](https://www.reddit.com/r/llm_d/)
 
 ## License
 
@@ -81,6 +79,6 @@ By contributing to llm-d, you agree that your contributions will be licensed und
 
 ## Code of Conduct
 
-Please note that we expect all contributors to adhere to a respectful and professional code of conduct. Detailed documentation can be found here [https://github.com/llm-d/llm-d/blob/dev/CODE_OF_CONDUCT.md](https://github.com/llm-d/llm-d/blob/dev/CODE_OF_CONDUCT.md)
+Please note that we expect all contributors to adhere to a respectful and professional code of conduct. Detailed documentation can be found [here](https://github.com/llm-d/llm-d/blob/dev/CODE_OF_CONDUCT.md)
 
 Thank you again for your interest in llm-d! Your contributions, in any form, are valuable.
