@@ -32,6 +32,11 @@ The KV-Cache-Manager is designed to connect high-level serving-stack goals with 
   - By improving compute utilization
      - Minimize re-compute via KVCache reuse and locality-aware request handling
      - Leverage zero-copy cache transfers across nodes
+- **Enable system scalability**
+   - Through a distributed KVCache pool
+      - Allows cache offloading and reuse across multiple serving instances
+   - User session duplication/migration for true and seamless load balancing
+
 
 ## Vision 
 
