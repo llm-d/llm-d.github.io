@@ -68,7 +68,7 @@ Visit our [GitHub Releases page](https://github.com/llm-d/llm-d-deployer/release
 
 ### Connect
 - We use Slack to discuss development across organizations. Please join via [this inviter link](https://inviter.co/llm-d-slack) and access the workspace [here](https://llm-d.slack.com).
-- We host a weekly standup for contributors on Wednesdays at 1230pm ET. Please join: [Meeting Details](https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=NG9yZ3AyYTN0N3VlaW01b21xbWV2c21uNjRfMjAyNTA1MjhUMTYzMDAwWiByb2JzaGF3QHJlZGhhdC5jb20&tmsrc=robshaw%40redhat.com&scp=ALL)
+- We host a weekly standup for contributors on Wednesdays at 1230pm ET. Please join by [adding the shared calendar](https://calendar.google.com/calendar/u/0?cid=NzA4ZWNlZDY0NDBjYjBkYzA3NjdlZTNhZTk2NWQ2ZTc1Y2U5NTZlMzA5MzhmYTAyZmQ3ZmU1MDJjMDBhNTRiNEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t)
 - We use Google Groups to share architecture diagrams and other content. Please join: [Google Group](https://groups.google.com/g/llm-d-contributors)
 
 ## License

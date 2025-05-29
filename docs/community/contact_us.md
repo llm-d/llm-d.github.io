@@ -12,7 +12,7 @@ There are several ways you can join the community effort to develop and enhance 
     Inviter link to [**join the Slack workspace**](https://inviter.co/llm-d-slack)
 
 - Via [**Reddit**: https://www.reddit.com/r/llm_d/](https://www.reddit.com/r/llm_d/)
-- We host a weekly standup for contributors on Wednesdays at 1230pm ET. Please join: [Meeting Details](https://calendar.google.com/calendar/event?action=TEMPLATE&tmeid=NG9yZ3AyYTN0N3VlaW01b21xbWV2c21uNjRfMjAyNTA1MjhUMTYzMDAwWiByb2JzaGF3QHJlZGhhdC5jb20&tmsrc=robshaw%40redhat.com&scp=ALL)
+- We host a weekly standup for contributors on Wednesdays at 1230pm ET. Please join by [adding the shared calendar](https://calendar.google.com/calendar/u/0?cid=NzA4ZWNlZDY0NDBjYjBkYzA3NjdlZTNhZTk2NWQ2ZTc1Y2U5NTZlMzA5MzhmYTAyZmQ3ZmU1MDJjMDBhNTRiNEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t)
 - We use Google Groups to share architecture diagrams and other content. Please join: [Google Group](https://groups.google.com/g/llm-d-contributors)
     
 You can also find us on
