@@ -90,16 +90,21 @@ For more details see the [vLLM documentation](https://docs.vllm.ai/en/stable/get
 
 ## Working with docker image
 
+### Clone the llm-d-inference-sim repository
+```bash
+git clone https://github.com/llm-d/llm-d-inference-sim.git
+```
+
 ### Building
 To build a Docker image of the vLLM Simulator, run:
 ```bash
-make build-llm-d-inference-sim-image
+make image-build
 ```
 
 ### Running
 To run the vLLM Simulator image under Docker, run:
 ```bash
-docker run --rm --publish 8000:8000 ai-aware-router/llm-d-inference-sim:0.0.1 /ai-aware-router/llm-d-inference-sim  --port 8000 --model "Qwen/Qwen2.5-1.5B-Instruct" --lora "tweet-summary-0,tweet-summary-1"
+docker run --rm --publish 8000:8000 ghcr.io/llm-d/llm-d-inference-sim:dev  --port 8000 --model "Qwen/Qwen2.5-1.5B-Instruct" --lora "tweet-summary-0,tweet-summary-1"
 ```
 **Note:** The above command exposes the simulator on port 8000, and serves the Qwen/Qwen2.5-1.5B-Instruct model.
 
@@ -108,7 +113,7 @@ docker run --rm --publish 8000:8000 ai-aware-router/llm-d-inference-sim:0.0.1 /a
 ### Building
 To build the vLLM simulator, run:
 ```bash
-make build-llm-d-inference-sim
+make build
 ```
 
 ### Running
