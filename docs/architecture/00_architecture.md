@@ -37,16 +37,16 @@ For more, see the [project proposal](https://github.com/llm-d/llm-d/blob/dev/doc
 
 `llm-d` can be installed as a full solution, customizing enabled features, or through its individual components for experimentation.
 
-### Deploying as as solution
+### Deploying as a solution
 
-llm-d's deployer can be used to that installed it as a solution using a single Helm chart on Kubernetes.
+llm-d's deployer can be used to install it as a solution using a single Helm chart on Kubernetes.
 
 **Tip**
 See the guided experience with our [quickstart](https://github.com/llm-d/llm-d-deployer/blob/main/quickstart/README.md).
 
 ### Experimenting and developing with llm-d
 
-llm-d is repo is a metaproject with subcomponents can that can be cloned individually.
+llm-d repo is a metaproject with subcomponents that can be cloned individually.
 
 To clone all the components:
 ```
