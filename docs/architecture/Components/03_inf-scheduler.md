@@ -92,7 +92,7 @@ These components are maintained in the `llm-d-inference-scheduler` repository an
 
 ### Prefill / Decode Configuration
 
-In case Disaggrigated Prefill is enabled, you should also define the following environment variables. 
+In case Disaggregated Prefill is enabled, you should also define the following environment variables. 
 
 - Toggle P/D mode: `PD_ENABLED=true`
 - Threshold: `PD_PROMPT_LEN_THRESHOLD=<value>`
