@@ -11,7 +11,8 @@
     "clear": "docusaurus clear",
     "serve": "docusaurus serve",
     "write-translations": "docusaurus write-translations",
-    "write-heading-ids": "docusaurus write-heading-ids"
+    "write-heading-ids": "docusaurus write-heading-ids",
+    "postgen":"docusaurus-post-generator"
   },
   "dependencies": {
     "@docusaurus/core": "3.7.0",
@@ -26,7 +27,8 @@
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.7.0",
-    "@docusaurus/types": "3.7.0"
+    "@docusaurus/types": "3.7.0",
+    "docusaurus-post-generator": "^1.0.9"
   },
   "browserslist": {
     "production": [
