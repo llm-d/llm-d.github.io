@@ -38,19 +38,6 @@ Subscribe to get notified when new videos are posted, presentations, demos, and 
 
 <!-- truncate -->
 
-## Reminder: Join Our Google Group to Access Project Docs
-
-:::warning Join our Google Group
-We use Google Groups to share architecture diagrams, SIG meeting notes, and other important project content. To get full access to all project resources, please join: [llm-d-contributors Google Group](https://groups.google.com/g/llm-d-contributors)
-:::
-
-The Google Group is where all the magic happens! Here you'll find:
-- Detailed architecture diagrams and design documents
-- SIG meeting notes and recordings
-- Early access to new features and proposals
-- Direct communication with the core team and other contributors
-
-
 ## Help Shape Our Performance Benchmarks
 
 The SIG-Benchmarking team is working on documenting real-world use cases and establishing performance expectations for llm-d deployments. To make this as comprehensive as possible, we need your help!
@@ -68,6 +55,18 @@ Your input is invaluable in helping us understand:
 - Your workload characteristics (input/output lengths, request patterns)
 - Performance requirements and constraints
 - Current challenges and pain points
+
+## Reminder: Join Our Google Group to Access Project Docs
+
+:::warning Join our Google Group
+We use Google Groups to share architecture diagrams, SIG meeting notes, and other important project content. To get full access to all project resources, please join: [llm-d-contributors Google Group](https://groups.google.com/g/llm-d-contributors)
+:::
+
+The Google Group is where all the magic happens! Here you'll find:
+- Detailed architecture diagrams and design documents
+- SIG meeting notes and recordings
+- Early access to new features and proposals
+- Direct communication with the core team and other contributors
 
 ## Get Involved
 
