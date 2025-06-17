@@ -43,3 +43,18 @@ announce:
   label: Announcements
   permalink: /announce
   description: Announcements that aren't news releases
+
+community:
+  label: Community
+  permalink: /community
+  description: Community updates and engagement
+
+updates:
+  label: Updates
+  permalink: /updates
+  description: Project updates and progress reports
+
+sig-benchmarking:
+  label: SIG-Benchmarking
+  permalink: /sig-benchmarking
+  description: Special Interest Group for benchmarking and performance analysis
