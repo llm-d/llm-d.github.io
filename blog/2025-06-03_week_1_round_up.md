@@ -4,11 +4,7 @@ description: Latest news and active design discussions from the llm-d project te
 slug: llm-d-week-1-round-up
 
 authors:
-  - name: Pete Cheslock
-    title: AI Community Architect, Red Hat
-    url: https://github.com/petecheslock
-    image_url: https://avatars.githubusercontent.com/u/511733?v=4
-    email: pete.cheslock@redhat.com
+  - petecheslock
  
 tags: [news]
 
@@ -25,12 +21,14 @@ We've hit 1000 ⭐️'s on [GitHub](https://github.com/llm-d/llm-d)
 
 ![llm-d Star Chart](../docs/assets/images/star-history-202563.png)
 
+<!-- truncate -->
 
 **Here are some of the active design conversations:**
 
 :::tip Join our Google Group
 We use Google Groups to share architecture diagrams and other content. Please join: [llm-d-contributors Google Group](https://groups.google.com/g/llm-d-contributors)
 :::
+
 
 * [2025-06-01 \[PUBLIC\] llm-d KVTransfer Protocol](https://docs.google.com/document/d/1zBkToR9XWjvBYLxu15JeoGpq16nH5sFFensZP_3lJQU/view)
 * [Revisiting The InferenceModel API](https://docs.google.com/document/d/1x6aI9pbTF5oOsaEQYc9n4pBBY3_AuEY2X51VKxmBSnU/view)
