@@ -1,0 +1,41 @@
+/**
+ * Example: Project README Remote Content
+ * 
+ * This is an example of how to set up remote content for a README file.
+ * Copy this file, rename it (remove .template), and modify the values.
+ */
+
+import { createContentWithSource } from './utils.js';
+
+export default [
+  'docusaurus-plugin-remote-content',
+  {
+    // Basic configuration
+    name: 'project-overview',                    // Change: unique name for CLI commands
+    sourceBaseUrl: 'https://raw.githubusercontent.com/YOUR-ORG/YOUR-REPO/main/',  // Change: your repo URL
+    outDir: 'docs/overview',                     // Change: where to put the files
+    documents: ['README.md'],                    // Change: which files to download
+    
+    // Plugin behavior
+    noRuntimeDownloads: false,  // false = auto-download, true = CLI only
+    performCleanup: true,       // true = clean up after build
+    
+    // Transform the content using utilities
+    modifyContent(filename, content) {
+      if (filename === 'README.md') {
+        return createContentWithSource({
+          title: 'Project Overview',             // Change: your page title
+          description: 'Overview of the project',  // Change: your description
+          sidebarLabel: 'Overview',              // Change: sidebar label
+          sidebarPosition: 1,                    // Change: sidebar position
+          filename: 'README.md',                 // Original filename
+          newFilename: 'overview.md',            // Change: new filename
+          repoUrl: 'https://github.com/YOUR-ORG/YOUR-REPO',  // Change: your repo URL
+          branch: 'main',                        // Change: your branch
+          content
+        });
+      }
+      return undefined;
+    },
+  },
+]; 
