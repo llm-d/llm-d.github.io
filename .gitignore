@@ -2,3 +2,7 @@ node_modules
 .DS_Store
 build
 .docusaurus
+
+# Remote content files (downloaded automatically)
+docs/community/contribute.md
+docs/community/code-of-conduct.md
