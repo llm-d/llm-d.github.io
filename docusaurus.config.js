@@ -97,6 +97,16 @@ const config = {
   markdown: { mermaid: true },
   themes: ["@docusaurus/theme-mermaid"],
 
+  plugins: [
+    [
+      require.resolve("docusaurus-lunr-search"),
+      {
+        languages: ["en"],
+      },
+    ],
+  ],
+
+
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
