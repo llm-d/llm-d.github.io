@@ -195,7 +195,7 @@ llm-d includes built-in support for metrics collection using Prometheus and Graf
 `--disable-metrics-collection` flag during installation. llm-d applies ServiceMonitors for vLLM and inference-gateway services to trigger Prometheus
 scrape targets. In OpenShift, the built-in user workload monitoring Prometheus stack can be utilized. In Kubernetes, Prometheus and Grafana are installed from the
 prometheus-community [kube-prometheus-stack helm charts](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack).
-The [llm-d metrics overview](./metrics-overview.md) lists the metrics scraped with a default llm-d install.
+The [llm-d metrics overview](https://github.com/llm-d/llm-d-deployer/blob/main/quickstart/metrics-overview.md) lists the metrics scraped with a default llm-d install.
 
 #### Accessing the Metrics UIs
 
