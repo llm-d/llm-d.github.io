@@ -6,7 +6,7 @@ sidebar_position: 1
 
 ## Fork and Clone the Repository
 
-Fork the repositorty of the site on our [GitHub](https://https://github.com/RedHatOfficial/static-website-template-for-ospo). 
+Fork the repositorty of the site on our [GitHub](https://https://github.com/RedHatOfficial/static-website-template-for-ospo).
 
 Clone your fork to your own computer then using this command and replacing the link with your own HTTPS clone link found underneath the **Code** button (see image below):
 
@@ -35,7 +35,7 @@ Run the server itself with this command:
 npm start
 ```
 
-The `cd` command changes the directory you're working with. 
+The `cd` command changes the directory you're working with.
 
 The `npm start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
 

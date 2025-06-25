@@ -22,7 +22,7 @@ export default function Install() {
               alt="1. "
               src={require('/docs/assets/counting-01.png').default}
               ></img>
-            <a className="link" href="docs/guide/installation/prerequisites#compute">
+            <a className="link" href="https://llm-d.ai/docs/guide/installation/prerequisites#compute">
               Check the Prerequisites
             </a>
           </h3>
@@ -34,7 +34,7 @@ export default function Install() {
               alt="2. "
               src={require('/docs/assets/counting-02.png').default}
               ></img>
-            <a className="link" href="docs/guide/installation/quickstart#install">
+            <a className="link" href="https://llm-d.ai/docs/guide/installation/quickstart#install">
               Run the Quickstart
             </a>
           </h3>
@@ -46,7 +46,7 @@ export default function Install() {
               alt="3. "
               src={require('/docs/assets/counting-03.png').default}
               ></img>
-              <a className="link" href="docs/guide/installation/quickstart#examples">Explore llm-d!</a></h3>
+              <a className="link" href="https://llm-d.ai/docs/guide/installation/quickstart#examples">Explore llm-d!</a></h3>
           {/* -------------------------------------------------------------------------- */}
           <a className="static-button install-button button-link" href="docs/guide">
             Complete install methods here
