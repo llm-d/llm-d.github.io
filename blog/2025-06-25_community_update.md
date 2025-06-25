@@ -10,35 +10,30 @@ tags: [community, updates, sig-benchmarking]
 hide_table_of_contents: false
 ---
 
-## June 23rd, 2025
+## June 25th, 2025
 
 # **llm-d Community Update**
 
 Hey everyone! We've been making great progress with the llm-d project, and I wanted to share some important updates and opportunities to get involved.
 
-## Help Shape Our Performance Benchmarks
+## Help Shape the Future of the llm-d Project
 
-The SIG-Benchmarking team is working on documenting real-world use cases and establishing performance expectations for llm-d deployments. To make this as comprehensive as possible, we need your help!  
+To guide the future development of the llm-d project, we need to understand the real-world challenges, configurations, and performance needs of our community. We've created a short survey to gather insight into how you serve Large Language Models, from the hardware you use to the features you need most.
 
-This survey is being conducted by researchers within Red Hat AI to better understand how organizations are evaluating, deploying, and monitoring GenAI applications in production environments. Your responses will help inform open research, tooling improvements, and best practices for the broader AI community.
+This **anonymous**, vendor-agnostic survey will take approximately 5 minutes to complete. Your input will directly influence the project's roadmap and priorities. The aggregated results will be shared with the [llm-d-contributors](https://groups.google.com/g/llm-d-contributors) mailing list to benefit the entire community.
 
-:::tip Share Your Use Case
-We've created a [Use Case Survey Form](https://docs.google.com/forms/d/e/1FAIpQLSefWpxlGNMN0NAj_4TzVLfSwTCyAz0gndNtLwoS9mamg5DtXw/viewform) to gather information about your LLM workloads. This will help us:
-- Document common deployment patterns
-- Establish realistic performance baselines
-- Identify optimization opportunities
-- Guide future development priorities
+:::tip Your Input Will Define Our Roadmap
+We've created an [llm-d Community Roadmap Survey](https://docs.google.com/forms/d/e/1FAIpQLScENfBNrN1q8XpugCmDUjy8sSn1cMzi_V0mCWTRwzixcPAQkw/viewform) to gather information about your LLM workloads. We are looking to learn more about:
+
+* **Your Serving Environment:** This includes the hardware you use now and anticipate using in a year (like NVIDIA GPUs, AMD GPUs, or CPUs), and whether you run on-premise, in the cloud, or on edge devices.
+* **Your Model Strategy:** Do you serve a few large models or many smaller ones, which model families (like Llama or Mistral) are most common, and how you utilize techniques like LoRA adapters.
+* **Your Performance Requirements:** Your real-world SLOs for latency and throughput and the biggest LLM serving challenges you face—from cost optimization to operational ease of use.
+* **Your Future Needs:** What single new feature you would prioritize for an LLM Model-as-a-Service to help guide our innovation.
 :::
 
-Your input is invaluable in helping us understand:
-- What models you're deploying
-- Your workload characteristics (input/output lengths, request patterns)
-- Performance requirements and constraints
-- Current challenges and pain points
+### [Take the 5-Minute Survey](https://docs.google.com/forms/d/e/1FAIpQLScENfBNrN1q8XpugCmDUjy8sSn1cMzi_V0mCWTRwzixcPAQkw/viewform)
 
-The survey takes approximately 10 minutes to complete. All responses are confidential and will be used in aggregated, anonymized form only.
-
-As a thank-you, you'll be entered into a raffle to win a pair of Apple AirPods Pro (2nd Gen) upon submission.
+**Your participation is invaluable.** Please take a few minutes to complete the survey. We encourage you to share it with other users or proxy their needs in your response to ensure our direction reflects the community's diverse requirements.
 
 <!-- truncate -->
 
