@@ -10,8 +10,6 @@ tags: [community, updates, sig-benchmarking]
 hide_table_of_contents: false
 ---
 
-## June 25th, 2025
-
 # **llm-d Community Update**
 
 Hey everyone! We've been making great progress with the llm-d project, and I wanted to share some important updates and opportunities to get involved.
