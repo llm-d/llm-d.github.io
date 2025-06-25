@@ -10,8 +10,6 @@ tags: [community, updates, sig-benchmarking]
 hide_table_of_contents: false
 ---
 
-# **llm-d Community Update**
-
 Hey everyone! We've been making great progress with the llm-d project, and I wanted to share some important updates and opportunities to get involved.
 
 ## Help Shape the Future of the llm-d Project
