@@ -10,7 +10,7 @@ The user guide is organized in sections to help you get started with llm-d and t
 
 llm-d is an open source project providing distributed inferencing for GenAI runtimes on any Kubernetes cluster. Its highly performant, scalable architecture helps reduce costs through a spectrum of hardware efficiency improvements. The project prioritizes ease of deployment+use as well as SRE needs + day 2 operations associated with running large GPU clusters.
 
-[For more information check out the Architecture Documentation](./architecture/00_architecture)
+[For more information check out the Architecture Documentation](./architecture/architecture)
 
 ## Installation: Start here to minimize your frustration
 
