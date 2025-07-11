@@ -4,7 +4,7 @@ This website is built using [Docusaurus](https://docusaurus.io/), a modern stati
 
 The site may be previewed at [llm-d.github.io](https://llm-d.github.io/) before it goes live
 
-If you spot any errors or ommisions in the site, please open an issue at [github.com/llm-d/llm-d.github.io](https://github.com/llm-d/llm-d.github.io/issues)
+If you spot any errors or omissions in the site, please open an issue at [github.com/llm-d/llm-d.github.io](https://github.com/llm-d/llm-d.github.io/issues)
 
 ## BEFORE DOING A PULL REQUEST
 
