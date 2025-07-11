@@ -34,7 +34,9 @@ export default [
           branch: 'dev',
           content,
           // Fix relative links in the content
-          contentTransform: (content) => content.replace(/\(CODE_OF_CONDUCT\.md\)/g, '(code-of-conduct)')
+          contentTransform: (content) => content
+            .replace(/\(CODE_OF_CONDUCT\.md\)/g, '(code-of-conduct)')
+            .replace(/\(SIGS\.md\)/g, '(sigs)')
         });
       }
       return undefined;

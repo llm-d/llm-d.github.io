@@ -4,6 +4,7 @@
 import contributeSource from './remote-sources/contribute.js';
 import codeOfConductSource from './remote-sources/code-of-conduct.js';
 import securitySource from './remote-sources/security.js';
+import sigsSource from './remote-sources/sigs.js';
 
 /**
  * Remote Content Plugin System
@@ -27,6 +28,7 @@ const remoteContentPlugins = [
   contributeSource,
   codeOfConductSource,
   securitySource,
+  sigsSource,
   
   // Add more remote sources here
 ];
