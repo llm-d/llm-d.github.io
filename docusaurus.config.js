@@ -127,7 +127,7 @@ const config = {
       announcementBar: {
         id: 'llm-d-v0-2-release',
         content:
-          '🎉 <b>llm-d v0.2 is now released!</b> Check out our first well-lit paths with better load balancing, lower latency, and native vLLM support. <a target="_self" rel="noopener noreferrer" href="/blog/llm-d-v0.2-our-first-well-lit-paths"><b>Read the announcement →</b></a>',
+          '🎉 <b>llm-d 0.2 is now released!</b> Check out our first well-lit paths with better load balancing, lower latency, and native vLLM support. <a target="_self" rel="noopener noreferrer" href="/blog/llm-d-v0.2-our-first-well-lit-paths"><b>Read the announcement →</b></a>',
         backgroundColor: '#7f317f',
         textColor: '#fff',
         isCloseable: true,
