@@ -122,6 +122,17 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       // Replace with your project's social card
+      
+      // Announcement banner for v0.2 release
+      announcementBar: {
+        id: 'llm-d-v0-2-release',
+        content:
+          '🎉 <b>llm-d v0.2 is now released!</b> Check out our first well-lit paths with better load balancing, lower latency, and native vLLM support. <a target="_self" rel="noopener noreferrer" href="/blog/llm-d-v0.2-our-first-well-lit-paths"><b>Read the announcement →</b></a>',
+        backgroundColor: '#7f317f',
+        textColor: '#fff',
+        isCloseable: true,
+      },
+
       navbar: {
         // title: "My Site",
         logo: {
