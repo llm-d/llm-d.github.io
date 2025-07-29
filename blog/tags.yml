@@ -58,3 +58,8 @@ sig-benchmarking:
   label: SIG-Benchmarking
   permalink: /sig-benchmarking
   description: Special Interest Group for benchmarking and performance analysis
+
+releases:
+  label: Releases
+  permalink: /releases
+  description: llm-d release announcements
