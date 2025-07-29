@@ -34,7 +34,7 @@ export default function Install() {
               alt="2. "
               src={require('/docs/assets/counting-02.png').default}
               ></img>
-            <a className="link" href="docs/guide/Installation/prerequisites">
+            <a className="link" href="docs/guide/Installation/prerequisites#examples">
               Run the Quickstart
             </a>
           </h3>
@@ -46,7 +46,7 @@ export default function Install() {
               alt="3. "
               src={require('/docs/assets/counting-03.png').default}
               ></img>
-              <a className="link" href="docs/guide/Installation/prerequisites#examples">Explore llm-d!</a></h3>
+              <a className="link" href="docs/guide#our-well-lit-paths">Explore llm-d!</a></h3>
           {/* -------------------------------------------------------------------------- */}
           <a className="static-button install-button button-link" href="docs/guide">
             Complete install methods here
