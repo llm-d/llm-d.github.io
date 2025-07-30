@@ -5,7 +5,7 @@ slug: llm-d-week-1-round-up
 
 authors:
   - petecheslock
- 
+
 tags: [news]
 
 hide_table_of_contents: false
@@ -55,3 +55,6 @@ We use Google Groups to share architecture diagrams and other content. Please jo
 * [@\_llm\_d\_](https://twitter.com/_llm_d_)
 * [r/llm\_d](https://www.reddit.com/r/llm_d/)
 * YouTube - coming soon
+
+<script data-goatcounter="https://llm-d-tracker.asgharlabs.io/count"
+        async src="//llm-d-tracker.asgharlabs.io/count.js"></script>
