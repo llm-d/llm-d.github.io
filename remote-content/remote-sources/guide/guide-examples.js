@@ -41,8 +41,12 @@ export default [
           content,
           // Transform content with custom logic plus standard transforms
           contentTransform: (content, sourcePath) => {
-            // Add what is llm-d section before the main content
-            const withIntro = content.replace(/^# /, `**What is llm-d?**
+            // Apply repository-specific transforms first (converts repo-relative links to GitHub)
+            const transformedContent = standardTransform(content, sourcePath);
+            
+            // Then add what is llm-d section before the main content
+            // This way our site-relative links don't get converted to GitHub URLs
+            const withIntro = transformedContent.replace(/^# /, `**What is llm-d?**
 
 llm-d is an open source project providing distributed inferencing for GenAI runtimes on any Kubernetes cluster. Its highly performant, scalable architecture helps reduce costs through a spectrum of hardware efficiency improvements. The project prioritizes ease of deployment+use as well as SRE needs + day 2 operations associated with running large GPU clusters.
 
@@ -50,8 +54,7 @@ llm-d is an open source project providing distributed inferencing for GenAI runt
 
 # `);
             
-            // Apply repository-specific transforms (all links go to GitHub)
-            return standardTransform(withIntro, sourcePath);
+            return withIntro;
           }
         });
       }
