@@ -5,21 +5,26 @@
  * and transforms it into docs/guide/Installation/wide-ep-lws.md
  */
 
-import { createContentWithSource } from './utils.js';
-import { getRepoTransform } from './repo-transforms.js';
+import { createContentWithSource, createStandardTransform } from '../utils.js';
+import { findRepoConfig, generateRepoUrls } from '../component-configs.js';
+
+// Get repository configuration from centralized config
+const repoConfig = findRepoConfig('llm-d-infra');
+const { repoUrl, sourceBaseUrl } = generateRepoUrls(repoConfig);
+const contentTransform = createStandardTransform('llm-d-infra');
 
 export default [
   'docusaurus-plugin-remote-content',
   {
-    // Basic configuration
+    // Basic configuration - all URLs generated from centralized config
     name: 'guide-wide-ep-lws',
-    sourceBaseUrl: 'https://raw.githubusercontent.com/llm-d-incubation/llm-d-infra/main/',
+    sourceBaseUrl,
     outDir: 'docs/guide/Installation',
     documents: ['quickstart/examples/wide-ep-lws/README.md'],
     
     // Plugin behavior
-    noRuntimeDownloads: false,  // Download automatically when building
-    performCleanup: true,       // Clean up files after build
+    noRuntimeDownloads: false,
+    performCleanup: true,
     
     // Transform the content for this specific document
     modifyContent(filename, content) {
@@ -31,19 +36,10 @@ export default [
           sidebarPosition: 4,
           filename: 'quickstart/examples/wide-ep-lws/README.md',
           newFilename: 'wide-ep-lws.md',
-          repoUrl: 'https://github.com/llm-d-incubation/llm-d-infra',
-          branch: 'main',
+          repoUrl,
+          branch: repoConfig.branch,
           content,
-          // Transform content using repository-specific logic
-          contentTransform: (content) => {
-            const transform = getRepoTransform('llm-d-incubation', 'llm-d-infra');
-            return transform(content, {
-              repoUrl: 'https://github.com/llm-d-incubation/llm-d-infra',
-              branch: 'main',
-              org: 'llm-d-incubation',
-              name: 'llm-d-infra'
-            });
-          }
+          contentTransform
         });
       }
       return undefined;

@@ -5,20 +5,25 @@
  * and transforms it into docs/community/security.md
  */
 
-import { createContentWithSource } from './utils.js';
+import { createContentWithSource } from '../utils.js';
+import { findRepoConfig, generateRepoUrls } from '../component-configs.js';
+
+// Get repository configuration from centralized config
+const repoConfig = findRepoConfig('llm-d');
+const { repoUrl, sourceBaseUrl } = generateRepoUrls(repoConfig);
 
 export default [
   'docusaurus-plugin-remote-content',
   {
-    // Basic configuration
+    // Basic configuration - all URLs generated from centralized config
     name: 'security-policy',
-    sourceBaseUrl: 'https://raw.githubusercontent.com/llm-d/llm-d/dev/',
+    sourceBaseUrl,
     outDir: 'docs/community',
     documents: ['SECURITY.md'],
     
     // Plugin behavior
-    noRuntimeDownloads: false,  // Download automatically when building
-    performCleanup: true,       // Clean up files after build
+    noRuntimeDownloads: false,
+    performCleanup: true,
     
     // Transform the content for this specific document
     modifyContent(filename, content) {
@@ -30,8 +35,8 @@ export default [
           sidebarPosition: 3,
           filename: 'SECURITY.md',
           newFilename: 'security.md',
-          repoUrl: 'https://github.com/llm-d/llm-d',
-          branch: 'dev',
+          repoUrl,
+          branch: repoConfig.branch,
           content,
           // No additional content transformations needed for SECURITY.md
           contentTransform: (content) => content

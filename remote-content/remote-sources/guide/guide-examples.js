@@ -5,21 +5,26 @@
  * and transforms it into docs/guide/guide.md (landing page)
  */
 
-import { createContentWithSource } from './utils.js';
-import { getRepoTransform } from './repo-transforms.js';
+import { createContentWithSource, createStandardTransform } from '../utils.js';
+import { findRepoConfig, generateRepoUrls } from '../component-configs.js';
+
+// Get repository configuration from centralized config
+const repoConfig = findRepoConfig('llm-d-infra');
+const { repoUrl, sourceBaseUrl } = generateRepoUrls(repoConfig);
+const standardTransform = createStandardTransform('llm-d-infra');
 
 export default [
   'docusaurus-plugin-remote-content',
   {
-    // Basic configuration
+    // Basic configuration - all URLs generated from centralized config
     name: 'guide-examples',
-    sourceBaseUrl: 'https://raw.githubusercontent.com/llm-d-incubation/llm-d-infra/main/',
+    sourceBaseUrl,
     outDir: 'docs/guide',
     documents: ['quickstart/examples/README.md'],
     
     // Plugin behavior
-    noRuntimeDownloads: false,  // Download automatically when building
-    performCleanup: true,       // Clean up files after build
+    noRuntimeDownloads: false,
+    performCleanup: true,
     
     // Transform the content for this specific document
     modifyContent(filename, content) {
@@ -31,10 +36,10 @@ export default [
           sidebarPosition: 1,
           filename: 'quickstart/examples/README.md',
           newFilename: 'guide.md',
-          repoUrl: 'https://github.com/llm-d-incubation/llm-d-infra',
-          branch: 'main',
+          repoUrl,
+          branch: repoConfig.branch,
           content,
-          // Transform content using repository-specific logic
+          // Transform content with custom logic plus standard transforms
           contentTransform: (content) => {
             // Add what is llm-d section before the main content
             const withIntro = content.replace(/^# /, `**What is llm-d?**
@@ -46,13 +51,7 @@ llm-d is an open source project providing distributed inferencing for GenAI runt
 # `);
             
             // Apply repository-specific transforms (all links go to GitHub)
-            const transform = getRepoTransform('llm-d-incubation', 'llm-d-infra');
-            return transform(withIntro, {
-              repoUrl: 'https://github.com/llm-d-incubation/llm-d-infra',
-              branch: 'main',
-              org: 'llm-d-incubation',
-              name: 'llm-d-infra'
-            });
+            return standardTransform(withIntro);
           }
         });
       }

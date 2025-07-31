@@ -12,23 +12,40 @@ Automatically download and sync content from remote repositories (like GitHub) i
 
 ## 🚀 Quick Start
 
-### 1. Copy & Edit Template
+### 1. Choose Directory & Copy Template
+
+Files are organized by their destination in the docs:
+
+| Directory | Purpose | Final Location |
+|-----------|---------|----------------|
+| `architecture/` | Architecture docs | `docs/architecture/` |
+| `guide/` | User guides & installation | `docs/guide/` |
+| `community/` | Community resources | `docs/community/` |
+
 ```bash
-cp remote-content/remote-sources/example-readme.js.template remote-content/remote-sources/my-content.js
+# Choose the appropriate directory for your content
+cp remote-content/remote-sources/example-readme.js.template remote-content/remote-sources/DIRECTORY/my-content.js
+
+# Examples:
+cp remote-content/remote-sources/example-readme.js.template remote-content/remote-sources/guide/my-guide.js
+cp remote-content/remote-sources/example-readme.js.template remote-content/remote-sources/architecture/my-component.js
 ```
-Edit the file and replace these placeholders:
+
+### 2. Edit Configuration
+
+Update the copied file and replace these placeholders:
 
 | Placeholder | Example | Description |
 |-------------|---------|-------------|
-| `YOUR-CONTENT-NAME` | `user-guide` | Unique name for CLI commands |
-| `YOUR-ORG/YOUR-REPO` | `microsoft/vscode` | GitHub repo path |
-| `YOUR-SECTION` | `docs/guides` | Where to put the file |
-| `YOUR-FILE.md` | `README.md` | Source filename |
+| `YOUR-REPO-NAME` | `llm-d-infra` | Repo name from component-configs.js |
+| `your-content-name` | `user-guide` | Unique name for CLI commands |
+| `docs/YOUR-SECTION` | `docs/guide` | Where to put the file |
+| `your-file.md` | `guide.md` | Output filename |
 
-### 2. Add to System
+### 3. Add to System
 ```javascript
 // remote-content/remote-content.js
-import myContent from './remote-sources/my-content.js';
+import myContent from './remote-sources/DIRECTORY/my-content.js';
 
 const remoteContentPlugins = [
   contributeSource,
@@ -37,7 +54,7 @@ const remoteContentPlugins = [
 ];
 ```
 
-### 3. Test
+### 4. Test
 ```bash
 npm start
 ```
@@ -65,23 +82,41 @@ Different repositories may have different link structures or conventions. The `r
 remote-content/
 ├── remote-content.js                    # Main system (imports all sources)
 ├── remote-sources/
-│   ├── utils.js                        # Shared utilities
+│   ├── architecture/                   # → docs/architecture/
+│   │   ├── architecture-main.js        # Main architecture documentation
+│   │   └── components-generator.js     # Auto-generates component documentation
+│   ├── guide/                          # → docs/guide/ & docs/guide/Installation/
+│   │   ├── guide-examples.js           # User guide landing page
+│   │   ├── guide-inference-scheduling.js # Installation guide sections
+│   │   ├── guide-pd-disaggregation.js  # Installation guide sections
+│   │   ├── guide-prerequisites.js      # Installation guide sections
+│   │   └── guide-wide-ep-lws.js        # Installation guide sections
+│   ├── community/                      # → docs/community/
+│   │   ├── code-of-conduct.js         # Code of conduct
+│   │   ├── contribute.js              # Contributing guide
+│   │   ├── security.js                # Security policy
+│   │   └── sigs.js                    # Special Interest Groups
+│   ├── utils.js                        # Shared utilities (used by all)
 │   ├── repo-transforms.js              # Repository-specific transformations
 │   ├── component-configs.js            # Component repository configurations
-│   ├── components-generator.js         # Auto-generates component documentation
-│   ├── architecture-main.js            # Main architecture documentation
-│   ├── contribute.js                   # Contributing guide
-│   ├── code-of-conduct.js             # Code of conduct
-│   ├── security.js                     # Security policy
-│   ├── sigs.js                         # Special Interest Groups
-│   ├── guide-*.js                      # User guide sections
 │   └── example-readme.js.template     # Template for new sources
 └── README.md                          # This file
 ```
 
-## 🔧 Adding Components
+### Directory Organization
 
-To add a new component to the auto-generation system:
+The remote-sources directory is organized to mirror the final documentation structure:
+
+- **`architecture/`** - Files that generate content for `docs/architecture/`
+- **`guide/`** - Files that generate content for `docs/guide/` and `docs/guide/Installation/`
+- **`community/`** - Files that generate content for `docs/community/`
+- **Root level** - Shared utilities and configurations used across all directories
+
+## 🔧 Adding New Content
+
+### Adding Components
+
+Components are automatically generated from `component-configs.js`. To add a new component:
 
 1. **Add to component-configs.js**:
    ```javascript
@@ -99,6 +134,22 @@ To add a new component to the auto-generation system:
 
 2. **Component will auto-appear** in the next build under `/docs/architecture/Components/`
 
+### Adding Other Content
+
+For non-component content:
+
+1. **Choose the right directory**:
+   - `architecture/` for architecture documentation
+   - `guide/` for user guides and installation docs
+   - `community/` for community resources
+
+2. **Copy and customize template**:
+   ```bash
+   cp remote-content/remote-sources/example-readme.js.template remote-content/remote-sources/DIRECTORY/your-content.js
+   ```
+
+3. **Update imports in remote-content.js** to include your new file
+
 ## 🐛 Troubleshooting
 
 | Problem | Fix |
@@ -107,10 +158,13 @@ To add a new component to the auto-generation system:
 | Build errors | Verify all `YOUR-...` placeholders are replaced |
 | Wrong sidebar order | Check `sidebarPosition` numbers |
 | Links broken | Use `contentTransform` to fix relative links or add to `repo-transforms.js` |
-| Import errors | Ensure file is imported in `remote-content/remote-content.js` |
+| Import errors | Ensure file is imported in `remote-content/remote-content.js` with correct path |
 | Component not showing | Check `component-configs.js` and ensure repository is public |
 | Source banner missing | Verify you're using `createContentWithSource()` from utils.js |
 | Banner at wrong location | Source banners now appear at bottom of pages automatically |
+| Import path errors | Use `../` to reference utils from subdirectories (e.g., `../utils.js`) |
+| File in wrong directory | Move to appropriate subdirectory: `architecture/`, `guide/`, or `community/` |
+| Template not working | Ensure you're using the updated template with correct import paths |
 
 ## 📝 Content Source Banners
 

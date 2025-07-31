@@ -6,6 +6,53 @@
  * consistency across different generators.
  */
 
+/**
+ * Common repository configurations for remote content sources
+ * These are frequently used repos that don't fit the component pattern
+ */
+export const COMMON_REPO_CONFIGS = {
+  'llm-d-main': {
+    name: 'llm-d',
+    org: 'llm-d',
+    branch: 'dev',
+    description: 'Main llm-d repository with core architecture and documentation'
+  },
+  'llm-d-infra': {
+    name: 'llm-d-infra', 
+    org: 'llm-d-incubation',
+    branch: 'main',
+    description: 'Examples, Helm charts, and release assets for llm-d infrastructure'
+  }
+};
+
+/**
+ * Find repository configuration by name from either components or common repos
+ * @param {string} repoName - Repository name to find
+ * @returns {Object|null} Repository configuration object
+ */
+export function findRepoConfig(repoName) {
+  // Check components first
+  const componentConfig = COMPONENT_CONFIGS.find(config => config.name === repoName);
+  if (componentConfig) return componentConfig;
+  
+  // Check common repos
+  const commonConfig = Object.values(COMMON_REPO_CONFIGS).find(config => config.name === repoName);
+  return commonConfig || null;
+}
+
+/**
+ * Generate repository URLs from configuration
+ * @param {Object} repoConfig - Repository configuration
+ * @returns {Object} Object with repoUrl and sourceBaseUrl
+ */
+export function generateRepoUrls(repoConfig) {
+  const { org, name, branch } = repoConfig;
+  return {
+    repoUrl: `https://github.com/${org}/${name}`,
+    sourceBaseUrl: `https://raw.githubusercontent.com/${org}/${name}/${branch}/`
+  };
+}
+
 export const COMPONENT_CONFIGS = [
   {
     name: 'llm-d-inference-scheduler',

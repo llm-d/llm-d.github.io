@@ -4,6 +4,27 @@
  * Helper functions to maintain consistency across remote content transformations
  */
 
+import { findRepoConfig, generateRepoUrls } from './component-configs.js';
+import { getRepoTransform } from './repo-transforms.js';
+
+/**
+ * Create a standardized content transform function using centralized repo configs
+ * @param {string} repoName - Repository name from COMPONENT_CONFIGS or COMMON_REPO_CONFIGS
+ * @returns {Function} Content transform function
+ */
+export function createStandardTransform(repoName) {
+  const repoConfig = findRepoConfig(repoName);
+  if (!repoConfig) {
+    throw new Error(`Repository configuration not found for: ${repoName}`);
+  }
+  
+  const { org, name, branch } = repoConfig;
+  const { repoUrl } = generateRepoUrls(repoConfig);
+  const transform = getRepoTransform(org, name);
+  
+  return (content) => transform(content, { repoUrl, branch, org, name });
+}
+
 /**
  * Generate a source callout for remote content
  * @param {string} filename - The original filename

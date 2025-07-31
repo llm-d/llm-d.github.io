@@ -5,9 +5,8 @@
  * This creates a foundation for automatically syncing component documentation
  */
 
-import { createContentWithSource } from './utils.js';
-import { COMPONENT_CONFIGS } from './component-configs.js';
-import { getRepoTransform } from './repo-transforms.js';
+import { createContentWithSource, createStandardTransform } from '../utils.js';
+import { COMPONENT_CONFIGS, generateRepoUrls } from '../component-configs.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -18,8 +17,7 @@ import path from 'path';
  */
 function generateComponentRemoteSource(config) {
   const { name, org, branch, description, sidebarPosition } = config;
-  const repoUrl = `https://github.com/${org}/${name}`;
-  const sourceBaseUrl = `https://raw.githubusercontent.com/${org}/${name}/${branch}/`;
+  const { repoUrl, sourceBaseUrl } = generateRepoUrls(config);
   
   return [
     'docusaurus-plugin-remote-content',
@@ -54,11 +52,7 @@ function generateComponentRemoteSource(config) {
             branch,
             content,
             // Transform content to work in docusaurus context
-            contentTransform: (content) => {
-              // Get the appropriate repository transform
-              const transform = getRepoTransform(org, name);
-              return transform(content, { repoUrl, branch, org, name });
-            }
+            contentTransform: createStandardTransform(name)
           });
         }
         return undefined;
@@ -127,7 +121,7 @@ This page is automatically updated from the latest component repository informat
   const sortedComponents = COMPONENT_CONFIGS.sort((a, b) => a.sidebarPosition - b.sidebarPosition);
   
   sortedComponents.forEach((component) => {
-    const repoUrl = `https://github.com/${component.org}/${component.name}`;
+    const { repoUrl } = generateRepoUrls(component);
     const cleanName = component.name.replace(/^llm-d-/, '');
     const cleanTitle = cleanName.split('-').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)

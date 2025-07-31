@@ -54,16 +54,26 @@ For content **without** "Content Source" banners:
 
 To sync new content from repositories:
 
-1. **Copy the template:**
+1. **Choose the right directory** based on content type:
+   - `architecture/` → `docs/architecture/`
+   - `guide/` → `docs/guide/`
+   - `community/` → `docs/community/`
+
+2. **Copy the template:**
    ```bash
-   cp remote-content/remote-sources/example-readme.js.template remote-content/remote-sources/my-content.js
+   # Choose appropriate directory
+   cp remote-content/remote-sources/example-readme.js.template remote-content/remote-sources/DIRECTORY/my-content.js
+   
+   # Examples:
+   cp remote-content/remote-sources/example-readme.js.template remote-content/remote-sources/guide/my-guide.js
+   cp remote-content/remote-sources/example-readme.js.template remote-content/remote-sources/architecture/my-arch-doc.js
    ```
 
-2. **Edit configuration** in the new file
+3. **Edit configuration** in the new file (note the `../` imports for utils)
 
-3. **Add to system** in `remote-content/remote-content.js`
+4. **Add to system** in `remote-content/remote-content.js`
 
-4. **Test** with `npm start`
+5. **Test** with `npm start`
 
 See [remote-content/README.md](remote-content/README.md) for detailed instructions.
 
