@@ -16,6 +16,7 @@ import guidePrerequisitesSource from './remote-sources/guide/guide-prerequisites
 import guideInferenceSchedulingSource from './remote-sources/guide/guide-inference-scheduling.js';
 import guidePdDisaggregationSource from './remote-sources/guide/guide-pd-disaggregation.js';
 import guideWideEpLwsSource from './remote-sources/guide/guide-wide-ep-lws.js';
+import guidePrecisePrefixCacheAwareSource from './remote-sources/guide/guide-precise-prefix-cache-aware.js';
 
 /**
  * Remote Content Plugin System
@@ -52,6 +53,7 @@ const remoteContentPlugins = [
   guideInferenceSchedulingSource,
   guidePdDisaggregationSource,
   guideWideEpLwsSource,
+  guidePrecisePrefixCacheAwareSource,
   
   // Add more remote sources here in the appropriate section above
 ];
