@@ -70,7 +70,7 @@ flowchart TD
     
     B --> B1["`**remote-content/remote-content.js**
     🎯 Main entry point - imports all sources`"]
-    B --> B2["`**remote-sources/&#91;category&#93;/&#91;name&#93;.js**
+    B --> B2["`**remote-sources/category/name.js**
     ⚙️ Individual content configurations`"]
     B --> B3["`**component-configs.js**
     📋 Central repository definitions`"]
@@ -91,13 +91,13 @@ flowchart TD
     🛠️ Apply multiple transformation layers`"]
     
     C3 --> C3a["`**MDX Compatibility**
-    • <br> → <br />
-    • Fix unclosed HTML tags
+    • Fix HTML tag formatting
+    • Close unclosed HTML tags
     • Escape JSX expressions`"]
     
     C3a --> C3b["`**Link & Image Fixing**
-    • ./docs/file.md → github.com/org/repo/blob/main/docs/file.md
-    • ./image.png → github.com/org/repo/raw/main/image.png`"]
+    • Convert relative links to GitHub URLs
+    • Convert image paths to GitHub raw URLs`"]
     
     C3b --> C3c["`**Frontmatter Addition**
     • title, description, sidebar config
@@ -112,7 +112,7 @@ flowchart TD
     
     D --> D1["`**docs/architecture/**
     • architecture.mdx (main repo)
-    • Components/&#91;name&#93;.md (auto-generated)`"]
+    • Components/component-name.md (auto-generated)`"]
     
     D --> D2["`**docs/guide/**
     • Installation guides
@@ -173,19 +173,19 @@ graph TD
     
     I --> I1["`**Step 1: MDX Fixes**
     repo-transforms.js<br/>
-    • Fix <br> tags → <br /><br/>
+    • Fix HTML tag formatting<br/>
     • Fix unclosed HTML tags<br/>
     • Escape JSX expressions`"]
     
     I1 --> I2["`**Step 2: Image Resolution**
     repo-transforms.js<br/>
-    • ![alt]&#40;./path&#41; → ![alt]&#40;github-raw-url&#41;<br/>
-    • &lt;img src='./path'&gt; → &lt;img src='github-raw-url'&gt;`"]
+    • Markdown images to GitHub raw URLs<br/>
+    • HTML img tags to GitHub raw URLs`"]
     
     I2 --> I3["`**Step 3: Link Resolution**
     repo-transforms.js<br/>
-    • [text]&#40;./file.md&#41; → [text]&#40;github-blob-url&#41;<br/>
-    • [label]: ./path → &#91;label&#93;: github-blob-url`"]
+    • Relative links to GitHub blob URLs<br/>
+    • Reference links to GitHub blob URLs`"]
     
     I3 --> I4["`**Step 4: Content Wrapping**
     utils.js - createContentWithSource()<br/>
@@ -199,7 +199,7 @@ graph TD
     sidebar_label: Inference Scheduler<br/>
     sidebar_position: 1<br/>
     ---<br/><br/>
-    &#91;TRANSFORMED CONTENT&#93;<br/><br/>
+    TRANSFORMED CONTENT<br/><br/>
     :::info Content Source<br/>
     This content is automatically synced...<br/>
     :::`"]
@@ -228,7 +228,7 @@ graph TD
 graph TB
     subgraph DOCUSAURUS["**Docusaurus Integration**"]
         DC["`**docusaurus.config.js**
-        plugins: &#91;...remoteContentPlugins&#93;`"]
+        plugins: ...remoteContentPlugins`"]
     end
     
     subgraph MAIN["**Main Entry Point**"]
@@ -260,7 +260,7 @@ graph TB
     subgraph SOURCES["**Content Source Configurations**"]
         subgraph ARCH["**Architecture Sources**"]
             AM["`**architecture-main.js**
-            Main repo README → architecture.mdx`"]
+            Main repo README to architecture.mdx`"]
             CG["`**components-generator.js**
             Auto-generates component docs`"]
         end
