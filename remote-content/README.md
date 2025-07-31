@@ -61,6 +61,317 @@ npm start
 
 ## 🏗️ Architecture
 
+### System Overview
+
+```mermaid
+flowchart TD
+    A["`**🏗️ Remote Content Plugin System**
+    Automatically syncs documentation from GitHub repositories`"] --> B["`**📁 File Organization**`"]
+    
+    B --> B1["`**remote-content/remote-content.js**
+    🎯 Main entry point - imports all sources`"]
+    B --> B2["`**remote-sources/[category]/[name].js**
+    ⚙️ Individual content configurations`"]
+    B --> B3["`**component-configs.js**
+    📋 Central repository definitions`"]
+    B --> B4["`**utils.js + repo-transforms.js**
+    🔧 Content transformation utilities`"]
+    
+    B1 --> C["`**🔄 Processing Flow**`"]
+    
+    C --> C1["`**1. Configuration Resolution**
+    📝 Find repo details from component-configs.js
+    🔗 Generate GitHub URLs (raw & blob)`"]
+    
+    C1 --> C2["`**2. Content Fetching**
+    📥 Download files from GitHub Raw API
+    📄 Usually README.md files`"]
+    
+    C2 --> C3["`**3. Content Transformation**
+    🛠️ Apply multiple transformation layers`"]
+    
+    C3 --> C3a["`**MDX Compatibility**
+    • <br> → <br />
+    • Fix unclosed HTML tags
+    • Escape JSX expressions`"]
+    
+    C3a --> C3b["`**Link & Image Fixing**
+    • ./docs/file.md → github.com/org/repo/blob/main/docs/file.md
+    • ./image.png → github.com/org/repo/raw/main/image.png`"]
+    
+    C3b --> C3c["`**Frontmatter Addition**
+    • title, description, sidebar config
+    • Auto-generated from repo metadata`"]
+    
+    C3c --> C3d["`**Source Attribution**
+    • 'Content Source' callout boxes
+    • Edit links back to GitHub
+    • Issue reporting links`"]
+    
+    C3d --> D["`**📄 Output Generation**`"]
+    
+    D --> D1["`**docs/architecture/**
+    • architecture.mdx (main repo)
+    • Components/[name].md (auto-generated)`"]
+    
+    D --> D2["`**docs/guide/**
+    • Installation guides
+    • Examples and tutorials`"]
+    
+    D --> D3["`**docs/community/**
+    • Contributing guidelines
+    • Code of conduct
+    • Security policies`"]
+    
+    D1 --> E["`**🌐 Final Website**
+    Docusaurus renders all content with consistent styling and navigation`"]
+    D2 --> E
+    D3 --> E
+    
+    style A fill:#e3f2fd,stroke:#1976d2,stroke-width:3px
+    style B fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style C fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style C3 fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    style D fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style E fill:#f1f8e9,stroke:#689f38,stroke-width:3px
+```
+
+### Detailed Processing Flow
+
+Here's how a single content source gets transformed from GitHub into your documentation:
+
+```mermaid
+graph TD
+    A["`**GitHub Repository**
+    e.g., llm-d/llm-d-inference-scheduler`"] --> B["`**Source Configuration**
+    e.g., architecture/component.js`"]
+    
+    B --> C["`**Configuration Lookup**
+    component-configs.js`"]
+    
+    C --> D["`**Repository Details**
+    org: 'llm-d'<br/>
+    name: 'llm-d-inference-scheduler'<br/>
+    branch: 'main'<br/>
+    description: 'vLLM-optimized...'`"]
+    
+    D --> E["`**URL Generation**
+    generateRepoUrls()`"]
+    
+    E --> F["`**Generated URLs**
+    repoUrl: https://github.com/llm-d/llm-d-inference-scheduler<br/>
+    sourceBaseUrl: https://raw.githubusercontent.com/.../main/`"]
+    
+    F --> G["`**Content Fetch**
+    Download README.md from sourceBaseUrl`"]
+    
+    G --> H["`**Raw Content**
+    Original markdown from repository`"]
+    
+    H --> I["`**Transform Pipeline**
+    modifyContent() function`"]
+    
+    I --> I1["`**Step 1: MDX Fixes**
+    repo-transforms.js<br/>
+    • Fix <br> tags → <br /><br/>
+    • Fix unclosed HTML tags<br/>
+    • Escape JSX expressions`"]
+    
+    I1 --> I2["`**Step 2: Image Resolution**
+    repo-transforms.js<br/>
+    • ![alt](./path) → ![alt](github-raw-url)<br/>
+    • <img src='./path'> → <img src='github-raw-url'>`"]
+    
+    I2 --> I3["`**Step 3: Link Resolution**
+    repo-transforms.js<br/>
+    • [text](./file.md) → [text](github-blob-url)<br/>
+    • [label]: ./path → [label]: github-blob-url`"]
+    
+    I3 --> I4["`**Step 4: Content Wrapping**
+    utils.js - createContentWithSource()<br/>
+    • Generate frontmatter<br/>
+    • Add source attribution callout`"]
+    
+    I4 --> J["`**Transformed Content**
+    ---<br/>
+    title: Inference Scheduler<br/>
+    description: vLLM-optimized...<br/>
+    sidebar_label: Inference Scheduler<br/>
+    sidebar_position: 1<br/>
+    ---<br/><br/>
+    [TRANSFORMED CONTENT]<br/><br/>
+    :::info Content Source<br/>
+    This content is automatically synced...<br/>
+    :::`"]
+    
+    J --> K["`**File Output**
+    docs/architecture/Components/inference-scheduler.md`"]
+    
+    K --> L["`**Docusaurus Processing**
+    Renders as website page`"]
+    
+    style A fill:#e3f2fd
+    style D fill:#f3e5f5
+    style H fill:#fff3e0
+    style I1 fill:#e8f5e8
+    style I2 fill:#e8f5e8
+    style I3 fill:#e8f5e8
+    style I4 fill:#e8f5e8
+    style J fill:#fce4ec
+    style K fill:#f1f8e9
+    style L fill:#e1f5fe
+```
+
+### Technical Architecture
+
+```mermaid
+graph TB
+    subgraph DOCUSAURUS["**Docusaurus Integration**"]
+        DC["`**docusaurus.config.js**
+        plugins: [...remoteContentPlugins]`"]
+    end
+    
+    subgraph MAIN["**Main Entry Point**"]
+        RC["`**remote-content.js**
+        • Imports all source configs<br/>
+        • Exports plugin array<br/>
+        • Central orchestration`"]
+    end
+    
+    subgraph CONFIG["**Configuration Layer**"]
+        CC["`**component-configs.js**
+        • COMPONENT_CONFIGS array<br/>
+        • COMMON_REPO_CONFIGS<br/>
+        • findRepoConfig()<br/>
+        • generateRepoUrls()`"]
+        
+        RT["`**repo-transforms.js**
+        • applyBasicMdxFixes()<br/>
+        • fixImages()<br/>
+        • transformRepo()<br/>
+        • getRepoTransform()`"]
+        
+        UT["`**utils.js**
+        • createStandardTransform()<br/>
+        • createSourceCallout()<br/>
+        • createContentWithSource()`"]
+    end
+    
+    subgraph SOURCES["**Content Source Configurations**"]
+        subgraph ARCH["**Architecture Sources**"]
+            AM["`**architecture-main.js**
+            Main repo README → architecture.mdx`"]
+            CG["`**components-generator.js**
+            Auto-generates component docs`"]
+        end
+        
+        subgraph GUIDE["**Guide Sources**"]
+            GE["`**guide-examples.js**
+            Examples landing page`"]
+            GP["`**guide-prerequisites.js**
+            Installation prerequisites`"]
+            GI["`**guide-inference-scheduling.js**
+            Inference scheduling guide`"]
+            GW["`**guide-wide-ep-lws.js**
+            Wide endpoint guide`"]
+            GD["`**guide-pd-disaggregation.js**
+            PD disaggregation guide`"]
+        end
+        
+        subgraph COMM["**Community Sources**"]
+            CO["`**contribute.js**
+            Contributing guidelines`"]
+            CC2["`**code-of-conduct.js**
+            Code of conduct`"]
+            SE["`**security.js**
+            Security policy`"]
+            SI["`**sigs.js**
+            Special interest groups`"]
+        end
+    end
+    
+    subgraph OUTPUT["**Generated Documentation**"]
+        subgraph DOCS_ARCH["**docs/architecture/**"]
+            DA1["`**architecture.mdx**
+            Main architecture doc`"]
+            DA2["`**Components/**
+            Auto-generated component docs`"]
+        end
+        
+        subgraph DOCS_GUIDE["**docs/guide/**"]
+            DG1["`**Installation/**
+            Installation guides`"]
+            DG2["`**examples.md**
+            Examples page`"]
+        end
+        
+        subgraph DOCS_COMM["**docs/community/**"]
+            DC1["`**contribute.md**
+            Contributing guide`"]
+            DC2["`**code-of-conduct.md**
+            Code of conduct`"]
+            DC3["`**security.md**
+            Security policy`"]
+            DC4["`**sigs.md**
+            SIG information`"]
+        end
+    end
+    
+    %% Main connections
+    DC --> RC
+    RC --> AM
+    RC --> CG
+    RC --> GE
+    RC --> GP
+    RC --> GI
+    RC --> GW
+    RC --> GD
+    RC --> CO
+    RC --> CC2
+    RC --> SE
+    RC --> SI
+    
+    %% Config dependencies
+    AM --> CC
+    AM --> UT
+    AM --> RT
+    CG --> CC
+    CG --> UT
+    CG --> RT
+    
+    %% Similar pattern for guides and community
+    GE --> CC
+    GE --> UT
+    GE --> RT
+    GP --> CC
+    GP --> UT
+    GP --> RT
+    
+    CO --> CC
+    CO --> UT
+    CO --> RT
+    
+    %% Output generation
+    AM --> DA1
+    CG --> DA2
+    GE --> DG2
+    GP --> DG1
+    GI --> DG1
+    GW --> DG1
+    GD --> DG1
+    CO --> DC1
+    CC2 --> DC2
+    SE --> DC3
+    SI --> DC4
+    
+    %% Styling
+    style DOCUSAURUS fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style MAIN fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style CONFIG fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style SOURCES fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    style OUTPUT fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+```
+
 ### Component Auto-Generation
 
 The system automatically generates documentation for all components listed in `component-configs.js`. This includes:
