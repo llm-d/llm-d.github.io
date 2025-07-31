@@ -70,7 +70,7 @@ flowchart TD
     
     B --> B1["`**remote-content/remote-content.js**
     🎯 Main entry point - imports all sources`"]
-    B --> B2["`**remote-sources/[category]/[name].js**
+    B --> B2["`**remote-sources/&#91;category&#93;/&#91;name&#93;.js**
     ⚙️ Individual content configurations`"]
     B --> B3["`**component-configs.js**
     📋 Central repository definitions`"]
@@ -112,7 +112,7 @@ flowchart TD
     
     D --> D1["`**docs/architecture/**
     • architecture.mdx (main repo)
-    • Components/[name].md (auto-generated)`"]
+    • Components/&#91;name&#93;.md (auto-generated)`"]
     
     D --> D2["`**docs/guide/**
     • Installation guides
@@ -159,8 +159,8 @@ graph TD
     generateRepoUrls()`"]
     
     E --> F["`**Generated URLs**
-    repoUrl: https://github.com/llm-d/llm-d-inference-scheduler<br/>
-    sourceBaseUrl: https://raw.githubusercontent.com/.../main/`"]
+    repoUrl: github.com/llm-d/llm-d-inference-scheduler<br/>
+    sourceBaseUrl: raw.githubusercontent.com/.../main/`"]
     
     F --> G["`**Content Fetch**
     Download README.md from sourceBaseUrl`"]
@@ -179,13 +179,13 @@ graph TD
     
     I1 --> I2["`**Step 2: Image Resolution**
     repo-transforms.js<br/>
-    • ![alt](./path) → ![alt](github-raw-url)<br/>
-    • <img src='./path'> → <img src='github-raw-url'>`"]
+    • ![alt]&#40;./path&#41; → ![alt]&#40;github-raw-url&#41;<br/>
+    • &lt;img src='./path'&gt; → &lt;img src='github-raw-url'&gt;`"]
     
     I2 --> I3["`**Step 3: Link Resolution**
     repo-transforms.js<br/>
-    • [text](./file.md) → [text](github-blob-url)<br/>
-    • [label]: ./path → [label]: github-blob-url`"]
+    • [text]&#40;./file.md&#41; → [text]&#40;github-blob-url&#41;<br/>
+    • [label]: ./path → &#91;label&#93;: github-blob-url`"]
     
     I3 --> I4["`**Step 4: Content Wrapping**
     utils.js - createContentWithSource()<br/>
@@ -199,7 +199,7 @@ graph TD
     sidebar_label: Inference Scheduler<br/>
     sidebar_position: 1<br/>
     ---<br/><br/>
-    [TRANSFORMED CONTENT]<br/><br/>
+    &#91;TRANSFORMED CONTENT&#93;<br/><br/>
     :::info Content Source<br/>
     This content is automatically synced...<br/>
     :::`"]
@@ -228,7 +228,7 @@ graph TD
 graph TB
     subgraph DOCUSAURUS["**Docusaurus Integration**"]
         DC["`**docusaurus.config.js**
-        plugins: [...remoteContentPlugins]`"]
+        plugins: &#91;...remoteContentPlugins&#93;`"]
     end
     
     subgraph MAIN["**Main Entry Point**"]
