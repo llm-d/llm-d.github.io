@@ -1,9 +1,8 @@
 /**
- * Repository-Specific Transformation System
+ * Repository Content Transformation System
  * 
- * Two repository types:
- * 1. Main llm-d/llm-d repository (keeps docs/ links local)
- * 2. Component repositories (all links point to source repo)
+ * Unified transformation that links all relative references back to the source repository.
+ * This ensures consistency across all content and prevents broken links.
  */
 
 /**
@@ -45,27 +44,10 @@ function fixImages(content, repoUrl, branch) {
 }
 
 /**
- * Transform content from the main llm-d/llm-d repository
- * Keeps docs/ links pointing to our local docs site
+ * Unified transform function for all repositories
+ * All relative links point back to the source repository on GitHub
  */
-export function transformMainRepo(content, { repoUrl, branch }) {
-  return fixImages(applyBasicMdxFixes(content), repoUrl, branch)
-    // Keep docs/ links local (inline format)
-    .replace(/\]\(docs\//g, '](/docs/architecture/')
-    .replace(/\]\(\.\/docs\//g, '](/docs/architecture/')
-    // Keep docs/ links local (reference format)  
-    .replace(/^\[([^\]]+)\]:docs\//gm, `[$1]:/docs/architecture/`)
-    .replace(/^\[([^\]]+)\]:\.\/docs\//gm, `[$1]:/docs/architecture/`)
-    // All other relative links go to GitHub
-    .replace(/\]\((?!http|https|#|\/docs|\/blog|mailto:)([^)]+)\)/g, `](${repoUrl}/blob/${branch}/$1)`)
-    .replace(/^\[([^\]]+)\]:(?!http|https|#|mailto:|\/docs|\/blog)([^\s]+)/gm, `[$1]:${repoUrl}/blob/${branch}/$2`);
-}
-
-/**
- * Transform content from component repositories
- * All relative links point back to the source repository
- */
-export function transformComponentRepo(content, { repoUrl, branch }) {
+export function transformRepo(content, { repoUrl, branch }) {
   return fixImages(applyBasicMdxFixes(content), repoUrl, branch)
     // All relative links go to source repository (inline format)
     .replace(/\]\((?!http|https|#|mailto:)([^)]+)\)/g, (match, path) => {
@@ -80,8 +62,13 @@ export function transformComponentRepo(content, { repoUrl, branch }) {
 }
 
 /**
- * Get the appropriate transform function for a repository
+ * Get the transform function for any repository
+ * Now returns the same unified transform for all repositories
  */
 export function getRepoTransform(org, name) {
-  return (org === 'llm-d' && name === 'llm-d') ? transformMainRepo : transformComponentRepo;
+  return transformRepo;
 }
+
+// Backward compatibility exports (deprecated - use transformRepo instead)
+export const transformMainRepo = transformRepo;
+export const transformComponentRepo = transformRepo;
