@@ -40,7 +40,7 @@ export default [
           branch: repoConfig.branch,
           content,
           // Transform content with custom logic plus standard transforms
-          contentTransform: (content) => {
+          contentTransform: (content, sourcePath) => {
             // Add what is llm-d section before the main content
             const withIntro = content.replace(/^# /, `**What is llm-d?**
 
@@ -51,7 +51,7 @@ llm-d is an open source project providing distributed inferencing for GenAI runt
 # `);
             
             // Apply repository-specific transforms (all links go to GitHub)
-            return standardTransform(withIntro);
+            return standardTransform(withIntro, sourcePath);
           }
         });
       }

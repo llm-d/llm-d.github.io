@@ -22,7 +22,7 @@ export function createStandardTransform(repoName) {
   const { repoUrl } = generateRepoUrls(repoConfig);
   const transform = getRepoTransform(org, name);
   
-  return (content) => transform(content, { repoUrl, branch, org, name });
+  return (content, sourcePath) => transform(content, { repoUrl, branch, org, name, sourcePath });
 }
 
 /**
@@ -85,7 +85,7 @@ sidebar_position: ${sidebarPosition}
   const sourceCallout = createSourceCallout(filename, repoUrl, branch);
   
   // Apply any additional content transformations
-  const transformedContent = contentTransform ? contentTransform(content) : content;
+  const transformedContent = contentTransform ? contentTransform(content, filename) : content;
   
   return {
     filename: newFilename,

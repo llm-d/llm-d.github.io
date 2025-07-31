@@ -31,15 +31,19 @@ function applyBasicMdxFixes(content) {
 /**
  * Fix all images to point to GitHub raw URLs
  */
-function fixImages(content, repoUrl, branch) {
+function fixImages(content, repoUrl, branch, sourceDir = '') {
   return content
     .replace(/!\[([^\]]*)\]\((?!http)([^)]+)\)/g, (match, alt, path) => {
       const cleanPath = path.replace(/^\.\//, '');
-      return `![${alt}](${repoUrl}/raw/${branch}/${cleanPath})`;
+      // Resolve relative path relative to the source file's directory
+      const fullPath = sourceDir ? `${sourceDir}/${cleanPath}` : cleanPath;
+      return `![${alt}](${repoUrl}/raw/${branch}/${fullPath})`;
     })
     .replace(/<img([^>]*?)src=["'](?!http)([^"']+)["']([^>]*?)>/g, (match, before, path, after) => {
       const cleanPath = path.replace(/^\.\//, '');
-      return `<img${before}src="${repoUrl}/raw/${branch}/${cleanPath}"${after}>`;
+      // Resolve relative path relative to the source file's directory
+      const fullPath = sourceDir ? `${sourceDir}/${cleanPath}` : cleanPath;
+      return `<img${before}src="${repoUrl}/raw/${branch}/${fullPath}"${after}>`;
     });
 }
 
@@ -47,17 +51,24 @@ function fixImages(content, repoUrl, branch) {
  * Unified transform function for all repositories
  * All relative links point back to the source repository on GitHub
  */
-export function transformRepo(content, { repoUrl, branch }) {
-  return fixImages(applyBasicMdxFixes(content), repoUrl, branch)
+export function transformRepo(content, { repoUrl, branch, sourcePath = '' }) {
+  // Get the directory of the source file to resolve relative paths correctly
+  const sourceDir = sourcePath ? sourcePath.split('/').slice(0, -1).join('/') : '';
+  
+  return fixImages(applyBasicMdxFixes(content), repoUrl, branch, sourceDir)
     // All relative links go to source repository (inline format)
     .replace(/\]\((?!http|https|#|mailto:)([^)]+)\)/g, (match, path) => {
       const cleanPath = path.replace(/^\]\(/, '').replace(/^\.\//, '');
-      return `](${repoUrl}/blob/${branch}/${cleanPath})`;
+      // Resolve relative path relative to the source file's directory
+      const fullPath = sourceDir ? `${sourceDir}/${cleanPath}` : cleanPath;
+      return `](${repoUrl}/blob/${branch}/${fullPath})`;
     })
     // All relative links go to source repository (reference format)
     .replace(/^\[([^\]]+)\]:(?!http|https|#|mailto:)([^\s]+)/gm, (match, label, path) => {
       const cleanPath = path.replace(/^\.\//, '');
-      return `[${label}]:${repoUrl}/blob/${branch}/${cleanPath}`;
+      // Resolve relative path relative to the source file's directory
+      const fullPath = sourceDir ? `${sourceDir}/${cleanPath}` : cleanPath;
+      return `[${label}]:${repoUrl}/blob/${branch}/${fullPath}`;
     });
 }
 
