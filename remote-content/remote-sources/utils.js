@@ -68,6 +68,6 @@ sidebar_position: ${sidebarPosition}
   
   return {
     filename: newFilename,
-    content: frontmatter + sourceCallout + transformedContent
+    content: frontmatter + transformedContent + sourceCallout
   };
 } 

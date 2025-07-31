@@ -185,7 +185,7 @@ const config = {
             items: [
               {
                 label: "Overview",
-                to: "docs/architecture/architecture",
+                to: "docs/architecture",
               },
 /*              {
                 label: "FAQ",

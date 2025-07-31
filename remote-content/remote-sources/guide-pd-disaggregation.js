@@ -6,6 +6,7 @@
  */
 
 import { createContentWithSource } from './utils.js';
+import { getRepoTransform } from './repo-transforms.js';
 
 export default [
   'docusaurus-plugin-remote-content',
@@ -33,18 +34,16 @@ export default [
           repoUrl: 'https://github.com/llm-d-incubation/llm-d-infra',
           branch: 'main',
           content,
-          // Transform content to work in docusaurus context
-          contentTransform: (content) => content
-            // Fix relative links
-            .replace(/\]\(\.\.\//g, '](../../')
-            .replace(/\]\(\.\//g, '](')
-            // Fix MDX compilation issues with angle bracket URLs
-            .replace(/<(http[s]?:\/\/[^>]+)>/g, '`$1`')
-            // Fix file references to point to repository
-            .replace(/\]\(([^)]+\.(yaml|sh|json))\)/g, '](https://github.com/llm-d-incubation/llm-d-infra/blob/main/quickstart/examples/pd-disaggregation/$1)')
-            .replace(/\]\(\.\.\/\.\.\/\.\.\/([^)]+\.sh)\)/g, '](https://github.com/llm-d-incubation/llm-d-infra/blob/main/quickstart/$1)')
-            // Convert relative markdown links to repository links
-            .replace(/\]\(([^)]+\.md)\)/g, '](https://github.com/llm-d-incubation/llm-d-infra/blob/main/quickstart/examples/pd-disaggregation/$1)')
+          // Transform content using repository-specific logic
+          contentTransform: (content) => {
+            const transform = getRepoTransform('llm-d-incubation', 'llm-d-infra');
+            return transform(content, {
+              repoUrl: 'https://github.com/llm-d-incubation/llm-d-infra',
+              branch: 'main',
+              org: 'llm-d-incubation',
+              name: 'llm-d-infra'
+            });
+          }
         });
       }
       return undefined;

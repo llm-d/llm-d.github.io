@@ -6,11 +6,43 @@ The site may be previewed at [llm-d.github.io](https://llm-d.github.io/) before 
 
 If you spot any errors or omissions in the site, please open an issue at [github.com/llm-d/llm-d.github.io](https://github.com/llm-d/llm-d.github.io/issues)
 
+## 📋 Documentation Types
+
+This repository contains two types of documentation:
+
+1. **Local Documentation** - Written directly in this repository (blog posts, etc.)
+2. **Remote Synced Content** - Automatically synced from other llm-d repositories (architecture docs, guides, component documentation, community docs.)
+
+Most technical documentation is automatically synced from the main [llm-d/llm-d](https://github.com/llm-d/llm-d) repository to ensure accuracy and consistency.
+
+## 🔄 Remote Content System
+
+Many docs pages are automatically synced from source repositories using our remote content system:
+
+- **Architecture Documentation** - Synced from component repositories
+- **User Guides** - Synced from the main llm-d repository  
+- **Component Documentation** - Automatically generated from individual component repos
+- **Contributing Guidelines** - Synced from the main repository
+
+Files with remote content show a "Content Source" banner at the bottom with links to edit the original source.
+
+### Making Changes to Synced Content
+
+**For synced content (files with "Content Source" banners):**
+- Click the "edit the source file" link in the Content Source banner
+- Make changes in the source repository
+- Changes will automatically sync to this website during the next build
+
+**For local website content:**
+- Follow the standard pull request process below
+
 ## BEFORE DOING A PULL REQUEST
 
-1. Make sure you are familiar with how docusaurus builds menus and links to images
-2. Make sure there are no relative links to any of the llm-d component repositories in your markdown. 
-3. Fork the website repo and deploy a preview version of your proposed change for reviewers to check. This will make obvious any missed links from step 2
+1. **Check if content is synced** - Look for "Content Source" banners at the bottom of pages
+2. **For synced content** - Edit the source repository, not this one
+3. **For local content** - Follow the process below
+4. Make sure you are familiar with how docusaurus builds menus and links to images
+5. Fork the website repo and deploy a preview version of your proposed change for reviewers to check
     
 
 ### Installation

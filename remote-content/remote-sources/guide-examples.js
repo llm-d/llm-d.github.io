@@ -6,6 +6,7 @@
  */
 
 import { createContentWithSource } from './utils.js';
+import { getRepoTransform } from './repo-transforms.js';
 
 export default [
   'docusaurus-plugin-remote-content',
@@ -33,26 +34,26 @@ export default [
           repoUrl: 'https://github.com/llm-d-incubation/llm-d-infra',
           branch: 'main',
           content,
-          // Transform content to work in docusaurus context
-          contentTransform: (content) => content
+          // Transform content using repository-specific logic
+          contentTransform: (content) => {
             // Add what is llm-d section before the main content
-            .replace(/^# /, `**What is llm-d?**
+            const withIntro = content.replace(/^# /, `**What is llm-d?**
 
 llm-d is an open source project providing distributed inferencing for GenAI runtimes on any Kubernetes cluster. Its highly performant, scalable architecture helps reduce costs through a spectrum of hardware efficiency improvements. The project prioritizes ease of deployment+use as well as SRE needs + day 2 operations associated with running large GPU clusters.
 
-[For more information check out the Architecture Documentation](/docs/architecture/00_architecture.mdx)
+[For more information check out the Architecture Documentation](/docs/architecture)
 
-# `)
-            // Fix relative links to work within the guide section
-            .replace(/README\.md/g, '')
-            // Fix specific broken links
-            .replace(/\]\(TBD\)/g, '](https://github.com/llm-d-incubation/llm-d-infra/blob/main/quickstart/examples/)')
-            .replace(/\]\(\.\/(sim)\)/g, '](https://github.com/llm-d-incubation/llm-d-infra/blob/main/quickstart/examples/sim/README.md)')
-            // Fix Installation links to work within Docusaurus guide structure
-            // Use absolute paths within the docs structure to ensure correct resolution
-            .replace(/\]\(\.\/(inference-scheduling)\)/g, '](/docs/guide/Installation/$1)')
-            .replace(/\]\(\.\/(pd-disaggregation)\)/g, '](/docs/guide/Installation/$1)')
-            .replace(/\]\(\.\/(wide-ep-lws)\)/g, '](/docs/guide/Installation/$1)')
+# `);
+            
+            // Apply repository-specific transforms (all links go to GitHub)
+            const transform = getRepoTransform('llm-d-incubation', 'llm-d-infra');
+            return transform(withIntro, {
+              repoUrl: 'https://github.com/llm-d-incubation/llm-d-infra',
+              branch: 'main',
+              org: 'llm-d-incubation',
+              name: 'llm-d-infra'
+            });
+          }
         });
       }
       return undefined;

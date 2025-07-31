@@ -6,6 +6,10 @@ import codeOfConductSource from './remote-sources/code-of-conduct.js';
 import securitySource from './remote-sources/security.js';
 import sigsSource from './remote-sources/sigs.js';
 
+// Import architecture remote content sources
+import architectureMainSource from './remote-sources/architecture-main.js';
+import componentSources from './remote-sources/components-generator.js';
+
 // Import guide remote content sources
 import guideExamplesSource from './remote-sources/guide-examples.js';
 import guidePrerequisitesSource from './remote-sources/guide-prerequisites.js';
@@ -36,6 +40,10 @@ const remoteContentPlugins = [
   codeOfConductSource,
   securitySource,
   sigsSource,
+  
+  // Architecture remote content sources
+  architectureMainSource,
+  ...componentSources,  // Spread all dynamically generated component sources
   
   // Guide remote content sources
   guideExamplesSource,

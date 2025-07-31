@@ -6,6 +6,7 @@
  */
 
 import { createContentWithSource } from './utils.js';
+import { getRepoTransform } from './repo-transforms.js';
 
 export default [
   'docusaurus-plugin-remote-content',
@@ -33,39 +34,16 @@ export default [
           repoUrl: 'https://github.com/llm-d-incubation/llm-d-infra',
           branch: 'main',
           content,
-          // Transform content to work in docusaurus context
-          contentTransform: (content) => content
-            // Fix MDX compilation issues with angle bracket URLs
-            .replace(/<(http[s]?:\/\/[^>]+)>/g, '`$1`')
-            
-            // CRITICAL: Fix istio-workaround.md FIRST before any other URL transformations
-            .replace(/\]\([^)]*istio-workaround\.md\)/g, '](https://github.com/llm-d-incubation/llm-d-infra/blob/main/quickstart/istio-workaround.md)')
-            
-            // Fix specific problematic links first (before general patterns)
-            .replace(/\[install\-deps\.sh\]\(\.\.\/\.\.\/install\-deps\.sh\)/g, '[install-deps.sh](https://github.com/llm-d-incubation/llm-d-infra/blob/main/quickstart/install-deps.sh)')
-            .replace(/\[gke\.md\]\(gke\.md\)/g, '[gke.md](https://github.com/llm-d-incubation/llm-d-infra/blob/main/quickstart/examples/inference-scheduling/gke.md)')
-            .replace(/\[gke\.md\]\(\.\/gke\.md\)/g, '[gke.md](https://github.com/llm-d-incubation/llm-d-infra/blob/main/quickstart/examples/inference-scheduling/gke.md)')
-            .replace(/\[scheduling configuration\]\(https\:\/\/github\.com\/llm\-d\/llm\-d\-inference\-scheduler\/blob\/main\/docs\/architecture\.md\)/g, '[scheduling configuration](https://github.com/llm-d/llm-d-inference-scheduler/blob/main/docs/architecture.md)')
-            
-            // Fix broken external references
-            .replace(/\]\(\.\.\/\.\.\/precise-prefix-cache-aware\)/g, '](https://github.com/llm-d-incubation/llm-d-infra/tree/main/quickstart/examples/precise-prefix-cache-aware)')
-            .replace(/\]\(precise-prefix-cache-aware\)/g, '](https://github.com/llm-d-incubation/llm-d-infra/tree/main/quickstart/examples/precise-prefix-cache-aware)')
-            .replace(/\]\(\.\.\/precise-prefix-cache-aware\)/g, '](https://github.com/llm-d-incubation/llm-d-infra/tree/main/quickstart/examples/precise-prefix-cache-aware)')
-            
-            // Fix relative path resolution for install-deps.sh (catch any remaining patterns)
-            .replace(/\]\(\.\.\/\.\.\/\.\.\/([^)]+\.sh)\)/g, '](https://github.com/llm-d-incubation/llm-d-infra/blob/main/quickstart/$1)')
-            // Fix any remaining ../../../*.md patterns before general md processing
-            .replace(/\]\(\.\.\/\.\.\/\.\.\/([^)]+\.md)\)/g, '](https://github.com/llm-d-incubation/llm-d-infra/blob/main/quickstart/$1)')
-            
-            // Fix relative links (but be more careful)
-            .replace(/\]\(\.\.\//g, '](../../')
-            .replace(/\]\(\.\//g, '](')
-            
-            // Fix file references to point to repository (only if not already a full URL)
-            .replace(/\]\((?!https?:\/\/)([^)]+\.(yaml|sh))\)/g, '](https://github.com/llm-d-incubation/llm-d-infra/blob/main/quickstart/examples/inference-scheduling/$1)')
-            
-            // Convert other relative markdown links to repository links (only if not already a full URL)
-            .replace(/\]\((?!https?:\/\/)([^)]+\.md)\)/g, '](https://github.com/llm-d-incubation/llm-d-infra/blob/main/quickstart/examples/inference-scheduling/$1)')
+          // Transform content using repository-specific logic
+          contentTransform: (content) => {
+            const transform = getRepoTransform('llm-d-incubation', 'llm-d-infra');
+            return transform(content, {
+              repoUrl: 'https://github.com/llm-d-incubation/llm-d-infra',
+              branch: 'main',
+              org: 'llm-d-incubation',
+              name: 'llm-d-infra'
+            });
+          }
         });
       }
       return undefined;

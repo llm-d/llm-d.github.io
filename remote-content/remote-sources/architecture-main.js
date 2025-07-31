@@ -1,8 +1,8 @@
 /**
- * Special Interest Groups (SIGs) Remote Content
+ * Main Architecture README Remote Content
  * 
- * Downloads the SIGS.md file from the llm-d repository
- * and transforms it into docs/community/sigs.md
+ * Downloads the README.md file from the main llm-d repository
+ * and transforms it into docs/architecture/00_architecture.mdx
  */
 
 import { createContentWithSource } from './utils.js';
@@ -12,10 +12,10 @@ export default [
   'docusaurus-plugin-remote-content',
   {
     // Basic configuration
-    name: 'sigs-guide',
+    name: 'architecture-main',
     sourceBaseUrl: 'https://raw.githubusercontent.com/llm-d/llm-d/dev/',
-    outDir: 'docs/community',
-    documents: ['SIGS.md'],
+    outDir: 'docs/architecture',
+    documents: ['README.md'],
     
     // Plugin behavior
     noRuntimeDownloads: false,  // Download automatically when building
@@ -23,19 +23,20 @@ export default [
     
     // Transform the content for this specific document
     modifyContent(filename, content) {
-      if (filename === 'SIGS.md') {
+      if (filename === 'README.md') {
         return createContentWithSource({
-          title: 'Special Interest Groups (SIGs)',
-          description: 'Information about Special Interest Groups in the llm-d project',
-          sidebarLabel: 'Special Interest Groups (SIGs)',
-          sidebarPosition: 2,
-          filename: 'SIGS.md',
-          newFilename: 'sigs.md',
+          title: 'llm-d Architecture',
+          description: 'Overview of llm-d distributed inference architecture and components',
+          sidebarLabel: 'llm-d Architecture',
+          sidebarPosition: 0,
+          filename: 'README.md',
+          newFilename: 'architecture.mdx',
           repoUrl: 'https://github.com/llm-d/llm-d',
           branch: 'dev',
           content,
-          // Transform content using repository-specific logic
+          // Transform content to work in docusaurus context
           contentTransform: (content) => {
+            // Get the appropriate repository transform
             const transform = getRepoTransform('llm-d', 'llm-d');
             return transform(content, {
               repoUrl: 'https://github.com/llm-d/llm-d',
