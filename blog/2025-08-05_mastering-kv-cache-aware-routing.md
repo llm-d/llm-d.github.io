@@ -13,7 +13,11 @@ tags: [llm-d, blog, community]
 
 In the era of large-scale AI inference, ensuring efficiency across distributed environments is no longer optional—it's a necessity. As workloads grow, so does the need for smarter scheduling and memory reuse strategies. Enter **llm-d**, a Kubernetes-native framework for scalable, intelligent LLM inference. One of its most powerful capabilities is **KV-cache-aware routing**, which reduces latency and improves throughput by directing requests to pods that already hold relevant context in GPU memory.
 
-In this blog post, we’ll cover:
+:::info Version Note
+This blog post is written for **llm-d v0.2.0**. For detailed release information and installation instructions, see the [v0.2.0 release notes](https://github.com/llm-d/llm-d/releases/tag/v0.2.0).
+:::
+
+In this blog post, we'll cover:
 
 - What KV-cache-aware routing is and why it matters  
 - How llm-d implements this feature with EPPs, Redis, and NIXL  
