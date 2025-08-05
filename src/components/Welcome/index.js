@@ -37,6 +37,9 @@ export default function Welcome() {
             for most models across a diverse and comprehensive set of hardware accelerators.
           </p>
 
+				  <script data-goatcounter="https://llm-d-tracker.asgharlabs.io/count"
+		        async src="//llm-d-tracker.asgharlabs.io/count.js"></script>
+
         </div>
 
       </div>

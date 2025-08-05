@@ -20,3 +20,5 @@ You can also find us on
 - [**LinkedIn:** https://linkedin.com/company/llm-d ](https://linkedin.com/company/llm-d)
 - [**X:** https://x.com/\_llm_d\_](https://x.com/_llm_d_)
 
+<script data-goatcounter="https://llm-d-tracker.asgharlabs.io/count"
+        async src="//llm-d-tracker.asgharlabs.io/count.js"></script>

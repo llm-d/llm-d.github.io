@@ -75,3 +75,6 @@ There are many ways to contribute to llm-d:
 6. Check out our [Contributor Guidelines](https://llm-d.ai/docs/community/contribute) to start contributing code
 
 We're looking forward to hearing from you and working together to make llm-d even better!
+
+<script data-goatcounter="https://llm-d-tracker.asgharlabs.io/count"
+        async src="//llm-d-tracker.asgharlabs.io/count.js"></script>
