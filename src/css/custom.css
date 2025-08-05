@@ -475,3 +475,48 @@ img.llm-d-logo {
 .footer--dark {
   --ifm-footer-background-color: #262626 !important;
 }
+
+/* Improved YAML syntax highlighting site-wide */
+/* Fix YAML code blocks to avoid red/green diff-like appearance */
+
+/* Light mode YAML colors */
+.language-yaml .prism-code .token.string {
+  color: #032f62 !important; /* Dark blue instead of red */
+}
+
+.language-yaml .prism-code .token.comment {
+  color: #6a737d !important; /* Muted gray instead of bright green */
+}
+
+.language-yaml .prism-code .token.key.atrule {
+  color: #005cc5 !important; /* Professional blue for YAML keys */
+}
+
+.language-yaml .prism-code .token.number {
+  color: #005cc5 !important; /* Consistent blue for numbers */
+}
+
+.language-yaml .prism-code .token.boolean {
+  color: #005cc5 !important; /* Consistent blue for booleans */
+}
+
+/* Dark mode YAML colors */
+[data-theme="dark"] .language-yaml .prism-code .token.string {
+  color: #9ecbff !important; /* Light blue instead of red */
+}
+
+[data-theme="dark"] .language-yaml .prism-code .token.comment {
+  color: #8b949e !important; /* Muted gray instead of bright green */
+}
+
+[data-theme="dark"] .language-yaml .prism-code .token.key.atrule {
+  color: #79c0ff !important; /* Light blue for keys */
+}
+
+[data-theme="dark"] .language-yaml .prism-code .token.number {
+  color: #79c0ff !important; /* Consistent light blue */
+}
+
+[data-theme="dark"] .language-yaml .prism-code .token.boolean {
+  color: #79c0ff !important; /* Consistent light blue */
+}

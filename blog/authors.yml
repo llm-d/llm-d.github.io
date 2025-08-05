@@ -31,3 +31,9 @@ petecheslock:
   url: https://github.com/petecheslock
   image_url: https://avatars.githubusercontent.com/u/511733?v=4
   email: pete.cheslock@redhat.com
+
+cnuland:
+  name: Christopher Nuland
+  title: Principal Technical Marketing Manager for AI, Red Hat
+  url: https://github.com/cnuland
+  image_url: /img/blogs/cnuland.jpeg
