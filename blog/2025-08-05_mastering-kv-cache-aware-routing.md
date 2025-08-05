@@ -7,6 +7,7 @@ authors:
   - cnuland
 
 tags: [llm-d, blog, community]
+draft: true
 ---
 
 ## Introduction
@@ -19,11 +20,11 @@ This blog post is written for **llm-d v0.2.0**. For detailed release information
 
 In this blog post, we'll cover:
 
-- What KV-cache-aware routing is and why it matters  
-- How llm-d implements this feature with EPPs, Redis, and NIXL  
-- The critical Kubernetes YAML assets that make it work  
-- A test case showing our latest 87.4% cache hit rate  
-- Where to go to learn more and get started  
+- What KV-cache-aware routing is and why it matters
+- How llm-d implements this feature with EPPs, Redis, and NIXL
+- The critical Kubernetes YAML assets that make it work
+- A test case showing our latest 87.4% cache hit rate
+- Where to go to learn more and get started
 
 <!-- truncate -->
 
@@ -36,10 +37,10 @@ In this blog post, we'll cover:
 
 **llm-d** is an open source project built by Red Hat and the AI infrastructure community to manage large-scale LLM inference using cloud-native patterns. llm-d introduces:
 
-- Disaggregated **prefill and decode** workloads  
-- **Multi-model** and multi-tenant isolation  
-- **Intelligent routing** via an External Processing Pod (EPP)  
-- And crucially, **KV-cache-aware routing** for memory-efficient, low-latency inference  
+- Disaggregated **prefill and decode** workloads
+- **Multi-model** and multi-tenant isolation
+- **Intelligent routing** via an External Processing Pod (EPP)
+- And crucially, **KV-cache-aware routing** for memory-efficient, low-latency inference
 
 ---
 
@@ -47,10 +48,10 @@ In this blog post, we'll cover:
 
 In traditional deployments, even if KV-caches are enabled inside the model server (like vLLM), the **gateway is unaware of cache state**. That leads to:
 
-- Round-robin routing or explicit sticky sessions  
-- Frequent **cache misses**  
-- Repeated compute for common prefixes  
-- Unnecessary GPU memory use  
+- Round-robin routing or explicit sticky sessions
+- Frequent **cache misses**
+- Repeated compute for common prefixes
+- Unnecessary GPU memory use
 
 This breaks down under high concurrency or workloads with shared prompts (like RAG, chat history, or templated inputs).
 
@@ -60,10 +61,10 @@ This breaks down under high concurrency or workloads with shared prompts (like R
 
 llm-d enables **state-aware request scheduling** by introducing a few key components:
 
-- An **EPP (External Processing Pod)** that acts as an intelligent router  
-- A **Redis-based cache indexer** that tracks what each pod has cached  
-- A **NIXL side-channel** between pods to transfer KV data when needed  
-- **Configurable routing scorers** that balance reuse and load  
+- An **EPP (External Processing Pod)** that acts as an intelligent router
+- A **Redis-based cache indexer** that tracks what each pod has cached
+- A **NIXL side-channel** between pods to transfer KV data when needed
+- **Configurable routing scorers** that balance reuse and load
 
 The result is a scheduling layer that favors pods with warm cache states—cutting inference times and GPU load.
 
@@ -76,10 +77,10 @@ The result is a scheduling layer that favors pods with warm cache states—cutti
 
 To follow this guide, you should have:
 
-- OpenShift or Kubernetes with GPU-enabled nodes  
-- The [llm-d Operator](https://llm-d.ai/docs/guide/Installation/prerequisites) installed  
+- OpenShift or Kubernetes with GPU-enabled nodes
+- The [llm-d Operator](https://llm-d.ai/docs/guide/Installation/prerequisites) installed
 - A Hugging Face token (for downloading LLaMA or other models)
-- [Project Code & Performace Test on GitHub](https://github.com/cnuland/hello-chris-llm-d)  
+- [Project Code & Performace Test on GitHub](https://github.com/cnuland/hello-chris-llm-d)
 ---
 
 ## 🔧 Core Configurations
@@ -209,7 +210,7 @@ data:
       # (2.2) CRITICAL: Session-aware scoring for 99.91% stickiness
       - name: ENABLE_SESSION_AWARE_SCORER
         value: "true"
-      
+
       # (2.3) Optimized scoring weights for session stickiness
       - name: KVCACHE_AWARE_SCORER_WEIGHT
         value: "10"
@@ -219,7 +220,7 @@ data:
         value: "5"
       - name: SESSION_AWARE_SCORER_WEIGHT
         value: "20"  # Highest weight for session stickiness
-      
+
       # (2.4) Session scoring configuration
       - name: SESSION_SCORING_ALGORITHM
         value: "sticky_hash"
@@ -227,19 +228,19 @@ data:
         value: "session-id,x-session-id,authorization"
       - name: SESSION_STICKY_DURATION
         value: "3600"
-      
+
       # (2.5) Enhanced Redis indexing with faster updates
       - name: KVCACHE_INDEXER_REDIS_ADDR
         value: llm-d-operator-redis-master.llm-d.svc.cluster.local:8100
       - name: KVCACHE_INDEX_UPDATE_INTERVAL
         value: "500ms"
-      
+
       # (2.6) Prefill/Decode disaggregation with cache-aware routing
       - name: PD_ENABLED
         value: "true"
       - name: PD_CACHE_AWARE_ROUTING
         value: "true"
-      
+
       # (2.7) Enhanced prefill scoring configuration
       - name: PREFILL_ENABLE_KVCACHE_AWARE_SCORER
         value: "true"
@@ -360,9 +361,9 @@ To validate that KV-cache-aware routing was functioning correctly, we designed a
 
 **Monitored Signals:**
 
-- Redis telemetry for prefix index hits  
-- vLLM logs for cache use  
-- Tekton metrics for latency  
+- Redis telemetry for prefix index hits
+- vLLM logs for cache use
+- Tekton metrics for latency
 - Grafana dashboard for visibility
 
 ### 🔍 Latest Validation Results
@@ -436,7 +437,7 @@ The bottom line: KV-cache-aware routing isn't just technically impressive—it's
 ---
 
 ## 📚 Learn More
-- [Project Code & Performance Test on GitHub](https://github.com/cnuland/hello-chris-llm-d)  
-- [llm-d GitHub](https://github.com/llm-d/llm-d)  
-- [llm-d Operator Quickstart](https://llm-d.ai/docs/guide/Installation/prerequisites)  
+- [Project Code & Performance Test on GitHub](https://github.com/cnuland/hello-chris-llm-d)
+- [llm-d GitHub](https://github.com/llm-d/llm-d)
+- [llm-d Operator Quickstart](https://llm-d.ai/docs/guide/Installation/prerequisites)
 - [vLLM Documentation](https://docs.vllm.ai)
