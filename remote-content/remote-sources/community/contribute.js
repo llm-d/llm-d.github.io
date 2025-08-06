@@ -32,7 +32,7 @@ export default [
           title: 'Contributing to llm-d',
           description: 'Guidelines for contributing to the llm-d project',
           sidebarLabel: 'Contributing',
-          sidebarPosition: 1,
+          sidebarPosition: 2,
           filename: 'CONTRIBUTING.md',
           newFilename: 'contribute.md',
           repoUrl,

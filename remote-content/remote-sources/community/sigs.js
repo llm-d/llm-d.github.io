@@ -33,7 +33,7 @@ export default [
           title: 'Special Interest Groups (SIGs)',
           description: 'Information about Special Interest Groups in the llm-d project',
           sidebarLabel: 'Special Interest Groups (SIGs)',
-          sidebarPosition: 2,
+          sidebarPosition: 4,
           filename: 'SIGS.md',
           newFilename: 'sigs.md',
           repoUrl,

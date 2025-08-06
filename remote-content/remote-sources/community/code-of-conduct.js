@@ -32,7 +32,7 @@ export default [
           title: 'Code of Conduct',
           description: 'Code of Conduct and Community Guidelines for llm-d',
           sidebarLabel: 'Code of Conduct',
-          sidebarPosition: 2,
+          sidebarPosition: 3,
           filename: 'CODE_OF_CONDUCT.md',
           newFilename: 'code-of-conduct.md',
           repoUrl,

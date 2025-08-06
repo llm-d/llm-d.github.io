@@ -32,7 +32,7 @@ export default [
           title: 'Security Policy',
           description: 'Security vulnerability reporting and disclosure policy for llm-d',
           sidebarLabel: 'Security Policy',
-          sidebarPosition: 3,
+          sidebarPosition: 5,
           filename: 'SECURITY.md',
           newFilename: 'security.md',
           repoUrl,

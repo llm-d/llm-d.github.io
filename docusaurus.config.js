@@ -199,7 +199,7 @@ const config = {
             items: [
               {
                 label: "Contact us",
-                href: "/docs/community/contact_us",
+                href: "/docs/community",
               },
 
               { 
@@ -208,7 +208,7 @@ const config = {
               },
               {
                 label: "Code of Conduct",
-                href: "https://github.com/llm-d/llm-d/blob/dev/CODE_OF_CONDUCT.md",
+                href: "/docs/community/code-of-conduct",
               },
             ],
           },

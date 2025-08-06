@@ -24,7 +24,7 @@ export default function Welcome() {
             {/* Link to install page on the docs */}
             Installation
           </a>
-          <a className="static-button button-link" href="docs/community/contribute">
+          <a className="static-button button-link" href="docs/community">
             {/* Link to Community tab */}
             Community
           </a>
