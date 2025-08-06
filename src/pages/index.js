@@ -22,7 +22,6 @@ export default function Home() {
           display: 'flex', 
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: '#f8f9fa'
         }}>
           <div style={{ 
             width: '75%', 
