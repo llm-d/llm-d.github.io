@@ -1,0 +1,79 @@
+name: Link Verification on Pull Request
+
+on:
+  pull_request:
+    branches: [ main, master ]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  link-verification:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+          fetch-depth: 0
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build the application
+      run: npm run build
+      
+    - name: Setup Python for link verifier
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: Download and setup link verifier
+      run: |
+        curl -o requirements.txt https://raw.githubusercontent.com/jjasghar/link-verifier-llm-d.ai/9930050b977f00f78dbe8d361814f359115df492/requirements.txt
+        curl -o link_verifier.py https://raw.githubusercontent.com/jjasghar/link-verifier-llm-d.ai/9930050b977f00f78dbe8d361814f359115df492/link_verifier.py
+        pip install -r requirements.txt
+        
+    - name: Start the application in background
+      run: |
+        npm run serve &
+        echo $! > server.pid
+        
+    - name: Wait for application to be ready
+      run: |
+        echo "Waiting for application to start on port 3000..."
+        timeout=60
+        counter=0
+        
+        while [ $counter -lt $timeout ]; do
+          if curl -f http://localhost:3000 >/dev/null 2>&1; then
+            echo "✅ Application is ready!"
+            break
+          fi
+          
+          echo "⏳ Waiting... ($counter/$timeout seconds)"
+          sleep 1
+          counter=$((counter + 1))
+        done
+        
+        if [ $counter -eq $timeout ]; then
+          echo "❌ Application failed to start within $timeout seconds"
+          exit 1
+        fi
+        
+    - name: Run link verification
+      run: python link_verifier.py --url http://localhost:3000
+        
+    - name: Cleanup
+      if: always()
+      run: |
+        if [ -f server.pid ]; then
+          kill $(cat server.pid) 2>/dev/null || true
+          rm -f server.pid
+        fi
+        # Kill any remaining node processes
+        pkill -f "docusaurus start" || true
