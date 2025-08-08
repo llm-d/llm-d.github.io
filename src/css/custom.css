@@ -61,38 +61,53 @@ display: none !important;
   background-image: url("@site/static/img/new-social/github-mark-white.png");
 }
 
-.github,
-.linkedin,
-.slack,
-.reddit,
-.x,
-.inviter {
-  width: 28px;
-  height: 28px;
-  margin: 10px 0;
+/* Footer social links */
+.footer-socials {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.25s, transform 0.25s;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.github {
-  margin: 0 10px;
+.footer-socials-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.footer-socials-cta {
+  margin-top: 4px;
+}
+
+.footer-socials a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.footer-socials img {
+  width: 28px;
+  height: 28px;
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.footer-socials img:hover {
+  transform: scale(1.08);
+}
+
+/* Navbar GitHub icon */
+.navbar .github {
+  width: 28px;
+  height: 28px;
+  display: inline-block;
   background-size: cover;
   background-position: center;
 }
 
-.github-footer {
-  margin: 0;
-}
-
-.github:hover,
-.github-footer:hover,
-.linkedin:hover,
-.slack:hover,
-.reddit:hover,
-.x:hover {
-  transform: scale(1.1);
+.navbar .github:hover {
+  transform: scale(1.05);
 }
 
 .header {

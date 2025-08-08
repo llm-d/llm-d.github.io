@@ -7,13 +7,6 @@
 import { themes as prismThemes } from "prism-react-renderer";
 import remoteContentPlugins from "./remote-content/remote-content.js";
 
-//import GHiconUrl from "./docs/assets/github-mark-white.svg";
-//import LIiconURL from "./docs/assets/linkedin-mark-white.svg";
-//import SlackiconURL from "./docs/assets/slack-mark-white.png";
-//import RedditiconURL from "./docs/assets/reddit-mark-white-png";
-//import XiconURL from "./docs/assets/x-mark-white.png";
-
-
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
@@ -95,6 +88,11 @@ const config = {
       }),
     ],
   ],
+
+  // Client modules - run on every page
+  clientModules: [
+    require.resolve('./src/clientModules/analytics.js'),
+  ],
   
   // Plugins configuration
   plugins: [
@@ -160,9 +158,9 @@ const config = {
           },
           { to: "/blog", label: "News", position: "left" },
           {
-            href: "https://github.com/llm-d/",
-            position: "right",
-            className: "github",
+            type: 'html',
+            position: 'right',
+            value: '<iframe src="https://ghbtns.com/github-btn.html?user=llm-d&repo=llm-d&type=star&count=true&size=large" frameborder="0" scrolling="0" width="170" height="30" title="GitHub Star" style="vertical-align: middle;"></iframe>',
           },
         ],
       },
@@ -187,11 +185,6 @@ const config = {
                 label: "Overview",
                 to: "docs/architecture",
               },
-/*              {
-                label: "FAQ",
-                to: "docs/architecture/faq.md",
-              },
-*/
               ],
           },
           {
@@ -220,13 +213,8 @@ const config = {
                 to: "/blog",
               },
               {
-                html: `
-                <a href="https://github.com/llm-d/" target="_blank" rel="noreferrer noopener" aria-label="GitHub Icon">
-                  <img class="github-footer" 
-                  src="https://raw.githubusercontent.com/KPRoche/iconography/refs/heads/main/assets/github-mark-white.png" 
-                  alt="GitHub Icon" width="30px" height="auto" margin="5px"/>
-                </a>
-              `,
+                label: "Privacy Policy",
+                href: "https://www.redhat.com/en/about/privacy-policy",
               },
             ],
           },
@@ -235,66 +223,36 @@ const config = {
             items: [
               {
                 html: `
-                <a href="https://linkedin.com/company/llm-d" target="_blank" rel="noreferrer noopener" aria-label="LinkedIn Icon">
-                  <img 
-                    class="linkedin" 
-                    src="https://raw.githubusercontent.com/KPRoche/iconography/refs/heads/main/assets/linkedin-mark-white.png" 
-                    alt="LinkedIn Icon" 
-                    width="30px" 
-                    height="auto" 
-                    margin="5px"/>
-
-                </a>
-              `,
-              },
-              
-              {
-                html: `
-                <a href="https://llm-d.slack.com" target="_blank" rel="noreferrer noopener" aria-label="Slack Icon">
-                  <img class="slack" 
-                  src="https://raw.githubusercontent.com/KPRoche/iconography/refs/heads/main/assets/slack-mark-white.png" 
-                  alt="Slack Icon" width="30px" height="auto" margin="5px"/>
-                </a>
-              `,
-              },
-              {
-                html: `
-                <a href="https://inviter.co/llm-d-slack" target="_blank" rel="noreferrer noopener" aria-label="Inviter Icon">
-                  <span class="button-link">Join our Slack</span>    
-                  <img class="inviter"
-                    src="https://raw.githubusercontent.com/KPRoche/iconography/refs/heads/main/assets/inviter-logo.png" 
-                    alt="Slack Inviter link" width="30px" height="auto" margin="5px"/>
-                </a>
-              `,
-              },
-              
-              {
-                html: `
-                <a href="https://www.reddit.com/r/llm_d/" target="_blank" rel="noreferrer noopener" aria-label="Reddit Icon">
-                  <img class="reddit" 
-                    src="https://raw.githubusercontent.com/KPRoche/iconography/refs/heads/main/assets/reddit-mark-white.png" 
-                    alt="Reddit Icon" 
-                    width="30px" 
-                    height="auto" 
-                    margin="5px"/>
-                </a>
-              `,
-              },
-              {
-                html: `
-                <a href="https://x.com/_llm_d_" target="_blank" rel="noreferrer noopener" aria-label="X Icon">
-                  <img class="x" 
-                  src="https://raw.githubusercontent.com/KPRoche/iconography/refs/heads/main/assets/x-mark-white.png" 
-                  alt="X Icon" 
-                  width="30px" 
-                  height="auto" margin="5px"/>
-                </a>
+                <div class="footer-socials" role="navigation" aria-label="Social links">
+                  <div class="footer-socials-row">
+                    <a href="https://github.com/llm-d/" target="_blank" rel="noreferrer noopener" aria-label="GitHub">
+                      <img src="/img/new-social/github-mark-white.png" alt="GitHub" />
+                    </a>
+                    <a href="https://linkedin.com/company/llm-d" target="_blank" rel="noreferrer noopener" aria-label="LinkedIn">
+                      <img src="/img/new-social/linkedin-mark-white.png" alt="LinkedIn" />
+                    </a>
+                    <a href="https://llm-d.slack.com" target="_blank" rel="noreferrer noopener" aria-label="Slack">
+                      <img src="/img/new-social/slack-mark-white.png" alt="Slack" />
+                    </a>
+                    <a href="https://www.reddit.com/r/llm_d/" target="_blank" rel="noreferrer noopener" aria-label="Reddit">
+                      <img src="/img/new-social/reddit-mark-white.png" alt="Reddit" />
+                    </a>
+                    <a href="https://x.com/_llm_d_" target="_blank" rel="noreferrer noopener" aria-label="X / Twitter">
+                      <img src="/img/new-social/x-mark-white.png" alt="X / Twitter" />
+                    </a>
+                  </div>
+                  <div class="footer-socials-cta">
+                    <a href="https://inviter.co/llm-d-slack" target="_blank" rel="noreferrer noopener" aria-label="Join our Slack">
+                      <span class="button-link">Join our Slack</span>
+                      <img src="/img/new-social/inviter-logo.png" alt="Slack Invite" />
+                    </a>
+                  </div>
+                </div>
               `,
               },
             ],
           },
         ],
-        // copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
       },
       prism: {
         theme: prismThemes.vsLight,
@@ -306,24 +264,4 @@ const config = {
 
 export default config;
 
-// {
-//             title: "Social",
-//             items: [
-//               {
-//                 className: "linkedin",
-//                 href: "https://linkedin.com/company/llm-d",
-//               },
-//               {
-//                 className: "slack",
-//                 href: "https://llm-d.slack.com",
-//               },
-//               {
-//                 className: "reddit",
-//                 href: "https://www.reddit.com/r/llm_d/",
-//               },
-//               {
-//                 className: "x",
-//                 href: "https://x.com/_llm_d_",
-//               },
-//             ],
-//           },
+
