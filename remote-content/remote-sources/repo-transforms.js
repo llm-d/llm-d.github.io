@@ -29,6 +29,9 @@ function applyBasicMdxFixes(content) {
       
       return `:::${docusaurusType}\n${cleanContent}\n:::\n`;
     })
+    // Fix HTML comments for MDX compatibility
+    .replace(/<!--\s*/g, '{/* ')
+    .replace(/\s*-->/g, ' */}')
     // Fix HTML tags for MDX compatibility
     .replace(/<br>/g, '<br />')
     .replace(/<br([^/>]*?)>/g, '<br$1 />')
@@ -58,6 +61,28 @@ function resolvePath(path, sourceDir, repoUrl, branch) {
   if (cleanPath.startsWith('/')) {
     const rootPath = cleanPath.substring(1); // Remove leading slash
     return `${repoUrl}/blob/${branch}/${rootPath}`;
+  }
+  
+  // Handle complex relative paths with ../ navigation
+  if (cleanPath.includes('../')) {
+    // Split the source directory and the relative path
+    const sourceParts = sourceDir ? sourceDir.split('/') : [];
+    const pathParts = cleanPath.split('/');
+    
+    // Process each part of the path
+    const resolvedParts = [...sourceParts];
+    for (const part of pathParts) {
+      if (part === '..') {
+        // Go up one directory
+        resolvedParts.pop();
+      } else if (part !== '.' && part !== '') {
+        // Add the directory/file part
+        resolvedParts.push(part);
+      }
+    }
+    
+    const resolvedPath = resolvedParts.join('/');
+    return `${repoUrl}/blob/${branch}/${resolvedPath}`;
   }
   
   // Handle regular relative paths - these are relative to the source file's directory
