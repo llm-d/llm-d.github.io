@@ -4,14 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- Primary redirect method - HTTP meta refresh (works in virtually all browsers) -->
-    <meta http-equiv="refresh" content="2; url=https://communityinviter.com/apps/llm-d/join-the-llm-d-community">
-    
-    <!-- Alternative refresh method for maximum compatibility -->
-    <meta http-equiv="location" content="https://communityinviter.com/apps/llm-d/join-the-llm-d-community">
-    
-    <!-- Canonical URL for SEO and indicating the destination -->
-    <link rel="canonical" href="https://communityinviter.com/apps/llm-d/join-the-llm-d-community">
+    <!-- Centralized URL configuration -->
+    <script>
+        // Define the Slack invite URL in ONE place for easy updates
+        var SLACK_INVITE_URL = 'https://inviter.co/llm-d-slack';
+        
+        // Immediately write critical meta tags using the variable
+        // This works because document.write executes during HTML parsing
+        document.write('<meta http-equiv="refresh" content="2; url=' + SLACK_INVITE_URL + '">');
+        document.write('<meta http-equiv="location" content="' + SLACK_INVITE_URL + '">');
+        document.write('<link rel="canonical" href="' + SLACK_INVITE_URL + '">');
+        document.write('<meta property="og:url" content="' + SLACK_INVITE_URL + '">');
+        
+        // Store in window object for later use
+        window.SLACK_INVITE_URL = SLACK_INVITE_URL;
+        
+        // Update user-facing elements that can be dynamically populated
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update fallback link
+            const fallbackLink = document.getElementById('fallback-link');
+            if (fallbackLink) {
+                fallbackLink.setAttribute('href', window.SLACK_INVITE_URL);
+            }
+            
+            // Update manual URL text
+            const manualUrl = document.getElementById('manual-url');
+            if (manualUrl) {
+                manualUrl.textContent = window.SLACK_INVITE_URL;
+            }
+        });
+    </script>
     
     <!-- Page title and meta information -->
     <title>Redirecting to llm-d Slack Community</title>
@@ -21,7 +43,6 @@
     <!-- Open Graph tags for social sharing -->
     <meta property="og:title" content="Join llm-d Slack Community">
     <meta property="og:description" content="Join the llm-d community on Slack">
-    <meta property="og:url" content="https://communityinviter.com/apps/llm-d/join-the-llm-d-community">
     <meta property="og:type" content="website">
     
     <!-- Twitter Card tags -->
@@ -114,7 +135,7 @@
         
         <!-- Primary fallback link for users who disable auto-redirects -->
         <p>
-            <a href="https://communityinviter.com/apps/llm-d/join-the-llm-d-community" class="redirect-link">
+            <a href="#" id="fallback-link" class="redirect-link">
                 Click here if you are not redirected automatically
             </a>
         </p>
@@ -122,8 +143,8 @@
         <div class="manual-instructions">
             <p><strong>If the redirect doesn't work:</strong></p>
             <p>Please copy and paste this URL into your browser:</p>
-            <p style="word-break: break-all; font-family: monospace; background: #f8f9fa; padding: 10px; border-radius: 4px;">
-                https://communityinviter.com/apps/llm-d/join-the-llm-d-community
+            <p id="manual-url" style="word-break: break-all; font-family: monospace; background: #f8f9fa; padding: 10px; border-radius: 4px;">
+                <!-- URL will be populated by JavaScript -->
             </p>
         </div>
     </div>
@@ -145,21 +166,22 @@
                     clearInterval(countdown);
                     // JavaScript redirect as final fallback
                     setTimeout(function() {
-                        window.location.replace("https://communityinviter.com/apps/llm-d/join-the-llm-d-community");
+                        window.location.replace(window.SLACK_INVITE_URL);
                     }, 100);
                 }
             }, 1000);
         } else {
             // Fallback if elements not found - immediate redirect
             setTimeout(function() {
-                window.location.replace("https://communityinviter.com/apps/llm-d/join-the-llm-d-community");
+                window.location.replace(window.SLACK_INVITE_URL);
             }, 2000);
         }
     </script>
     
     <!-- Noscript fallback for browsers with JavaScript disabled -->
-    <noscript>
-        <meta http-equiv="refresh" content="2; url=https://communityinviter.com/apps/llm-d/join-the-llm-d-community">
-    </noscript>
+    <script>
+        // Write the noscript fallback using the variable
+        document.write('<noscript><meta http-equiv="refresh" content="2; url=' + SLACK_INVITE_URL + '"></noscript>');
+    </script>
 </body>
 </html>
