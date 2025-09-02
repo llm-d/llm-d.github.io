@@ -37,3 +37,21 @@ cnuland:
   title: Principal Technical Marketing Manager for AI, Red Hat
   url: https://github.com/cnuland
   image_url: /img/blogs/cnuland.jpeg
+
+niliguy:
+  name: Nili Guy
+  title: R&D Manager, AI Infrastructure, IBM
+  url: https://www.linkedin.com/in/nilig/
+  image_url: /img/blogs/niliguy.jpg
+  
+etailevran:
+  name: Etai Lev Ran
+  title: Cloud Architect, IBM
+  url: https://www.linkedin.com/in/elevran/
+  image_url: /img/blogs/etailevran.jpg
+
+vitabortnikov:
+  name: Vita Bortnikov
+  title: IBM Fellow, IBM
+  url: https://www.linkedin.com/in/vita-bortnikov/
+  image_url: /img/blogs/vitabortnikov.jpg
