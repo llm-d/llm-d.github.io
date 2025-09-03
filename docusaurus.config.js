@@ -156,7 +156,7 @@ const config = {
             position: "left",
             label: "Community",
           },
-          { to: "/blog", label: "News", position: "left" },
+          { to: "/blog", label: "Blog", position: "left" },
           {
             type: 'html',
             position: 'right',
@@ -209,7 +209,7 @@ const config = {
             title: "More",
             items: [
               {
-                label: "News",
+                label: "Blog",
                 to: "/blog",
               },
               {
