@@ -2,7 +2,7 @@
 title: Intelligent Inference Scheduling with llm-d
 description: How llm-d enables smarter, prefix-aware, load- and SLO-aware routing for better latency and throughput
 slug: intelligent-inference-scheduling-with-llm-d
-date: 2025-09-02T09:00
+date: 2025-09-03T09:00
 
 authors:
   - niliguy
@@ -22,7 +22,9 @@ The llm-d project lays out clear, “well-lit” paths for anyone to adopt the l
 
 Deploying large language models (LLMs) on Kubernetes has become the norm, but LLM inference workloads behave very differently from standard microservices. Traditional patterns like uniform replicas paired with round-robin load balancing assume each request uses the same amount of resources and finishes in roughly the same time. In contrast, LLM requests can vary wildly in token count and compute needs, making simple load-spread strategies prone to bottlenecks and imbalanced traffic.
 
-![Intelligent inference scheduling diagram](/img/blogs/inference-scheduling/image01.png)  
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/inference-scheduling/image01.png" alt="Intelligent inference scheduling diagram" style={{width: '75%', height: 'auto'}} />
+</div>  
 
 <!-- truncate -->
 
@@ -48,7 +50,9 @@ The default EPP in IGW follows a structured scheduling cycle for each incoming r
 
 Building on IGW’s foundation, **llm-d** **augments the EPP with more advanced scheduling capabilities**. It introduces scorers that optimize for KV cache locality (boosting prefix-cache hit rates) and orchestrates multiple scheduling passes to disaggregate prefill and decode phases onto specialized pod variants. The result is a fully LLM-aware scheduler that drives higher throughput, lower tail latencies, and finer resource efficiency across the board.
 
-![Diagram](/img/blogs/inference-scheduling/image02.png)
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/inference-scheduling/image02.png" alt="Diagram" style={{width: '75%', height: 'auto'}} />
+</div>
 
 ### Intelligent Inference Scheduling with llm-d
 
@@ -77,14 +81,30 @@ When cache locality is abundant, the results are dramatic:
 
 * **Throughput:** Prefix \+ Load scaled linearly with QPS, reaching \~60k tokens/sec at 20 QPS. Prefix-only flatlined near 2k–3k tokens/sec.  
   
-  ![Throughput vs Request Rate](/img/blogs/inference-scheduling/image03.png)  
-    
-  ![Success Rate](/img/blogs/inference-scheduling/image04.png)  
-  ![TTFT and QPS](/img/blogs/inference-scheduling/image05.png)
-  ![Intertoken Latency](/img/blogs/inference-scheduling/image06.png)
+<div style={{margin: '20px 0'}}>
+  <div style={{marginBottom: '20px'}}>
+    <img src="/img/blogs/inference-scheduling/image03.png" alt="Throughput vs Request Rate" style={{width: '100%', height: 'auto'}} />
+    <p style={{textAlign: 'center', fontSize: '0.9em', marginTop: '8px'}}><em>Throughput vs Request Rate</em></p>
+  </div>
+  
+  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', alignItems: 'start'}}>
+    <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%'}}>
+      <img src="/img/blogs/inference-scheduling/image04.png" alt="Success Rate" style={{width: '100%', height: 'auto'}} />
+      <p style={{textAlign: 'center', fontSize: '0.85em', marginTop: '6px'}}><em>Success Rate</em></p>
+    </div>
+    <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%'}}>
+      <img src="/img/blogs/inference-scheduling/image05.png" alt="TTFT and QPS" style={{width: '100%', height: 'auto'}} />
+      <p style={{textAlign: 'center', fontSize: '0.85em', marginTop: '6px'}}><em>TTFT and QPS</em></p>
+    </div>
+    <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%'}}>
+      <img src="/img/blogs/inference-scheduling/image06.png" alt="Intertoken Latency" style={{width: '100%', height: 'auto'}} />
+      <p style={{textAlign: 'center', fontSize: '0.85em', marginTop: '6px'}}><em>Intertoken Latency</em></p>
+    </div>
+  </div>
+</div>
 
 
-#### In workloads with heavy prefix reuse, prefix-aware scheduling combined with load-awareness is essential to avoid bottlenecks and maximize GPU utilization. By combining prefix scoring with load awareness, llm-d achieves **100% request success, lower latencies, and linear throughput scaling** — the essence of intelligent, AI-aware scheduling.
+In workloads with heavy prefix reuse, prefix-aware scheduling combined with load-awareness is essential to avoid bottlenecks and maximize GPU utilization. By combining prefix scoring with load awareness, llm-d achieves **100% request success, lower latencies, and linear throughput scaling** — the essence of intelligent, AI-aware scheduling.
 
 #### **Low Prefix Sharing Workload**
 
