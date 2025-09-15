@@ -34,6 +34,14 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
       dateText: 'Sep 19–20, 2025',
       cost: 'Free',
       href: 'https://www.devconf.info/us/',
+      sessions: [
+        {
+          title: 'llm-d: Kubernetes Native Distributed Inferencing',
+          date: 'Fri, Sep 19, 2025',
+          time: '9:15am – 9:50am',
+          href: 'https://pretalx.devconf.info/devconf-us-2025/talk/GF8RJQ/',
+        },
+      ],
     },
     {
       month: 'October 2025',
@@ -136,8 +144,9 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
     gap: '8px',
     padding: '10px',
     border: '1px solid var(--ifm-color-emphasis-200)',
+    borderLeft: '3px solid var(--ifm-color-primary)',
     borderRadius: '6px',
-    backgroundColor: 'var(--ifm-background-color)'
+    backgroundColor: 'var(--ifm-background-surface-color)'
   };
 
   const headerRowStyle = {
@@ -146,6 +155,14 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
     justifyContent: 'space-between',
     gap: '12px',
     marginBottom: '6px'
+  };
+
+  const sessionSectionStyle = {
+    marginTop: '10px',
+    padding: '12px',
+    border: '1px solid var(--ifm-color-emphasis-200)',
+    borderRadius: '8px',
+    backgroundColor: 'var(--ifm-color-emphasis-100)'
   };
 
   return (
@@ -168,8 +185,8 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
                       <span style={{fontSize: '12px', padding: '2px 8px', backgroundColor: 'var(--ifm-color-emphasis-100)', border: '1px solid var(--ifm-color-emphasis-200)', borderRadius: '999px'}}>📍 {e.location}</span>
                     </div>
                     <p style={{margin: 0, fontSize: '14px'}}>{e.dateText} · <strong>{e.cost}</strong></p>
-                    <div style={{marginTop: '10px'}}>
-                      <p style={{margin: '0 0 6px 0', fontSize: '14px', fontWeight: 600}}>Sessions</p>
+                    <div style={sessionSectionStyle}>
+                      <p style={{margin: '0 0 8px 0', fontSize: '14px', fontWeight: 700, color: 'var(--ifm-color-primary)'}}>Sessions</p>
                       <ul style={sessionListStyle}>
                         {e.sessions.map((s) => (
                           <li key={`${s.title}-${s.date}-${s.time}`} style={sessionItemStyle}>
