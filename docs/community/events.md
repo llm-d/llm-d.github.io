@@ -165,6 +165,15 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
     backgroundColor: 'var(--ifm-color-emphasis-100)'
   };
 
+  const titleRowLeftStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    flexWrap: 'wrap'
+  };
+
+  // no icon-only button in this variant
+
   return (
     <div>
       {months.map((m) => {
@@ -175,16 +184,18 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
             <h2>{m}</h2>
             <div style={containerStyle}>
               {monthEvents.map((e) => (
-                e.sessions && e.sessions.length > 0 ? (
-                  <div key={e.title} style={{...cardStyle, flexDirection: 'column', alignItems: 'stretch'}}>
-                    <div style={headerRowStyle}>
+                <div key={e.title} style={{...cardStyle, flexDirection: 'column', alignItems: 'stretch'}}>
+                  <div style={headerRowStyle}>
+                    <div style={titleRowLeftStyle}>
                       <h4 style={{margin: 0, color: 'var(--ifm-color-primary)'}}>{e.title}</h4>
-                      <a href={e.href} target="_blank" rel="noopener noreferrer" style={buttonStyle}>Register</a>
                     </div>
-                    <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '0 0 6px 0'}}>
-                      <span style={{fontSize: '12px', padding: '2px 8px', backgroundColor: 'var(--ifm-color-emphasis-100)', border: '1px solid var(--ifm-color-emphasis-200)', borderRadius: '999px'}}>📍 {e.location}</span>
-                    </div>
-                    <p style={{margin: 0, fontSize: '14px'}}>{e.dateText} · <strong>{e.cost}</strong></p>
+                    <a href={e.href} target="_blank" rel="noopener noreferrer" style={buttonStyle}>Register</a>
+                  </div>
+                  <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '0 0 6px 0'}}>
+                    <span style={{fontSize: '12px', padding: '2px 8px', backgroundColor: 'var(--ifm-color-emphasis-100)', border: '1px solid var(--ifm-color-emphasis-200)', borderRadius: '999px'}}>📍 {e.location}</span>
+                  </div>
+                  <p style={{margin: 0, fontSize: '14px'}}>{e.dateText} · <strong>{e.cost}</strong></p>
+                  {e.sessions && e.sessions.length > 0 && (
                     <div style={sessionSectionStyle}>
                       <p style={{margin: '0 0 8px 0', fontSize: '14px', fontWeight: 700, color: 'var(--ifm-color-primary)'}}>Sessions</p>
                       <ul style={sessionListStyle}>
@@ -203,19 +214,8 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
                         ))}
                       </ul>
                     </div>
-                  </div>
-                ) : (
-                  <div key={e.title} style={cardStyle}>
-                    <div>
-                      <h4 style={{margin: '0 0 6px 0', color: 'var(--ifm-color-primary)'}}>{e.title}</h4>
-                      <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '0 0 6px 0'}}>
-                        <span style={{fontSize: '12px', padding: '2px 8px', backgroundColor: 'var(--ifm-color-emphasis-100)', border: '1px solid var(--ifm-color-emphasis-200)', borderRadius: '999px'}}>📍 {e.location}</span>
-                      </div>
-                      <p style={{margin: 0, fontSize: '14px'}}>{e.dateText} · <strong>{e.cost}</strong></p>
-                    </div>
-                    <a href={e.href} target="_blank" rel="noopener noreferrer" style={buttonStyle}>Register</a>
-                  </div>
-                )
+                  )}
+                </div>
               ))}
             </div>
           </div>
