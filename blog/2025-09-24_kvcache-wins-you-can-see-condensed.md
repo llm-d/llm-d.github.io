@@ -100,7 +100,7 @@ This is precisely what llm-d provides (pun intended). It creates a **global view
 
 ### **How It Works: A Global Cache View via KVEvents**
 
-The global cache view is built upon a continuous stream of [**`KVEvents`](https://docs.vllm.ai/en/latest/api/vllm/config/kv_events.html)** from each vLLM pod, which are processed efficiently by the open-source [**`llm-d-kv-cache-manager`](https://github.com/llm-d/llm-d-kv-cache-manager)** library.
+The global cache view is built upon a continuous stream of [**`KVEvents`**](https://docs.vllm.ai/en/latest/api/vllm/config/kv_events.html) from each vLLM pod, which are processed efficiently by the open-source [**`llm-d-kv-cache-manager`**](https://github.com/llm-d/llm-d-kv-cache-manager) library.
 
 The `KVEvents` provide a live feed of all physical cache changes across the cluster, firing every time a cache block is created or evicted. This high-throughput stream is then ingested and organized by the llm-d-kv-cache-manager library's components:
 
