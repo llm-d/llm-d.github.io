@@ -97,7 +97,7 @@ While Retrieval-Augmented Generation also relies on large prefixes (system promp
 
 ## **The Challenge of Scale-Out**
 
-What happens when we move from single-instance to distributed production clusters? The once-unified KV-cache becomes **disaggregated**. Each vLLM pod manages its own cache in isolation. Standard load balancers spread traffic evenly using cache-blind metrics, scattering related requests across different pods and destroying cache locality.
+What happens when we move from single-instance environment to distributed production clusters? The once-unified KV-cache becomes **disaggregated**. Each vLLM pod manages its own cache in complete isolation. Standard load balancers naively spread traffic evenly using cache-blind metrics, scattering related requests across different pods and destroying cache locality.
 
 Let's revisit our agentic workflow example to see the direct impact of being blind to this unmanaged, disaggregated cache:
 
