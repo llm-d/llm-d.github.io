@@ -126,7 +126,7 @@ This is precisely what llm-d provides (pun intended). It creates a **global view
 
 The global cache view is built upon a continuous stream of [**`KVEvents`**](https://docs.vllm.ai/en/latest/api/vllm/config/kv_events.html) from each vLLM pod, which are processed efficiently by the open-source [**`llm-d-kv-cache-manager`**](https://github.com/llm-d/llm-d-kv-cache-manager) library.
 
-The `KVEvents` provide a live feed of all physical cache changes across the cluster, firing every time a cache block is created or evicted. This high-throughput stream is then ingested and organized by the llm-d-kv-cache-manager library's components:
+The `KVEvents` provide a live feed of all physical cache changes across the cluster, firing every time a cache block is created or evicted. This stream is then ingested and organized by the llm-d-kv-cache-manager library's components:
 
 1. **`kvevents.Pool`**: This component consumes the high-throughput stream of events. As it digests them, it continuously updates a low-level **KV-Block Index**, which maintains a simple, real-time map of block-hashes to the pod and memory-medium (GPU/CPU) it resides on.  
 2. **`kvcache.Index`**: This is the higher-level index used by the scheduler. It uses the underlying KV-Block Index to map logical sequences of tokens (i.e., prefixes) to the pods that hold them. This provides the direct answer to the question, "what percentage of this request's prefix is on the accessible Pods?"
@@ -170,8 +170,8 @@ The four strategies compared:
 
 * **`random-scheduling`**: A naive scheduler, acting as the control group.  
 * **`load-scheduling`**: A scheduler aware of only of load scorers: vLLM queueing \+ kv-cache-utilization  
-* **`estimated-scheduling`**: The default configuration in the intelligent inference scheduling path, extending load-aware scheduling with the [**approximate** prefix-cache scorer](https://gateway-api-inference-extension.sigs.k8s.io/guides/epp-configuration/prefix-aware/).  
-  * This plugin builds an estimated-locality index based on routing history.  
+* **`approximate-scheduling`**: The default configuration in the intelligent inference scheduling path, extending load-aware scheduling with the [**approximate** prefix-cache scorer](https://gateway-api-inference-extension.sigs.k8s.io/guides/epp-configuration/prefix-aware/).  
+  * This plugin builds an approximate-locality index based on routing history.  
 * **`precise-scheduling`**: The advanced well-lit path described in this post.
 
 This benchmark, therefore, tests the scheduler's ability to efficiently manage the disaggregated KV-cache. In a production environment, if the total cache demand were to exceed the cluster's capacity, an autoscaling system would be responsible for spinning up more replicas to maintain SLOs. Here, we focus on **maximizing the performance of the existing hardware**.
@@ -180,18 +180,18 @@ This benchmark, therefore, tests the scheduler's ability to efficiently manage t
 
 The summary table below shows the difference across the key performance indicators.
 
-| Experiment | Output toks/s | TTFT p90 (s) | TTFT mean (s) | vLLM Wait Queue (mean) |
-| :---- | :---- | :---- | :---- | :---- |
+| Experiment             | Output toks/s | TTFT p90 (s) | TTFT mean (s) | vLLM Wait Queue (mean) |
+|:-----------------------| :---- | :---- | :---- | :---- |
 | **precise-scheduling** | **8730.0** | **0.542** | **0.298** | **0.1** |
-| estimated-scheduling | 6944.4 | 31.083 | 13.316 | 8.1 |
-| load-scheduling | 4428.7 | 94.865 | 46.987 | 28.9 |
-| random-scheduling | 4428.7 | 92.551 | 45.281 | 27.3 |
+| approximate-scheduling | 6944.4 | 31.083 | 13.316 | 8.1 |
+| load-scheduling        | 4428.7 | 94.865 | 46.987 | 28.9 |
+| random-scheduling      | 4428.7 | 92.551 | 45.281 | 27.3 |
 
 #### **Time to First Token (TTFT)**
 
 The most dramatic impact was on user-facing latency. `precise-scheduling` delivered a P90 TTFT of just **0.542 seconds**. In contrast, the approximate scheduler took over **31 seconds**, and the cache-blind schedulers took over **90 seconds**.
 
-* **`precise-scheduling` is 57x faster than `estimated-scheduling`.**  
+* **`precise-scheduling` is 57x faster than `approximate-scheduling`.**  
 * **`precise-scheduling` is over 170x faster than `random-scheduling`.**
 
 This is the difference between an interactive experience and a system that is functionally unusable at scale.
@@ -200,7 +200,7 @@ This is the difference between an interactive experience and a system that is fu
 
 This efficiency in latency directly translates to higher system capacity. `precise-scheduling` achieved a total throughput of **8,730 output tokens/second**. This represents:
 
-* A **25% increase** over the **`estimated-scheduling`** baseline.  
+* A **25% increase** over the **`approximate-scheduling`** baseline.  
 * Over **double the throughput** of the cache-blind configurations.
 
 This allows you to handle significantly more traffic on the exact same hardware, simply by eliminating the waste of cache misses.
@@ -211,13 +211,13 @@ This allows you to handle significantly more traffic on the exact same hardware,
 
 <br/><br/>
 
-The charts above clearly illustrate these wins. The blue line (`precise-scheduling`) maintains the lowest Mean TTFT (tested for up to 50 QPS) and achieves the highest Total Throughput as the request rate increases.
+The charts above clearly illustrate these wins. The blue line (`precise-scheduling`) maintains the lowest Mean TTFT and achieves the highest Total Throughput as the request rate increases.
 
 #### **The "Why": From Saved Work to System Throughput**
 
 The dramatic performance gains seen in the benchmarks are a direct result of **system efficiency**, a difference that is immediately visible in the **real-time Grafana metrics**.
 
-The following graphs were captured throughout the benchmark runs. Schedulers are shown in order: `precise-scheduling` *(left)*, `estimated-scheduling` *(center)*, and `random-scheduling` *(right)*.
+The following graphs were captured throughout the benchmark runs. Schedulers are shown in order: `precise-scheduling` *(left)*, `approximate-scheduling` *(center)*, and `random-scheduling` *(right)*.
 
 ##### **1\. Effective Cache Throughput: Quantifying Saved Work**
 
@@ -229,11 +229,11 @@ First, we measure the **Effective Cache Throughput** \- the number of prompt **t
 
 <br/><br/>
 
-The chart clearly shows that `precise-scheduling` sustains a massive and stable throughput of saved work by hitting the prefixes effectively. In the middle, we see `estimate-scheduling` with good but lower efficiency, and on the right, `random-scheduling` saving almost no work.
+The chart clearly shows that `precise-scheduling` sustains a massive and stable throughput of saved work by hitting the prefixes effectively. In the middle, we see `approximate-scheduling` with good but lower efficiency, and on the right, `random-scheduling` saving almost no work.
 
 ##### **2\. System State: The Consequence of Efficiency**
 
-This saved work translates directly into system health. By avoiding prefill bottlenecks, the GPUs can focus on productive decoding. We can see this by comparing the number of "**Waiting**" requests (**queued**) to "**Running**" requests (**in decode**).
+This saved work translates directly into system health. By avoiding prefill bottlenecks, the GPUs can focus on productive decoding. We can see this by comparing the number of "**Waiting**" requests (**queued**) and "**Running**" requests (**in decode**).
 
 ![vLLM waiting requests metrics](/img/blogs/kv-cache-wins/image7.png)  
 <small>*__FIGURE 7__: The number of **waiting requests** in vLLM over the course of the benchmark.*</small>
@@ -241,7 +241,7 @@ This saved work translates directly into system health. By avoiding prefill bott
 ![vLLM running requests metrics](/img/blogs/kv-cache-wins/image8.png)  
 <small>*__FIGURE 8__: The number of **running requests** **(decoding)** in vLLM over the course of the benchmark.*</small>
 
-The **`precise-scheduling`** plots on the left show a stable system. By keeping the waiting queue minimal, it maximizes the number of actively running requests. In contrast, the other schedulers are clearly overwhelmed; their growing waiting queues choke the system and prevent work from being done efficiently.
+The **`precise-scheduling`** plots on the left show a stable system. By effectively utilizing the disaggregated KV-cache, it maintains minimal waiting queues and maximizes the number of actively running requests. In contrast, the other schedulers are clearly overwhelmed; their growing waiting queues choke the system and prevent work from being done efficiently.
 
 This instability is caused by **"cache thrashing."** Cache-blind schedulers constantly **duplicate and evict** the same prefixes across different pods, wasting GPU cycles on **redundant prefill**. `precise-scheduling` avoids this entirely. It is precisely aware of prefix locations and consistently routes requests for cache-hits \- as long as the load allows \- resulting in less work, virtually no queues, and a healthy system.
 
@@ -270,6 +270,19 @@ The journey of llm-d reflects a broader shift in how we think about LLM inferenc
 
 By moving from AI-blind routing to a precise, KV-cache aware strategy, **we can unlock order-of-magnitude improvements in latency and throughput on the exact same hardware**. The well-lit path of precise prefix-cache awareness offers a tested, benchmarked solution to make your distributed deployments dramatically more efficient.
 
+:::tip Choosing the Right Strategy
+The optimal scheduler depends on the complexity of the workload. Below is a hierarchy of supported strategies, where each level addresses the limitations of the one before it.
+
+* **1. Random/Round-Robin Scheduling**: this simple approach works well for symmetric workloads where all requests have similar computational costs and minimal cache reuse.
+
+* **2. Load-Aware Scheduling**: the necessary next step for asymmetric workloads. By routing requests based on Pod serving capacity, it prevents overload and improves resource utilization.
+
+* **3. Approximate Prefix-Cache Scheduling**: this strategy introduces cache-awareness for workloads with context reuse (as described in the blog).
+  The estimations can become unreliable at high scale or with dynamic workloads, leading to suboptimal routing.
+
+* **4. Precise Prefix-Cache Aware Scheduling**: in production environments with tight SLOs - this is the most effective strategy for dynamic, high-scale workloads where maximizing the cache-hit ratio is a primary performance driver.
+:::
+
 ## **Get Involved with llm-d**
 
 The llm-d project thrives on community contributions, and there are many ways to get involved:
@@ -291,7 +304,7 @@ The llm-d project thrives on community contributions, and there are many ways to
 * **Schedulers Compared**:  
   * **`random-scheduling`**: A naive scheduler, acting as the control group.  
   * **`load-scheduling`**: A scheduler aware of only of load scorers: vLLM queueing \+ kv-cache-utilization  
-  * **`estimated-scheduling`**: The baseline intelligent scheduler extending load-scheduling with the approximate prefix-cache scorer.  
+  * **`approximate-scheduling`**: The baseline intelligent scheduler extending load-scheduling with the approximate prefix-cache scorer.  
   * **`precise-scheduling`**: The advanced well-lit path described in this post.
 
 ### **A.2: Workload Details \- Real-World B2B SaaS Scenario**
