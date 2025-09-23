@@ -16,9 +16,9 @@ authors:
 tags: [blog, updates, llm-d]
 ---
 
-The llm-d project provides a series of “well-lit paths” \- tested, benchmarked solutions for deploying large language models in production. Our first path, [**Intelligent Inference Scheduling**](https://llm-d.ai/blog/intelligent-inference-scheduling-with-llm-d), established a baseline for AI-aware routing by balancing both cluster load and prefix-cache affinities. The default configuration for that path uses an *approximate* method for the latter, predicting cache locality based on request traffic.
+The llm-d project provides a series of “well-lit paths” \- tested, benchmarked solutions for deploying large language models in production. Our first path, [**Intelligent Inference Scheduling**](/blog/intelligent-inference-scheduling-with-llm-d), established a baseline for AI-aware routing by balancing both cluster load and prefix-cache affinities. The default configuration for that path uses an *approximate* method for the latter, predicting cache locality based on request traffic.
 
-This blog illuminates a more advanced and powerful path: [**precise prefix-cache aware scheduling**](https://github.com/llm-d/llm-d/blob/main/guides/precise-prefix-cache-aware/README.md).
+This blog illuminates a more advanced and powerful path: [**precise prefix-cache aware scheduling**](/docs/guide/Installation/precise-prefix-cache-aware).
 
 We take a deep dive into the next generation of this feature, which moves beyond prediction and gives the scheduler direct introspection into distributed vLLM caches. This precision is key to maximizing cache hit rates and achieving a new level of performance and maximizing cost-efficiency in your distributed deployments.
 
@@ -154,7 +154,7 @@ With an accurate, real-time global view of the cache, the scheduler can now perf
 
 This scorer provides a strong **stickiness** signal, scheduling requests to maximize the probability of a cache hit. However, relying solely on stickiness can create new problems, like sending a stream of requests to an already overloaded pod while others sit idle.
 
-Therefore, the final routing decision isn't based on this score alone. As detailed in our previous post on the [**Intelligent Inference Scheduling**](https://llm-d.ai/blog/intelligent-inference-scheduling-with-llm-d) well-lit path, the KV-cache affinity score is combined with distributive, load-aware scores, creating a balanced decision.
+Therefore, the final routing decision isn't based on this score alone. As detailed in our previous post on the [**Intelligent Inference Scheduling**](/blog/intelligent-inference-scheduling-with-llm-d) well-lit path, the KV-cache affinity score is combined with distributive, load-aware scores, creating a balanced decision.
 
 ## **Performance Results**
 
@@ -274,10 +274,10 @@ By moving from AI-blind routing to a precise, KV-cache aware strategy, **we can 
 
 The llm-d project thrives on community contributions, and there are many ways to get involved:
 
-* Explore the llm-d Community Quickstart Guide → [Start here](https://llm-d.ai/docs/community) to learn more about getting involved in the llm-d project.  
-* Join our Slack → [Get your invite](https://llm-d.ai/slack) and connect with maintainers and contributors  
+* Explore the llm-d Community Quickstart Guide → [Start here](/docs/community) to learn more about getting involved in the llm-d project.  
+* Join our Slack → [Get your invite](/slack) and connect with maintainers and contributors  
 * Explore the code → Browse our [GitHub organization](https://github.com/llm-d) and find issues that interest you  
-* Attend meetings → All meetings are open\! Add our [public calendar](https://llm-d.ai/docs/community#public-meeting-calendar) and join discussions\`
+* Attend meetings → All meetings are open\! Add our [public calendar](/docs/community#public-meeting-calendar) and join discussions\`
 
 ---
 
