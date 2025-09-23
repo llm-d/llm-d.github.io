@@ -277,8 +277,8 @@ The optimal scheduler depends on the complexity of the workload. Below is a hier
 
 * **2. Load-Aware Scheduling**: the necessary next step for asymmetric workloads. By routing requests based on Pod serving capacity, it prevents overload and improves resource utilization.
 
-* **3. Approximate Prefix-Cache Scheduling**: this strategy introduces cache-awareness for workloads with context reuse (as described in the blog).
-  The estimations can become unreliable at high scale or with dynamic workloads, leading to suboptimal routing.
+* **3. Approximate Prefix-Cache Scheduling**: this strategy introduces cache-awareness for workloads with context reuse patterns.
+  * **Limitation:** The estimations can become unreliable at high scale or with dynamic workloads, leading to suboptimal routing - as seen in our benchmarks.
 
 * **4. Precise Prefix-Cache Aware Scheduling**: in production environments with tight SLOs - this is the most effective strategy for dynamic, high-scale workloads where maximizing the cache-hit ratio is a primary performance driver.
 :::
