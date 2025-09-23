@@ -63,10 +63,6 @@ vLLM takes this further with **Automatic Prefix Caching**: it intelligently iden
 
 In a simple test sending a request with a \~10,000 token prompt to a Qwen/Qwen3-32B instance a second time, time-to-first-token drops from **4.3 seconds** to just **0.6 seconds**.
 
-:::info vLLM benchmark script
-For deeper analysis, see the vLLM [`benchmark_prefix_caching.py`](https://github.com/vllm-project/vllm/blob/65a5910ce35f889740bddb2e19dad35c83278873/benchmarks/benchmark_prefix_caching.py) script.
-:::
-
 ## **Prefix Reuse in Practical Use Cases**
 
 The power of vLLM's caching isn't theoretical; it directly maps to the structure of the most common and valuable LLM workloads. By understanding this pattern, we can see exactly what's at stake when serving in production.
