@@ -49,7 +49,7 @@ This blog explores that challenge: how the wins of vLLM's prefix caching are los
 
 ## **Inside vLLM: Mastering the Cache in a Single Instance**
 :::note For the Experts
-Already know how vLLM uses the KV-cache and prefix caching to optimize inference? Feel free to skip this section and dive into the [challenges of scale-out](#the-challenge-of-scale-out).
+Already know how vLLM uses the KV-cache and prefix caching to optimize inference? Feel free to skip right into the [**challenges of scale-out**](#the-challenge-of-scale-out).
 :::
 
 At the heart of every transformer model is the **self-attention mechanism** \- how the model understands context by computing attention scores between every pair of tokens. This all-pairs comparison scales quadratically with input length, making the initial **prefill** computation the most expensive part of generation.
