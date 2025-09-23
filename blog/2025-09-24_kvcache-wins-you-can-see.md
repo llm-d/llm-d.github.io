@@ -1,7 +1,7 @@
 ---
 title: "KV-Cache Wins You Can See: From Prefix Caching in vLLM to Distributed Scheduling with llm-d"
 description: "How llm-d enables smarter, prefix-aware, load- and SLO-aware routing for better latency and throughput"
-slug: kvcache-wins-you-can-see-condensed
+slug: kvcache-wins-you-can-see
 date: 2025-09-24T09:00
 
 authors:
@@ -69,6 +69,8 @@ AI agents represent the most extreme case of prefix dominance. These systems ope
 
 <small>*__FIGURE 2__: A visual of an agent loop, showing the massive, static context (tools, step-history) as the cached prefix and the new observation/action as the small suffix.*</small>
 
+<br/><br/>
+
 Reusing this massive context on each turn is essential for complex agents to be computationally viable and cost-effective.
 
 :::tip What about RAG?
@@ -82,6 +84,8 @@ What happens when we move from single-instance to distributed production cluster
 ![KV-cache miss scenario diagram](/img/blogs/kv-cache-wins/image3.png)
 
 <small>*__FIGURE 3__: A heartbreaking KV-cache miss scenario.*</small>
+
+<br/><br/>
 
 This single routing decision triggers a cascade of failures:
 
@@ -112,6 +116,8 @@ This two-layered architecture provides a continuously updated, scalable view of 
 ![llm-d architecture diagram](/img/blogs/kv-cache-wins/image4.png)
 
 <small>*__FIGURE 4__: Simplified architecture diagram. (1) \- (3) show the read path, while (A) \- (B) show the write pipeline.*</small>
+
+<br/><br/>
 
 **What about the overhead?** the memory overhead for this global index is negligible \- see **Appendix A.3** for the scaling analysis showing a **1,000,000:1** data-to-metadata ratio.
 
@@ -183,28 +189,45 @@ This allows you to handle significantly more traffic on the exact same hardware,
 
 <small>*__FIGURE 5__: A tri-panel of TTFT, TPoT and Throughput measured through progressively rising QPS rates.*</small>
 
+<br/><br/>
+
 The charts above clearly illustrate these wins. The blue line (`precise-scheduling`) maintains the lowest Mean TTFT (tested for up to 50 QPS) and achieves the highest Total Throughput as the request rate increases.
 
-#### **The "Why": A Visual Story of System Efficiency**
+#### **The "Why": From Saved Work to System Throughput**
 
-The dramatic performance gains seen in the benchmarks are a direct result of system stability, a difference that is immediately visible in the **real-time Grafana metrics**.
+The dramatic performance gains seen in the benchmarks are a direct result of **system efficiency**, a difference that is immediately visible in the **real-time Grafana metrics**.
 
-The following graphs show the number of **vLLM Waiting Requests** and **vLLM Running Requests (decoding)** for each of the **8 pods**. The schedulers are shown in order: `precise-scheduling` *(left)*, `estimated-scheduling` *(center)*, and `random-scheduling` *(right)*.  
-![vLLM waiting requests metrics](/img/blogs/kv-cache-wins/image6.png)  
-<small>*__FIGURE 6__: The number of **waiting requests** **(prefilling)** in vLLM over the course of the benchmark.*</small>
+The following graphs were captured throughout the benchmark runs. Schedulers are shown in order: `precise-scheduling` *(left)*, `estimated-scheduling` *(center)*, and `random-scheduling` *(right)*.
 
-![vLLM running requests metrics](/img/blogs/kv-cache-wins/image7.png)  
-<small>*__FIGURE 7__: The number of **running requests** **(decoding)** in vLLM over the course of the benchmark.*</small>
+##### **1\. Effective Cache Throughput: Quantifying Saved Work**
+
+First, we measure the **Effective Cache Throughput** \- the number of prompt **tokens** per second served directly from the cache. This metric quantifies the computational work the GPUs ***avoided***. A high value means the system is consistently saving massive amounts of expensive prefill computation.
+
+![Effective cache throughput metrics](/img/blogs/kv-cache-wins/image6.png)
+
+<small>*__FIGURE 6__: The total computational work **saved** by the KV-cache across the cluster, over the course of the benchmarks.*</small>
+
+<br/><br/>
+
+The chart clearly shows that `precise-scheduling` sustains a massive and stable throughput of saved work by hitting the prefixes effectively. In the middle, we see `estimate-scheduling` with good but lower efficiency, and on the right, `random-scheduling` saving almost no work.
+
+##### **2\. System State: The Consequence of Efficiency**
+
+This saved work translates directly into system health. By avoiding prefill bottlenecks, the GPUs can focus on productive decoding. We can see this by comparing the number of "**Waiting**" requests (**queued**) to "**Running**" requests (**in decode**).
+
+![vLLM waiting requests metrics](/img/blogs/kv-cache-wins/image7.png)  
+<small>*__FIGURE 7__: The number of **waiting requests** in vLLM over the course of the benchmark.*</small>
+
+![vLLM running requests metrics](/img/blogs/kv-cache-wins/image8.png)  
+<small>*__FIGURE 8__: The number of **running requests** **(decoding)** in vLLM over the course of the benchmark.*</small>
 
 The **`precise-scheduling`** plots on the left show a stable system. By keeping the waiting queue minimal, it maximizes the number of actively running requests. In contrast, the other schedulers are clearly overwhelmed; their growing waiting queues choke the system and prevent work from being done efficiently.
 
 This instability is caused by **"cache thrashing."** Cache-blind schedulers constantly **duplicate and evict** the same prefixes across different pods, wasting GPU cycles on **redundant prefill**. `precise-scheduling` avoids this entirely. It is precisely aware of prefix locations and consistently routes requests for cache-hits \- as long as the load allows \- resulting in less work, virtually no queues, and a healthy system.
 
-The summary metrics below provide a final, clear picture of this difference, showing that `precise-scheduling` almost completely eliminated request queuing, maintaining a mean queue size of just **0.1**, while efficiently managing the distributed KV-cache pool.
-
-![Queue size and cache utilization metrics](/img/blogs/kv-cache-wins/image8.png)
-
-<small>*__FIGURE 8__: Graphs and distribution-plots showing the average vLLM waiting-queue size and KV-cache-utilization over time, across the different scheduling configurations.*</small>
+:::info Session-Based Scheduling
+Session-based scheduling provides affinity for individual users but misses cross-user scenarios. In our benchmark with **150 enterprise customers** each having **6,000-token system prompts**, session-scheduling would create 750 separate sessions but miss cross-user cache reuse within customer groups, leaving the majority of computational work (shared 6,000-token context) uncaptured. Precise prefix-cache aware scheduling guarantees **maximal reuse** across the system.
+:::
 
 ### **Adoption**
 
