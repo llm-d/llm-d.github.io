@@ -43,13 +43,22 @@ In production LLM inference, we track dozens of metrics \- latency, throughput, 
 
 This isn't just an academic claim; it has a direct and dramatic impact on the bottom line. Consider the pricing model for a state-of-the-art model like Anthropic's Claude Sonnet. The [cost](https://www.anthropic.com/pricing#api) for processing tokens that are already in the cache is **10 times lower** than for uncached tokens ($0.30 vs. $3.00 per million). The same pattern can be seen in OpenAI’s [API pricing](http://openai.com/api/pricing/) page. A high cache hit rate doesn't just make your application faster; it makes it **fundamentally cheaper to operate**. This is the power of the KV-cache. 
 
+In a single-instance environment, engines like vLLM leverage Automatic Prefix Caching to cut redundant work, reusing prior computations to drive faster, more efficient performance. However, the moment you scale to a distributed, multi-replica environment, these finely tuned optimizations can fall apart.
+
+This blog explores that challenge: how the wins of vLLM's prefix caching are lost in naive distributed systems, and how llm-d's precise prefix-cache aware scheduling restores and enhances them. To fully grasp this, we first need to understand what makes vLLM so performant in a single instance. Let's dive in.
+
 ## **Inside vLLM: Mastering the Cache in a Single Instance**
 
-At the heart of every transformer model is the **self-attention mechanism**. The initial computation is called **prefill** \- the most computationally expensive part of generation, especially for long contexts. The result is **Key (K)** and **Value (V)** tensors stored in the **KV-cache** \- the model's short-term memory.
+At the heart of every transformer model is the **self-attention mechanism** \- how the model understands context by computing attention scores between every pair of tokens. This all-pairs comparison scales quadratically with input length, making the initial **prefill** computation the most expensive part of generation.
 
-vLLM takes this further with **Automatic Prefix Caching**: it intelligently identifies when a new request starts with the same sequence of tokens as a previous one. Instead of recomputing, it reuses the *exact same* memory pages from the cache. 
+The result is **Key (K)** and **Value (V)** tensors stored in the **KV-cache** \- the model's short-term memory. For subsequent token generation during **decode**, the model simply pulls these existing values from memory rather than recomputing them.
 
-In a simple test sending a request with a \~10,000 token prompt to a `Qwen/Qwen3-32B` instance a second time, time-to-first-token drops from **4.3 seconds** to just **0.6 seconds**.
+vLLM takes this further with **Automatic Prefix Caching**: it intelligently identifies when requests share the same token sequence prefix. Instead of recomputing, it reuses the exact same memory pages from the cache through hash-based block matching. This principle of reusing computed work drives vLLM's performance:
+
+* **Time to First Token (TTFT)** plummets because the expensive prefill step is mostly skipped
+* Overall **throughput** increases because the GPU is freed up to serve more requests
+
+In a simple test sending a request with a \~10,000 token prompt to a Qwen/Qwen3-32B instance a second time, time-to-first-token drops from **4.3 seconds** to just **0.6 seconds**.
 
 :::info vLLM benchmark script
 For deeper analysis, see the vLLM [`benchmark_prefix_caching.py`](https://github.com/vllm-project/vllm/blob/65a5910ce35f889740bddb2e19dad35c83278873/benchmarks/benchmark_prefix_caching.py) script.
@@ -86,6 +95,8 @@ While Retrieval-Augmented Generation also relies on large prefixes (system promp
 ## **The Challenge of Scale-Out**
 
 What happens when we move from single-instance to distributed production clusters? The once-unified KV-cache becomes **disaggregated**. Each vLLM pod manages its own cache in isolation. Standard load balancers spread traffic evenly using cache-blind metrics, scattering related requests across different pods and destroying cache locality.
+
+Let's revisit our agentic workflow example to see the direct impact of being blind to this unmanaged, disaggregated cache:
 
 ![KV-cache miss scenario diagram](/img/blogs/kv-cache-wins/image3.png)
 
