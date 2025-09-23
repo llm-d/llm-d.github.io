@@ -20,7 +20,7 @@ The llm-d project provides a series of “well-lit paths” \- tested, benchmark
 
 This blog illuminates a more advanced and powerful path: [**precise prefix-cache aware scheduling**](https://github.com/llm-d/llm-d/blob/main/guides/precise-prefix-cache-aware/README.md).
 
-We take a deep dive into the next generation of this feature, which moves beyond prediction and gives the scheduler direct introspection into distributed vLLM caches. This precision is key to maximizing cache hit rates and achieving **57x faster response times** and **double the throughput** in your distributed deployments.
+We take a deep dive into the next generation of this feature, which moves beyond prediction and gives the scheduler direct introspection into distributed vLLM caches. This precision is key to maximizing cache hit rates and achieving a new level of performance and maximizing cost-efficiency in your distributed deployments.
 
 :::tip Blog key takeaways
 
@@ -47,7 +47,13 @@ This isn't just an academic claim; it has a direct and dramatic impact on the bo
 
 At the heart of every transformer model is the **self-attention mechanism**. The initial computation is called **prefill** \- the most computationally expensive part of generation, especially for long contexts. The result is **Key (K)** and **Value (V)** tensors stored in the **KV-cache** \- the model's short-term memory.
 
-vLLM takes this further with **Automatic Prefix Caching**: it intelligently identifies when a new request starts with the same sequence of tokens as a previous one. Instead of recomputing, it reuses the *exact same* memory pages from the cache. In a simple test sending a request with a \~10,000 token prompt to a `Qwen/Qwen3-32B` instance a second time, time-to-first-token drops from **4.3 seconds** to just **0.6 seconds**.
+vLLM takes this further with **Automatic Prefix Caching**: it intelligently identifies when a new request starts with the same sequence of tokens as a previous one. Instead of recomputing, it reuses the *exact same* memory pages from the cache. 
+
+In a simple test sending a request with a \~10,000 token prompt to a `Qwen/Qwen3-32B` instance a second time, time-to-first-token drops from **4.3 seconds** to just **0.6 seconds**.
+
+:::info vLLM benchmark script
+For deeper analysis, see the vLLM [`benchmark_prefix_caching.py`](https://github.com/vllm-project/vllm/blob/65a5910ce35f889740bddb2e19dad35c83278873/benchmarks/benchmark_prefix_caching.py) script.
+:::
 
 ## **Prefix Reuse in Practical Use Cases**
 
@@ -226,7 +232,7 @@ The **`precise-scheduling`** plots on the left show a stable system. By keeping 
 This instability is caused by **"cache thrashing."** Cache-blind schedulers constantly **duplicate and evict** the same prefixes across different pods, wasting GPU cycles on **redundant prefill**. `precise-scheduling` avoids this entirely. It is precisely aware of prefix locations and consistently routes requests for cache-hits \- as long as the load allows \- resulting in less work, virtually no queues, and a healthy system.
 
 :::info Session-Based Scheduling
-Session-based scheduling provides affinity for individual users but misses cross-user scenarios. In our benchmark with **150 enterprise customers** each having **6,000-token system prompts**, session-scheduling would create 750 separate sessions but miss cross-user cache reuse within customer groups, leaving the majority of computational work (shared 6,000-token context) uncaptured. Precise prefix-cache aware scheduling guarantees **maximal reuse** across the system.
+Session-based scheduling provides affinity for individual users but misses cross-user scenarios. In our benchmark with **150 enterprise customers** each having **6,000-token system prompts**, session-scheduling would create 750 separate sessions but miss cross-user cache reuse within customer groups, leaving the majority of computational work uncaptured. Precise prefix-cache aware scheduling guarantees **maximal reuse** across the system.
 :::
 
 ### **Adoption**
