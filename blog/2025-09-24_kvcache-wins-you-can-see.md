@@ -135,7 +135,7 @@ This two-layered architecture provides a continuously updated, scalable view of 
 
 <br/><br/>
 
-**What about the overhead?** the memory overhead for this global index is negligible \- see **Appendix A.3** for the scaling analysis showing a **1,000,000:1** data-to-metadata ratio.
+**What about the overhead?** The memory overhead for this global index is negligible \- see **Appendix A.3** for the scaling analysis showing a **1,000,000:1** data-to-metadata ratio.
 
 :::info High availability support
 This design naturally supports active-active or active-passive deployments, with either full view duplication or sharding through configurations.
@@ -264,7 +264,7 @@ Precise prefix-aware scheduling is a massive step forward, but it's just one par
 
 The journey of llm-d reflects a broader shift in how we think about LLM inference \- not as a set of stateless function calls, but as a dynamic, stateful orchestration problem. The benchmark data is clear: **prefix-cache aware scheduling is not just an optimization; it is essential for production performance and cost efficiency.**
 
-By moving from AI-blind routing to a precise, KV-cache aware strategy, **we can unlock order-of-magnitude improvements in latency and throughput on the exact same hardware**. The well-lit path of precise prefix-cache awareness offers a tested, benchmarked solution to make your distributed deployments dramatically more efficient.
+By moving from AI-blind routing to a precise, KV-cache aware strategy, **we unlock order-of-magnitude improvements in latency and throughput on the same hardware**. The well-lit path of precise prefix-cache awareness offers a tested, benchmarked solution to make your distributed deployments dramatically more efficient.
 
 :::tip Choosing the Right Strategy
 The optimal scheduler depends on the complexity of the workload. Below is a hierarchy of supported strategies, where each level addresses the limitations of the one before it.
