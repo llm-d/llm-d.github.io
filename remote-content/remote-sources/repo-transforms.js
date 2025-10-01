@@ -11,6 +11,10 @@
  * Mapping of GitHub guide paths to local documentation paths
  * This allows internal links between synced guides to stay within the site
  * 
+ * IMPORTANT: Only files listed in this mapping will have their GitHub URLs
+ * transformed to local paths. All other files (even in guides/) will remain
+ * as GitHub links for safety and precision.
+ * 
  * Future versioning support:
  * - When versioning is enabled, paths will be prefixed with version (e.g., /docs/1.0/guide)
  * - The getInternalGuidePath function will handle version detection automatically
@@ -59,15 +63,18 @@ function getVersionedPath(basePath, branch) {
 /**
  * Check if a GitHub URL points to a synced guide and return the local path
  * Supports future versioning by detecting branch/tag from URL
+ * ONLY transforms links to files that are actually synced (exist in INTERNAL_GUIDE_MAPPINGS)
  */
 function getInternalGuidePath(githubUrl) {
-  // Match GitHub blob URLs for the llm-d repo guides with any branch/tag
-  // Handles branch names with slashes (e.g., feature/branch-name, legacy/v0.9)
-  const match = githubUrl.match(/https:\/\/github\.com\/llm-d\/llm-d\/blob\/(.+?)\/(guides\/.+\.md)$/);
+  // Match GitHub blob URLs for the llm-d repo with any branch/tag
+  // More permissive regex to capture the full path, then check if it's a synced guide
+  const match = githubUrl.match(/https:\/\/github\.com\/llm-d\/llm-d\/blob\/(.+?)\/(.+\.md)$/);
   if (match) {
     const branch = match[1];
-    const guidePath = match[2];
-    const basePath = INTERNAL_GUIDE_MAPPINGS[guidePath];
+    const filePath = match[2];
+    
+    // CRITICAL: Only transform if this exact file path is in our synced mappings
+    const basePath = INTERNAL_GUIDE_MAPPINGS[filePath];
     
     if (basePath) {
       return getVersionedPath(basePath, branch);
