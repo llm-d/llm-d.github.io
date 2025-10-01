@@ -3,6 +3,15 @@
  * 
  * Automatically discovers and generates guide pages from the llm-d repository's guides directory.
  * This replaces the individual guide files and consolidates all guide content management.
+ * 
+ * Future Versioning Support:
+ * - When implementing Docusaurus versioning, this generator can be extended to:
+ *   1. Accept version/branch parameters in the configuration
+ *   2. Generate versioned outDir paths (e.g., 'docs/1.0/guide/Installation')
+ *   3. Update sourceBaseUrl to point to specific tags/releases
+ *   4. Maintain separate guide configurations per version
+ * - The internal link mapping in repo-transforms.js will automatically handle
+ *   version-aware routing between guides within the same version
  */
 
 import { createContentWithSource, createStandardTransform } from '../utils.js';
