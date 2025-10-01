@@ -22,7 +22,7 @@ export default function Install() {
               alt="1. "
               src={require('/docs/assets/counting-01.png').default}
               ></img>
-            <a className="link" href="docs/guide/Installation/prerequisites#compute">
+            <a className="link" href="docs/guide/Installation/prerequisites">
               Check the Prerequisites
             </a>
           </h3>
@@ -34,7 +34,7 @@ export default function Install() {
               alt="2. "
               src={require('/docs/assets/counting-02.png').default}
               ></img>
-            <a className="link" href="docs/guide/Installation/prerequisites#examples">
+            <a className="link" href="docs/guide/Installation/quickstart">
               Run the Quickstart
             </a>
           </h3>

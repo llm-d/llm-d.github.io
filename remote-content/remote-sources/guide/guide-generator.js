@@ -18,12 +18,20 @@ const contentTransform = createStandardTransform('llm-d');
  */
 const SPECIAL_GUIDES = {
   'prerequisites': {
-    sourceFile: 'guides/QUICKSTART.md',
+    sourceFile: 'guides/prereq/infrastructure/README.md',
     title: 'Prerequisites',
     description: 'Prerequisites for running the llm-d QuickStart',
     sidebarLabel: 'Prerequisites',
     sidebarPosition: 1,
     outputFile: 'prerequisites.md'
+  },
+  'quickstart': {
+    sourceFile: 'guides/QUICKSTART.md',
+    title: 'QuickStart',
+    description: 'QuickStart guide for llm-d',
+    sidebarLabel: 'QuickStart',
+    sidebarPosition: 2,
+    outputFile: 'quickstart.md'
   },
   'guide': {
     sourceFile: 'guides/README.md',
@@ -46,31 +54,31 @@ const DYNAMIC_GUIDES = [
     dirName: 'inference-scheduling',
     title: 'Intelligent Inference Scheduling',
     description: 'Well-lit path for intelligent inference scheduling with load balancing',
-    sidebarPosition: 2
+    sidebarPosition: 3
   },
   {
     dirName: 'pd-disaggregation', 
     title: 'Prefill/Decode Disaggregation',
     description: 'Well-lit path for separating prefill and decode operations',
-    sidebarPosition: 3
+    sidebarPosition: 4
   },
   {
     dirName: 'precise-prefix-cache-aware',
     title: 'Precise Prefix Cache Aware Routing',
     description: 'Feature guide for precise prefix cache aware routing',
-    sidebarPosition: 4
+    sidebarPosition: 5
   },
   {
     dirName: 'simulated-accelerators',
     title: 'Accelerator Simulation',
     description: 'Feature guide for llm-d accelerator simulation',
-    sidebarPosition: 5
+    sidebarPosition: 6
   },
   {
     dirName: 'wide-ep-lws',
     title: 'Wide Expert Parallelism with LeaderWorkerSet',
     description: 'Well-lit path for wide expert parallelism using LeaderWorkerSet',
-    sidebarPosition: 6
+    sidebarPosition: 7
   }
 ];
 
