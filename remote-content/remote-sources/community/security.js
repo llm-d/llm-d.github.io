@@ -5,12 +5,13 @@
  * and transforms it into docs/community/security.md
  */
 
-import { createContentWithSource } from '../utils.js';
+import { createContentWithSource, createStandardTransform } from '../utils.js';
 import { findRepoConfig, generateRepoUrls } from '../component-configs.js';
 
 // Get repository configuration from centralized config
 const repoConfig = findRepoConfig('llm-d');
 const { repoUrl, sourceBaseUrl } = generateRepoUrls(repoConfig);
+const contentTransform = createStandardTransform('llm-d');
 
 export default [
   'docusaurus-plugin-remote-content',
@@ -38,8 +39,7 @@ export default [
           repoUrl,
           branch: repoConfig.branch,
           content,
-          // No additional content transformations needed for SECURITY.md
-          contentTransform: (content) => content
+          contentTransform
         });
       }
       return undefined;

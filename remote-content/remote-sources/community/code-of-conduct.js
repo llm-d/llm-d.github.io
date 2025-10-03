@@ -5,12 +5,13 @@
  * and transforms it into docs/community/code-of-conduct.md
  */
 
-import { createContentWithSource } from '../utils.js';
+import { createContentWithSource, createStandardTransform } from '../utils.js';
 import { findRepoConfig, generateRepoUrls } from '../component-configs.js';
 
 // Get repository configuration from centralized config
 const repoConfig = findRepoConfig('llm-d');
 const { repoUrl, sourceBaseUrl } = generateRepoUrls(repoConfig);
+const contentTransform = createStandardTransform('llm-d');
 
 export default [
   'docusaurus-plugin-remote-content',
@@ -37,7 +38,8 @@ export default [
           newFilename: 'code-of-conduct.md',
           repoUrl,
           branch: repoConfig.branch,
-          content
+          content,
+          contentTransform
         });
       }
       return undefined;

@@ -5,12 +5,22 @@
  * and transforms it into docs/community/contribute.md
  */
 
-import { createContentWithSource } from '../utils.js';
+import { createContentWithSource, createStandardTransform } from '../utils.js';
 import { findRepoConfig, generateRepoUrls } from '../component-configs.js';
 
 // Get repository configuration from centralized config
 const repoConfig = findRepoConfig('llm-d');
 const { repoUrl, sourceBaseUrl } = generateRepoUrls(repoConfig);
+
+// Create content transform that applies standard transformations,
+// then overrides specific links that should stay local to the docs site
+const contentTransform = (content, sourcePath) => {
+  const standardTransform = createStandardTransform('llm-d');
+  const transformed = standardTransform(content, sourcePath);
+  return transformed
+    .replace(/\(https:\/\/github\.com\/llm-d\/llm-d\/blob\/main\/CODE_OF_CONDUCT\.md\)/g, '(code-of-conduct)')
+    .replace(/\(https:\/\/github\.com\/llm-d\/llm-d\/blob\/main\/SIGS\.md\)/g, '(sigs)');
+};
 
 export default [
   'docusaurus-plugin-remote-content',
@@ -38,10 +48,7 @@ export default [
           repoUrl,
           branch: repoConfig.branch,
           content,
-          // Fix relative links in the content
-          contentTransform: (content) => content
-            .replace(/\(CODE_OF_CONDUCT\.md\)/g, '(code-of-conduct)')
-            .replace(/\(SIGS\.md\)/g, '(sigs)')
+          contentTransform
         });
       }
       return undefined;
