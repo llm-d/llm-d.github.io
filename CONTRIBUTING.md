@@ -93,7 +93,7 @@ Components are auto-generated! Just add to `remote-content/remote-sources/compon
 
 ## 📋 General Guidelines
 
-This project follows the main llm-d [Contributing Guidelines](https://github.com/llm-d/llm-d/blob/dev/CONTRIBUTING.md):
+This project follows the main llm-d [Contributing Guidelines](https://github.com/llm-d/llm-d/blob/main/CONTRIBUTING.md):
 
 - **DCO Sign-off Required**: Use `git commit -s`
 - **All changes via PR**: No direct pushes to main
