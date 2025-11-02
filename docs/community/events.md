@@ -26,6 +26,12 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
           location: 'Building B | Level 4 | B401-402',
           href: 'https://colocatedeventsna2025.sched.com/event/28D0y',
         },
+        {
+          title: 'KServe Next: Advancing Generative AI Model Serving',
+          date: 'Mon, Nov 10, 2025',
+          time: '2:05pm – 2:30pm EST',
+          href: 'https://colocatedeventsna2025.sched.com/event/28D4J',
+        },
       ],
     },
     {
@@ -62,12 +68,6 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
           date: 'Wed, Nov 12, 2025',
           time: '2:15pm – 2:45pm EST',
           href: 'https://kccncna2025.sched.com/event/27Nlv?iframe=no',
-        },
-        {
-          title: 'KServe Next: Advancing Generative AI Model Serving',
-          date: 'Mon, Nov 10, 2025',
-          time: '2:05pm – 2:30pm EST',
-          href: 'https://colocatedeventsna2025.sched.com/event/28D4J',
         },
       ],
     },
