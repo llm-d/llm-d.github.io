@@ -86,17 +86,23 @@ const DYNAMIC_GUIDES = [
     sidebarPosition: 5
   },
   {
-    dirName: 'simulated-accelerators',
-    title: 'Accelerator Simulation',
-    description: 'Feature guide for llm-d accelerator simulation',
-    sidebarPosition: 6
-  },
-  {
     dirName: 'wide-ep-lws',
     title: 'Wide Expert Parallelism with LeaderWorkerSet',
     description: 'Well-lit path for wide expert parallelism using LeaderWorkerSet',
+    sidebarPosition: 6
+  },
+  {
+    dirName: 'simulated-accelerators',
+    title: 'Accelerator Simulation',
+    description: 'Feature guide for llm-d accelerator simulation',
     sidebarPosition: 7
-  }
+  },
+  {
+    dirName: 'predicted-latency-based-scheduling',
+    title: 'Predicted Latency Based Load Balancing',
+    description: 'Well-lit path for predicted latency based load balancing',
+    sidebarPosition: 8
+  },
 ];
 
 /**
