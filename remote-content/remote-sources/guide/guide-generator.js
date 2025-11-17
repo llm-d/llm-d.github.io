@@ -16,9 +16,11 @@ import { getRepoTransform } from '../repo-transforms.js';
 const repoConfig = findRepoConfig('llm-d');
 
 // Use the release version from YAML instead of the branch
-const releaseVersion = RELEASE_INFO.version;
+// const releaseVersion = RELEASE_INFO.version;
+const releaseVersion = "liu-cong-debug"
 const repoUrl = `https://github.com/${repoConfig.org}/${repoConfig.name}`;
 const sourceBaseUrl = `https://raw.githubusercontent.com/${repoConfig.org}/${repoConfig.name}/${releaseVersion}/`;
+// const sourceBaseUrl = repoUrl
 
 // Create a custom transform that uses the release version instead of 'main'
 const transform = getRepoTransform(repoConfig.org, repoConfig.name);
@@ -72,6 +74,18 @@ const DYNAMIC_GUIDES = [
     title: 'Intelligent Inference Scheduling',
     description: 'Well-lit path for intelligent inference scheduling with load balancing',
     sidebarPosition: 3
+  },
+  {
+    dirName: 'prefix-cache-storage',
+    title: 'Prefix Cache Storage',
+    description: 'Well-lit path for separating prefill and decode operations',
+    sidebarPosition: 4
+  },
+  {
+    dirName: 'prefix-cache-storage/cpu',
+    title: 'Prefix Cache Storage - CPU',
+    description: 'Well-lit path for separating prefill and decode operations',
+    sidebarPosition: 4
   },
   {
     dirName: 'pd-disaggregation', 
