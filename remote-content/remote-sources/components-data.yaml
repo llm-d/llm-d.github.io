@@ -14,43 +14,43 @@ release:
 components:
   - name: llm-d-inference-scheduler
     org: llm-d
+    sidebarLabel: "Inference Scheduler"
     description: This scheduler that makes optimized routing decisions for inference requests to the llm-d inference framework.
-    category: Core Infrastructure
     sidebarPosition: 1
     version: v0.3.2
   - name: llm-d-modelservice
     org: llm-d-incubation
+    sidebarLabel: "Model Service"
     description: '`modelservice` is a Helm chart that simplifies LLM deployment on llm-d by declaratively managing Kubernetes resources for serving base models. It enables reproducible, scalable, and tunable model deployments through modular presets, and clean integration with llm-d ecosystem components (including vLLM, Gateway API Inference Extension, LeaderWorkerSet).'
-    category: Infrastructure Tools
     sidebarPosition: 2
     version: llm-d-modelservice-v0.2.10
   - name: llm-d-routing-sidecar
     org: llm-d
+    sidebarLabel: "Routing Sidecar"
     description: A reverse proxy redirecting incoming requests to the prefill worker specified in the x-prefiller-host-port HTTP request header.
-    category: Core Infrastructure
     sidebarPosition: 3
     version: v0.3.0
   - name: llm-d-inference-sim
     org: llm-d
+    sidebarLabel: "Inference Simulator"
     description: A light weight vLLM simulator emulates responses to the HTTP REST endpoints of vLLM.
-    category: Development Tools
     sidebarPosition: 4
     version: v0.6.1
   - name: llm-d-infra
     org: llm-d-incubation
+    sidebarLabel: "Infrastructure"
     description: A helm chart for deploying gateway and gateway related infrastructure assets for llm-d.
-    category: Infrastructure Tools
     sidebarPosition: 5
     version: v1.3.3
   - name: llm-d-kv-cache-manager
     org: llm-d
+    sidebarLabel: "KV Cache Manager"
     description: This repository contains the llm-d-kv-cache-manager, a pluggable service designed to enable KV-Cache Aware Routing and lay the foundation for advanced, cross-node cache coordination in vLLM-based serving platforms.
-    category: Core Infrastructure
     sidebarPosition: 6
     version: v0.3.0
   - name: llm-d-benchmark
     org: llm-d
+    sidebarLabel: "Benchmark Tools"
     description: This repository provides an automated workflow for benchmarking LLM inference using the llm-d stack. It includes tools for deployment, experiment execution, data collection, and teardown across multiple environments and deployment styles.
-    category: Development Tools
     sidebarPosition: 7
     version: v0.3.0

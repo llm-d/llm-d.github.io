@@ -49,14 +49,16 @@ function generateComponentRemoteSource(config) {
         if (filename === 'README.md') {
           // Generate clean names without llm-d prefix
           const cleanName = name.replace(/^llm-d-/, '');
-          const cleanTitle = cleanName.split('-').map(word => 
+          
+          // Use custom sidebarLabel from config if provided, otherwise auto-generate
+          const displayLabel = config.sidebarLabel || cleanName.split('-').map(word => 
             word.charAt(0).toUpperCase() + word.slice(1)
           ).join(' ');
           
           return createContentWithSource({
-            title: cleanTitle,
+            title: displayLabel,
             description,
-            sidebarLabel: cleanTitle,
+            sidebarLabel: displayLabel,
             sidebarPosition,
             filename: 'README.md',
             newFilename: `${cleanName}.md`,
@@ -107,7 +109,9 @@ The llm-d ecosystem consists of multiple interconnected components that work tog
   sortedComponents.forEach((component) => {
     const { repoUrl } = generateRepoUrls(component);
     const cleanName = component.name.replace(/^llm-d-/, '');
-    const cleanTitle = cleanName.split('-').map(word => 
+    
+    // Use custom sidebarLabel if provided, otherwise auto-generate
+    const displayLabel = component.sidebarLabel || cleanName.split('-').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
     const docLink = `./Components/${cleanName}`;
@@ -117,7 +121,7 @@ The llm-d ecosystem consists of multiple interconnected components that work tog
     const versionUrl = `${repoUrl}/releases/tag/${versionTag}`;
     const versionLink = `[${versionTag}](${versionUrl})`;
     
-    content += `\n| **[${cleanTitle}](${repoUrl})** | ${component.description} | [${component.org}/${component.name}](${repoUrl}) | ${versionLink} | [View Docs](${docLink}) |`;
+    content += `\n| **[${displayLabel}](${repoUrl})** | ${component.description} | [${component.org}/${component.name}](${repoUrl}) | ${versionLink} | [View Docs](${docLink}) |`;
   });
 
   content += `
