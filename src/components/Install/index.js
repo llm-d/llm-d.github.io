@@ -49,7 +49,7 @@ export default function Install() {
               <a className="link" href="docs/guide#our-well-lit-paths">Explore llm-d!</a></h3>
           {/* -------------------------------------------------------------------------- */}
           <a className="static-button install-button button-link" href="docs/guide">
-            Complete install methods here
+            Install Guides
           </a>
         </div>
       </div>

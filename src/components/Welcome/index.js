@@ -20,9 +20,9 @@ export default function Welcome() {
           <a className="static-button button-link" href="docs/architecture">
             Architecture
           </a>
-          <a className="static-button button-link" href="docs/guide/Installation/prerequisites" >
+          <a className="static-button button-link" href="/docs/guide" >
             {/* Link to install page on the docs */}
-            Installation
+            Install Guides
           </a>
           <a className="static-button button-link" href="docs/community">
             {/* Link to Community tab */}
