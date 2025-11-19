@@ -22,6 +22,7 @@ docs/community/sigs.md
 docs/guide/guide.md
 docs/guide/Installation/*.md
 docs/guide/InfraProviders/*.md
+docs/usage/**/*.md
 # Keep category files for sidebar configuration
 !docs/guide/Installation/_category_.json
 !docs/guide/InfraProviders/_category_.json

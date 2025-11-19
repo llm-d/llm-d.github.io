@@ -146,13 +146,19 @@ const config = {
             type: "docSidebar",
             sidebarId: "structureSidebar",
             position: "left",
-            label: "What is llm-d?",
+            label: "Architecture",
           },
           {
             type: "docSidebar",
             sidebarId: "guideSidebar",
             position: "left",
             label: "Guides",
+          },
+          {
+            type: "docSidebar",
+            sidebarId: "usageSidebar",
+            position: "left",
+            label: "Usage",
           },
           {
             type: "docSidebar",

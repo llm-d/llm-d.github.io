@@ -13,6 +13,9 @@ import componentSources from './remote-sources/architecture/components-generator
 // Import guide remote content sources
 import guideSources from './remote-sources/guide/guide-generator.js';
 
+// Import usage remote content sources
+import usageSources from './remote-sources/usage/usage-generator.js';
+
 // Import infra providers remote content sources
 import infraProviderSources from './remote-sources/infra-providers/infra-providers-generator.js';
 
@@ -47,6 +50,9 @@ const remoteContentPlugins = [
   
   // Guide remote content sources (docs/guide/)
   ...guideSources,  // Spread all dynamically generated guide sources
+  
+  // Usage remote content sources (docs/usage/)
+  ...usageSources,  // Spread all dynamically generated usage sources
   
   // Infra Providers remote content sources (docs/infra-providers/)
   ...infraProviderSources,  // Spread all dynamically generated infra provider sources
