@@ -59,6 +59,14 @@ const USAGE_DOCS = [
     sidebarLabel: 'Readiness Probes',
     sidebarPosition: 3,
     outputFile: 'readiness-probes.md'
+  },
+  {
+    sourceFile: 'docs/monitoring/README.md',
+    title: 'Monitoring and Observability',
+    description: 'Enable metrics collection, dashboards, and monitoring for your llm-d deployment',
+    sidebarLabel: 'Monitoring and Observability',
+    sidebarPosition: 4,
+    outputFile: 'monitoring.md'
   }
 ];
 
