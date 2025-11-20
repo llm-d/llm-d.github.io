@@ -113,6 +113,34 @@ display: none !important;
   transform: scale(1.05);
 }
 
+/* Navbar Slack button */
+.navbar-slack-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: transparent;
+  color: var(--ifm-navbar-link-color);
+  text-decoration: none;
+  border-radius: 6px;
+  font-family: var(--ifm-font-family-base);
+  font-size: 1rem;
+  font-weight: var(--ifm-font-weight-semibold);
+  vertical-align: middle;
+  margin-left: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.navbar-slack-button:hover {
+  background-color: #f0f0f0;
+  color: var(--ifm-navbar-link-hover-color);
+  text-decoration: none;
+}
+
+[data-theme="dark"] .navbar-slack-button:hover {
+  background-color: #3a3a3a;
+}
+
 .header {
   display: flex;
   align-content: center;
