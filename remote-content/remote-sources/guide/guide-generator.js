@@ -74,35 +74,43 @@ const DYNAMIC_GUIDES = [
     sidebarPosition: 3
   },
   {
+    dirName: 'tiered-prefix-cache',
+    title: 'Prefix Cache Offloading',
+    description: 'Well-lit path for separating prefill and decode operations',
+    sidebarPosition: 4,
+    targetFilename: 'tiered-prefix-cache/index.md'
+  },
+  {
+    dirName: 'tiered-prefix-cache/cpu',
+    title: 'Prefix Cache Offloading - CPU',
+    description: 'Well-lit path for separating prefill and decode operations',
+    sidebarPosition: 5,
+    targetFilename: 'tiered-prefix-cache/cpu.md'
+  },
+  {
     dirName: 'pd-disaggregation', 
     title: 'Prefill/Decode Disaggregation',
     description: 'Well-lit path for separating prefill and decode operations',
-    sidebarPosition: 4
+    sidebarPosition: 6
   },
   {
     dirName: 'precise-prefix-cache-aware',
     title: 'Precise Prefix Cache Aware Routing',
     description: 'Feature guide for precise prefix cache aware routing',
-    sidebarPosition: 5
+    sidebarPosition: 7
   },
   {
     dirName: 'wide-ep-lws',
     title: 'Wide Expert Parallelism with LeaderWorkerSet',
     description: 'Well-lit path for wide expert parallelism using LeaderWorkerSet',
-    sidebarPosition: 6
+    sidebarPosition: 8
   },
   {
     dirName: 'simulated-accelerators',
     title: 'Accelerator Simulation',
     description: 'Feature guide for llm-d accelerator simulation',
-    sidebarPosition: 7
-  },
-  {
-    dirName: 'predicted-latency-based-scheduling',
-    title: 'Predicted Latency Based Load Balancing',
-    description: 'Well-lit path for predicted latency based load balancing',
-    sidebarPosition: 8
-  },
+    sidebarPosition: 9
+  }
 ];
 
 /**
@@ -147,6 +155,7 @@ function createGuidePlugins() {
   // Add dynamic guides
   DYNAMIC_GUIDES.forEach((guide) => {
     const sourceFile = `guides/${guide.dirName}/README.md`;
+    const targetFilename = guide.targetFilename || `${guide.dirName}.md`;
     
     plugins.push([
       'docusaurus-plugin-remote-content',
@@ -166,7 +175,7 @@ function createGuidePlugins() {
               sidebarLabel: guide.title,
               sidebarPosition: guide.sidebarPosition,
               filename: sourceFile,
-              newFilename: `${guide.dirName}.md`,
+              newFilename: targetFilename,
               repoUrl,
               branch: releaseVersion,
               content,

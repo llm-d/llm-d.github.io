@@ -97,7 +97,54 @@ git push                           # Triggers automatic deployment
 - Component descriptions and version tags
 - **Components** sync from their individual release tags
 - **Guides** sync from the llm-d/llm-d release tag
+- **Architecture docs** sync from the llm-d/llm-d release tag
 - **Community docs** always sync from `main` branch (latest)
+
+### Understanding Versioned vs. Always-Current Content
+
+The remote content system supports two sync strategies:
+
+**Versioned Content** (syncs from release tags):
+- **Guides** (`docs/guide/`) - Uses `RELEASE_INFO.version` from `components-data.yaml`
+- **Architecture** (`docs/architecture/`) - Uses `RELEASE_INFO.version` from `components-data.yaml`
+- **Components** (`docs/architecture/Components/`) - Each component uses its own `version` field from `components-data.yaml`
+- **Infrastructure Providers** (`docs/guide/InfraProviders/`) - Uses `RELEASE_INFO.version` from `components-data.yaml`
+
+These docs are pinned to specific release tags (e.g., `v0.3.1`) to ensure documentation matches the released code. When you update `release.version` in `components-data.yaml`, all versioned content automatically syncs from the new tag.
+
+**Always-Current Content** (syncs from `main` branch):
+- **Community docs** (`docs/community/`) - Contributing guidelines, Code of Conduct, Security Policy, SIGs
+- These are configured via `COMMON_REPO_CONFIGS['llm-d-main'].branch = 'main'` in `component-configs.js`
+
+Community documentation stays current with the latest policies and processes, independent of releases. The `branch` field in `COMMON_REPO_CONFIGS` controls this behavior.
+
+**How it works:**
+- `generateRepoUrls()` in `component-configs.js` prefers `version` over `branch` when both exist
+- Versioned content sources call `findRepoConfig('llm-d')` and use `RELEASE_INFO.version`
+- Community sources call `findRepoConfig('llm-d')` and use `repoConfig.branch` (which is `'main'`)
+- This separation lets you cut releases without worrying about stale community policies
+
+### Testing content from a feature branch
+
+To preview remote docs from a work-in-progress branch (for example `liu-cong-debug`), temporarily set `release.version` in `remote-content/remote-sources/components-data.yaml` to that branch name. Run `npm start` or `npm run build` to pull the branch content into the site. When testing is done, change `release.version` back to the released tag so production remains on the official docs.
+
+### Supporting remote guides from nested directories
+
+Dynamic guides are configured in `remote-content/remote-sources/guide/guide-generator.js`. Each entry in `DYNAMIC_GUIDES` points at a `README.md` inside `guides/<dirName>/` in the main repo. By default, the generator mirrors the directory structure when it creates docs: `dirName: 'some-folder/sub-guide'` produces `some-folder/sub-guide.md` under `docs/guide/Installation`, and the sidebar groups pages under a folder.
+
+If you want to surface a nested source as a top-level page, add an optional `targetFilename` to the guide definition. Example:
+
+```javascript
+{
+  dirName: 'prefix-cache-storage/cpu',
+  title: 'Prefix Cache Storage - CPU',
+  description: '…',
+  sidebarPosition: 5,
+  targetFilename: 'prefix-cache-storage-cpu.md'
+}
+```
+
+With `targetFilename`, the generator still reads `guides/prefix-cache-storage/cpu/README.md`, but it writes the output to `docs/guide/Installation/prefix-cache-storage-cpu.md`, letting the page appear alongside other top-level guides. Leave `targetFilename` out to keep the default nested behavior.
 
 **Manual updates:** You can also manually edit `components-data.yaml` if needed.
 
