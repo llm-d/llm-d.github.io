@@ -40,7 +40,7 @@ export const COMMON_REPO_CONFIGS = {
   'llm-d-main': {
     name: 'llm-d',
     org: 'llm-d',
-    branch: 'main', // Community docs always sync from main
+    branch: 'liu-cong-debug', // Community docs always sync from main
     description: 'Main llm-d repository with core architecture and documentation'
   },
   'llm-d-infra': {
