@@ -152,7 +152,7 @@ sidebar_position: ${sidebarPosition}
   const transformedContent = contentTransform ? contentTransform(content, filename) : content;
   
   // Ensure content ends with a newline before adding the callout
-  const contentWithNewline = transformedContent.endsWith('\n') ? transformedContent : transformedContent + '\n';
+  const contentWithNewline = transformedContent + '\n';
   
   return {
     filename: newFilename,
