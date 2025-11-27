@@ -92,9 +92,9 @@ function convertTabsToDocusaurus(content) {
     
     tabs.forEach(tab => {
       const defaultAttr = tab.isDefault ? ' default' : '';
-      result += `  <TabItem value="${tab.label.toLowerCase().replace(/[^a-z0-9]/g, '-')}" label="${tab.label}"${defaultAttr}>\n\n`;
+      result += `<TabItem value="${tab.label.toLowerCase().replace(/[^a-z0-9]/g, '-')}" label="${tab.label}"${defaultAttr}>\n\n`;
       result += `${tab.content}\n\n`;
-      result += `  </TabItem>\n`;
+      result += `</TabItem>\n`;
     });
     
     result += `</Tabs>`;
