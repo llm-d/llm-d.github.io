@@ -13,7 +13,7 @@ export default function Home() {
   return (
     <Layout
       title={`Welcome to the ${siteConfig.title} website!`}
-      description="llm-d: a Kubernetes-native high-performance distributed LLM inference framework">
+      description="llm-d: Achieve SOTA Inference Performance On Any Accelerator">
       <main>
         <Welcome />
         

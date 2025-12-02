@@ -127,9 +127,9 @@ const config = {
       
       // Announcement banner for v0.2 release
       announcementBar: {
-        id: 'llm-d-v0-3-release',
+        id: 'llm-d-v0-4-release',
         content:
-          '🎉 <b>llm-d 0.3 is now released!</b> Check out high scale DeepSeek serving with wide expert-parallelism, predicted latency balancing, and better prefix cache routing. <a target="_self" rel="noopener noreferrer" href="/blog/llm-d-v0.3-expanded-hardware-faster-perf-and-igw-ga"><b>Read the announcement →</b></a>',
+          '🎉 <b>llm-d 0.4 is now released!</b> Check out low latency DeepSeek serving with with speculative decoding, tiered prefix cache offloading guide, and the workload autoscaler preview. <a target="_self" rel="noopener noreferrer" href="/blog/llm-d-v0.4-achieve-sota-inference-across-accelerators"><b>Read the announcement →</b></a>',
         backgroundColor: '#7f317f',
         textColor: '#fff',
         isCloseable: true,
