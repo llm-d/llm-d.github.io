@@ -274,6 +274,9 @@ const config = {
                     <a href="https://www.reddit.com/r/llm_d/" target="_blank" rel="noreferrer noopener" aria-label="Reddit">
                       <img src="/img/new-social/reddit-mark-white.png" alt="Reddit" />
                     </a>
+                    <a href="https://bsky.app/profile/llm-d.ai" target="_blank" rel="noreferrer noopener" aria-label="Bluesky">
+                      <img src="/img/new-social/bluesky-mark-white.svg" alt="Bluesky" />
+                    </a>
                     <a href="https://x.com/_llm_d_" target="_blank" rel="noreferrer noopener" aria-label="X / Twitter">
                       <img src="/img/new-social/x-mark-white.png" alt="X / Twitter" />
                     </a>

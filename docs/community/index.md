@@ -199,6 +199,7 @@ import Link from '@docusaurus/Link';
 Follow llm-d across social platforms for updates, discussions, and community highlights:
 
 - 💼 **LinkedIn**: [@llm-d](https://linkedin.com/company/llm-d)
+- 🦋 **Bluesky**: [@llm-d.ai](https://bsky.app/profile/llm-d.ai)
 - 🐦 **X (Twitter)**: [@\_llm_d\_](https://x.com/_llm_d_)
 - 🤖 **Reddit**: [r/llm_d](https://www.reddit.com/r/llm_d/)
 

@@ -52,6 +52,7 @@ We use Google Groups to share architecture diagrams and other content. Please jo
 
 * [https://llm-d.ai](https://llm-d.ai)
 * [LinkedIn](http://linkedin.com/company/llm-d)
+* [Bluesky - @llm-d.ai](https://bsky.app/profile/llm-d.ai)
 * [@\_llm\_d\_](https://twitter.com/_llm_d_)
 * [r/llm\_d](https://www.reddit.com/r/llm_d/)
 * YouTube - coming soon
