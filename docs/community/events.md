@@ -33,6 +33,13 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
           location: 'Elicium Ballroom 1',
           href: 'https://kccnceu2026.sched.com/event/2CW5y/tutorial-kv-cache-wins-you-can-feel-building-ai-aware-llm-routing-on-kubernetes-tyler-michael-smith-red-hat-kay-yan-daocloud-danny-harnik-michal-malka-maroon-ayoub-ibm',
         },
+        {
+          title: 'Evolving KServe: The Unified Model Inference Platform for Both Predictive and Generative AI',
+          date: 'Thu, Mar 26, 2026',
+          time: '1:45pm - 2:15pm CET',
+          location: 'E103-105',
+          href: 'https://sched.co/2EF54',
+        },
       ],
     },
   ];
