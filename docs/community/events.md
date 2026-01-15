@@ -12,6 +12,15 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
 {(() => {
   const events = [
     {
+      month: 'January 2026',
+      title: 'Dynamo Day',
+      location: 'Virtual Event',
+      dateText: 'January 22, 2026',
+      cost: 'Free',
+      href: 'https://nvevents.nvidia.com/dynamoday/begin',
+      sessions: [],
+    },
+    {
       month: 'March 2026',
       title: 'KubeCon + CloudNativeCon Europe 2026',
       location: 'London, UK',
