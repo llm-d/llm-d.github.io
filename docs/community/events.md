@@ -12,40 +12,45 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
 {(() => {
   const events = [
     {
-      month: 'January 2026',
-      title: 'Dynamo Day',
-      location: 'Virtual Event',
-      dateText: 'January 22, 2026',
-      cost: 'Free',
-      href: 'https://nvevents.nvidia.com/dynamoday/begin',
-      sessions: [],
-    },
-    {
       month: 'March 2026',
       title: 'KubeCon + CloudNativeCon Europe 2026',
-      location: 'London, UK',
-      dateText: 'March 24–26, 2026',
+      location: 'Amsterdam, The Netherlands',
+      dateText: 'March 23–26, 2026',
       cost: 'Paid',
       href: 'https://events.linuxfoundation.org/kubecon-cloudnativecon-europe/',
       sessions: [
         {
+          title: 'Panel: Routing Intelligence Vs Traffic Control: Architectural Tradeoffs for AI Inference in Gateway API',
+          date: 'Mon, Mar 23, 2026',
+          time: '12:45 – 13:20 CET',
+          location: 'Hall 7 | Room B',
+          href: 'https://colocatedeventseu2026.sched.com/event/2DY4J/panel-routing-intelligence-vs-traffic-control-how-ai-is-shaping-mesh-gateways-lin-sun-soloio-rob-salmond-google-kevin-foster-red-hat-john-howard-soloio-dan-sun-bloomberg',
+        },
+        {
+          title: 'Cloud Native Theater | Istio Day: Running State of the Art Inference with Istio and llm-d',
+          date: 'Tue, Mar 24, 2026',
+          time: '16:00 – 16:35 CET',
+          location: 'Halls 1-5',
+          href: 'https://kccnceu2026.sched.com/event/2EG0w/cloud-native-theater-istio-day-running-state-of-the-art-llms-at-scale-with-istio-ambient-mode-keith-mattix-ii-microsoft-and-nili-guy-ibm',
+        },
+        {
           title: 'Route, Serve, Adapt, Repeat: Adaptive Routing for AI Inference Workloads in Kubernetes',
           date: 'Wed, Mar 25, 2026',
-          time: '11:45am – 12:15pm CET',
+          time: '11:45 – 12:15 CET',
           location: 'Auditorium',
           href: 'https://kccnceu2026.sched.com/event/2CW2C/route-serve-adapt-repeat-adaptive-routing-for-ai-inference-workloads-in-kubernetes-nir-rozenbaum-ibm-kellen-swain-google',
         },
         {
           title: 'Tutorial: KV-Cache Wins You Can Feel: Building AI-Aware LLM Routing on Kubernetes',
           date: 'Thu, Mar 26, 2026',
-          time: '11:00am – 12:15pm CET',
-          location: 'Elicium Ballroom 1',
+          time: '11:00 – 12:15 CET',
+          location: 'Elicium 1',
           href: 'https://kccnceu2026.sched.com/event/2CW5y/tutorial-kv-cache-wins-you-can-feel-building-ai-aware-llm-routing-on-kubernetes-tyler-michael-smith-red-hat-kay-yan-daocloud-danny-harnik-michal-malka-maroon-ayoub-ibm',
         },
         {
           title: 'Evolving KServe: The Unified Model Inference Platform for Both Predictive and Generative AI',
           date: 'Thu, Mar 26, 2026',
-          time: '1:45pm - 2:15pm CET',
+          time: '11:00 – 11:30 CET',
           location: 'E103-105',
           href: 'https://sched.co/2EF54',
         },
@@ -192,7 +197,7 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
                             <div>
                               <a href={s.href} target="_blank" rel="noopener noreferrer" style={{fontWeight: 600, color: 'var(--ifm-color-primary)'}}>{s.title}</a>
                               <div style={{fontSize: '12px', marginTop: '4px'}}>
-                                {s.date} · {s.time}
+                                {s.date} · {s.time} · 📍 {s.location}
                               </div>
                             </div>
                             <div style={{whiteSpace: 'nowrap'}}>

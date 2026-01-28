@@ -141,12 +141,17 @@ function applyBasicMdxFixes(content) {
       
       return `:::${docusaurusType}\n${cleanContent}\n:::\n`;
     })
-    // Fix HTML comments for MDX compatibility (without breaking Mermaid arrows)
+    // Handle HTML comments for MDX compatibility
+    // Multi-line comments (contain newlines) are removed entirely - they're meant to hide content
+    // Single-line comments are converted to JSX comments for MDX compatibility
     .replace(/<!--([\s\S]*?)-->/g, (_match, comment) => {
-      const normalized = comment
-        .replace(/^\s*/, ' ')
-        .replace(/\s*$/, ' ');
-      return `{/*${normalized}*/}`;
+      // If comment contains newlines, it's meant to hide content - remove it entirely
+      if (comment.includes('\n')) {
+        return '';
+      }
+      // Single-line comments: convert to JSX comment syntax
+      const normalized = comment.trim();
+      return `{/* ${normalized} */}`;
     })
     // Fix HTML tags for MDX compatibility
     .replace(/<br>/g, '<br />')
@@ -157,6 +162,10 @@ function applyBasicMdxFixes(content) {
     .replace(/(<\w+[^>]*?)(\s+\w+)=([^"'\s>]+)([^>]*?>)/g, '$1$2="$3"$4')
     .replace(/'(\{[^}]*\})'/g, '`$1`')
     .replace(/\{[^}]*\}/g, (match) => {
+      // Skip JSX comments - they're valid MDX and shouldn't be wrapped
+      if (match.startsWith('{/*') || match.startsWith('{ /*')) {
+        return match;
+      }
       if (match.includes('"') || match.includes("'") || match.includes('\\') || match.match(/\{[^}]*\d+[^}]*\}/)) {
         return '`' + match + '`';
       }
