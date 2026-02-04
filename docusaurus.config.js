@@ -108,11 +108,11 @@ const config = {
     ({
       // Replace with your project's social card
       
-      // Announcement banner for v0.2 release
+      // Announcement banner for v0.5 release
       announcementBar: {
-        id: 'llm-d-v0-4-release',
+        id: 'llm-d-v0-5-release',
         content:
-          '🎉 <b>llm-d 0.4 is now released!</b> Check out low latency DeepSeek serving with with speculative decoding, tiered prefix cache offloading guide, and the workload autoscaler preview. <a target="_self" rel="noopener noreferrer" href="/blog/llm-d-v0.4-achieve-sota-inference-across-accelerators"><b>Read the announcement →</b></a>',
+          '🎉 <b>llm-d 0.5 is now released!</b> Check out hierarchical KV offloading, cache-aware LoRA routing, resilient networking with UCCL, and scale-to-zero autoscaling. <a target="_self" rel="noopener noreferrer" href="/blog/llm-d-v0.5-reproducible-resilient-cost-efficient-inference-at-scale"><b>Read the announcement →</b></a>',
         backgroundColor: '#7f317f',
         textColor: '#fff',
         isCloseable: true,
