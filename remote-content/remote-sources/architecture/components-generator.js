@@ -104,8 +104,8 @@ The llm-d ecosystem consists of multiple interconnected components that work tog
 
 ## Components
 
-| Component | Description | Repository | Version | Documentation |
-|-----------|-------------|------------|---------|---------------|`;
+| Component | Description | Repository | Version |
+|-----------|-------------|------------|---------|`;
 
   // Generate single table with all components (sorted by sidebarPosition)
   const sortedComponents = [...componentsData.components].sort((a, b) => a.sidebarPosition - b.sidebarPosition);
@@ -118,15 +118,46 @@ The llm-d ecosystem consists of multiple interconnected components that work tog
     const displayLabel = component.sidebarLabel || cleanName.split('-').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
-    const docLink = `./Components/${cleanName}`;  // Link to Components/ folder
+    
+    // Link component name to internal docs if synced, otherwise to GitHub
+    const componentLink = component.skipSync 
+      ? repoUrl
+      : `./Components/${cleanName}`;
     
     // Create version link to GitHub releases
     const versionTag = component.version || 'latest';
     const versionUrl = `${repoUrl}/releases/tag/${versionTag}`;
     const versionLink = `[${versionTag}](${versionUrl})`;
     
-    content += `\n| **[${displayLabel}](${repoUrl})** | ${component.description} | [${component.org}/${component.name}](${repoUrl}) | ${versionLink} | [View Docs](${docLink}) |`;
+    content += `\n| **[${displayLabel}](${componentLink})** | ${component.description} | [${component.org}/${component.name}](${repoUrl}) | ${versionLink} |`;
   });
+
+  // Generate Container Images section if data exists
+  if (componentsData.containerImages && componentsData.containerImages.length > 0) {
+    content += `
+
+## Container Images
+
+Container images are published to the [GitHub Container Registry](https://github.com/orgs/llm-d/packages).
+
+\`\`\`
+ghcr.io/llm-d/<image-name>:<version>
+\`\`\`
+
+| Image | Description | Version | Pull Command |
+|-------|-------------|---------|--------------|`;
+
+    componentsData.containerImages.forEach((image) => {
+      const packageUrl = `https://github.com/${image.sourceRepo}/pkgs/container/${image.name}`;
+      content += `\n| [${image.name}](${packageUrl}) | ${image.description} | ${image.version} | \`ghcr.io/llm-d/${image.name}:${image.version}\` |`;
+    });
+
+    // Add deprecation note if there are deprecated images
+    if (componentsData.deprecatedImages && componentsData.deprecatedImages.length > 0) {
+      const deprecatedList = componentsData.deprecatedImages.map(img => `\`${img.name}\``).join(', ');
+      content += `\n\n**Note:** The following images have been deprecated in this release: ${deprecatedList}.`;
+    }
+  }
 
   content += `
 
@@ -187,12 +218,16 @@ function generateLatestReleaseSource() {
 
 /**
  * Generate all component remote sources including the Latest Release page
+ * Components with skipSync: true are excluded from README syncing but still appear on the Latest Release page
  * @returns {Array} Array of remote content plugin configurations
  */
 function generateAllComponentSources() {
+  // Filter out components with skipSync: true
+  const syncableComponents = componentsData.components.filter(c => !c.skipSync);
+  
   return [
     generateLatestReleaseSource(), // Latest Release page
-    ...componentsData.components.map(generateComponentRemoteSource) // Individual component pages
+    ...syncableComponents.map(generateComponentRemoteSource) // Individual component pages (excluding skipSync)
   ];
 }
 

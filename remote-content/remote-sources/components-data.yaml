@@ -2,50 +2,94 @@
 # This file contains static data for generating the Components documentation page
 # Update this file when there are new releases or component changes
 #
-# Last synced from: https://github.com/llm-d/llm-d/releases/tag/v0.4.0
-# Sync date: 2025-12-01T21:17:30.109Z
+# Last synced from: https://github.com/llm-d/llm-d/releases/tag/v0.5.0
+# Sync date: 2026-02-04T00:00:00.000Z
 
 release:
-  version: v0.4.0
-  releaseDate: '2025-11-26'
-  releaseDateFormatted: November 26, 2025
-  releaseUrl: https://github.com/llm-d/llm-d/releases/tag/v0.4.0
-  releaseName: Release v0.4.0
+  version: v0.5.0
+  releaseDate: '2026-02-03'
+  releaseDateFormatted: February 3, 2026
+  releaseUrl: https://github.com/llm-d/llm-d/releases/tag/v0.5.0
+  releaseName: Release v0.5.0
 components:
   - name: llm-d-inference-scheduler
     org: llm-d
     sidebarLabel: Inference Scheduler
-    description: This scheduler that makes optimized routing decisions for inference requests to the llm-d inference framework.
+    description: The scheduler that makes optimized routing decisions for inference requests to the llm-d inference framework.
     sidebarPosition: 1
-    version: v0.3.2
+    version: v0.5.0
   - name: llm-d-modelservice
     org: llm-d-incubation
     sidebarLabel: Model Service
     description: '`modelservice` is a Helm chart that simplifies LLM deployment on llm-d by declaratively managing Kubernetes resources for serving base models. It enables reproducible, scalable, and tunable model deployments through modular presets, and clean integration with llm-d ecosystem components (including vLLM, Gateway API Inference Extension, LeaderWorkerSet).'
     sidebarPosition: 2
-    version: llm-d-modelservice-v0.3.8
+    version: v0.4.5
   - name: llm-d-inference-sim
     org: llm-d
     sidebarLabel: Inference Simulator
     description: A light weight vLLM simulator emulates responses to the HTTP REST endpoints of vLLM.
     sidebarPosition: 4
-    version: v0.6.1
+    version: v0.7.1
   - name: llm-d-infra
     org: llm-d-incubation
     sidebarLabel: Infrastructure
     description: A helm chart for deploying gateway and gateway related infrastructure assets for llm-d.
     sidebarPosition: 5
-    version: v1.3.4
-  - name: llm-d-kv-cache-manager
-    # note: this is renamed to llm-d-kv-cache in > v0.4.0
+    version: v1.3.6
+  - name: llm-d-kv-cache
     org: llm-d
-    sidebarLabel: KV Cache Manager
-    description: This repository contains the llm-d-kv-cache-manager, a pluggable service designed to enable KV-Cache Aware Routing and lay the foundation for advanced, cross-node cache coordination in vLLM-based serving platforms.
+    sidebarLabel: KV Cache
+    description: The libraries for tokenization, KV-events processing, and KV-cache indexing and offloading.
     sidebarPosition: 6
-    version: v0.3.0
+    version: v0.5.0
   - name: llm-d-benchmark
     org: llm-d
     sidebarLabel: Benchmark Tools
     description: This repository provides an automated workflow for benchmarking LLM inference using the llm-d stack. It includes tools for deployment, experiment execution, data collection, and teardown across multiple environments and deployment styles.
     sidebarPosition: 7
     version: v0.3.0
+  - name: workload-variant-autoscaler
+    org: llm-d-incubation
+    sidebarLabel: Workload Variant Autoscaler
+    description: Graduated from experimental to core component. Provides saturation-based autoscaling for llm-d deployments.
+    sidebarPosition: 8
+    version: v0.5.0
+  - name: gateway-api-inference-extension
+    org: kubernetes-sigs
+    sidebarLabel: Gateway API Inference Extension
+    description: A Helm chart to deploy an InferencePool, a corresponding EndpointPicker (epp) deployment, and any other related assets.
+    sidebarPosition: 9
+    version: v1.3.0
+    skipSync: true  # External kubernetes-sigs repository
+
+# Container images published to GitHub Container Registry (ghcr.io/llm-d/...)
+containerImages:
+  - name: llm-d-cuda
+    description: CUDA-based inference image for NVIDIA GPUs
+    version: v0.5.0
+    sourceRepo: llm-d/llm-d
+  - name: llm-d-xpu
+    description: Intel XPU inference image
+    version: v0.5.0
+    sourceRepo: llm-d/llm-d
+  - name: llm-d-cpu
+    description: CPU-only inference image (New in v0.5.0)
+    version: v0.5.0
+    sourceRepo: llm-d/llm-d
+  - name: llm-d-inference-scheduler
+    description: Inference scheduler for optimized routing
+    version: v0.5.0
+    sourceRepo: llm-d/llm-d-inference-scheduler
+  - name: llm-d-routing-sidecar
+    description: Routing sidecar for request redirection
+    version: v0.5.0
+    sourceRepo: llm-d/llm-d-inference-scheduler
+  - name: llm-d-inference-sim
+    description: Lightweight vLLM simulator
+    version: v0.7.1
+    sourceRepo: llm-d/llm-d-inference-sim
+
+# Deprecated images (for reference)
+deprecatedImages:
+  - name: llm-d-aws
+    note: Deprecated in v0.5.0
