@@ -23,7 +23,7 @@ components:
     sidebarLabel: Model Service
     description: '`modelservice` is a Helm chart that simplifies LLM deployment on llm-d by declaratively managing Kubernetes resources for serving base models. It enables reproducible, scalable, and tunable model deployments through modular presets, and clean integration with llm-d ecosystem components (including vLLM, Gateway API Inference Extension, LeaderWorkerSet).'
     sidebarPosition: 2
-    version: v0.4.5
+    version: llm-d-modelservice-v0.4.5
   - name: llm-d-inference-sim
     org: llm-d
     sidebarLabel: Inference Simulator
