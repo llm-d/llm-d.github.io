@@ -254,6 +254,12 @@ export function transformRepo(content, { repoUrl, branch, sourcePath = '' }) {
     .replace(
       /https:\/\/github\.com\/llm-d\/llm-d\/blob\/dev\//g,
       'https://github.com/llm-d/llm-d/blob/main/'
+    )
+    // Fix broken link in WVA README - llm-d repo is in llm-d org, not llm-d-incubation
+    // TODO: Remove this transform after https://github.com/llm-d-incubation/workload-variant-autoscaler/pull/680 is merged
+    .replace(
+      /https:\/\/github\.com\/llm-d-incubation\/llm-d(?![a-z-])/g,
+      'https://github.com/llm-d/llm-d'
     );
   
   return fixImages(applyBasicMdxFixes(fixedContent), repoUrl, branch, sourceDir)

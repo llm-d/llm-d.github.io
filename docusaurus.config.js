@@ -186,8 +186,8 @@ const config = {
                 to: "docs/architecture/Components/inference-scheduler",
               },
               {
-                label: "KV Cache Manager",
-                to: "docs/architecture/Components/kv-cache-manager",
+                label: "KV Cache",
+                to: "docs/architecture/Components/kv-cache",
               },
               {
                 label: "Model Service",
