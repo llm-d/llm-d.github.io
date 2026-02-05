@@ -190,7 +190,7 @@ image_url: https://your-website.com/path/to/your-photo.jpg
 
 **Examples from existing authors:**
 - GitHub avatar: [`robshaw`](blog/authors.yml#L10-L11) uses `https://avatars.githubusercontent.com/u/114415538?v=4`
-- Local image: [`cnuland`](blog/authors.yml#L39) uses `/img/blogs/cnuland.jpeg`
+- Local image: [`cnuland`](blog/authors.yml#L39) uses `/img/blogs/cnuland.webp`
 
 #### 4. **Write Your Content**
 

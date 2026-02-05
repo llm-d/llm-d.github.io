@@ -23,7 +23,7 @@ The llm-d project lays out clear, “well-lit” paths for anyone to adopt the l
 Deploying large language models (LLMs) on Kubernetes has become the norm, but LLM inference workloads behave very differently from standard microservices. Traditional patterns like uniform replicas paired with round-robin load balancing assume each request uses the same amount of resources and finishes in roughly the same time. In contrast, LLM requests can vary wildly in token count and compute needs, making simple load-spread strategies prone to bottlenecks and imbalanced traffic.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/inference-scheduling/image01.png" alt="Intelligent inference scheduling diagram" style={{width: '75%', height: 'auto'}} />
+  <img src="/img/blogs/inference-scheduling/image01.webp" alt="Intelligent inference scheduling diagram" style={{width: '75%', height: 'auto'}} />
 </div>  
 
 <!-- truncate -->
@@ -51,7 +51,7 @@ The default EPP in IGW follows a structured scheduling cycle for each incoming r
 Building on IGW’s foundation, **llm-d** **augments the EPP with more advanced scheduling capabilities**. It introduces scorers that optimize for KV cache locality (boosting prefix-cache hit rates) and orchestrates multiple scheduling passes to disaggregate prefill and decode phases onto specialized pod variants. The result is a fully LLM-aware scheduler that drives higher throughput, lower tail latencies, and finer resource efficiency across the board.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/inference-scheduling/image02.png" alt="Diagram" style={{width: '75%', height: 'auto'}} />
+  <img src="/img/blogs/inference-scheduling/image02.webp" alt="Diagram" style={{width: '75%', height: 'auto'}} />
 </div>
 
 ### Intelligent Inference Scheduling with llm-d
@@ -83,21 +83,21 @@ When cache locality is abundant, the results are dramatic:
   
 <div style={{margin: '20px 0'}}>
   <div style={{marginBottom: '20px'}}>
-    <img src="/img/blogs/inference-scheduling/image03.png" alt="Throughput vs Request Rate" style={{width: '100%', height: 'auto'}} />
+    <img src="/img/blogs/inference-scheduling/image03.webp" alt="Throughput vs Request Rate" style={{width: '100%', height: 'auto'}} />
     <p style={{textAlign: 'center', fontSize: '0.9em', marginTop: '8px'}}><em>Throughput vs Request Rate</em></p>
   </div>
   
   <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', alignItems: 'start'}}>
     <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%'}}>
-      <img src="/img/blogs/inference-scheduling/image04.png" alt="Success Rate" style={{width: '100%', height: 'auto'}} />
+      <img src="/img/blogs/inference-scheduling/image04.webp" alt="Success Rate" style={{width: '100%', height: 'auto'}} />
       <p style={{textAlign: 'center', fontSize: '0.85em', marginTop: '6px'}}><em>Success Rate</em></p>
     </div>
     <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%'}}>
-      <img src="/img/blogs/inference-scheduling/image05.png" alt="TTFT and QPS" style={{width: '100%', height: 'auto'}} />
+      <img src="/img/blogs/inference-scheduling/image05.webp" alt="TTFT and QPS" style={{width: '100%', height: 'auto'}} />
       <p style={{textAlign: 'center', fontSize: '0.85em', marginTop: '6px'}}><em>TTFT and QPS</em></p>
     </div>
     <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%'}}>
-      <img src="/img/blogs/inference-scheduling/image06.png" alt="Intertoken Latency" style={{width: '100%', height: 'auto'}} />
+      <img src="/img/blogs/inference-scheduling/image06.webp" alt="Intertoken Latency" style={{width: '100%', height: 'auto'}} />
       <p style={{textAlign: 'center', fontSize: '0.85em', marginTop: '6px'}}><em>Intertoken Latency</em></p>
     </div>
   </div>
@@ -125,8 +125,8 @@ When cache hits are rare, prefix-awareness provides little benefit, and both sco
 
 Under low prefix sharing workloads, the benefits of prefix-aware routing naturally diminish. In this case, adding load-awareness or prefix-awareness makes little difference \- both strategies scale smoothly and meet latency targets.
 
-![Latency vs request rate](/img/blogs/inference-scheduling/image07.png)
-![Throughput vs Request rate](/img/blogs/inference-scheduling/image08.png)
+![Latency vs request rate](/img/blogs/inference-scheduling/image07.webp)
+![Throughput vs Request rate](/img/blogs/inference-scheduling/image08.webp)
 
 ### **Takeaway**
 
