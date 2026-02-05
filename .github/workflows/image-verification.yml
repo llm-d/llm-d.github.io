@@ -1,0 +1,68 @@
+name: Image Verification on Pull Request
+
+on:
+  pull_request:
+    branches: [ main, master ]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  image-verification:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+          fetch-depth: 0
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.18.1
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build the application
+      run: npm run build
+        
+    - name: Start the application in background
+      run: |
+        npm run serve &
+        echo $! > server.pid
+        
+    - name: Wait for application to be ready
+      run: |
+        echo "Waiting for application to start on port 3000..."
+        timeout=60
+        counter=0
+        
+        while [ $counter -lt $timeout ]; do
+          if curl -f http://localhost:3000 >/dev/null 2>&1; then
+            echo "✅ Application is ready!"
+            break
+          fi
+          
+          echo "⏳ Waiting... ($counter/$timeout seconds)"
+          sleep 1
+          counter=$((counter + 1))
+        done
+        
+        if [ $counter -eq $timeout ]; then
+          echo "❌ Application failed to start within $timeout seconds"
+          exit 1
+        fi
+        
+    - name: Run image verification
+      run: node tests/image_verifier.js --url http://localhost:3000
+        
+    - name: Cleanup
+      if: always()
+      run: |
+        if [ -f server.pid ]; then
+          kill $(cat server.pid) 2>/dev/null || true
+          rm -f server.pid
+        fi
+        # Kill any remaining node processes
+        pkill -f "docusaurus serve" || true
