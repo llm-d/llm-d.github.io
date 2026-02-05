@@ -106,8 +106,16 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      // Replace with your project's social card
+      // Social card image for Open Graph and Twitter Cards
+      image: 'img/llm-d-logotype-and-icon.png',
       
+      // Additional meta tags for social media
+      metadata: [
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:site', content: '@_llm_d_' },
+        { name: 'og:type', content: 'website' },
+      ],
+
       // Announcement banner for v0.5 release
       announcementBar: {
         id: 'llm-d-v0-5-release',
