@@ -1,6 +1,6 @@
 # Native KV cache offloading to any file system with llm-d
 
-Kfir Toledo, Danny Harnik, Effi Ofer, Or Ozeri
+#### *Kfir Toledo, Danny Harnik, Effi Ofer, Or Ozeri*
 
 llm-d is a distributed inference platform spanning multiple vLLM instances. KV cache hits are critical to achieving high inference throughput. Yet, in a distributed environment, cache hits do not occur across different nodes as the KV cache is local to each vLLM instance. In addition, this local cache is limited in size, further limiting KV data reuse. This blog presents a new way to offload KV cache to storage, tackling both aforementioned challenges – KV cache sharing and KV Cache scale.       llm-d’s file system (FS) backend is a KV cache storage connector for vLLM that offloads KV blocks to shared storage based on vLLM’s native Offloading Connector. While the llm-d FS backend can speed up serving of single requests (improve TTFT), its main goal is rather to preserve stable throughput and low latency at scale,  as concurrency and context lengths grow. This is accomplished by significantly enlarging the cache space and enabling KV reuse across multiple replicas and nodes in llm-d. 
 
