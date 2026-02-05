@@ -14,7 +14,7 @@ welcome:
   description: Welcome tag description
 
 llm-d:
-  label: llm-d release news!
+  label: llm-d release news
   permalink: /llm-d
   description: llm-d tag description
 
