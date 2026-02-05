@@ -6,13 +6,13 @@ llm-d is a distributed inference platform spanning multiple vLLM instances. KV c
 
 While there are a number of existing solutions for KV Cache offload to storage, the new connector offers simplicity, can run with llm-d and vLLM as the only dependency, and exhibits improved performance over state-of-the-art shared storage connectors. 
 
-# The Importance of KV-cache Reuse
+## The Importance of KV-cache Reuse
 
 In transformer-based inference, the prefill stage computes key and value (KV) tensors for the input tokens, which are then used when decoding output tokens. This stage is computationally intensive, especially for long input contexts. But once the KV tensors are available, they are kept in a KV cache and can be reused, avoiding the prefill computation entirely.
 
 When the same prefix appears repeatedly \- for example, shared system prompts, common documents, agentic loops, or multi-turn conversations \- recomputing the KV tensors wastes significant compute. Reusing the KV cache allows the system to skip a large portion of the prefill work, reducing latency and improving overall throughput (a deeper dive on KV reuse use cases appears [here](https://llm-d.ai/blog/kvcache-wins-you-can-see)) 
 
-# Why Storage Offloading is Needed
+## Why Storage Offloading is Needed
 
 vLLM already supports keeping KV-cache data in GPU (High Bandwidth Memory) HBM and, more recently, offloading KV to host memory. These approaches work well for a single server or small deployments, but they become limited at scale. GPU HBM is typically on the order of tens of gigabytes per GPU. CPU memory is usually larger but still on the same order of magnitude. For example, consider a high-end node hosting 8 GPUs with 1.2TB of DRAM. Divided by 8, the CPU DRAM per GPU is 150GB while the HBM is, say 80GB. 
 
@@ -20,7 +20,7 @@ On the other hand, **KV-cache takes up lots of space.** With longer context leng
 
 In addition, shared storage is a simple method to share KV data across an entire cluster spanning multiple vLLM instances and physical nodes. New nodes added to a cluster can immediately benefit from existing KV-cache data without warming the cache from scratch. Shared persistent KV-cache also benefits post-peak scale-down since localized KV-cache data is not lost. Finally, KV-cache persistence matters, so cached data is not lost during restarts or rescheduling events.
 
-# What We Built: llm-d FS Backend
+## What We Built: llm-d FS Backend
 
 The llm-d FS backend is a storage backend that plugs into vLLM's Offloading Connector. It stores KV blocks as files on a shared file system and loads them back on demand. It uses the file system directory as the index of what KV values are in the storage, and as such is persistent and sharable across all nodes connected to the file system. 
 
@@ -45,7 +45,7 @@ Using the FS offloading connector is simple, requires pip install, and a directo
 
 Detailed instructions can be found in the llm-d well-lit path [guide](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache/storage/llm-d-fs).  
 
-# Results and Benchmarks
+## Results and Benchmarks
 
 ### Single request speed-up
 
@@ -81,7 +81,7 @@ Finally,  we evaluate a more realistic workload that mixes KV loading, prefill, 
 
 The results, in Figure 3, show similar behavior to the previous test. By extending KV-cache capacity using shared storage, llm-d can reuse KV data more effectively across requests and replicas, maintaining an improved overall throughput and TTFT as the system scales. An additional important observation is that even though the storage in this test was not top-end, the asynchronous use of storage frees up precious GPU cycles for prefill and decode operations and hence achieves higher throughput. 
 
-# Summary and Next Steps
+## Summary and Next Steps
 
 Storage offloading is an important and essential capability for scalable AI inference platforms such as llm-d. It increases effective KV-cache capacity, enables cross-replica reuse, and makes llm-d clusters more elastic by allowing them to scale efficiently with growing request volume and user concurrency. The FS backend keeps the integration native to vLLM and llm-d, using an asynchronous design and high-throughput transfers built around parallelism.
 
