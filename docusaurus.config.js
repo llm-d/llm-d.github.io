@@ -13,7 +13,7 @@ import remoteContentPlugins from "./remote-content/remote-content.js";
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: "llm-d",
-  tagline: "Powered by Docusaurus",
+  tagline: "Distributed LLM Inference Platform - Achieve state-of-the-art inference performance on any accelerator with intelligent scheduling, KV-cache optimization, and seamless scaling.",
   favicon: "img/llm-d-favicon.png",
 
   url: "https://llm-d.ai/",
@@ -107,7 +107,7 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       // Social card image for Open Graph and Twitter Cards
-      image: 'img/llm-d-logotype-and-icon.png',
+      image: 'img/llm-d-social-card.png',
       
       // Additional meta tags for social media
       metadata: [
