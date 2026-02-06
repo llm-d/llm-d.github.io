@@ -13,7 +13,7 @@ import remoteContentPlugins from "./remote-content/remote-content.js";
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: "llm-d",
-  tagline: "Distributed LLM Inference Platform - Achieve state-of-the-art inference performance on any accelerator with intelligent scheduling, KV-cache optimization, and seamless scaling.",
+  tagline: "Open source, Kubernetes-native LLM inference - Achieve state-of-the-art inference performance on any accelerator with intelligent scheduling, KV-cache optimization, and seamless scaling.",
   favicon: "img/llm-d-favicon.png",
 
   url: "https://llm-d.ai/",
@@ -51,7 +51,7 @@ const config = {
         name: 'llm-d',
         url: 'https://llm-d.ai',
         logo: 'https://llm-d.ai/img/llm-d-icon.png',
-        description: 'Distributed LLM Inference Platform - Achieve state-of-the-art inference performance on any accelerator with intelligent scheduling, KV-cache optimization, and seamless scaling.',
+        description: 'Open source, Kubernetes-native LLM inference - Achieve state-of-the-art inference performance on any accelerator with intelligent scheduling, KV-cache optimization, and seamless scaling.',
         sameAs: [
           'https://github.com/llm-d',
           'https://linkedin.com/company/llm-d',
