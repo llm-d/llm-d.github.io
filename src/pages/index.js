@@ -8,16 +8,19 @@ import VideoEmbed from '@site/src/components/VideoEmbed'
 
 export default function Home() {
   const {siteConfig} = useDocusaurusContext();
+  const pageTitle = "Kubernetes-Native Distributed LLM Inference with vLLM";
+  const pageDescription = "Deploy production LLM inference on Kubernetes with vLLM: intelligent scheduling, KV-cache optimization, and SOTA performance across accelerators";
+
   return (
     <>
       <Head>
         <meta name="keywords" content="llm-d, distributed inference, LLM inference, large language models, kubernetes, GPU optimization, KV cache, model serving, vLLM, state-of-the-art inference" />
-        <meta property="og:title" content="llm-d - Distributed LLM Inference Platform" />
-        <meta property="og:description" content="Achieve state-of-the-art inference performance on any accelerator with intelligent scheduling, KV-cache optimization, and seamless scaling." />
+        <meta property="og:title" content={`${siteConfig.title} - ${pageTitle}`} />
+        <meta property="og:description" content={pageDescription} />
       </Head>
       <Layout
-        title={`Welcome to the ${siteConfig.title} website!`}
-        description="llm-d: Achieve SOTA Inference Performance On Any Accelerator">
+        title={`${siteConfig.title} - ${pageTitle}`}
+        description={pageDescription}>
       <main>
         <Welcome />
         
