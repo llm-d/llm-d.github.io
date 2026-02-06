@@ -35,7 +35,8 @@ const SPECIAL_GUIDES = {
     description: 'Prerequisites for running the llm-d QuickStart',
     sidebarLabel: 'Prerequisites',
     sidebarPosition: 1,
-    outputFile: 'prerequisites.md'
+    outputFile: 'prerequisites.md',
+    keywords: ['llm-d', 'prerequisites', 'installation', 'setup', 'requirements']
   },
   'quickstart': {
     sourceFile: 'guides/QUICKSTART.md',
@@ -43,7 +44,8 @@ const SPECIAL_GUIDES = {
     description: 'QuickStart guide for llm-d',
     sidebarLabel: 'QuickStart',
     sidebarPosition: 2,
-    outputFile: 'quickstart.md'
+    outputFile: 'quickstart.md',
+    keywords: ['llm-d', 'quickstart', 'getting started', 'tutorial', 'installation']
   },
   'guide': {
     sourceFile: 'guides/README.md',
@@ -52,7 +54,8 @@ const SPECIAL_GUIDES = {
     sidebarLabel: 'Guides',
     sidebarPosition: 1,
     outputFile: 'guide.md',
-    customTransform: contentTransform
+    customTransform: contentTransform,
+    keywords: ['llm-d', 'guides', 'documentation', 'tutorials', 'distributed inference']
   }
 };
 
@@ -66,45 +69,52 @@ const DYNAMIC_GUIDES = [
     dirName: 'inference-scheduling',
     title: 'Intelligent Inference Scheduling',
     description: 'Well-lit path for intelligent inference scheduling with load balancing',
-    sidebarPosition: 3
+    sidebarPosition: 3,
+    keywords: ['llm-d', 'inference scheduling', 'load balancing', 'intelligent scheduling', 'request routing']
   },
   {
     dirName: 'tiered-prefix-cache',
     title: 'Prefix Cache Offloading',
     description: 'Well-lit path for separating prefill and decode operations',
     sidebarPosition: 4,
-    targetFilename: 'tiered-prefix-cache/index.md'
+    targetFilename: 'tiered-prefix-cache/index.md',
+    keywords: ['llm-d', 'prefix cache', 'cache offloading', 'tiered cache', 'KV cache']
   },
   {
     dirName: 'tiered-prefix-cache/cpu',
     title: 'Prefix Cache Offloading - CPU',
     description: 'Well-lit path for separating prefill and decode operations',
     sidebarPosition: 5,
-    targetFilename: 'tiered-prefix-cache/cpu.md'
+    targetFilename: 'tiered-prefix-cache/cpu.md',
+    keywords: ['llm-d', 'CPU cache', 'prefix cache', 'cache offloading', 'KV cache']
   },
   {
-    dirName: 'pd-disaggregation', 
+    dirName: 'pd-disaggregation',
     title: 'Prefill/Decode Disaggregation',
     description: 'Well-lit path for separating prefill and decode operations',
-    sidebarPosition: 6
+    sidebarPosition: 6,
+    keywords: ['llm-d', 'prefill', 'decode', 'disaggregation', 'performance optimization']
   },
   {
     dirName: 'precise-prefix-cache-aware',
     title: 'Precise Prefix Cache Aware Routing',
     description: 'Feature guide for precise prefix cache aware routing',
-    sidebarPosition: 7
+    sidebarPosition: 7,
+    keywords: ['llm-d', 'cache-aware routing', 'prefix cache', 'request routing', 'optimization']
   },
   {
     dirName: 'wide-ep-lws',
     title: 'Wide Expert Parallelism with LeaderWorkerSet',
     description: 'Well-lit path for wide expert parallelism using LeaderWorkerSet',
-    sidebarPosition: 8
+    sidebarPosition: 8,
+    keywords: ['llm-d', 'expert parallelism', 'LeaderWorkerSet', 'wide EP', 'distributed inference']
   },
   {
     dirName: 'simulated-accelerators',
     title: 'Accelerator Simulation',
     description: 'Feature guide for llm-d accelerator simulation',
-    sidebarPosition: 9
+    sidebarPosition: 9,
+    keywords: ['llm-d', 'accelerator simulation', 'GPU simulation', 'testing', 'development']
   }
 ];
 
@@ -138,7 +148,8 @@ function createGuidePlugins() {
               repoUrl,
               branch: ref,  // Always 'main'
               content,
-              contentTransform: config.customTransform || contentTransform
+              contentTransform: config.customTransform || contentTransform,
+              keywords: config.keywords
             });
           }
           return undefined;
@@ -174,7 +185,8 @@ function createGuidePlugins() {
               repoUrl,
               branch: ref,  // Always 'main'
               content,
-              contentTransform
+              contentTransform,
+              keywords: guide.keywords
             });
           }
           return undefined;

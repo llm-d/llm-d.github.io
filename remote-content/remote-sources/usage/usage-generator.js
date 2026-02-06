@@ -37,7 +37,8 @@ const USAGE_DOCS = [
     description: 'How to send inference requests to your deployed llm-d model servers',
     sidebarLabel: 'Getting Started with Inference',
     sidebarPosition: 1,
-    outputFile: 'getting-started-inferencing.md'
+    outputFile: 'getting-started-inferencing.md',
+    keywords: ['llm-d', 'inference', 'getting started', 'API requests', 'model serving']
   },
   {
     sourceFile: 'docs/customizing-your-gateway.md',
@@ -45,7 +46,8 @@ const USAGE_DOCS = [
     description: 'How to configure and customize the inference gateway',
     sidebarLabel: 'Customizing Your Gateway',
     sidebarPosition: 2,
-    outputFile: 'customizing-your-gateway.md'
+    outputFile: 'customizing-your-gateway.md',
+    keywords: ['llm-d', 'gateway', 'configuration', 'customization', 'inference gateway']
   },
   {
     sourceFile: 'docs/readiness-probes.md',
@@ -53,7 +55,8 @@ const USAGE_DOCS = [
     description: 'Configuring health checks and readiness probes for model servers',
     sidebarLabel: 'Readiness Probes',
     sidebarPosition: 3,
-    outputFile: 'readiness-probes.md'
+    outputFile: 'readiness-probes.md',
+    keywords: ['llm-d', 'readiness probes', 'health checks', 'kubernetes', 'monitoring']
   },
   {
     sourceFile: 'docs/monitoring/README.md',
@@ -61,7 +64,8 @@ const USAGE_DOCS = [
     description: 'Enable metrics collection, dashboards, and monitoring for your llm-d deployment',
     sidebarLabel: 'Monitoring and Observability',
     sidebarPosition: 4,
-    outputFile: 'monitoring.md'
+    outputFile: 'monitoring.md',
+    keywords: ['llm-d', 'monitoring', 'observability', 'metrics', 'dashboards', 'prometheus']
   }
 ];
 
@@ -94,7 +98,8 @@ function createUsagePlugins() {
               repoUrl,
               branch: ref,  // Always 'main'
               content,
-              contentTransform
+              contentTransform,
+              keywords: doc.keywords
             });
           }
           return undefined;

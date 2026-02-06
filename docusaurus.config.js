@@ -38,6 +38,31 @@ const config = {
     locales: ["en"],
   },
 
+  // SEO: Organization structured data for rich search results
+  headTags: [
+    {
+      tagName: 'script',
+      attributes: {
+        type: 'application/ld+json',
+      },
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'llm-d',
+        url: 'https://llm-d.ai',
+        logo: 'https://llm-d.ai/img/llm-d-icon.png',
+        description: 'Distributed LLM Inference Platform - Achieve state-of-the-art inference performance on any accelerator with intelligent scheduling, KV-cache optimization, and seamless scaling.',
+        sameAs: [
+          'https://github.com/llm-d',
+          'https://linkedin.com/company/llm-d',
+          'https://x.com/_llm_d_',
+          'https://bsky.app/profile/llm-d.ai',
+          'https://www.reddit.com/r/llm_d/',
+        ],
+      }),
+    },
+  ],
+
   presets: [
     [
       "classic",
@@ -66,6 +91,12 @@ const config = {
         },
         theme: {
           customCss: "./src/css/custom.css",
+        },
+        sitemap: {
+          changefreq: "weekly",
+          priority: 0.5,
+          ignorePatterns: ["/tags/**"],
+          filename: "sitemap.xml",
         },
       }),
     ],
