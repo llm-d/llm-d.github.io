@@ -1,5 +1,6 @@
 import React from 'react';
 import Layout from '@theme/Layout';
+import Head from '@docusaurus/Head';
 import VideoEmbed from '@site/src/components/VideoEmbed';
 import styles from './videos.module.css';
 
@@ -47,9 +48,15 @@ function VideoCard({ video }) {
 
 export default function Videos() {
   return (
-    <Layout
-      title="Videos"
-      description="Watch videos about llm-d: a Kubernetes-native high-performance distributed LLM inference framework">
+    <>
+      <Head>
+        <meta name="keywords" content="llm-d, videos, tutorials, distributed inference, LLM inference, kubernetes, conference talks, presentations, PyTorch, KubeCon" />
+        <meta property="og:title" content="llm-d Videos - Conference Talks and Tutorials" />
+        <meta property="og:description" content="Watch conference talks and tutorials about llm-d: distributed LLM inference on Kubernetes from KubeCon, PyTorch Conference, and DevConf." />
+      </Head>
+      <Layout
+        title="Videos"
+        description="Watch videos about llm-d: a Kubernetes-native high-performance distributed LLM inference framework">
       <main className={styles.videosPage}>
         <div className={styles.heroSection}>
           <div className={styles.heroContent}>
@@ -87,7 +94,8 @@ export default function Videos() {
           </div>
         </div>
       </main>
-    </Layout>
+      </Layout>
+    </>
   );
 }
 

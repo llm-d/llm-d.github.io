@@ -1,6 +1,6 @@
 ---
 title: "KV-Cache Wins You Can See: From Prefix Caching in vLLM to Distributed Scheduling with llm-d"
-description: "How llm-d enables smarter, prefix-aware, load- and SLO-aware routing for better latency and throughput"
+description: "See how llm-d's precise KV-cache aware scheduling delivers 57x faster responses and 2x throughput in production distributed LLM inference benchmarks."
 slug: kvcache-wins-you-can-see
 date: 2025-09-24T09:00
 

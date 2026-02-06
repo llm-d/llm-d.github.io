@@ -65,6 +65,8 @@ This content is automatically synced from [${filename}](${fileUrl}) on the \`${b
  * @param {string} options.content - Original content
  * @param {Function} [options.contentTransform] - Optional content transformation function
  * @param {string} [options.mainReleaseVersion] - Optional main llm-d release version
+ * @param {string[]} [options.keywords] - Optional SEO keywords array
+ * @param {string} [options.image] - Optional social sharing image path
  * @returns {Object} Transformed content object
  */
 export function createContentWithSource({
@@ -78,21 +80,33 @@ export function createContentWithSource({
   branch = 'main',
   content,
   contentTransform,
-  mainReleaseVersion = null
+  mainReleaseVersion = null,
+  keywords = [],
+  image = null
 }) {
   // Escape description for YAML frontmatter (handle quotes and special chars)
   const escapedDescription = description
     .replace(/\\/g, '\\\\')  // Escape backslashes first
     .replace(/"/g, '\\"');   // Escape double quotes
-  
-  const frontmatter = `---
+
+  // Build frontmatter with optional SEO fields
+  let frontmatter = `---
 title: ${title}
 description: "${escapedDescription}"
 sidebar_label: ${sidebarLabel}
-sidebar_position: ${sidebarPosition}
----
+sidebar_position: ${sidebarPosition}`;
 
-`;
+  // Add keywords if provided
+  if (keywords && keywords.length > 0) {
+    frontmatter += `\nkeywords: [${keywords.join(', ')}]`;
+  }
+
+  // Add image if provided
+  if (image) {
+    frontmatter += `\nimage: ${image}`;
+  }
+
+  frontmatter += `\n---\n\n`;
 
   const sourceCallout = createSourceCallout(filename, repoUrl, branch, mainReleaseVersion);
   

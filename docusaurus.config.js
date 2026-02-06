@@ -13,7 +13,7 @@ import remoteContentPlugins from "./remote-content/remote-content.js";
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: "llm-d",
-  tagline: "Powered by Docusaurus",
+  tagline: "Distributed LLM Inference Platform - Achieve state-of-the-art inference performance on any accelerator with intelligent scheduling, KV-cache optimization, and seamless scaling.",
   favicon: "img/llm-d-favicon.png",
 
   url: "https://llm-d.ai/",
@@ -37,6 +37,31 @@ const config = {
     defaultLocale: "en",
     locales: ["en"],
   },
+
+  // SEO: Organization structured data for rich search results
+  headTags: [
+    {
+      tagName: 'script',
+      attributes: {
+        type: 'application/ld+json',
+      },
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'llm-d',
+        url: 'https://llm-d.ai',
+        logo: 'https://llm-d.ai/img/llm-d-icon.png',
+        description: 'Distributed LLM Inference Platform - Achieve state-of-the-art inference performance on any accelerator with intelligent scheduling, KV-cache optimization, and seamless scaling.',
+        sameAs: [
+          'https://github.com/llm-d',
+          'https://linkedin.com/company/llm-d',
+          'https://x.com/_llm_d_',
+          'https://bsky.app/profile/llm-d.ai',
+          'https://www.reddit.com/r/llm_d/',
+        ],
+      }),
+    },
+  ],
 
   presets: [
     [
@@ -66,6 +91,12 @@ const config = {
         },
         theme: {
           customCss: "./src/css/custom.css",
+        },
+        sitemap: {
+          changefreq: "weekly",
+          priority: 0.5,
+          ignorePatterns: ["/tags/**"],
+          filename: "sitemap.xml",
         },
       }),
     ],
@@ -106,8 +137,20 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      // Replace with your project's social card
+      // Social card image for Open Graph and Twitter Cards
+      image: 'img/llm-d-social-card.png',
       
+      // Additional meta tags for social media (Twitter/X, LinkedIn, Bluesky, etc.)
+      metadata: [
+        // Twitter/X specific
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:site', content: '@_llm_d_' },
+        // Open Graph (LinkedIn, Bluesky, Facebook, etc.)
+        { property: 'og:type', content: 'website' },
+        { property: 'og:site_name', content: 'llm-d' },
+        { property: 'og:locale', content: 'en_US' },
+      ],
+
       // Announcement banner for v0.5 release
       announcementBar: {
         id: 'llm-d-v0-5-release',

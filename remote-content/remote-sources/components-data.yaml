@@ -18,42 +18,49 @@ components:
     description: The scheduler that makes optimized routing decisions for inference requests to the llm-d inference framework.
     sidebarPosition: 1
     version: v0.5.0
+    keywords: ['llm-d', 'inference scheduler', 'request routing', 'load balancing', 'scheduling']
   - name: llm-d-modelservice
     org: llm-d-incubation
     sidebarLabel: Model Service
     description: '`modelservice` is a Helm chart that simplifies LLM deployment on llm-d by declaratively managing Kubernetes resources for serving base models. It enables reproducible, scalable, and tunable model deployments through modular presets, and clean integration with llm-d ecosystem components (including vLLM, Gateway API Inference Extension, LeaderWorkerSet).'
     sidebarPosition: 2
     version: llm-d-modelservice-v0.4.5
+    keywords: ['llm-d', 'model service', 'helm chart', 'kubernetes', 'LLM deployment', 'vLLM']
   - name: llm-d-inference-sim
     org: llm-d
     sidebarLabel: Inference Simulator
     description: A light weight vLLM simulator emulates responses to the HTTP REST endpoints of vLLM.
     sidebarPosition: 4
     version: v0.7.1
+    keywords: ['llm-d', 'inference simulator', 'vLLM simulator', 'testing', 'development']
   - name: llm-d-infra
     org: llm-d-incubation
     sidebarLabel: Infrastructure
     description: A helm chart for deploying gateway and gateway related infrastructure assets for llm-d.
     sidebarPosition: 5
     version: v1.3.6
+    keywords: ['llm-d', 'infrastructure', 'helm chart', 'gateway', 'kubernetes']
   - name: llm-d-kv-cache
     org: llm-d
     sidebarLabel: KV Cache
     description: The libraries for tokenization, KV-events processing, and KV-cache indexing and offloading.
     sidebarPosition: 6
     version: v0.5.0
+    keywords: ['llm-d', 'KV cache', 'tokenization', 'cache offloading', 'memory optimization']
   - name: llm-d-benchmark
     org: llm-d
     sidebarLabel: Benchmark Tools
     description: This repository provides an automated workflow for benchmarking LLM inference using the llm-d stack. It includes tools for deployment, experiment execution, data collection, and teardown across multiple environments and deployment styles.
     sidebarPosition: 7
     version: v0.3.0
+    keywords: ['llm-d', 'benchmark', 'performance testing', 'LLM inference', 'automation']
   - name: workload-variant-autoscaler
     org: llm-d-incubation
     sidebarLabel: Workload Variant Autoscaler
     description: Graduated from experimental to core component. Provides saturation-based autoscaling for llm-d deployments.
     sidebarPosition: 8
     version: v0.5.0
+    keywords: ['llm-d', 'autoscaling', 'workload autoscaler', 'kubernetes', 'scaling']
   - name: gateway-api-inference-extension
     org: kubernetes-sigs
     sidebarLabel: Gateway API Inference Extension
@@ -61,6 +68,7 @@ components:
     sidebarPosition: 9
     version: v1.3.0
     skipSync: true  # External kubernetes-sigs repository
+    keywords: ['kubernetes', 'gateway api', 'inference extension', 'InferencePool']
 
 # Container images published to GitHub Container Registry (ghcr.io/llm-d/...)
 containerImages:

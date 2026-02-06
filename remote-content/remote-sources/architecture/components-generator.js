@@ -71,7 +71,8 @@ function generateComponentRemoteSource(config) {
             branch: ref, // Always 'main' now
             content,
             // Transform content to work in docusaurus context
-            contentTransform: createStandardTransform(name)
+            contentTransform: createStandardTransform(name),
+            keywords: config.keywords
           });
         }
         return undefined;

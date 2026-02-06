@@ -1,6 +1,6 @@
 ---
 title: Intelligent Inference Scheduling with llm-d
-description: How llm-d enables smarter, prefix-aware, load- and SLO-aware routing for better latency and throughput
+description: "Learn how llm-d's intelligent inference scheduling uses prefix-aware, load-balanced routing to maximize LLM throughput and minimize latency on Kubernetes."
 slug: intelligent-inference-scheduling-with-llm-d
 date: 2025-09-03T09:00
 

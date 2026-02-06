@@ -34,34 +34,38 @@ const USAGE_DOCS = [
   {
     sourceFile: 'docs/getting-started-inferencing.md',
     title: 'Getting Started with Inference',
-    description: 'How to send inference requests to your deployed llm-d model servers',
+    description: 'Send inference requests to llm-d model servers: expose gateways, configure endpoints, and interact with deployed vLLM instances',
     sidebarLabel: 'Getting Started with Inference',
     sidebarPosition: 1,
-    outputFile: 'getting-started-inferencing.md'
+    outputFile: 'getting-started-inferencing.md',
+    keywords: ['llm-d', 'inference', 'getting started', 'API requests', 'model serving']
   },
   {
     sourceFile: 'docs/customizing-your-gateway.md',
     title: 'Customizing Your Gateway',
-    description: 'How to configure and customize the inference gateway',
+    description: 'Configure and customize the Inference Gateway: set up Ingress, adjust Envoy resources, and optimize for high-throughput benchmarks',
     sidebarLabel: 'Customizing Your Gateway',
     sidebarPosition: 2,
-    outputFile: 'customizing-your-gateway.md'
+    outputFile: 'customizing-your-gateway.md',
+    keywords: ['llm-d', 'gateway', 'configuration', 'customization', 'inference gateway']
   },
   {
     sourceFile: 'docs/readiness-probes.md',
     title: 'Readiness Probes',
-    description: 'Configuring health checks and readiness probes for model servers',
+    description: 'Configure model-aware Kubernetes readiness probes to ensure vLLM pods only receive traffic when models are fully loaded',
     sidebarLabel: 'Readiness Probes',
     sidebarPosition: 3,
-    outputFile: 'readiness-probes.md'
+    outputFile: 'readiness-probes.md',
+    keywords: ['llm-d', 'readiness probes', 'health checks', 'kubernetes', 'monitoring']
   },
   {
     sourceFile: 'docs/monitoring/README.md',
     title: 'Monitoring and Observability',
-    description: 'Enable metrics collection, dashboards, and monitoring for your llm-d deployment',
+    description: 'Enable Prometheus metrics and Grafana dashboards for llm-d deployments to monitor vLLM performance and system health',
     sidebarLabel: 'Monitoring and Observability',
     sidebarPosition: 4,
-    outputFile: 'monitoring.md'
+    outputFile: 'monitoring.md',
+    keywords: ['llm-d', 'monitoring', 'observability', 'metrics', 'dashboards', 'prometheus']
   }
 ];
 
@@ -94,7 +98,8 @@ function createUsagePlugins() {
               repoUrl,
               branch: ref,  // Always 'main'
               content,
-              contentTransform
+              contentTransform,
+              keywords: doc.keywords
             });
           }
           return undefined;

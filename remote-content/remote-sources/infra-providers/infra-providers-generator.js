@@ -34,20 +34,23 @@ const INFRA_PROVIDERS = [
   {
     dirName: 'aks',
     title: 'Azure Kubernetes Service',
-    description: 'Deploy llm-d on Azure Kubernetes Service (AKS)',
-    sidebarPosition: 1
+    description: 'Deploy llm-d distributed LLM inference on Azure Kubernetes Service with provider-specific configuration and best practices',
+    sidebarPosition: 1,
+    keywords: ['llm-d', 'Azure', 'AKS', 'kubernetes', 'deployment', 'Azure Kubernetes Service']
   },
   {
     dirName: 'digitalocean',
     title: 'DigitalOcean Kubernetes Service (DOKS)',
-    description: 'Deploy llm-d on DigitalOcean Kubernetes Service (DOKS)',
-    sidebarPosition: 2
+    description: 'Deploy llm-d on DigitalOcean Kubernetes Service with optimized configuration for distributed LLM inference workloads',
+    sidebarPosition: 2,
+    keywords: ['llm-d', 'DigitalOcean', 'DOKS', 'kubernetes', 'deployment']
   },
   {
     dirName: 'gke',
     title: 'Google Kubernetes Engine (GKE)',
-    description: 'Deploy llm-d on Google Kubernetes Engine (GKE)',
-    sidebarPosition: 3
+    description: 'Deploy llm-d on Google Kubernetes Engine with support for GPUs and TPUs, including GKE-specific networking configuration',
+    sidebarPosition: 3,
+    keywords: ['llm-d', 'Google Cloud', 'GKE', 'kubernetes', 'deployment', 'Google Kubernetes Engine']
   }
 ];
 
@@ -83,7 +86,8 @@ function createInfraProviderPlugins() {
               repoUrl,
               branch: ref,  // Always 'main'
               content,
-              contentTransform
+              contentTransform,
+              keywords: provider.keywords
             });
           }
           return undefined;

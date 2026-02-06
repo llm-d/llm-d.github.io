@@ -32,18 +32,20 @@ const SPECIAL_GUIDES = {
   'prerequisites': {
     sourceFile: 'guides/prereq/infrastructure/README.md',
     title: 'Prerequisites',
-    description: 'Prerequisites for running the llm-d QuickStart',
+    description: 'Infrastructure and cluster requirements for llm-d: Kubernetes 1.29+, datacenter accelerators, fast networking, and vLLM configuration',
     sidebarLabel: 'Prerequisites',
     sidebarPosition: 1,
-    outputFile: 'prerequisites.md'
+    outputFile: 'prerequisites.md',
+    keywords: ['llm-d', 'prerequisites', 'installation', 'setup', 'requirements']
   },
   'quickstart': {
     sourceFile: 'guides/QUICKSTART.md',
     title: 'QuickStart',
-    description: 'QuickStart guide for llm-d',
+    description: 'Step-by-step guide to install and deploy llm-d on Kubernetes with vLLM, configure gateways, and validate your deployment',
     sidebarLabel: 'QuickStart',
     sidebarPosition: 2,
-    outputFile: 'quickstart.md'
+    outputFile: 'quickstart.md',
+    keywords: ['llm-d', 'quickstart', 'getting started', 'tutorial', 'installation']
   },
   'guide': {
     sourceFile: 'guides/README.md',
@@ -52,7 +54,8 @@ const SPECIAL_GUIDES = {
     sidebarLabel: 'Guides',
     sidebarPosition: 1,
     outputFile: 'guide.md',
-    customTransform: contentTransform
+    customTransform: contentTransform,
+    keywords: ['llm-d', 'guides', 'documentation', 'tutorials', 'distributed inference']
   }
 };
 
@@ -65,46 +68,60 @@ const DYNAMIC_GUIDES = [
   {
     dirName: 'inference-scheduling',
     title: 'Intelligent Inference Scheduling',
-    description: 'Well-lit path for intelligent inference scheduling with load balancing',
-    sidebarPosition: 3
+    description: 'Deploy vLLM with intelligent load balancing and prefix-cache aware routing to reduce latency and increase throughput on Kubernetes',
+    sidebarPosition: 3,
+    keywords: ['llm-d', 'inference scheduling', 'load balancing', 'intelligent scheduling', 'request routing']
   },
   {
     dirName: 'tiered-prefix-cache',
     title: 'Prefix Cache Offloading',
-    description: 'Well-lit path for separating prefill and decode operations',
+    description: 'Offload KV cache to CPU memory with vLLM to extend GPU capacity and serve longer contexts in distributed LLM inference',
     sidebarPosition: 4,
-    targetFilename: 'tiered-prefix-cache/index.md'
+    targetFilename: 'tiered-prefix-cache/index.md',
+    keywords: ['llm-d', 'prefix cache', 'cache offloading', 'tiered cache', 'KV cache']
   },
   {
     dirName: 'tiered-prefix-cache/cpu',
     title: 'Prefix Cache Offloading - CPU',
-    description: 'Well-lit path for separating prefill and decode operations',
+    description: 'Offload KV cache to CPU memory with vLLM to extend GPU capacity and serve longer contexts in distributed LLM inference',
     sidebarPosition: 5,
-    targetFilename: 'tiered-prefix-cache/cpu.md'
+    targetFilename: 'tiered-prefix-cache/cpu.md',
+    keywords: ['llm-d', 'CPU cache', 'prefix cache', 'cache offloading', 'KV cache']
   },
   {
-    dirName: 'pd-disaggregation', 
+    dirName: 'pd-disaggregation',
     title: 'Prefill/Decode Disaggregation',
-    description: 'Well-lit path for separating prefill and decode operations',
-    sidebarPosition: 6
+    description: 'Separate prefill and decode operations with vLLM disaggregation to improve latency and throughput for large models like GPT-OSS-120B',
+    sidebarPosition: 6,
+    keywords: ['llm-d', 'prefill', 'decode', 'disaggregation', 'performance optimization']
   },
   {
     dirName: 'precise-prefix-cache-aware',
     title: 'Precise Prefix Cache Aware Routing',
-    description: 'Feature guide for precise prefix cache aware routing',
-    sidebarPosition: 7
+    description: 'Enable precise prefix cache routing with vLLM KV-Events to increase cache hit rates and eliminate indexing services overhead',
+    sidebarPosition: 7,
+    keywords: ['llm-d', 'cache-aware routing', 'prefix cache', 'request routing', 'optimization']
+  },
+  {
+    dirName: 'predicted-latency-based-scheduling',
+    title: 'Predicted Latency Based Load Balancing',
+    description: 'Experimental SLO-aware routing with ML-based latency prediction to meet service level objectives and optimize request placement',
+    sidebarPosition: 8,
+    keywords: ['llm-d', 'latency prediction', 'SLO', 'load balancing', 'experimental']
   },
   {
     dirName: 'wide-ep-lws',
     title: 'Wide Expert Parallelism with LeaderWorkerSet',
-    description: 'Well-lit path for wide expert parallelism using LeaderWorkerSet',
-    sidebarPosition: 8
+    description: 'Deploy large MoE models like DeepSeek-R1 using wide expert parallelism and LeaderWorkerSet across multi-node GPU clusters',
+    sidebarPosition: 9,
+    keywords: ['llm-d', 'expert parallelism', 'LeaderWorkerSet', 'wide EP', 'distributed inference']
   },
   {
     dirName: 'simulated-accelerators',
     title: 'Accelerator Simulation',
-    description: 'Feature guide for llm-d accelerator simulation',
-    sidebarPosition: 9
+    description: 'Test llm-d at scale without GPUs using the inference simulator to validate autoscaling, scheduling, and system behavior',
+    sidebarPosition: 10,
+    keywords: ['llm-d', 'accelerator simulation', 'GPU simulation', 'testing', 'development']
   }
 ];
 
@@ -138,7 +155,8 @@ function createGuidePlugins() {
               repoUrl,
               branch: ref,  // Always 'main'
               content,
-              contentTransform: config.customTransform || contentTransform
+              contentTransform: config.customTransform || contentTransform,
+              keywords: config.keywords
             });
           }
           return undefined;
@@ -174,7 +192,8 @@ function createGuidePlugins() {
               repoUrl,
               branch: ref,  // Always 'main'
               content,
-              contentTransform
+              contentTransform,
+              keywords: guide.keywords
             });
           }
           return undefined;
