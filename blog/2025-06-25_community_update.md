@@ -1,6 +1,6 @@
 ---
 title: llm-d Community Update - June 2025
-description: Latest updates from the llm-d community, including new resources and opportunities to get involved
+description: "Help shape llm-d's future: Take our 5-minute community survey, subscribe to our YouTube channel, and access exclusive resources for LLM serving innovation."
 slug: llm-d-community-update-june-2025
 
 authors:

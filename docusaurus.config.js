@@ -109,11 +109,15 @@ const config = {
       // Social card image for Open Graph and Twitter Cards
       image: 'img/llm-d-social-card.png',
       
-      // Additional meta tags for social media
+      // Additional meta tags for social media (Twitter/X, LinkedIn, Bluesky, etc.)
       metadata: [
+        // Twitter/X specific
         { name: 'twitter:card', content: 'summary_large_image' },
         { name: 'twitter:site', content: '@_llm_d_' },
-        { name: 'og:type', content: 'website' },
+        // Open Graph (LinkedIn, Bluesky, Facebook, etc.)
+        { property: 'og:type', content: 'website' },
+        { property: 'og:site_name', content: 'llm-d' },
+        { property: 'og:locale', content: 'en_US' },
       ],
 
       // Announcement banner for v0.5 release

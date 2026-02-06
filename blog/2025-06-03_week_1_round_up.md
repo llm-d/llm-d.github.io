@@ -1,6 +1,6 @@
 ---
 title: llm-d Week 1 Project News Round-Up
-description: Latest news and active design discussions from the llm-d project team, including protocol developments, API updates, and community resources for contributors and followers.
+description: "llm-d hits 1000 GitHub stars! Week 1-2 round-up covers KVTransfer Protocol, InferenceModel API updates, and community resources for LLM inference developers."
 slug: llm-d-week-1-round-up
 
 authors:

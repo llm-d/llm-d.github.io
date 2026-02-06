@@ -1,6 +1,6 @@
 ---
 title: "KV Caching with vLLM, LMCache, and Ceph"
-description: "Exploring KV caching integration with vLLM, LMCache, and Ceph for optimized inference performance"
+description: "Achieve up to 23x faster LLM inference with KV caching using vLLM, LMCache, and Ceph object storage. Reduce time-to-first-token for hyperscale AI deployments."
 slug: kv-caching-vllm-lmcache-ceph
 date: 2025-12-10T09:00
 draft: true
