@@ -148,7 +148,7 @@ processor designs and lithography. While surveying the server landscape across a
 whole host of OEMs there was one system that caught our attention, the
 Supermicro X14 2U 4-node GrandTwin Rear IO.
 
-![](/img/blogs/kv-caching-ceph/smci-x14-grandtwin.png)
+![](/img/blogs/kv-caching-ceph/smci-x14-grandtwin.webp)
 
 [Supermicro X14 2U 4-node GrandTwin Rear
 IO](https://www.supermicro.com/en/products/system/datasheet/sys-212gt-hnr)
@@ -163,7 +163,7 @@ Each node:
 This system is utilized to provide high-bandwidth all-flash object storage for
 the AI solution using IBM Storage Ceph 8.1.
 
-![](/img/blogs/kv-caching-ceph/smci-gaudi3.png)
+![](/img/blogs/kv-caching-ceph/smci-gaudi3.webp)
 
 [Supermicro Gaudi 3 AI Server
 SYS-822GA-NGR3](https://www.supermicro.com/en/products/system/datasheet/sys-822ga-ngr3)
@@ -178,7 +178,7 @@ SYS-822GA-NGR3](https://www.supermicro.com/en/products/system/datasheet/sys-822g
 This system is utilized to run inference workloads with the combination of vLLM
 and LMCache, leveraging Gaudi 3 accelerators from Intel. 
 
-![](/img/blogs/kv-caching-ceph/smci-gpu-aplus.png)
+![](/img/blogs/kv-caching-ceph/smci-gpu-aplus.webp)
 
 [Supermicro GPU A+ Server AS
 -8125GS-TNMR2](https://www.supermicro.com/en/products/system/datasheet/as-8125gs-tnmr2)
@@ -193,7 +193,7 @@ and LMCache, leveraging Gaudi 3 accelerators from Intel.
 This system is utilized to run inference workloads with the combination of vLLM
 and LMCache, leveraging MI300X accelerators from AMD.
 
-![](/img/blogs/kv-caching-ceph/smci-sw.png)
+![](/img/blogs/kv-caching-ceph/smci-sw.webp)
 
 [SSE-T7132S - 400Gb Ethernet
 Switch](https://www.supermicro.com/en/products/accessories/Networking/SSE-T7132SR.php)
@@ -445,7 +445,7 @@ LMCache. This shows that we’re able to multiplex connections across the
 concentrator endpoints on each host and drive a considerable amount of S3
 traffic from even a single host, topping out at nearly 60 GB/s.
 
-![](/img/blogs/kv-caching-ceph/elbencho.png)
+![](/img/blogs/kv-caching-ceph/elbencho.webp)
 
 ## vLLM
 
@@ -595,14 +595,14 @@ python3 ~/LMCache/benchmarks/long_doc_qa/long_doc_qa.py \
 
 ## Results
 
-![](/img/blogs/kv-caching-ceph/amd-tp1-sweep-qwen.png)
-![](/img/blogs/kv-caching-ceph/amd-tp-qwen.png)
-![](/img/blogs/kv-caching-ceph/amd-tp-llama.png)
+![](/img/blogs/kv-caching-ceph/amd-tp1-sweep-qwen.webp)
+![](/img/blogs/kv-caching-ceph/amd-tp-qwen.webp)
+![](/img/blogs/kv-caching-ceph/amd-tp-llama.webp)
 
-![](/img/blogs/kv-caching-ceph/gaudi3-tp2-sweep-qwen.png)
-![](/img/blogs/kv-caching-ceph/gaudi3-tp2-sweep-llama.png)
-![](/img/blogs/kv-caching-ceph/gaudi3-tp-qwen.png)
-![](/img/blogs/kv-caching-ceph/gaudi3-tp-llama.png)
+![](/img/blogs/kv-caching-ceph/gaudi3-tp2-sweep-qwen.webp)
+![](/img/blogs/kv-caching-ceph/gaudi3-tp2-sweep-llama.webp)
+![](/img/blogs/kv-caching-ceph/gaudi3-tp-qwen.webp)
+![](/img/blogs/kv-caching-ceph/gaudi3-tp-llama.webp)
 
 Considerable reduction in TTFT with both Intel Guadi3 and AMD MI300X
 accelerators, with up to 23x reduction with the longest context length tested at

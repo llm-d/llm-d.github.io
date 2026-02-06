@@ -19,7 +19,7 @@ hide_table_of_contents: false
 
 We've hit 1000 ⭐️'s on [GitHub](https://github.com/llm-d/llm-d)
 
-![llm-d Star Chart](../docs/assets/images/star-history-202563.png)
+![llm-d Star Chart](../docs/assets/images/star-history-202563.webp)
 
 <!-- truncate -->
 

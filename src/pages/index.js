@@ -3,9 +3,6 @@ import Layout from '@theme/Layout';
 
 import Welcome from '@site/src/components/Welcome'
 import Install from '@site/src/components/Install'
-import Demo from '@site/src/components/Demo'
-import About from '@site/src/components/About'
-
 import VideoEmbed from '@site/src/components/VideoEmbed'
 
 export default function Home() {

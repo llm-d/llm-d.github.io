@@ -71,7 +71,7 @@ The power of vLLM's caching isn't theoretical; it directly maps to the structure
 
 In any multi-turn dialogue, from a customer service bot to a long-form assistant, the entire chat history and system prompt form a massive **prefix**. Each new user message is a tiny **suffix**. Effective caching means only the latest turn is prefilled, keeping the conversation fluid and responsive, preventing latency from increasing as the dialogue gets longer.
 
-![Conversational AI prefix caching diagram](/img/blogs/kv-cache-wins/image1.png)
+![Conversational AI prefix caching diagram](/img/blogs/kv-cache-wins/image1.webp)
 
 <small>*__FIGURE 1__: A diagram showing the conversational history as a growing prefix that gets cached, with only the new user query requiring prefill.*</small>
 
@@ -79,7 +79,7 @@ In any multi-turn dialogue, from a customer service bot to a long-form assistant
 
 AI agents represent the most extreme case of prefix dominance. These systems operate in reasoning loops where the prefix contains the agent's goals, tool definitions, and a long history of actions and observations. Production data shows this can lead to input-to-output ratios exceeding **100:1** *(from the Manus [blog](https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus))*, making the prefix overwhelmingly large. Reusing context at every step makes agents computationally viable.
 
-![Agentic workflow prefix caching diagram](/img/blogs/kv-cache-wins/image2.png)
+![Agentic workflow prefix caching diagram](/img/blogs/kv-cache-wins/image2.webp)
 
 <small>*__FIGURE 2__: A visual of an agent loop, showing the massive, static context (tools, step-history) as the cached prefix and the new observation/action as the small suffix.*</small>
 
@@ -97,7 +97,7 @@ What happens when we move from single-instance environment to distributed produc
 
 Let's revisit our agentic workflow example to see the direct impact of being blind to this unmanaged, disaggregated cache:
 
-![KV-cache miss scenario diagram](/img/blogs/kv-cache-wins/image3.png)
+![KV-cache miss scenario diagram](/img/blogs/kv-cache-wins/image3.webp)
 
 <small>*__FIGURE 3__: A heartbreaking KV-cache miss scenario.*</small>
 
@@ -129,7 +129,7 @@ The `KVEvents` provide a live feed of all physical cache changes across the clus
 
 This two-layered architecture provides a continuously updated, scalable view of the cluster's cache state, which is the key to enabling intelligent, cache-aware routing.
 
-![llm-d architecture diagram](/img/blogs/kv-cache-wins/image4.png)
+![llm-d architecture diagram](/img/blogs/kv-cache-wins/image4.webp)
 
 <small>*__FIGURE 4__: Simplified architecture diagram. (1) \- (3) show the read path, while (A) \- (B) show the write pipeline.*</small>
 
@@ -201,7 +201,7 @@ This efficiency in latency directly translates to higher system capacity. `preci
 
 This allows you to handle significantly more traffic on the exact same hardware, simply by eliminating the waste of cache misses.
 
-![Performance benchmark charts](/img/blogs/kv-cache-wins/image5.png)
+![Performance benchmark charts](/img/blogs/kv-cache-wins/image5.webp)
 
 <small>*__FIGURE 5__: A tri-panel of TTFT, TPoT and Throughput measured through progressively rising QPS rates.*</small>
 
@@ -219,7 +219,7 @@ The following graphs were captured throughout the benchmark runs. Schedulers are
 
 First, we measure the **Effective Cache Throughput** \- the number of prompt **tokens** per second served directly from the cache. This metric quantifies the computational work the GPUs ***avoided***. A high value means the system is consistently saving massive amounts of expensive prefill computation.
 
-![Effective cache throughput metrics](/img/blogs/kv-cache-wins/image6.png)
+![Effective cache throughput metrics](/img/blogs/kv-cache-wins/image6.webp)
 
 <small>*__FIGURE 6__: The total computational work **saved** by the KV-cache across the cluster, over the course of the benchmarks.*</small>
 
@@ -231,10 +231,10 @@ The chart clearly shows that `precise-scheduling` sustains a massive and stable 
 
 This saved work translates directly into system health. By avoiding prefill bottlenecks, the GPUs can focus on productive decoding. We can see this by comparing the number of "**Waiting**" requests (**queued**) and "**Running**" requests (**in decode**).
 
-![vLLM waiting requests metrics](/img/blogs/kv-cache-wins/image7.png)  
+![vLLM waiting requests metrics](/img/blogs/kv-cache-wins/image7.webp)  
 <small>*__FIGURE 7__: The number of **waiting requests** in vLLM over the course of the benchmark.*</small>
 
-![vLLM running requests metrics](/img/blogs/kv-cache-wins/image8.png)  
+![vLLM running requests metrics](/img/blogs/kv-cache-wins/image8.webp)  
 <small>*__FIGURE 8__: The number of **running requests** **(decoding)** in vLLM over the course of the benchmark.*</small>
 
 The **`precise-scheduling`** plots on the left show a stable system. By effectively utilizing the disaggregated KV-cache, it maintains minimal waiting queues and maximizes the number of actively running requests. In contrast, the other schedulers are clearly overwhelmed; their growing waiting queues choke the system and prevent work from being done efficiently.
