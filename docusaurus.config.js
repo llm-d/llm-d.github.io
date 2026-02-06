@@ -138,7 +138,7 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       // Social card image for Open Graph and Twitter Cards
-      image: 'img/llm-d-social-card.png',
+      image: 'img/llm-d-social-card.jpg',
       
       // Additional meta tags for social media (Twitter/X, LinkedIn, Bluesky, etc.)
       metadata: [
