@@ -68,6 +68,24 @@ dannyharnik:
   url: https://www.linkedin.com/in/danny-harnik-19a95436/
   image_url: /img/blogs/dannyharnik.webp
 
+kfirtoledo:
+  name: Kfir Toledo
+  title: Research Staff Member, IBM
+  url: https://www.linkedin.com/in/kfir-toledo-394a8811a/
+  image_url: /img/blogs/kfirtoledo.jpg
+
+effiofer:
+  name: Effi Ofer
+  title: Software Developer and Architect, IBM
+  url: https://www.linkedin.com/in/effi-ofer-91a261b0/
+  image_url: /img/blogs/effiofer.jpg
+
+orozeri:
+  name: Or Ozeri
+  title: Research Staff Member, IBM
+  url: https://www.linkedin.com/in/or-ozeri-a942859a/
+  image_url: /img/blogs/orozeri.jpg
+
 tylersmith:
   name: Tyler Smith
   title: Member of Technical Staff, Red Hat
