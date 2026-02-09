@@ -8,7 +8,7 @@ authors:
   - kfirtoledo
   - dannyharnik
   - effiofer
-  - orozeri
+  - orozeri 
 
 tags: [blog, kv-cache, storage]
 ---
@@ -66,7 +66,7 @@ Detailed instructions can be found in the llm-d well-lit path [guide](https://gi
 
 Depending on storage speed, loading KV data from storage can dramatically reduce TTFT compared to prefilling. We start by examining the benefit that offloading of KV data to storage can have on the speed of a single request, while emphasizing that the main benefit of offloading KV to storage (supporting high throughput at scale) will be shown later on. 
 
-![Single Request Latency](/img/blogs/fs-connector/StorageBlogimage1.png)
+![Single Request Latency](/img/blogs/fs-connector/StorageBlogimage1.webp)
 
 **Figure 1: Single-request KV-cache load across tiers**
 
@@ -77,7 +77,7 @@ As the number of tokens increases, KV loading becomes increasingly efficient com
 
 In order to exemplify the benefit of storage for scalability, we start by examining a somewhat artificial workload that consists of multiple users, where each user has their own distinct system prompt (we will consider a more realistic workload in the following section). We ask how many concurrent users a single vLLM node can support without a significant drop in throughput due to cache misses.
 
-![Full Hit Workload](/img/blogs/fs-connector/StorageBlogimage2.png)
+![Full Hit Workload](/img/blogs/fs-connector/StorageBlogimage2.webp)
 **Figure 2: Multiple-request KV-cache load across tiers**
 
 In Figure 2, we evaluate KV-cache loading under varying concurrency levels by issuing 16K token requests from a growing number of users. In this test, all prompts have previously appeared, and the decode is of a single token. We chose this extreme workload just to emphasize the point, and we will show a more realistic workload next.  Again, we used a single node running Llama-3.1-70B on a system with 4x NVIDIA H100 GPUs and an IBM Storage Scale file system.
@@ -90,7 +90,7 @@ This experiment highlights the key benefit of storage offloading: **it prevents 
 
 Finally,  we evaluate a more realistic workload that mixes KV loading, prefill, and decode operations. We use the llm-d benchmarking framework to run inference-perf with a shared-prefix synthetic workload. Each query consists of a previously seen user-specific system prompt of 2000 tokens and a question made of 256 tokens. 256 tokens are decoded in response. The queries are issued at a rate of 40 QPS from a pool of users of variable size. This setup helps us study how the different caching options behave with a growing number of users. This setup runs llm-d with two decode nodes executing a Llama-3.1-8B model on a system with 2x NVIDIA H100 GPUs and a cloud-based storage offering approximately 10GB/s IO throughput.
 
-![Real Life Workload](/img/blogs/fs-connector/StorageBlogimage3.png)
+![Real Life Workload](/img/blogs/fs-connector/StorageBlogimage3.webp)
 
 **Figure 3: Multiple requests with mixed workload (load \+ prefill \+ decode)**
 
