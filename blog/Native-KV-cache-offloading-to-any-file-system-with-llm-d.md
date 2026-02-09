@@ -43,7 +43,7 @@ In addition, the following performance-related design choices were made:
 
 Using the FS offloading connector is simple, requires pip install, and a directory path to the storage being used. Other optional tunable parameters are the storage block size (in tokens) and the number of worker threads.
 
-Detailed instructions can be found in the llm-d well-lit path [guide](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache/storage/llm-d-fs).  
+Detailed instructions can be found in the llm-d well-lit path [guide](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache/storage/README.md).  
 
 ## Results and Benchmarks
 
@@ -60,7 +60,7 @@ As the number of tokens increases, KV loading becomes increasingly efficient com
 
 ### Scalability test
 
-In order to exemplify the benefit of storage for scalability, we examine a workload that consists of multiple users, where each user has their own distinct system prompt. We ask how many concurrent users a single vLLM node can support without a significant drop in throughput due to cache misses.
+In order to exemplify the benefit of storage for scalability, we start by examining a somewhat artificial workload that consists of multiple users, where each user has their own distinct system prompt (we will consider a more realistic workload in the following section). We ask how many concurrent users a single vLLM node can support without a significant drop in throughput due to cache misses.
 
 ![Full Hit Workload](../docs/assets/images/StorageBlogimage2.png)
 **Figure 2: Multiple-request KV-cache load across tiers**
