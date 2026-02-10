@@ -104,7 +104,7 @@ The results, in Figure 3, show similar behavior to the previous test. By extendi
 
 Storage offloading is an important and essential capability for scalable AI inference platforms such as llm-d. It increases effective KV-cache capacity, enables cross-replica reuse, and makes llm-d clusters more elastic by allowing them to scale efficiently with growing request volume and user concurrency. The FS backend keeps the integration native to vLLM and llm-d, using an asynchronous design and high-throughput transfers built around parallelism.
 
-The initial FS backend is the first llm-d native solution for storage KV offloading. As next steps, we are working on new features, including tiered storage offload (as a second tier to CPU DRAM), support for more backends such as object storage, support for GPU Direct Storage (GDS), Nixl integration, and more. 
+The initial FS backend is the first llm-d native solution for storage KV offloading. As next steps, we are working on new features, including tiered storage offload (as a second tier to CPU DRAM), support for more backends such as object storage, support for GPU Direct Storage (GDS), NIXL integration, and more. 
 
 #### *Acknowledgement*
 
