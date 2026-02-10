@@ -41,7 +41,7 @@ The llm-d FS backend is a storage backend that plugs into vLLM's Offloading Conn
 
 The following are some key properties of our solution: 
 
-* [**File system agnostic**](https://blog.vllm.ai/2026/01/08/kv-offloading-connector.html): Relies on standard POSIX file operations, so it works with any standard file system.  
+* **File system agnostic**: Relies on standard POSIX file operations, so it works with any standard file system.  
 * **KV sharing across instances and nodes:** Multiple vLLM servers can reuse cached prefixes by accessing the same shared path.   
 * **Persistence across restarts or failures:** KV data can survive pod restarts, rescheduling, and node failures (depending on storage durability).  
 * **Enterprise storage integration:** Can leverage mature storage systems with existing durability, monitoring, and access control.
