@@ -29,7 +29,7 @@ When the same prefix appears repeatedly \- for example, shared system prompts, c
 
 ## Why Storage Offloading is Needed
 
-vLLM already supports keeping KV-cache data in GPU (High Bandwidth Memory) HBM and, more recently, offloading KV to host memory. These approaches work well for a single server or small deployments, but they become limited at scale. GPU HBM is typically on the order of tens of gigabytes per GPU. CPU memory is usually larger but still on the same order of magnitude. For example, consider a high-end node hosting 8 GPUs with 1.2TB of DRAM. Divided by 8, the CPU DRAM per GPU is 150GB while the HBM is, say 80GB. 
+vLLM already supports keeping KV-cache data in GPU (High Bandwidth Memory) HBM and, more recently, offloading KV to host memory. These approaches work well for a single server or small deployments, but they become limited at scale. GPU HBM is typically on the order of tens of gigabytes per GPU. CPU memory is usually larger but still on the same order of magnitude. For example, consider a high-end node hosting 8 GPUs with 2TB of DRAM. Divided by 8, the CPU DRAM per GPU is 250GB while the HBM is, say 80GB. 
 
 On the other hand, **KV-cache takes up lots of space.** With longer context lengths and higher concurrency from multiple users and requests. Even a medium-sized class model, such as Llama-3.1-70B, requires 305 GB of KV-cache for one million tokens. Storage scales nearly infinitely compared to memory solutions and offers a far superior $ per GB ratio.
 
