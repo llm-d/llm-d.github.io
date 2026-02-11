@@ -83,3 +83,8 @@ kv-cache:
   label: KV Cache
   permalink: /kv-cache
   description: KV caching for LLM inference
+
+storage:
+  label: Storage
+  permalink: /storage
+  description: Storage related content
