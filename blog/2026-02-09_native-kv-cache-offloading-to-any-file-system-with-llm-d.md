@@ -8,7 +8,8 @@ authors:
   - kfirtoledo
   - dannyharnik
   - effiofer
-  - orozeri 
+  - orozeri
+  - guymargalit 
 
 tags: [blog, kv-cache, storage]
 ---

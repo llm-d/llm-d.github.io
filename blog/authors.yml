@@ -72,19 +72,19 @@ kfirtoledo:
   name: Kfir Toledo
   title: Research Staff Member, IBM
   url: https://www.linkedin.com/in/kfir-toledo-394a8811a/
-  image_url: /img/blogs/kfirtoledo.jpg
+  image_url: /img/blogs/kfirtoledo.webp
 
 effiofer:
   name: Effi Ofer
   title: Research Staff Member, IBM
   url: https://www.linkedin.com/in/effi-ofer-91a261b0/
-  image_url: /img/blogs/effiofer.jpg
+  image_url: /img/blogs/effiofer.webp
 
 orozeri:
   name: Or Ozeri
   title: Research Staff Member, IBM
   url: https://www.linkedin.com/in/or-ozeri-a942859a/
-  image_url: /img/blogs/orozeri.jpg
+  image_url: /img/blogs/orozeri.webp
 
 tylersmith:
   name: Tyler Smith
@@ -125,3 +125,9 @@ tushargohad:
   title: Distinguished Engineer, Intel
   url: https://www.linkedin.com/in/tushargohad/
   image_url: /img/blogs/tushar-gohad.webp
+
+guymargalit:
+  name: Guy Margalit
+  title: STSM, IBM Storage CTO Office 
+  url: https://www.linkedin.com/in/guymargalit/
+  image_url: /img/blogs/guymargalit.webp
