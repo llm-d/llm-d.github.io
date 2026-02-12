@@ -1,0 +1,13 @@
+# Typos configuration for llm-d.github.io
+# https://github.com/crate-ci/typos
+
+[default.extend-words]
+# Azure Kubernetes Service abbreviation
+AKS = "AKS"
+aks = "aks"
+# Latin lorem ipsum text in placeholder content
+Nam = "Nam"
+nam = "nam"
+
+# Pre-existing typo in codebase (to be fixed separately)
+Kuberentes = "Kuberentes"
