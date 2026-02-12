@@ -1,5 +1,21 @@
+# Dependabot configuration for llm-d.github.io
+# Based on canonical config from llm-d/llm-d-infra
+
 version: 2
 updates:
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "release-note-none"
+    commit-message:
+      prefix: "deps(actions)"
+
+  # npm dependencies
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -8,12 +24,7 @@ updates:
       - "dependencies"
     commit-message:
       prefix: "deps(npm)"
-
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-    commit-message:
-      prefix: "deps(actions)"
+    open-pull-requests-limit: 10
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
