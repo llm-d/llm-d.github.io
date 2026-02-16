@@ -71,6 +71,9 @@ const config = {
         docs: {
           sidebarPath: "./sidebars.js",
           sidebarCollapsible: false,
+          exclude: [
+            '**/upstream-versions.md',
+          ],
         },
         blog: {
           showReadingTime: true,
