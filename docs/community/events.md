@@ -13,6 +13,44 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
   const events = [
     {
       month: 'March 2026',
+      title: 'llm-d Distributed Inference Meetup NYC',
+      location: 'IBM Innovation Studio, 1 Madison Ave, NYC',
+      dateText: 'March 11, 2026',
+      cost: 'Free',
+      href: 'https://luma.com/0crwqwg4',
+      sessions: [
+        {
+          title: 'Intro to llm-d for Open Source Distributed Inference & Project Update',
+          date: 'Wed, Mar 11, 2026',
+          time: '5:15 PM ET',
+          location: 'IBM Innovation Studio',
+          href: 'https://luma.com/0crwqwg4',
+        },
+        {
+          title: 'Distributed LLM Serving on AMD with llm-d',
+          date: 'Wed, Mar 11, 2026',
+          time: '5:35 PM ET',
+          location: 'IBM Innovation Studio',
+          href: 'https://luma.com/0crwqwg4',
+        },
+        {
+          title: 'The Path to Intelligent Routing: Lessons Learned Scaling Wide-EP and MoE Models',
+          date: 'Wed, Mar 11, 2026',
+          time: '5:55 PM ET',
+          location: 'IBM Innovation Studio',
+          href: 'https://luma.com/0crwqwg4',
+        },
+        {
+          title: 'KV-Cache Wins You Can See: Prefix-Cache Scheduling, Offloading, and Scaling',
+          date: 'Wed, Mar 11, 2026',
+          time: '6:15 PM ET',
+          location: 'IBM Innovation Studio',
+          href: 'https://luma.com/0crwqwg4',
+        },
+      ],
+    },
+    {
+      month: 'March 2026',
       title: 'KubeCon + CloudNativeCon Europe 2026',
       location: 'Amsterdam, The Netherlands',
       dateText: 'March 23–26, 2026',
