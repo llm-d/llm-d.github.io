@@ -94,6 +94,65 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
         },
       ],
     },
+    {
+      month: 'April 2026',
+      title: 'PyTorch Conference Europe 2026',
+      location: 'Paris, France',
+      dateText: 'April 7–8, 2026',
+      cost: 'Paid',
+      href: 'https://events.linuxfoundation.org/pytorch-conference-europe/',
+      sessions: [
+        {
+          title: 'Why WideEP Inference Needs Data-Parallel-Aware Scheduling',
+          date: 'Tue, Apr 7, 2026',
+          time: '13:35 – 14:00 CEST',
+          location: 'Central Room',
+          href: 'https://pytorchconferenceeu2026.sched.com/event/2Hind/why-wideep-inference-needs-data-parallel-aware-scheduling-nili-guy-ibm-tyler-michael-smith-red-hat',
+        },
+        {
+          title: 'The Token Slice: Implementing Preemptive Scheduling Via Chunked Decoding',
+          date: 'Tue, Apr 7, 2026',
+          time: '14:05 – 14:30 CEST',
+          location: 'Central Room',
+          href: 'https://pytorchconferenceeu2026.sched.com/event/2Hins/the-token-slice-implementing-preemptive-scheduling-via-chunked-decoding-etai-lev-ran-ibm-kellen-swain-google',
+        },
+        {
+          title: 'Birds of A Feather: Disaggregated Tokenization: Building Toward Tokens-In-Tokens-Out LLM Inference',
+          date: 'Wed, Apr 8, 2026',
+          time: '10:10 – 10:35 CEST',
+          location: 'TBA',
+          href: 'https://pytorchconferenceeu2026.sched.com/event/2Hiow/birds-of-a-feather-disaggregated-tokenization-building-toward-tokens-in-tokens-out-llm-inference-maroon-ayoub-ibm-research-hang-yin-xi-ning-wang-alibaba-cloud-nili-guy-ibm-hyunkyun-moon-moreh',
+        },
+        {
+          title: 'Lightning Talk: Beyond Generic Spans: Distributed Tracing for Actionable LLM Observability',
+          date: 'Tue, Apr 7, 2026',
+          time: '15:45 – 15:55 CEST',
+          location: 'Master Stage',
+          href: 'https://pytorchconferenceeu2026.sched.com/event/2HioV/lightning-talk-beyond-generic-spans-distributed-tracing-for-actionable-llm-observability-sally-omalley-greg-pereira-red-hat',
+        },
+        {
+          title: 'Lightning Talk: KV-Cache Centric Inference: Building a State-Aware Serving Platform With llm-d and vLLM',
+          date: 'Wed, Apr 8, 2026',
+          time: '11:10 – 11:20 CEST',
+          location: 'Founders Cafe',
+          href: 'https://pytorchconferenceeu2026.sched.com/event/2HipK/lightning-talk-kv-cache-centric-inference-building-a-state-aware-serving-platform-with-llm-d-and-vllm-maroon-ayoub-ibm-research',
+        },
+        {
+          title: 'Lightning Talk: Not All Tokens Are Equal: Semantic KV-Cache for Agentic LLM Serving',
+          date: 'Wed, Apr 8, 2026',
+          time: '11:25 – 11:35 CEST',
+          location: 'Founders Cafe',
+          href: 'https://pytorchconferenceeu2026.sched.com/event/2HipQ/lightning-talk-not-all-tokens-are-equal-semantic-kv-cache-for-agentic-llm-serving-maroon-ayoub-ibm-research-hyunkyun-moon-moreh',
+        },
+        {
+          title: "Lightning Talk: Inside vLLM's KV Offloading Connector: Async Memory Transfers for Higher Inference Throughput",
+          date: 'Wed, Apr 8, 2026',
+          time: '14:20 – 14:30 CEST',
+          location: 'Central Room',
+          href: 'https://pytorchconferenceeu2026.sched.com/event/2HiqO/lightning-talk-inside-vllms-kv-offloading-connector-async-memory-transfers-for-higher-inference-throughput-or-ozeri-ibm-nicolo-lucchesi-red-hat',
+        },
+      ],
+    },
   ];
 
   const months = Array.from(new Set(events.map((e) => e.month)));
