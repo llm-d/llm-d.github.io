@@ -73,7 +73,7 @@ export default function NightlyE2EStatus({ styles }) {
         <div className={styles.offlineMessage}>
           <p className={styles.offlineTitle}>Unable to load E2E status</p>
           <p className={styles.offlineDetail}>
-            Could not connect to the KubeStellar Console API. Please try again later.
+            Could not connect to the status API. Please try again later.
           </p>
         </div>
       </div>
