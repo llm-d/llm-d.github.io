@@ -123,10 +123,6 @@ const config = {
       },
     ],
 
-    // Examples:
-    // ['@docusaurus/plugin-google-analytics', { trackingID: 'UA-XXXXXX-X' }],
-    // ['docusaurus-plugin-sass', {}],
-    // Add any other plugins you need
   ],
   
   markdown: { 
@@ -197,6 +193,7 @@ const config = {
           },
           { to: "/blog", label: "Blog", position: "left" },
           { to: "/videos", label: "Videos", position: "left" },
+          { to: "/nightly-e2e", label: "Nightly E2E", position: "left" },
           {
             type: 'html',
             position: 'right',
