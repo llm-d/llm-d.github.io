@@ -1,6 +1,6 @@
 ---
-title: "Native KV Cache Offloading to Any File System with llm-d"
-description: "llm-d's new file system backend offloads KV cache to shared storage, enabling cross-replica reuse and up to 16.8x faster TTFT — scaling inference throughput without GPU or CPU memory limits."
+title: "Native KV Cache Offloading to Any Filesystem with llm-d"
+description: "llm-d's new filesystem backend offloads KV cache to shared storage, enabling cross-replica reuse and up to 16.8x faster TTFT — scaling inference throughput without GPU or CPU memory limits."
 slug: native-kv-cache-offloading-to-any-file-system-with-llm-d
 date: 2026-02-10T09:00
 
@@ -14,9 +14,9 @@ authors:
 tags: [blog, kv-cache, storage]
 ---
 
-# Native KV Cache Offloading to Any File System with llm-d
+# Native KV Cache Offloading to Any Filesystem with llm-d
 
-llm-d is a distributed inference platform spanning multiple vLLM instances. KV cache hits are critical to achieving high inference throughput. Yet, in a distributed environment, cache hits do not occur across different nodes as the KV cache is local to each vLLM instance. In addition, this local cache is limited in size, further limiting KV data reuse. This blog presents a new way to offload KV cache to storage, tackling both aforementioned challenges – KV cache sharing and KV Cache scale.       llm-d's file system (FS) backend is a KV cache storage connector for vLLM that offloads KV blocks to shared storage based on vLLM's native Offloading Connector. While the llm-d FS backend can speed up serving of single requests (improve TTFT), its main goal is rather to preserve stable throughput and low latency at scale,  as concurrency and context lengths grow. This is accomplished by significantly enlarging the cache space and enabling KV reuse across multiple replicas and nodes in llm-d. 
+llm-d is a distributed inference platform spanning multiple vLLM instances. KV cache hits are critical to achieving high inference throughput. Yet, in a distributed environment, cache hits do not occur across different nodes as the KV cache is local to each vLLM instance. In addition, this local cache is limited in size, further limiting KV data reuse. This blog presents a new way to offload KV cache to storage, tackling both aforementioned challenges – KV cache sharing and KV Cache scale.       llm-d's filesystem (FS) backend is a KV cache storage connector for vLLM that offloads KV blocks to shared storage based on vLLM's native Offloading Connector. While the llm-d FS backend can speed up serving of single requests (improve TTFT), its main goal is rather to preserve stable throughput and low latency at scale,  as concurrency and context lengths grow. This is accomplished by significantly enlarging the cache space and enabling KV reuse across multiple replicas and nodes in llm-d. 
 
 While there are a number of existing solutions for KV Cache offload to storage, the new connector offers simplicity, can run with llm-d and vLLM as the only dependency, and exhibits improved performance over state-of-the-art shared storage connectors. 
 
@@ -38,11 +38,11 @@ In addition, shared storage is a simple method to share KV data across an entire
 
 ## What We Built: llm-d FS Backend
 
-The llm-d FS backend is a storage backend that plugs into vLLM's Offloading Connector. It stores KV blocks as files on a shared file system and loads them back on demand. It uses the file system directory as the index of what KV values are in the storage, and as such is persistent and sharable across all nodes connected to the file system. 
+The llm-d FS backend is a storage backend that plugs into vLLM's Offloading Connector. It stores KV blocks as files on a shared filesystem and loads them back on demand. It uses the filesystem directory as the index of what KV values are in the storage, and as such is persistent and sharable across all nodes connected to the filesystem. 
 
 The following are some key properties of our solution: 
 
-* **File system agnostic**: Relies on standard POSIX file operations, so it works with any standard file system.  
+* **Filesystem agnostic**: Relies on standard POSIX file operations, so it works with any standard filesystem.  
 * **KV sharing across instances and nodes:** Multiple vLLM servers can reuse cached prefixes by accessing the same shared path.   
 * **Persistence across restarts or failures:** KV data can survive pod restarts, rescheduling, and node failures (depending on storage durability).  
 * **Enterprise storage integration:** Can leverage mature storage systems with existing durability, monitoring, and access control.
@@ -84,7 +84,7 @@ In order to exemplify the benefit of storage for scalability, we start by examin
   <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 2: Multiple-request KV-cache load across tiers</em></p>
 </div>
 
-In Figure 2, we evaluate KV-cache loading under varying concurrency levels by issuing 16K token requests from a growing number of users. In this test, all prompts have previously appeared, and the decode is of a single token. We chose this extreme workload just to emphasize the point, and we will show a more realistic workload next.  Again, we used a single node running Llama-3.1-70B on a system with 4x NVIDIA H100 GPUs and an IBM Storage Scale file system.
+In Figure 2, we evaluate KV-cache loading under varying concurrency levels by issuing 16K token requests from a growing number of users. In this test, all prompts have previously appeared, and the decode is of a single token. We chose this extreme workload just to emphasize the point, and we will show a more realistic workload next.  Again, we used a single node running Llama-3.1-70B on a system with 4x NVIDIA H100 GPUs and an IBM Storage Scale filesystem.
 
 We see that only a small number of user prompts can fit in GPU memory. With such a small number of users, performance is extremely fast, but once we grow beyond this, performance drops significantly as essentially almost all requests undergo prefill. With CPU offloading, this drop-off is postponed, and the system can handle a higher (yet limited) number of users with a very small drop-off for these. On the other hand, storage-backed KV caching shines once we scale up.  While the speed offered by storage does not match that of the GPU or CPU, it allows the system to sustain throughput as the working set increases nearly infinitely.
 
