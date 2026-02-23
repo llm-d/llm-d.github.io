@@ -18,7 +18,7 @@ tags: [blog, kv-cache, storage]
 
 llm-d is a distributed inference platform spanning multiple vLLM instances. KV cache hits are critical to achieving high inference throughput. Yet, in a distributed environment, cache hits do not occur across different nodes as the KV cache is local to each vLLM instance. In addition, this local cache is limited in size, further limiting KV data reuse. This blog presents a new way to offload KV cache to storage, tackling both aforementioned challenges – KV cache sharing and KV Cache scale.       llm-d's filesystem (FS) backend is a KV cache storage connector for vLLM that offloads KV blocks to shared storage based on vLLM's native Offloading Connector. While the llm-d FS backend can speed up serving of single requests (improve TTFT), its main goal is rather to preserve stable throughput and low latency at scale,  as concurrency and context lengths grow. This is accomplished by significantly enlarging the cache space and enabling KV reuse across multiple replicas and nodes in llm-d. 
 
-While there are a number of existing solutions for KV Cache offload to storage, the new connector offers simplicity, can run with llm-d and vLLM as the only dependency, and exhibits improved performance over state-of-the-art shared storage connectors. 
+While there are a number of existing solutions for KV Cache offload to storage (e.g. LMCache or Dynamo KVBM), the new connector offers simplicity, can run with llm-d and vLLM as the only dependency, and exhibits improved performance over state-of-the-art shared storage connectors. 
 
 <!-- truncate -->
 
@@ -57,9 +57,11 @@ In addition, the following performance-related design choices were made:
 
 ### How to Use it
 
-Using the FS offloading connector is simple, requires pip install, and a directory path to the storage being used. Other optional tunable parameters are the storage block size (in tokens) and the number of worker threads.
+Using the FS offloading connector is simple, requires pip install, and a directory path to the storage being used. Other optional tunable parameters are the storage block size (in tokens) and the number of worker threads. 
 
-Detailed instructions can be found in the llm-d well-lit path [guide](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache/storage/README.md).  
+Detailed instructions can be found in the llm-d well-lit path [guide](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache/storage/README.md).
+
+Note that while the results presented in this blog where of tests run with IBM storage scale, the connector was also tested with other storage options including local storage (NVMe drive with a FS mounted on it) and CephFS. In general it will work seamlessly with any storage supporting a file system API or that has a file system mounted on it. 
 
 ## Results and Benchmarks
 
@@ -92,7 +94,7 @@ This experiment highlights the key benefit of storage offloading: **it prevents 
 
 ### Scalability in realistic workloads
 
-Finally,  we evaluate a more realistic workload that mixes KV loading, prefill, and decode operations. We use the llm-d benchmarking framework to run inference-perf with a shared-prefix synthetic workload. Each query consists of a previously seen user-specific system prompt of 2000 tokens and a question made of 256 tokens. 256 tokens are decoded in response. The queries are issued at a rate of 40 QPS from a pool of users of variable size. This setup helps us study how the different caching options behave with a growing number of users. This setup runs llm-d with two decode nodes executing a Llama-3.1-8B model on a system with 2x NVIDIA H100 GPUs and a cloud-based storage offering approximately 10GB/s IO throughput.
+Finally,  we evaluate a more realistic workload that mixes KV loading, prefill, and decode operations. We use the llm-d benchmarking framework to run inference-perf with a shared-prefix synthetic workload. Each query consists of a previously seen user-specific system prompt of 2000 tokens and a question made of 256 tokens. 256 tokens are decoded in response. The queries are issued at a rate of 40 QPS from a pool of users of variable size. The more users in the system, the greater the working set size is and hence the more we expect storage to shine. This setup helps us study how the different caching options behave with a growing number of users. This setup runs llm-d with two decode nodes executing a Llama-3.1-8B model on a system with 2x NVIDIA H100 GPUs and a cloud-based storage offering approximately 10GB/s IO throughput.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/fs-connector/StorageBlogimage3.webp" alt="Real Life Workload" style={{width: '75%', height: 'auto'}} />
