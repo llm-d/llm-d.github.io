@@ -32,7 +32,7 @@ We recognized that running LLMs at scale demanded a purpose-built solution, a Ku
 
 ## The Winning Combination: KServe \+ llm-d \+ vLLM
 
-![kserve-architecture](https://github.com/kserve/kserve/blob/master/docs/diagrams/kserve_new.png)
+![kserve-architecture](/img/blogs/production-grade-ai-inference-kserve-red-hat-and-tesla-success-story/kserve-architecture.webp)
 
 Our journey led us back to the most flexible and powerful solution: [**llm-d**](https://github.com/llm-d/llm-d), powered by [**KServe**](https://github.com/kserve/kserve) and its cutting-edge **Inference Gateway Extension**.
 
@@ -50,6 +50,17 @@ This migration from a fragile StatefulSet to a robust, scalable MLOps platform w
 This collaboration helps identify issues and sparks ideas for new features in KServe ([\#4901](https://github.com/kserve/kserve/issues/4901), [\#4900](https://github.com/kserve/kserve/issues/4900), [\#4898](https://github.com/kserve/kserve/issues/4898), [\#4899](https://github.com/kserve/kserve/issues/4899)). In addition, LLMInferenceService’s storageInitializer field has been [changed to optional](https://github.com/kserve/kserve/pull/4970) to enable the use of RunAI Model Streamer.
 
 The combination of **KServe's** industry-leading standard for model serving, **llm-d's** intelligent routing capabilities, and **vLLM's** high-throughput inference engine provides the best foundation for managing the next generation of AI workloads at enterprise scale.
+
+## Get Involved with llm-d
+
+The work described here is just one example of what becomes possible when a community of engineers tackles hard problems together in the open. If you're running LLMs at scale and wrestling with the same challenges — storage, routing, efficiency, day-2 operations — we'd love to have you involved.
+
+* **Explore the code** → Browse our [GitHub organization](https://github.com/llm-d) and dig into the projects powering this stack
+* **Join our Slack** → [Get your invite](/slack) and connect directly with maintainers and contributors from Red Hat, Tesla, and beyond
+* **Attend community calls** → All meetings are open! Add our [public calendar](https://red.ht/llm-d-public-calendar) (Wednesdays 12:30pm ET) and join the conversation
+* **Follow project updates** → Stay current on [Twitter/X](https://twitter.com/_llm_d_), [Bluesky](https://bsky.app/profile/llm-d.ai), and [LinkedIn](https://www.linkedin.com/company/llm-d)
+* **Watch demos and recordings** → Subscribe to the [llm-d YouTube channel](https://www.youtube.com/@llm-d-project) for community call recordings and feature walkthroughs
+* **Read the docs** → Visit our [community page](/docs/community) to find SIGs, contribution guides, and upcoming events
 
 ## Acknowledgement
 

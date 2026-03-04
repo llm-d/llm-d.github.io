@@ -144,7 +144,7 @@ cabrinha:
   name: Scott Cabrinha
   title: Staff Site Reliability Engineer, Tesla
   url: https://github.com/cabrinha
-  image_url: https://github.com/cabrinha.png
+  image_url: /img/blogs/scottcabrinha.webp
   socials:
     github: https://github.com/cabrinha
 
@@ -152,6 +152,6 @@ saikrishna:
   name: Sai Krishna
   title: Staff Software Engineer, Tesla
   url: https://www.linkedin.com/in/sai-krishna-45372444/
-  image_url: https://github.com/saikrishna.png
+  image_url: /img/blogs/saikrishna.webp
   socials:
     github: https://github.com/saikrishna
