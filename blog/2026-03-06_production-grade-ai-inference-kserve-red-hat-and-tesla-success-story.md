@@ -19,6 +19,7 @@ tags: [blog]
 
 Everyone is racing to run Large Language Models (LLMs), in the cloud, on-prem, and even on edge devices. The real challenge, however, isn't the first deployment; it's scaling, managing, and maintaining hundreds of LLMs efficiently. We initially approached this challenge with a straightforward vLLM deployment wrapped in a Kubernetes StatefulSet.
 
+<!-- truncate -->
 The approach quickly introduced severe operational bottlenecks:
 
 * **Storage Drag:** Models like Llama 3 can easily reach hundreds of gigabytes in size. Relying on sluggish network storage (NFS) for these massive safetensors was a non-starter.  
