@@ -41,7 +41,7 @@ This combination solved every scaling and operational challenge we faced by deli
 1. **Deep Customization:** The **LLMInferenceService** and **LLMInferenceConfig** objects expose the standard Kubernetes API, allowing us to override the spec precisely where needed. This level of granular control is crucial for tailoring vLLM to specialized hardware or quickly implementing flag changes.  
 2. **Intelligent Routing and Efficiency:** By leveraging [**Envoy**](https://www.envoyproxy.io/), [**Envoy AI Gateway**](https://aigateway.envoyproxy.io/), and [**Gateway API Inference Extension**](https://github.com/kubernetes-sigs/gateway-api-inference-extension), we moved far beyond round-robin. This technology enables **prefix-cache aware routing**, ensuring requests are intelligently routed to the correct vLLM instance to maximize KV-cache utilization and drive up GPU efficiency.
 
-TODO(saikrishna): charts on the before --> after with prefix-awarness (pending approval) along with some text/descriptions
+TODO(saikrishna): charts on the before --> after with prefix-awareness (pending approval) along with some text/descriptions
 
 ## Collaboration for Successful Adoption
 
