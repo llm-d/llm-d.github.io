@@ -10,6 +10,9 @@ robshaw:
   url: https://github.com/robertgshaw2-redhat
   image_url: https://avatars.githubusercontent.com/u/114415538?v=4
   email: robshaw@redhat.com
+  socials:
+    linkedin: robert-shaw-1a01399a
+    github: https://github.com/robertgshaw2-redhat
 
 smarterclayton:
   name: Clayton Coleman
@@ -17,6 +20,8 @@ smarterclayton:
   url: https://github.com/smarterclayton
   image_url: https://avatars.githubusercontent.com/u/1163175?v=4
   email: claytoncoleman@google.com
+  socials:
+    github: https://github.com/smarterclayton
 
 chcost:
   name: Carlos Costa
@@ -24,6 +29,8 @@ chcost:
   url: https://github.com/chcost
   image_url: https://avatars.githubusercontent.com/u/26551701?v=4
   email: chcost@us.ibm.com
+  socials:
+    github: https://github.com/chcost
 
 petecheslock:
   name: Pete Cheslock
@@ -31,72 +38,86 @@ petecheslock:
   url: https://github.com/petecheslock
   image_url: https://avatars.githubusercontent.com/u/511733?v=4
   email: pete.cheslock@redhat.com
+  socials:
+    github: https://github.com/petecheslock
 
 cnuland:
   name: Christopher Nuland
   title: Principal Technical Marketing Manager for AI, Red Hat
   url: https://github.com/cnuland
   image_url: /img/blogs/cnuland.webp
+  socials:
+    github: https://github.com/cnuland
 
 niliguy:
   name: Nili Guy
   title: R&D Manager, AI Infrastructure, IBM
-  url: https://www.linkedin.com/in/nilig/
   image_url: /img/blogs/niliguy.webp
-  
+  socials:
+    linkedin: nilig
+
 etailevran:
   name: Etai Lev Ran
   title: Cloud Architect, IBM
-  url: https://www.linkedin.com/in/elevran/
   image_url: /img/blogs/etailevran.webp
+  socials:
+    linkedin: elevran
 
 vitabortnikov:
   name: Vita Bortnikov
   title: IBM Fellow, IBM
-  url: https://www.linkedin.com/in/vita-bortnikov/
   image_url: /img/blogs/vitabortnikov.webp
+  socials:
+    linkedin: vita-bortnikov
 
 maroonayoub:
   name: Maroon Ayoub
   title: Research Scientist & Architect, IBM
-  url: https://www.linkedin.com/in/v-maroon/
   image_url: /img/blogs/maroonayoub.webp
+  socials:
+    linkedin: v-maroon
 
 dannyharnik:
   name: Danny Harnik
   title: Senior Technical Staff Member, IBM
-  url: https://www.linkedin.com/in/danny-harnik-19a95436/
   image_url: /img/blogs/dannyharnik.webp
+  socials:
+    linkedin: danny-harnik-19a95436
 
 kfirtoledo:
   name: Kfir Toledo
   title: Research Staff Member, IBM
-  url: https://www.linkedin.com/in/kfir-toledo-394a8811a/
   image_url: /img/blogs/kfirtoledo.webp
+  socials:
+    linkedin: kfir-toledo-394a8811a
 
 effiofer:
   name: Effi Ofer
   title: Research Staff Member, IBM
-  url: https://www.linkedin.com/in/effi-ofer-91a261b0/
   image_url: /img/blogs/effiofer.webp
+  socials:
+    linkedin: effi-ofer-91a261b0
 
 orozeri:
   name: Or Ozeri
   title: Research Staff Member, IBM
-  url: https://www.linkedin.com/in/or-ozeri-a942859a/
   image_url: /img/blogs/orozeri.webp
+  socials:
+    linkedin: or-ozeri-a942859a
 
 tylersmith:
   name: Tyler Smith
   title: Member of Technical Staff, Red Hat
-  url: https://www.linkedin.com/in/tyler-michael-smith-017b28102/
   image_url: /img/blogs/tylersmith.webp
+  socials:
+    linkedin: tyler-michael-smith-017b28102
 
 kellenswain:
   name: Kellen Swain
   title: Software Engineer, Google
-  url: https://www.linkedin.com/in/kellen-swain/
   image_url: /img/blogs/kellenswain.webp
+  socials:
+    linkedin: kellen-swain
 
 xiningwang:
   name: Xining Wang
@@ -111,26 +132,30 @@ hangyin:
 kayyan:
   name: Kay Yan
   title: Principal Software Engineer, DaoCloud
-  url: https://www.linkedin.com/in/yankay/
   image_url: /img/blogs/kayyan.webp
+  socials:
+    linkedin: yankay
 
 kylebader:
   name: Kyle Bader
   title: Chief Architect, Data and AI, Ceph at IBM
-  url: https://www.linkedin.com/in/kyle-bader-5267a030/
   image_url: /img/blogs/kyle-bader.webp
+  socials:
+    linkedin: kyle-bader-5267a030
 
 tushargohad:
   name: Tushar Gohad
   title: Distinguished Engineer, Intel
-  url: https://www.linkedin.com/in/tushargohad/
   image_url: /img/blogs/tushar-gohad.webp
+  socials:
+    linkedin: tushargohad
 
 guymargalit:
   name: Guy Margalit
-  title: Senior Technical Staff Member, IBM Storage CTO Ofiice 
-  url: https://www.linkedin.com/in/guymargalit/
+  title: Senior Technical Staff Member, IBM Storage CTO Office
   image_url: /img/blogs/guymargalit.webp
+  socials:
+    linkedin: guymargalit
 
 terrytangyuan:
   name: Yuan Tang
@@ -138,6 +163,7 @@ terrytangyuan:
   url: https://github.com/terrytangyuan
   image_url: https://github.com/terrytangyuan.png
   socials:
+    linkedin: terrytangyuan
     github: https://github.com/terrytangyuan
 
 cabrinha:
@@ -146,12 +172,13 @@ cabrinha:
   url: https://github.com/cabrinha
   image_url: /img/blogs/scottcabrinha.webp
   socials:
+    linkedin: scott-cabrinha
     github: https://github.com/cabrinha
 
 saikrishna:
   name: Sai Krishna
   title: Staff Software Engineer, Tesla
-  url: https://www.linkedin.com/in/sai-krishna-45372444/
   image_url: /img/blogs/saikrishna.webp
   socials:
+    linkedin: sai-krishna-45372444
     github: https://github.com/saikrishna
