@@ -131,3 +131,27 @@ guymargalit:
   title: Senior Technical Staff Member, IBM Storage CTO Ofiice 
   url: https://www.linkedin.com/in/guymargalit/
   image_url: /img/blogs/guymargalit.webp
+
+terrytangyuan:
+  name: Yuan Tang
+  title: Senior Principal Software Engineer, Red Hat
+  url: https://github.com/terrytangyuan
+  image_url: https://github.com/terrytangyuan.png
+  socials:
+    github: https://github.com/terrytangyuan
+
+cabrinha:
+  name: Scott Cabrinha
+  title: Staff Site Reliability Engineer, Tesla
+  url: https://github.com/cabrinha
+  image_url: https://github.com/cabrinha.png
+  socials:
+    github: https://github.com/cabrinha
+
+saikrishna:
+  name: Sai Krishna
+  title: Staff Software Engineer, Tesla
+  url: https://www.linkedin.com/in/sai-krishna-45372444/
+  image_url: https://github.com/saikrishna.png
+  socials:
+    github: https://github.com/saikrishna
