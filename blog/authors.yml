@@ -7,7 +7,6 @@ redhat:
 robshaw:
   name: Robert Shaw
   title: Director of Engineering, Red Hat
-  url: https://github.com/robertgshaw2-redhat
   image_url: https://avatars.githubusercontent.com/u/114415538?v=4
   email: robshaw@redhat.com
   socials:
@@ -17,7 +16,6 @@ robshaw:
 smarterclayton:
   name: Clayton Coleman
   title: Distinguished Engineer, Google
-  url: https://github.com/smarterclayton
   image_url: https://avatars.githubusercontent.com/u/1163175?v=4
   email: claytoncoleman@google.com
   socials:
@@ -26,7 +24,6 @@ smarterclayton:
 chcost:
   name: Carlos Costa
   title: Distinguished Engineer, IBM
-  url: https://github.com/chcost
   image_url: https://avatars.githubusercontent.com/u/26551701?v=4
   email: chcost@us.ibm.com
   socials:
@@ -35,18 +32,18 @@ chcost:
 petecheslock:
   name: Pete Cheslock
   title: AI Community Architect, Red Hat
-  url: https://github.com/petecheslock
   image_url: https://avatars.githubusercontent.com/u/511733?v=4
   email: pete.cheslock@redhat.com
   socials:
+    linkedin: petecheslock
     github: https://github.com/petecheslock
 
 cnuland:
   name: Christopher Nuland
   title: Principal Technical Marketing Manager for AI, Red Hat
-  url: https://github.com/cnuland
   image_url: /img/blogs/cnuland.webp
   socials:
+    linkedin: cjnuland
     github: https://github.com/cnuland
 
 niliguy:
@@ -160,7 +157,6 @@ guymargalit:
 terrytangyuan:
   name: Yuan Tang
   title: Senior Principal Software Engineer, Red Hat
-  url: https://github.com/terrytangyuan
   image_url: https://github.com/terrytangyuan.png
   socials:
     linkedin: terrytangyuan
@@ -169,7 +165,6 @@ terrytangyuan:
 cabrinha:
   name: Scott Cabrinha
   title: Staff Site Reliability Engineer, Tesla
-  url: https://github.com/cabrinha
   image_url: /img/blogs/scottcabrinha.webp
   socials:
     linkedin: scott-cabrinha
