@@ -9,16 +9,17 @@
 ## How was this tested?
 
 <!-- Describe how you verified the changes work correctly -->
-- [ ] Unit tests added/updated
-- [ ] Integration/e2e tests added/updated
-- [ ] Manual testing performed
+- [ ] Tests added/updated (`npm test`)
+- [ ] Site builds successfully (`npm run build`)
+- [ ] Manual testing performed (`npm start`)
 
 ## Checklist
 
 - [ ] Commits are signed off (`git commit -s`) per [DCO](PR_SIGNOFF.md)
 - [ ] Code follows project [contributing guidelines](CONTRIBUTING.md)
-- [ ] Tests pass locally (`make test`)
-- [ ] Linters pass (`make lint`)
+- [ ] Tests pass locally (`npm test`)
+- [ ] Site builds without errors (`npm run build`)
+- [ ] Linters pass (`pre-commit run --all-files`)
 - [ ] Documentation updated (if applicable)
 
 ## Related Issues
