@@ -139,7 +139,7 @@ containerImages:
     version: v0.5.1
     sourceRepo: llm-d/llm-d
   - name: llm-d-rocm
-    description: Rocm inference image (New in v0.5.1)
+    description: ROCm inference image (New in v0.5.1)
     version: v0.5.1
     sourceRepo: llm-d/llm-d
     packageUrl: https://github.com/orgs/llm-d/packages/container/package/llm-d-rocm
