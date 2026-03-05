@@ -19,7 +19,6 @@
 - [ ] Code follows project [contributing guidelines](../CONTRIBUTING.md)
 - [ ] Tests pass locally (`npm test`)
 - [ ] Site builds without errors (`npm run build`)
-- [ ] Linters pass (`pre-commit run --all-files`)
 - [ ] Documentation updated (if applicable)
 
 ## Related Issues
