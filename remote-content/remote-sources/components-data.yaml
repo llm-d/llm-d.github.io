@@ -144,7 +144,7 @@ containerImages:
     sourceRepo: llm-d/llm-d
     packageUrl: https://github.com/orgs/llm-d/packages/container/package/llm-d-rocm
   - name: llm-d-hpu
-    description: Hpu inference image (New in v0.5.1)
+    description: HPU inference image (New in v0.5.1)
     version: v0.5.1
     sourceRepo: llm-d/llm-d
     packageUrl: https://github.com/orgs/llm-d/packages/container/package/llm-d-hpu
