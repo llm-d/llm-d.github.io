@@ -15,8 +15,8 @@
 
 ## Checklist
 
-- [ ] Commits are signed off (`git commit -s`) per [DCO](PR_SIGNOFF.md)
-- [ ] Code follows project [contributing guidelines](CONTRIBUTING.md)
+- [ ] Commits are signed off (`git commit -s`) per [DCO](../PR_SIGNOFF.md)
+- [ ] Code follows project [contributing guidelines](../CONTRIBUTING.md)
 - [ ] Tests pass locally (`npm test`)
 - [ ] Site builds without errors (`npm run build`)
 - [ ] Linters pass (`pre-commit run --all-files`)
