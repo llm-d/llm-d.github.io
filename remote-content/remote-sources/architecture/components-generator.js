@@ -149,7 +149,7 @@ ghcr.io/llm-d/<image-name>:<version>
 |-------|-------------|---------|--------------|`;
 
     componentsData.containerImages.forEach((image) => {
-      const packageUrl = `https://github.com/${image.sourceRepo}/pkgs/container/${image.name}`;
+      const packageUrl = image.packageUrl || `https://github.com/${image.sourceRepo}/pkgs/container/${image.name}`;
       content += `\n| [${image.name}](${packageUrl}) | ${image.description} | ${image.version} | \`ghcr.io/llm-d/${image.name}:${image.version}\` |`;
     });
 
