@@ -47,7 +47,7 @@ TODO(saikrishna): charts on the before --> after with prefix-awareness (pending 
 
 This migration from a fragile StatefulSet to a robust, scalable MLOps platform was not a solitary effort. It was a direct result of the powerful collaboration between **Red Hat** and **Tesla**. By combining Red Hat’s deep expertise in enterprise-grade Kubernetes and open-source infrastructure with Tesla’s demanding requirements for high-performance, large-scale AI serving, we successfully integrated and validated the KServe and llm-d solution. This partnership demonstrates how open standards and purpose-built operators are the key to unlocking the true potential of LLMs in production environments.
 
-This collaboration helps identify issues and sparks ideas for new features in KServe ([\#4901](https://github.com/kserve/kserve/issues/4901), [\#4900](https://github.com/kserve/kserve/issues/4900), [\#4898](https://github.com/kserve/kserve/issues/4898), [\#4899](https://github.com/kserve/kserve/issues/4899)). In addition, LLMInferenceService’s storageInitializer field has been [changed to optional](https://github.com/kserve/kserve/pull/4970) to enable the use of RunAI Model Streamer.
+This collaboration helps identify issues and sparks ideas for new features in KServe ([\#4901](https://github.com/kserve/kserve/issues/4901), [\#4900](https://github.com/kserve/kserve/issues/4900), [\#4898](https://github.com/kserve/kserve/issues/4898), [\#4899](https://github.com/kserve/kserve/issues/4899)). In addition, LLMInferenceService’s storageInitializer field has been [changed to optional](https://github.com/kserve/kserve/pull/4970) to enable the use of RunAI Model Streamer and we [added support for latest version of GIE](https://github.com/kserve/kserve/pull/4886).
 
 The combination of **KServe's** industry-leading standard for model serving, **llm-d's** intelligent routing capabilities, and **vLLM's** high-throughput inference engine provides the best foundation for managing the next generation of AI workloads at enterprise scale.
 
@@ -66,5 +66,5 @@ The work described here is just one example of what becomes possible when a comm
 
 We’d like to thank everyone from the community who has contributed to the successful adoption of KServe, llm-d, and vLLM in Tesla's production environment. In particular, below is the list of people from Red Hat and Tesla teams who have helped through the process (in alphabetical order).
 
-* **Red Hat team**: Andres Llausas, Bartosz Majsak, Greg Pereira, Pierangelo Di Pilato, Vivek Karunai Kiri Ragavan, Robert Shaw, and Yuan Tang  
+* **Red Hat team**: Sergey Bekkerman, Nati Fridman, Killian Golds,Andres Llausas, Bartosz Majsak, Greg Pereira, Pierangelo Di Pilato, Ran Pollak, Vivek Karunai Kiri Ragavan, Robert Shaw, and Yuan Tang
 * **Tesla team**: Scott Cabrinha and Sai Krishna
