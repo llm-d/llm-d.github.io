@@ -3,37 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Centralized URL configuration -->
-    <script>
-        // Define the Prism URL in ONE place for easy updates
-        var PRISM_URL = 'https://prism-369234493812.us-central1.run.app/';
-        
-        // Immediately write critical meta tags using the variable
-        // This works because document.write executes during HTML parsing
-        document.write('<meta http-equiv="refresh" content="2; url=' + PRISM_URL + '">');
-        document.write('<meta http-equiv="location" content="' + PRISM_URL + '">');
-        document.write('<link rel="canonical" href="' + PRISM_URL + '">');
-        document.write('<meta property="og:url" content="' + PRISM_URL + '">');
-        
-        // Store in window object for later use
-        window.PRISM_URL = PRISM_URL;
-        
-        // Update user-facing elements that can be dynamically populated
-        document.addEventListener('DOMContentLoaded', function() {
-            // Update fallback link
-            const fallbackLink = document.getElementById('fallback-link');
-            if (fallbackLink) {
-                fallbackLink.setAttribute('href', window.PRISM_URL);
-            }
-            
-            // Update manual URL text
-            const manualUrl = document.getElementById('manual-url');
-            if (manualUrl) {
-                manualUrl.textContent = window.PRISM_URL;
-            }
-        });
-    </script>
+    <meta http-equiv="refresh" content="2; url=https://prism-369234493812.us-central1.run.app/">
+    <link rel="canonical" href="https://prism-369234493812.us-central1.run.app/">
     
     <!-- Page title and meta information -->
     <title>Redirecting to Prism</title>
@@ -44,6 +15,7 @@
     <meta property="og:title" content="Prism">
     <meta property="og:description" content="Redirecting to the Prism app">
     <meta property="og:type" content="website">
+    <meta property="og:url" content="https://prism-369234493812.us-central1.run.app/">
     
     <!-- Twitter Card tags -->
     <meta name="twitter:card" content="summary">
@@ -123,7 +95,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- llm-d logo -->
         <img src="/img/llm-d-icon.png" alt="llm-d logo" class="logo">
         
         <h1>Redirecting to Prism</h1>
@@ -133,9 +104,8 @@
             <span id="redirect-message">Redirecting you to Prism in <span id="countdown">2</span> seconds...</span>
         </div>
         
-        <!-- Primary fallback link for users who disable auto-redirects -->
         <p>
-            <a href="#" id="fallback-link" class="redirect-link">
+            <a href="https://prism-369234493812.us-central1.run.app/" id="fallback-link" class="redirect-link">
                 Click here if you are not redirected automatically
             </a>
         </p>
@@ -144,14 +114,14 @@
             <p><strong>If the redirect doesn't work:</strong></p>
             <p>Please copy and paste this URL into your browser:</p>
             <p id="manual-url" style="word-break: break-all; font-family: monospace; background: #f8f9fa; padding: 10px; border-radius: 4px;">
-                <!-- URL will be populated by JavaScript -->
+                https://prism-369234493812.us-central1.run.app/
             </p>
         </div>
     </div>
 
-    <!-- JavaScript countdown timer and redirect (optional enhancement - works even if disabled) -->
+    <!-- Progressive enhancement: countdown timer and JS redirect -->
     <script>
-        // Countdown timer for better user experience
+        var REDIRECT_URL = 'https://prism-369234493812.us-central1.run.app/';
         let timeLeft = 2;
         const countdownElement = document.getElementById('countdown');
         const messageElement = document.getElementById('redirect-message');
@@ -164,24 +134,16 @@
                 } else {
                     messageElement.textContent = 'Redirecting now...';
                     clearInterval(countdown);
-                    // JavaScript redirect as final fallback
                     setTimeout(function() {
-                        window.location.replace(window.PRISM_URL);
+                        window.location.replace(REDIRECT_URL);
                     }, 100);
                 }
             }, 1000);
         } else {
-            // Fallback if elements not found - immediate redirect
             setTimeout(function() {
-                window.location.replace(window.PRISM_URL);
+                window.location.replace(REDIRECT_URL);
             }, 2000);
         }
-    </script>
-    
-    <!-- Noscript fallback for browsers with JavaScript disabled -->
-    <script>
-        // Write the noscript fallback using the variable
-        document.write('<noscript><meta http-equiv="refresh" content="2; url=' + PRISM_URL + '"></noscript>');
     </script>
 </body>
 </html>
