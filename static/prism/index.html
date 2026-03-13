@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Centralized URL configuration -->
+    <script>
+        // Define the Prism URL in ONE place for easy updates
+        var PRISM_URL = 'https://prism-369234493812.us-central1.run.app/';
+        
+        // Immediately write critical meta tags using the variable
+        // This works because document.write executes during HTML parsing
+        document.write('<meta http-equiv="refresh" content="2; url=' + PRISM_URL + '">');
+        document.write('<meta http-equiv="location" content="' + PRISM_URL + '">');
+        document.write('<link rel="canonical" href="' + PRISM_URL + '">');
+        document.write('<meta property="og:url" content="' + PRISM_URL + '">');
+        
+        // Store in window object for later use
+        window.PRISM_URL = PRISM_URL;
+        
+        // Update user-facing elements that can be dynamically populated
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update fallback link
+            const fallbackLink = document.getElementById('fallback-link');
+            if (fallbackLink) {
+                fallbackLink.setAttribute('href', window.PRISM_URL);
+            }
+            
+            // Update manual URL text
+            const manualUrl = document.getElementById('manual-url');
+            if (manualUrl) {
+                manualUrl.textContent = window.PRISM_URL;
+            }
+        });
+    </script>
+    
+    <!-- Page title and meta information -->
+    <title>Redirecting to Prism</title>
+    <meta name="description" content="You are being redirected to the Prism app.">
+    <meta name="robots" content="noindex, nofollow">
+    
+    <!-- Open Graph tags for social sharing -->
+    <meta property="og:title" content="Prism">
+    <meta property="og:description" content="Redirecting to the Prism app">
+    <meta property="og:type" content="website">
+    
+    <!-- Twitter Card tags -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Prism">
+    <meta name="twitter:description" content="Redirecting to the Prism app">
+    
+    <!-- Favicon for branded experience -->
+    <link rel="icon" type="image/png" href="/img/llm-d-favicon.png">
+    
+    <!-- Basic styling for the fallback page -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            text-align: center;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .logo {
+            max-width: 80px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #7f317f;
+            margin-bottom: 20px;
+        }
+        .redirect-link {
+            display: inline-block;
+            background-color: #7f317f;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            margin: 20px 0;
+            transition: background-color 0.2s;
+        }
+        .redirect-link:hover {
+            background-color: #6a2a6a;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #7f317f;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .redirecting-text {
+            margin: 20px 0;
+            color: #666;
+        }
+        .manual-instructions {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e9ecef;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- llm-d logo -->
+        <img src="/img/llm-d-icon.png" alt="llm-d logo" class="logo">
+        
+        <h1>Redirecting to Prism</h1>
+        
+        <div class="redirecting-text">
+            <div class="spinner"></div>
+            <span id="redirect-message">Redirecting you to Prism in <span id="countdown">2</span> seconds...</span>
+        </div>
+        
+        <!-- Primary fallback link for users who disable auto-redirects -->
+        <p>
+            <a href="#" id="fallback-link" class="redirect-link">
+                Click here if you are not redirected automatically
+            </a>
+        </p>
+        
+        <div class="manual-instructions">
+            <p><strong>If the redirect doesn't work:</strong></p>
+            <p>Please copy and paste this URL into your browser:</p>
+            <p id="manual-url" style="word-break: break-all; font-family: monospace; background: #f8f9fa; padding: 10px; border-radius: 4px;">
+                <!-- URL will be populated by JavaScript -->
+            </p>
+        </div>
+    </div>
+
+    <!-- JavaScript countdown timer and redirect (optional enhancement - works even if disabled) -->
+    <script>
+        // Countdown timer for better user experience
+        let timeLeft = 2;
+        const countdownElement = document.getElementById('countdown');
+        const messageElement = document.getElementById('redirect-message');
+        
+        if (countdownElement && messageElement) {
+            const countdown = setInterval(function() {
+                timeLeft--;
+                if (timeLeft > 0) {
+                    countdownElement.textContent = timeLeft;
+                } else {
+                    messageElement.textContent = 'Redirecting now...';
+                    clearInterval(countdown);
+                    // JavaScript redirect as final fallback
+                    setTimeout(function() {
+                        window.location.replace(window.PRISM_URL);
+                    }, 100);
+                }
+            }, 1000);
+        } else {
+            // Fallback if elements not found - immediate redirect
+            setTimeout(function() {
+                window.location.replace(window.PRISM_URL);
+            }, 2000);
+        }
+    </script>
+    
+    <!-- Noscript fallback for browsers with JavaScript disabled -->
+    <script>
+        // Write the noscript fallback using the variable
+        document.write('<noscript><meta http-equiv="refresh" content="2; url=' + PRISM_URL + '"></noscript>');
+    </script>
+</body>
+</html>
