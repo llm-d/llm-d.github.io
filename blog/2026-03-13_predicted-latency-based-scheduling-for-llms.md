@@ -21,7 +21,7 @@ Not all LLM requests cost the same. A short prompt might complete in millisecond
 
 The variation in request cost comes from how LLM inference works. It happens in two phases: first, the model processes the entire input prompt (the **prefill** phase), which is compute-heavy and scales with prompt length. Prefill can be accelerated when the server has already cached results from a similar prompt (prefix caching). Then it generates output tokens one at a time (the **decode** phase), which is memory-heavy and scales with the number of tokens generated.
 
-Current load balancers try to account for this using signals like queue depth, memory pressure, cache locality, and batch size. But these signals often conflict: routing for cache reuse concentrates load, while routing for low utilization spreads it. Getting the balance right requires manual tuning of weights (see [nVidia Dynamo](https://docs.nvidia.com/dynamo/latest/user-guides/kv-cache-aware-routing#cli-arguments) or [Inference Gateway](https://gateway-api-inference-extension.sigs.k8s.io/guides/epp-configuration/config-text/?h=kv#kvcachescorer)), and the right balance shifts as the workload varies.
+Current load balancers try to account for this using signals like queue depth, memory pressure, cache locality, and batch size. But these signals often conflict: routing for cache reuse concentrates load, while routing for low utilization spreads it. Getting the balance right requires manual tuning of weights (see [NVIDIA Dynamo](https://docs.nvidia.com/dynamo/latest/user-guides/kv-cache-aware-routing#cli-arguments) or [Inference Gateway](https://gateway-api-inference-extension.sigs.k8s.io/guides/epp-configuration/config-text/?h=kv#kvcachescorer)), and the right balance shifts as the workload varies.
 
 Production traffic makes this concrete. Figures below show metrics from an internal Google service serving an open model over 24 hours, patterns representative of what we see across production LLM deployments.
 
@@ -57,7 +57,7 @@ At scheduling time, the model predicts the TTFT and TPOT a new request would exp
 
 This largely eliminates manual weight tuning. Rather than deciding how much to value cache locality versus queue depth versus memory pressure, the model learns those tradeoffs directly from observed latency data.
 
-Across five benchmark scenarios ranging from cache-friendly to cache-intensive workloads, predicted-latency aware scheduling outperforms or matches load+prefix-aware routing in four out of five cases. We achieve 43% improvement in P50 end-to-end latency on a representative MaaS workload, with 70% improvements in TTFT.
+Across five benchmark scenarios ranging from cache-friendly to cache-intensive workloads, predicted-latency aware scheduling outperforms or matches load+prefix-aware routing in four out of five cases. Additionally we achieve 43% improvement in P50 end-to-end latency on a representative MaaS workload, with 70% improvements in TTFT.
 
 ## How It Works
 
@@ -107,7 +107,7 @@ We added a [predicted-latency scorer](https://github.com/kubernetes-sigs/gateway
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
 <img src="/img/blogs/predicted-latency/image4.webp" alt="Architecture: predicted-latency trainer and predictor sidecars" style={{width: '85%', height: 'auto'}} />
-<p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 1: The predicted-latency trainer and predictor modules are deployed as sidecars to the EPP. The trainer is invoked at the post-response stage. The predictor is invoked during scheduling and optionally at the post-response stage. A new predicted-latency scorer utilizes predictions from the ML model.</em></p>
+<p style={{fontSize: '0.9em', marginTop: '8px'}}><em>The predicted-latency trainer and predictor modules are deployed as sidecars to the EPP. The trainer is invoked at the post-response stage. The predictor is invoked during scheduling and optionally at the post-response stage. A new predicted-latency scorer utilizes predictions from the ML model.</em></p>
 </div>
 
 ### Prediction Accuracy
@@ -145,7 +145,7 @@ The table below contrasts five scenarios, ranging from cache-friendly (high pref
   - **Load metrics:** KV cache utilization and queued request count
   - **Prefix cache awareness:** Considers cached prefix availability
 
-  The sets of [weights](https://github.com/kubernetes-sigs/gateway-api-inference-extension/blob/0f0dff6866da606b6439254eda787b24be1b5110/config/charts/inferencepool/templates/epp-config.yaml#L55) used was:
+  The set of [weights](https://github.com/kubernetes-sigs/gateway-api-inference-extension/blob/0f0dff6866da606b6439254eda787b24be1b5110/config/charts/inferencepool/templates/epp-config.yaml#L55) used was:
   (1, 1, 1) prefix scorer: 1, queue scorer: 1, kv cache scorer: 1
 
 - **K8s Default Load Balancer:** Standard Kubernetes round-robin or least-connection load balancing without cache or latency awareness (baseline).
@@ -154,7 +154,7 @@ Note that **Predicted Latency Scorer** eliminates the need to manually tune rela
 
 ---
 
-**Hardware Configuration:** 10 model servers, each with 2x H100 80GB GPUs (TP=2) for scenario A - D. For shareGPT workload, which has much shorter prompts, to achieve high KV Cache utilization, we have 8 model servers, each with 1x H100 80GB GPUs (TP=1).
+**Hardware Configuration:** 10 model servers, each with 2x H100 80GB GPUs (TP=2) for scenario A - D. For ShareGPT workload, which has much shorter prompts, to achieve high KV Cache utilization, we have 8 model servers, each with 1x H100 80GB GPUs (TP=1).
 
 Benchmark configuration: we tested multiple scenarios detailed in the following table. Think of *num_groups* as the number of unique system prompts and *num_prompts_per_group* as the number of users that share a system prompt.
 
@@ -170,13 +170,13 @@ Benchmark configuration: we tested multiple scenarios detailed in the following 
 
 ### Results
 
-Below we compare different load balancing strategies across the four scenarios above and the shareGPT dataset. In every scenario, the QPS is increased until throughput saturation occurs and queues begin to form. At each point, requests are sent for 100 seconds, and we wait for their completion before moving on to the next QPS. No SLOs were assumed; the predicted latency scorer simply selects pods with lower predicted latency.
+Below we compare different load balancing strategies across the four scenarios above and the ShareGPT dataset. In every scenario, the QPS is increased until throughput saturation occurs and queues begin to form. At each point, requests are sent for 100 seconds, and we wait for their completion before moving on to the next QPS. No SLOs were assumed; the predicted latency scorer simply selects pods with lower predicted latency.
 
 The charts show two metrics: **NTPOT** (Normalized Time Per Output Token — E2E Latency divided by output length to make it comparable across requests of different output lengths), and **output tokens per sec**.
 
 In Scenarios A and B, where system cache is amortized across pods, the predicted latency scorer performs best. In Scenario D, which has some system cache churn but user prompts much larger than system prompts, the predicted latency scorer performs as well as the load+prefix aware routing with weights (1, 1, 1). In Scenario C, which has very high system cache churn, the predicted latency scorer performs comparably to load+prefix aware scorers, while still outperforming standard Kubernetes load balancing. In this scenario, performance is governed by **discrete cache-eviction events rather than gradual saturation**, whereas the latency predictor's *greedy* routing strategy is inherently better suited to modeling **continuous resource contention**, such as queueing and KV-cache utilization. Alternate prefix distribution strategies could further improve performance in high-churn scenarios. For instance, [**pinning critical KV cache**](https://github.com/vllm-project/vllm/issues/23083) prefixes (like system prompts in this case) ensures they remain non-evictable. Similarly, using a [**no-hit-lru-scorer**](https://llm-d.ai/blog/llm-d-v0.4-achieve-sota-inference-across-accelerators) can improve performance by intelligently distributing "cold" requests to prevent hotspots during the formation of new prefix-caches.
 
-**Overall, predicted-latency aware routing consistently performs as well as or better than standard Kubernetes routing and load+prefix-aware routing in all tested scenarios, while eliminating the need for manual parameter tuning. Load + Prefix-aware routing usually performs better than standard Kubernetes routing near KV Cache saturation.**
+**Overall, predicted-latency aware routing consistently performs as well as or better than standard Kubernetes routing and load+prefix-aware routing in all tested scenarios, while eliminating the need for manual parameter tuning.**
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
 <img src="/img/blogs/predicted-latency/image7.webp" alt="Scenario A benchmark results" style={{width: '85%', height: 'auto'}} />
