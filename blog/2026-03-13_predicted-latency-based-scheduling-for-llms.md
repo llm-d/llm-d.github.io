@@ -247,7 +247,7 @@ These results are particularly notable because the Load+Prefix (3,2,2) weights w
 
 ## Prediction Server Scalability
 
-At high replica counts, the EPP issues one prediction call per candidate pod per incoming request, so prediction QPS scales with both request rate and cluster size. To handle this, the Go sidecar coalesces concurrent EPP prediction requests within a 1ms window into a single batched HTTP call, and load-balances across multiple prediction server instances -- each running 28 uvicorn workers. Latency scales roughly linearly with QPS, and adding a prediction server adds 28 cores of inference capacity.
+At high replica counts, the EPP issues one prediction call per candidate pod per incoming request, so prediction QPS scales with both request rate and cluster size. At each QPS level in the table below, we assume 100 model server endpoints, so the prediction server is generating predictions for all 100 pods per request. To handle this, the Go sidecar coalesces concurrent EPP prediction requests within a 1ms window into a single batched HTTP call, and load-balances across multiple prediction server instances -- each running 28 uvicorn workers. Latency scales roughly linearly with QPS, and adding a prediction server adds 28 cores of inference capacity.
 
 | QPS | Avg (ms) | p50 (ms) | p99 (ms) | p99.9 (ms) | Prediction Servers |
 | :---: | :---: | :---: | :---: | :---: | :---: |
