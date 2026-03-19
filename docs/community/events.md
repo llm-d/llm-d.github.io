@@ -54,6 +54,13 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
           location: 'G102-103',
           href: 'https://sched.co/2EF54',
         },
+        {
+          title: 'Redefining SLIs for LLM Inference: Managing Hybrid Cloud with vLLM & llm-d',
+          date: 'Thu, Mar 26, 2026',
+          time: '14:30 – 15:00 CET',
+          location: 'Hall 7 | Room A',
+          href: 'https://kccnceu2026.sched.com/event/2CW7B/redefining-slis-for-llm-inference-managing-hybrid-cloud-with-vllm-llm-d-christopher-nuland-hilliary-lipsig-red-hat',
+        },
       ],
     },
     {
