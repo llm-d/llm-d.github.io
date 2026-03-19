@@ -29,8 +29,8 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
         {
           title: 'Cloud Native Theater | Istio Day: Running State of the Art Inference with Istio and llm-d',
           date: 'Tue, Mar 24, 2026',
-          time: '16:00 – 16:35 CET',
-          location: 'Halls 1-5',
+          time: '14:30 – 15:00 CET',
+          location: 'Hall 1-5 | Tram Zone | Cloud Native Theater',
           href: 'https://kccnceu2026.sched.com/event/2EG0w/cloud-native-theater-istio-day-running-state-of-the-art-llms-at-scale-with-istio-ambient-mode-keith-mattix-ii-microsoft-and-nili-guy-ibm',
         },
         {
@@ -50,8 +50,8 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
         {
           title: 'Evolving KServe: The Unified Model Inference Platform for Both Predictive and Generative AI',
           date: 'Thu, Mar 26, 2026',
-          time: '11:00 – 11:30 CET',
-          location: 'E103-105',
+          time: '13:45 – 14:15 CET',
+          location: 'G102-103',
           href: 'https://sched.co/2EF54',
         },
       ],
