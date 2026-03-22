@@ -145,13 +145,13 @@ To balance cache exploitation with exploration, the scorer uses an epsilon-greed
 The default threshold of 0.80 comes from production observation: prefix cache scores follow a bimodal distribution, roughly half of request-pod pairs have very high cache match (\>0.80) and half have low match (\<0.80). This reflects how prefix caching works in practice: in multi-turn conversations, a pod either has the conversation history cached from prior turns or it doesn't. Partial matches from unrelated conversations contribute very little because caching is block-based. The 0.80 threshold cleanly separates these two populations, so the affinity gate routes to pods that genuinely have your conversation cached rather than pods with incidental partial matches.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-<img src="/img/blogs/predicted-latency/prefix_hit_ratio_dist.png" alt="Prefix cache hit ratio distribution showing bimodal pattern" style={{width: '85%', height: 'auto'}} />
+<img src="/img/blogs/predicted-latency/prefix_hit_ratio_dist.webp" alt="Prefix cache hit ratio distribution showing bimodal pattern" style={{width: '85%', height: 'auto'}} />
 <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>A typical production prefix hit ratio distribution observed in internal workloads, showing the bimodal pattern that motivates the 0.80 affinity threshold.</em></p>
 </div>
 
 ## Benchmark Scenario Comparison
 
-The table below contrasts five scenarios, ranging from cache-friendly (high prefix-sharing) to cache-intensive scenarios. We used the [**inference-perf**](https://github.com/kubernetes-sigs/inference-perf/pull/301) library to enable shared prefix benchmarking configurations with multi-chat support. See [Appendix](#appendix) for a complete analysis of the workloads.
+The table below contrasts five scenarios, ranging from cache-friendly (high prefix-sharing) to cache-intensive scenarios. We used the [**inference-perf**](https://github.com/kubernetes-sigs/inference-perf/pull/301) library to enable shared prefix benchmarking configurations with multi-turn chat support. See [Appendix](#appendix) for a complete analysis of the workloads.
 
 ### Load Balancing Scorers
 
@@ -169,7 +169,7 @@ Note that **Predicted Latency Scorer** eliminates the need to manually tune rela
 
 ---
 
-**Hardware Configuration:** 10 model servers, each with 2x H100 80GB GPUs (TP=2) for scenario A - D. For ShareGPT workload, which has much shorter prompts, to achieve high KV Cache utilization, we have 8 model servers, each with 1x H100 80GB GPUs (TP=1).
+**Hardware Configuration:** 10 model servers, each with 2x H100 80GB GPUs (TP=2, DP=1, EP=1, no disaggregation) for scenario A - D. For ShareGPT workload, which has much shorter prompts, to achieve high KV Cache utilization, we have 8 model servers, each with 1x H100 80GB GPUs (TP=1).
 
 Benchmark configuration: we tested multiple scenarios detailed in the following table. Think of *num_groups* as the number of unique system prompts and *num_prompts_per_group* as the number of users that share a system prompt.
 
@@ -282,7 +282,7 @@ At high replica counts, the EPP issues one prediction call per candidate pod per
 **Prereqs**
 
 - Install the Inference Gateway extension with the latency prediction sidecars:
-  [https://gateway-api-inference-extension.sigs.k8s.io/guides/latency-based-predictor/](https://gateway-api-inference-extension.sigs.k8s.io/guides/latency-based-predictor/)
+  https://gateway-api-inference-extension.sigs.k8s.io/guides/latency-based-predictor/
 
 **Smoke test**
 
@@ -339,7 +339,7 @@ Accelerator performance is fairly predictable when we account for both the curre
 
 ### Get Involved
 
-- **Docs & guides**: [https://gateway-api-inference-extension.sigs.k8s.io/guides/latency-based-predictor/](https://gateway-api-inference-extension.sigs.k8s.io/guides/latency-based-predictor/)
+- **Docs & guides**: https://gateway-api-inference-extension.sigs.k8s.io/guides/latency-based-predictor/
 
 ## Appendix
 
@@ -377,17 +377,17 @@ This section analyzes how **workload inputs shape cache behavior**, and manifest
 
 Each workload varies six core inputs:
 
-1. **System prompt size** (system_prompt_len)
-2. **Prefix sharing structure** (`num_groups` each with a unique system prompt and num_prompts_per_group signifying number of users per group)
-3. **User context growth** (enable_multi_turn_chat) If turned on, each user appends its prompt to its previous prompts and responses.
-4. **Request shape** (question_len, output_len)
+- **System prompt size** (system_prompt_len)
+- **Prefix sharing structure** (`num_groups` each with a unique system prompt and num_prompts_per_group signifying number of users per group)
+- **User context growth** (enable_multi_turn_chat) If turned on, each user appends its prompt to its previous prompts and responses.
+- **Request shape** (question_len, output_len)
 
 The simulation produces the figures below that should be read as answering four questions:
 
 * How much of the system prompt and user prompt is typically reused?
 * How quickly does cache pressure build under load?
 * When evictions occur, *what* is being evicted?
-* At what QPS evictions occur.
+* At what QPS do evictions occur?
 
 Here we assume a single model server running on a **2 x H100 80 GB pod (TP=2)**. The requests are sent at different QPS for a fixed duration (100 secs).
 
