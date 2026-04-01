@@ -132,22 +132,22 @@ const DYNAMIC_GUIDES = [
     keywords: ['llm-d', 'autoscaling', 'HPA', 'KEDA', 'workload autoscaler', 'KV cache', 'SLO']
   },
   {
-    dirName: 'workload-autoscaling/hpa-igw',
-    sourceFile: 'guides/workload-autoscaling/README.hpa-igw.md',
-    title: 'Autoscaling with HPA and IGW Metrics',
-    description: 'Configure Kubernetes HPA with Inference Gateway queue depth and running request metrics for responsive, model-aware LLM autoscaling',
-    sidebarPosition: 12,
-    targetFilename: 'workload-autoscaling/hpa-igw.md',
-    keywords: ['llm-d', 'HPA', 'autoscaling', 'inference gateway', 'queue depth', 'IGW metrics', 'KEDA']
-  },
-  {
     dirName: 'workload-autoscaling/wva',
     sourceFile: 'guides/workload-autoscaling/README.wva.md',
     title: 'Workload Variant Autoscaler (WVA)',
     description: 'Dynamically autoscale llm-d inference replicas using the Workload Variant Autoscaler with saturation-based signals and cost-aware capacity allocation across heterogeneous hardware',
-    sidebarPosition: 13,
+    sidebarPosition: 12,
     targetFilename: 'workload-autoscaling/wva.md',
     keywords: ['llm-d', 'workload variant autoscaler', 'WVA', 'autoscaling', 'KV cache', 'saturation', 'heterogeneous hardware']
+  },
+  {
+    dirName: 'workload-autoscaling/hpa-igw',
+    sourceFile: 'guides/workload-autoscaling/README.hpa-igw.md',
+    title: 'Autoscaling with HPA and IGW Metrics',
+    description: 'Configure Kubernetes HPA with Inference Gateway queue depth and running request metrics for responsive, model-aware LLM autoscaling',
+    sidebarPosition: 13,
+    targetFilename: 'workload-autoscaling/hpa-igw.md',
+    keywords: ['llm-d', 'HPA', 'autoscaling', 'inference gateway', 'queue depth', 'IGW metrics', 'KEDA']
   },
   {
     dirName: 'simulated-accelerators',
