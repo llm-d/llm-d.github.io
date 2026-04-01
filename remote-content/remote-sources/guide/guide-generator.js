@@ -129,7 +129,7 @@ const DYNAMIC_GUIDES = [
     description: 'Test llm-d at scale without GPUs using the inference simulator to validate autoscaling, scheduling, and system behavior',
     sidebarPosition: 11,
     keywords: ['llm-d', 'accelerator simulation', 'GPU simulation', 'testing', 'development']
-  } 
+  }
 ];
 
 /**
