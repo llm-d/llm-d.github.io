@@ -119,7 +119,7 @@ const DYNAMIC_GUIDES = [
   {
     dirName: 'asynchronous-processing',
     title: 'Asynchronous Processing',
-    description: 'Enable queue-based inference with Async Processor to decouple request submission from execution, optimize spare capacity, and handle background workloads with GCP Pub/Sub or Redis',
+    description: 'Leverage a message queue (such as Redis or GCP Pub/Sub) for async-processing to decouple request submission from execution, optimize spare capacity, and manage latency-tolerant workloads.',
     sidebarPosition: 10,
     keywords: ['llm-d', 'async processing', 'queue', 'background jobs', 'GCP Pub/Sub', 'Redis']
   },
