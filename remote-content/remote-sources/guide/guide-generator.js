@@ -117,10 +117,43 @@ const DYNAMIC_GUIDES = [
     keywords: ['llm-d', 'expert parallelism', 'LeaderWorkerSet', 'wide EP', 'distributed inference']
   },
   {
+    dirName: 'asynchronous-processing',
+    title: 'Asynchronous Processing',
+    description: 'Leverage a message queue (such as Redis or GCP Pub/Sub) for async-processing to decouple request submission from execution, optimize spare capacity, and manage latency-tolerant workloads.',
+    sidebarPosition: 10,
+    keywords: ['llm-d', 'async processing', 'queue', 'background jobs', 'GCP Pub/Sub', 'Redis']
+  },
+  {
+    dirName: 'workload-autoscaling',
+    title: 'Workload Autoscaling',
+    description: 'Autoscale LLM inference workloads using SLO-aware signals like queue depth, in-flight request counts, and KV cache pressure with Kubernetes HPA or KEDA',
+    sidebarPosition: 11,
+    targetFilename: 'workload-autoscaling/index.md',
+    keywords: ['llm-d', 'autoscaling', 'HPA', 'KEDA', 'workload autoscaler', 'KV cache', 'SLO']
+  },
+  {
+    dirName: 'workload-autoscaling/wva',
+    sourceFile: 'guides/workload-autoscaling/README.wva.md',
+    title: 'Workload Variant Autoscaler (WVA)',
+    description: 'Dynamically autoscale llm-d inference replicas using the Workload Variant Autoscaler with saturation-based signals and cost-aware capacity allocation across heterogeneous hardware',
+    sidebarPosition: 12,
+    targetFilename: 'workload-autoscaling/wva.md',
+    keywords: ['llm-d', 'workload variant autoscaler', 'WVA', 'autoscaling', 'KV cache', 'saturation', 'heterogeneous hardware']
+  },
+  {
+    dirName: 'workload-autoscaling/hpa-igw',
+    sourceFile: 'guides/workload-autoscaling/README.hpa-igw.md',
+    title: 'Autoscaling with HPA and IGW Metrics',
+    description: 'Configure Kubernetes HPA with Inference Gateway queue depth and running request metrics for responsive, model-aware LLM autoscaling',
+    sidebarPosition: 13,
+    targetFilename: 'workload-autoscaling/hpa-igw.md',
+    keywords: ['llm-d', 'HPA', 'autoscaling', 'inference gateway', 'queue depth', 'IGW metrics', 'KEDA']
+  },
+  {
     dirName: 'simulated-accelerators',
     title: 'Accelerator Simulation',
     description: 'Test llm-d at scale without GPUs using the inference simulator to validate autoscaling, scheduling, and system behavior',
-    sidebarPosition: 10,
+    sidebarPosition: 14,
     keywords: ['llm-d', 'accelerator simulation', 'GPU simulation', 'testing', 'development']
   }
 ];
@@ -167,7 +200,7 @@ function createGuidePlugins() {
   
   // Add dynamic guides
   DYNAMIC_GUIDES.forEach((guide) => {
-    const sourceFile = `guides/${guide.dirName}/README.md`;
+    const sourceFile = guide.sourceFile || `guides/${guide.dirName}/README.md`;
     const targetFilename = guide.targetFilename || `${guide.dirName}.md`;
     
     plugins.push([

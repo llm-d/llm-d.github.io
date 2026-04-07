@@ -9,5 +9,8 @@ aks = "aks"
 Nam = "Nam"
 nam = "nam"
 
+# Person's name (blog/authors.yml)
+Ofer = "Ofer"
+
 # Pre-existing typo in codebase (to be fixed separately)
 Kuberentes = "Kuberentes"

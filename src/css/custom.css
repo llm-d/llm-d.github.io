@@ -73,7 +73,7 @@ display: none !important;
 
 .footer-socials-row {
   display: grid;
-  grid-template-columns: repeat(6, 26px);
+  grid-template-columns: repeat(7, 26px);
   gap: 10px;
   align-items: center;
   justify-content: start;
@@ -82,7 +82,7 @@ display: none !important;
 /* Responsive layout for smaller footer widths */
 @media screen and (max-width: 996px) {
   .footer-socials-row {
-    grid-template-columns: repeat(3, 28px);
+    grid-template-columns: repeat(4, 28px);
     gap: 12px;
     justify-content: start;
   }

@@ -12,89 +12,6 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
 {(() => {
   const events = [
     {
-      month: 'March 2026',
-      title: 'llm-d Distributed Inference Meetup NYC',
-      location: 'IBM Innovation Studio, 1 Madison Ave, NYC',
-      dateText: 'March 11, 2026',
-      cost: 'Free',
-      href: 'https://luma.com/0crwqwg4',
-      sessions: [
-        {
-          title: 'Intro to llm-d for Open Source Distributed Inference & Project Update',
-          date: 'Wed, Mar 11, 2026',
-          time: '5:15 PM ET',
-          location: 'IBM Innovation Studio',
-          href: 'https://luma.com/0crwqwg4',
-        },
-        {
-          title: 'Distributed LLM Serving on AMD with llm-d',
-          date: 'Wed, Mar 11, 2026',
-          time: '5:35 PM ET',
-          location: 'IBM Innovation Studio',
-          href: 'https://luma.com/0crwqwg4',
-        },
-        {
-          title: 'The Path to Intelligent Routing: Lessons Learned Scaling Wide-EP and MoE Models',
-          date: 'Wed, Mar 11, 2026',
-          time: '5:55 PM ET',
-          location: 'IBM Innovation Studio',
-          href: 'https://luma.com/0crwqwg4',
-        },
-        {
-          title: 'KV-Cache Wins You Can See: Prefix-Cache Scheduling, Offloading, and Scaling',
-          date: 'Wed, Mar 11, 2026',
-          time: '6:15 PM ET',
-          location: 'IBM Innovation Studio',
-          href: 'https://luma.com/0crwqwg4',
-        },
-      ],
-    },
-    {
-      month: 'March 2026',
-      title: 'KubeCon + CloudNativeCon Europe 2026',
-      location: 'Amsterdam, The Netherlands',
-      dateText: 'March 23–26, 2026',
-      cost: 'Paid',
-      href: 'https://events.linuxfoundation.org/kubecon-cloudnativecon-europe/',
-      sessions: [
-        {
-          title: 'Panel: Routing Intelligence Vs Traffic Control: Architectural Tradeoffs for AI Inference in Gateway API',
-          date: 'Mon, Mar 23, 2026',
-          time: '12:45 – 13:20 CET',
-          location: 'Hall 7 | Room B',
-          href: 'https://colocatedeventseu2026.sched.com/event/2DY4J/panel-routing-intelligence-vs-traffic-control-how-ai-is-shaping-mesh-gateways-lin-sun-soloio-rob-salmond-google-kevin-foster-red-hat-john-howard-soloio-dan-sun-bloomberg',
-        },
-        {
-          title: 'Cloud Native Theater | Istio Day: Running State of the Art Inference with Istio and llm-d',
-          date: 'Tue, Mar 24, 2026',
-          time: '16:00 – 16:35 CET',
-          location: 'Halls 1-5',
-          href: 'https://kccnceu2026.sched.com/event/2EG0w/cloud-native-theater-istio-day-running-state-of-the-art-llms-at-scale-with-istio-ambient-mode-keith-mattix-ii-microsoft-and-nili-guy-ibm',
-        },
-        {
-          title: 'Route, Serve, Adapt, Repeat: Adaptive Routing for AI Inference Workloads in Kubernetes',
-          date: 'Wed, Mar 25, 2026',
-          time: '11:45 – 12:15 CET',
-          location: 'Auditorium',
-          href: 'https://kccnceu2026.sched.com/event/2CW2C/route-serve-adapt-repeat-adaptive-routing-for-ai-inference-workloads-in-kubernetes-nir-rozenbaum-ibm-kellen-swain-google',
-        },
-        {
-          title: 'Tutorial: KV-Cache Wins You Can Feel: Building AI-Aware LLM Routing on Kubernetes',
-          date: 'Thu, Mar 26, 2026',
-          time: '11:00 – 12:15 CET',
-          location: 'Elicium 1',
-          href: 'https://kccnceu2026.sched.com/event/2CW5y/tutorial-kv-cache-wins-you-can-feel-building-ai-aware-llm-routing-on-kubernetes-tyler-michael-smith-red-hat-kay-yan-daocloud-danny-harnik-michal-malka-maroon-ayoub-ibm',
-        },
-        {
-          title: 'Evolving KServe: The Unified Model Inference Platform for Both Predictive and Generative AI',
-          date: 'Thu, Mar 26, 2026',
-          time: '11:00 – 11:30 CET',
-          location: 'E103-105',
-          href: 'https://sched.co/2EF54',
-        },
-      ],
-    },
-    {
       month: 'April 2026',
       title: 'PyTorch Conference Europe 2026',
       location: 'Paris, France',
@@ -150,6 +67,24 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
           time: '14:20 – 14:30 CEST',
           location: 'Central Room',
           href: 'https://pytorchconferenceeu2026.sched.com/event/2HiqO/lightning-talk-inside-vllms-kv-offloading-connector-async-memory-transfers-for-higher-inference-throughput-or-ozeri-ibm-nicolo-lucchesi-red-hat',
+        },
+      ],
+    },
+    {
+      month: 'April 2026',
+      title: 'Google Cloud Next 2026',
+      location: 'Las Vegas, NV',
+      dateText: 'April 22–24, 2026',
+      cost: 'Paid',
+      href: 'https://www.googlecloudevents.com/next-vegas/',
+      sessions: [
+        {
+          title: 'Achieve state-of-the-art inference: High performance on TPUs and GPUs with llm-d',
+          date: 'Apr 22–24, 2026',
+          time: 'TBA',
+          location: 'TBA',
+          speakers: 'Sean Horgan (Google Cloud), Greg Pereira (Red Hat), Alex Zakonov (Google Cloud)',
+          href: 'https://www.googlecloudevents.com/next-vegas/session/3912927/achieve-state-of-the-art-inference-high-performance-on-tpus-and-gpus-with-llm-d',
         },
       ],
     },
@@ -296,6 +231,11 @@ Stay connected with the llm-d community at meetups, conferences, and workshops. 
                               <div style={{fontSize: '12px', marginTop: '4px'}}>
                                 {s.date} · {s.time} · 📍 {s.location}
                               </div>
+                              {s.speakers && (
+                                <div style={{fontSize: '12px', marginTop: '2px', color: 'var(--ifm-color-emphasis-700)'}}>
+                                  🎤 {s.speakers}
+                                </div>
+                              )}
                             </div>
                             <div style={{whiteSpace: 'nowrap'}}>
                               <a href={s.href} target="_blank" rel="noopener noreferrer" style={buttonStyle}>View details</a>

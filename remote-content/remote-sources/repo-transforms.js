@@ -33,7 +33,10 @@ const INTERNAL_GUIDE_MAPPINGS = {
   'guides/simulated-accelerators/README.md': '/docs/guide/Installation/simulated-accelerators',
   'guides/wide-ep-lws/README.md': '/docs/guide/Installation/wide-ep-lws',
   'guides/tiered-prefix-cache/README.md': '/docs/guide/Installation/tiered-prefix-cache',
-  'guides/tiered-prefix-cache/cpu/README.md': '/docs/guide/Installation/tiered-prefix-cache/cpu'
+  'guides/tiered-prefix-cache/cpu/README.md': '/docs/guide/Installation/tiered-prefix-cache/cpu',
+  'guides/workload-autoscaling/README.md': '/docs/guide/Installation/workload-autoscaling',
+  'guides/workload-autoscaling/README.hpa-igw.md': '/docs/guide/Installation/workload-autoscaling/hpa-igw',
+  'guides/workload-autoscaling/README.wva.md': '/docs/guide/Installation/workload-autoscaling/wva'
 };
 
 /**
@@ -120,8 +123,8 @@ function applyBasicMdxFixes(content) {
   // First convert tabs to Docusaurus format
   let transformed = convertTabsToDocusaurus(content);
   
-  // Then apply other MDX fixes
-  return transformed
+  // Apply MDX fixes that are safe to run across all content
+  transformed = transformed
     // Convert GitHub-style callouts to Docusaurus admonitions
     .replace(/^> \[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION|REQUIREMENTS)\]\s*\n((?:> .*\n?)*)/gm, (match, type, content) => {
       // Map GitHub callout types to Docusaurus admonition types
@@ -160,20 +163,31 @@ function applyBasicMdxFixes(content) {
     .replace(/<\/picture>/g, '')
     .replace(/(<(?:img|input|area|base|col|embed|hr|link|meta|param|source|track|wbr)[^>]*?)(?<!\/)>/gi, '$1 />')
     .replace(/(<\w+[^>]*?)(\s+\w+)=([^"'\s>]+)([^>]*?>)/g, '$1$2="$3"$4')
-    .replace(/'(\{[^}]*\})'/g, '`$1`')
-    .replace(/\{[^}]*\}/g, (match) => {
-      // Skip JSX comments - they're valid MDX and shouldn't be wrapped
-      if (match.startsWith('{/*') || match.startsWith('{ /*')) {
-        return match;
-      }
-      if (match.includes('"') || match.includes("'") || match.includes('\\') || match.match(/\{[^}]*\d+[^}]*\}/)) {
-        return '`' + match + '`';
-      }
-      return match;
-    })
     .replace(/<(http[s]?:\/\/[^>]+)>/g, '`$1`')
     .replace(/<details[^>]*>/gi, '<details>')
     .replace(/<summary[^>]*>/gi, '<summary>');
+
+  // Escape bare {}-expressions for MDX using the match-and-skip pattern:
+  // code fences and inline code spans are matched first and passed through unchanged,
+  // so the brace-wrapping only applies to prose content.
+  transformed = transformed
+    .replace(/(```[\s\S]*?```|`[^`\n]+`)|'(\{[^}]*\})'/g, (match, code, braces) => {
+      if (code) return code;
+      if (braces) return '`' + braces + '`';
+      return match;
+    })
+    .replace(/(```[\s\S]*?```|`[^`\n]+`)|(\{[^}]*\})/g, (match, code, braces) => {
+      if (code) return code;
+      if (braces) {
+        if (braces.startsWith('{/*') || braces.startsWith('{ /*')) return braces;
+        if (braces.includes('"') || braces.includes("'") || braces.includes('\\') || braces.match(/\{[^}]*\d+[^}]*\}/)) {
+          return '`' + braces + '`';
+        }
+      }
+      return match;
+    });
+
+  return transformed;
 }
 
 /**

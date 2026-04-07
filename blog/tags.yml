@@ -88,3 +88,13 @@ storage:
   label: Storage
   permalink: /storage
   description: Storage related content
+
+scheduling:
+  label: Scheduling
+  permalink: /scheduling
+  description: Request scheduling and load balancing for LLM inference
+
+inference:
+  label: Inference
+  permalink: /inference
+  description: LLM inference serving and optimization

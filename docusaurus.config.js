@@ -326,6 +326,9 @@ const config = {
                     <a href="https://x.com/_llm_d_" target="_blank" rel="noreferrer noopener" aria-label="X / Twitter">
                       <img src="/img/new-social/x-mark-white.png" alt="X / Twitter" />
                     </a>
+                    <a href="https://www.youtube.com/@llm-d-project" target="_blank" rel="noreferrer noopener" aria-label="YouTube">
+                      <img src="/img/new-social/youtube-mark-white.svg" alt="YouTube" />
+                    </a>
                   </div>
                   <div class="footer-socials-cta">
                     <a href="/slack" target="_self" rel="noreferrer noopener" aria-label="Join our Slack">
