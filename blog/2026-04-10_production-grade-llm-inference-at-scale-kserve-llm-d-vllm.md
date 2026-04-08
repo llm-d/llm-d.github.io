@@ -26,7 +26,7 @@ The approach quickly introduced severe operational bottlenecks:
 * **Infrastructure Lock-in:** Switching to local LVM persistent volumes solved the speed problem but created a rigid node-to-pod affinity. A single hardware failure meant a manual intervention to delete the Persistent Volume Claim (PVC) and reschedule the pod, which is an unacceptable burden for day-2 operations.  
 * **Naive Load Balancing:** Beyond the looming retirement of NGINX Ingress Controller, a simple round-robin load-balancing strategy is fundamentally inefficient for LLMs. It fails to utilize the critical **KV-cache** on the GPU, a core feature of vLLM that significantly boosts throughput. In a world where GPU costs are paramount, squeezing efficiency out of every core is non-negotiable.
 
-## What We Needed from an LLM Operator
+## What We Needed from an Operator
 
 Running LLMs at scale demanded a purpose-built Kubernetes Operator designed for the intricacies of AI/ML. After evaluating the landscape, we identified a clear set of requirements:
 
@@ -50,7 +50,7 @@ On one deployment, we observed a **3x improvement in output tokens/s** and a **2
 ![performance-improvements](/img/blogs/production-grade-ai-inference-kserve-red-hat-and-tesla-success-story/performance-improvements.png)
 
 
-## Upstream Contributions and Lessons Learned
+## Community Contributions and Collaboration
 
 Running this stack in production surfaced real issues that we fixed upstream in KServe, benefiting the broader community:
 
@@ -59,6 +59,14 @@ Running this stack in production surfaced real issues that we fixed upstream in 
 * **Added support for latest Gateway API Inference Extension** ([kserve\#4886](https://github.com/kserve/kserve/pull/4886))
 
 These contributions came directly from hitting production edge cases. Validating KServe and llm-d at this scale helped harden the platform for everyone running LLM workloads on Kubernetes.
+
+
+## Acknowledgement
+
+We’d like to thank everyone from the community who has contributed to the successful adoption of KServe, llm-d, and vLLM in Tesla's production environment. In particular, below is the list of people from Red Hat and Tesla teams who have helped through the process (in alphabetical order).
+
+* **Red Hat team**: Sergey Bekkerman, Nati Fridman, Killian Golds,Andres Llausas, Bartosz Majsak, Greg Pereira, Pierangelo Di Pilato, Ran Pollak, Vivek Karunai Kiri Ragavan, Robert Shaw, and Yuan Tang
+* **Tesla team**: Scott Cabrinha and Sai Krishna
 
 ## Get Involved with llm-d
 
@@ -70,10 +78,3 @@ The work described here is just one example of what becomes possible when a comm
 * **Follow project updates** → Stay current on [Twitter/X](https://twitter.com/_llm_d_), [Bluesky](https://bsky.app/profile/llm-d.ai), and [LinkedIn](https://www.linkedin.com/company/llm-d)
 * **Watch demos and recordings** → Subscribe to the [llm-d YouTube channel](https://www.youtube.com/@llm-d-project) for community call recordings and feature walkthroughs
 * **Read the docs** → Visit our [community page](/docs/community) to find SIGs, contribution guides, and upcoming events
-
-## Acknowledgement
-
-We’d like to thank everyone from the community who has contributed to the successful adoption of KServe, llm-d, and vLLM in Tesla's production environment. In particular, below is the list of people from Red Hat and Tesla teams who have helped through the process (in alphabetical order).
-
-* **Red Hat team**: Sergey Bekkerman, Nati Fridman, Killian Golds,Andres Llausas, Bartosz Majsak, Greg Pereira, Pierangelo Di Pilato, Ran Pollak, Vivek Karunai Kiri Ragavan, Robert Shaw, and Yuan Tang
-* **Tesla team**: Scott Cabrinha and Sai Krishna
