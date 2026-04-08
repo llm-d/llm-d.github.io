@@ -1,8 +1,8 @@
 ---
-title: "Production-Grade AI Inference with KServe, llm-d, and vLLM: A Red Hat and Tesla Success Story"
-description: "The collaboration story between Red Hat and Tesla to overcome significant scaling and operational challenges in LLM deployment. It explains how migrating from a simple vLLM deployment to a robust MLOps platform utilizing KServe, llm-d's intelligent routing, and vLLM provides deep customization and improved efficiency through prefix-cache aware routing to maximize GPU utilization."
-slug: production-grade-ai-inference-kserve-red-hat-and-tesla-success-story
-date: 2026-03-06T09:00
+title: "Production-Grade LLM Inference at Scale with KServe, llm-d, and vLLM"
+description: "How migrating from a simple vLLM deployment to a robust MLOps platform utilizing KServe, llm-d's intelligent routing, and vLLM solved significant scaling and operational challenges in LLM deployment through deep customization and prefix-cache aware routing to maximize GPU utilization."
+slug: production-grade-llm-inference-at-scale-kserve-llm-d-vllm
+date: 2026-04-10T09:00
 
 authors:
   - terrytangyuan
@@ -13,7 +13,7 @@ authors:
 tags: [blog]
 ---
 
-# Production-Grade AI Inference with KServe, llm-d, and vLLM: A Red Hat and Tesla Success Story
+# Production-Grade LLM Inference at Scale with KServe, llm-d, and vLLM
 
 ## The Problem with "Simple" LLM Deployments
 
@@ -26,9 +26,13 @@ The approach quickly introduced severe operational bottlenecks:
 * **Infrastructure Lock-in:** Switching to local LVM persistent volumes solved the speed problem but created a rigid node-to-pod affinity. A single hardware failure meant a manual intervention to delete the Persistent Volume Claim (PVC) and reschedule the pod, which is an unacceptable burden for day-2 operations.  
 * **Naive Load Balancing:** Beyond the looming retirement of NGINX Ingress Controller, a simple round-robin load-balancing strategy is fundamentally inefficient for LLMs. It fails to utilize the critical **KV-cache** on the GPU, a core feature of vLLM that significantly boosts throughput. In a world where GPU costs are paramount, squeezing efficiency out of every core is non-negotiable.
 
-## The Search for a Superior Operator
+## What We Needed from an LLM Operator
 
-We recognized that running LLMs at scale demanded a purpose-built solution, a Kubernetes Operator designed for the intricacies of AI/ML. While some existing projects are clean and functional as a Proof-of-Concept, they lacked the necessary extensibility. Customizing the runtime specification beyond the exposed Custom Resources was a requirement we couldn't compromise on. There are also other tools that offered complexity and robustness but were overly opinionated, catering heavily toward a specific prefill/decode setup. In addition, their strict API contracts didn't align with our need for flexible, customized deployment patterns.
+Running LLMs at scale demanded a purpose-built Kubernetes Operator designed for the intricacies of AI/ML. After evaluating the landscape, we identified a clear set of requirements:
+
+* **Full spec-level customization:** We needed the ability to override the runtime specification beyond what typical Custom Resources expose — tailoring vLLM flags for specialized hardware and rapid iteration.
+* **Flexible deployment patterns:** Rather than being locked into a single prefill/decode architecture, we needed an operator that could adapt to our evolving serving topologies.
+* **Standard Kubernetes API integration:** The solution had to work with the Kubernetes API surface we already knew, not introduce an entirely new abstraction layer.
 
 ## The Winning Combination: KServe \+ llm-d \+ vLLM
 
@@ -41,18 +45,20 @@ This combination solved every scaling and operational challenge we faced by deli
 1. **Deep Customization:** The **LLMInferenceService** and **LLMInferenceConfig** objects expose the standard Kubernetes API, allowing us to override the spec precisely where needed. This level of granular control is crucial for tailoring vLLM to specialized hardware or quickly implementing flag changes.  
 2. **Intelligent Routing and Efficiency:** By leveraging [**Envoy**](https://www.envoyproxy.io/), [**Envoy AI Gateway**](https://aigateway.envoyproxy.io/), and [**Gateway API Inference Extension**](https://github.com/kubernetes-sigs/gateway-api-inference-extension), we moved far beyond round-robin. This technology enables **prefix-cache aware routing**, ensuring requests are intelligently routed to the correct vLLM instance to maximize KV-cache utilization and drive up GPU efficiency.
 
-On certain deployments, we noticed 3x improvement in output tokens/s, while the time to first token dropped by 2x. Below is the chart that shows the performance improvement after we released the routing change (at around 12:30PM),
+On one deployment, we observed a **3x improvement in output tokens/s** and a **2x reduction in time to first token (TTFT)** after enabling prefix-cache aware routing. These numbers were measured on [TODO: specify model name, GPU type, number of replicas, and concurrency level]. Below is the chart that shows the performance improvement after we released the routing change (at around 12:30PM).
 
 ![performance-improvements](/img/blogs/production-grade-ai-inference-kserve-red-hat-and-tesla-success-story/performance-improvements.png)
 
 
-## Collaboration for Successful Adoption
+## Upstream Contributions and Lessons Learned
 
-This migration from a fragile StatefulSet to a robust, scalable MLOps platform was not a solitary effort. It was a direct result of the powerful collaboration between **Red Hat** and **Tesla**. By combining Red Hat’s deep expertise in enterprise-grade Kubernetes and open-source infrastructure with Tesla’s demanding requirements for high-performance, large-scale AI serving, we successfully integrated and validated the KServe and llm-d solution. This partnership demonstrates how open standards and purpose-built operators are the key to unlocking the true potential of LLMs in production environments.
+Running this stack in production surfaced real issues that we fixed upstream in KServe, benefiting the broader community:
 
-This collaboration helps identify issues and sparks ideas for new features in KServe ([\#4901](https://github.com/kserve/kserve/issues/4901), [\#4900](https://github.com/kserve/kserve/issues/4900), [\#4898](https://github.com/kserve/kserve/issues/4898), [\#4899](https://github.com/kserve/kserve/issues/4899)). In addition, LLMInferenceService’s storageInitializer field has been [changed to optional](https://github.com/kserve/kserve/pull/4970) to enable the use of RunAI Model Streamer and we [added support for latest version of GIE](https://github.com/kserve/kserve/pull/4886).
+* **New feature requests filed:** [\#4901](https://github.com/kserve/kserve/issues/4901), [\#4900](https://github.com/kserve/kserve/issues/4900), [\#4898](https://github.com/kserve/kserve/issues/4898), [\#4899](https://github.com/kserve/kserve/issues/4899)
+* **storageInitializer made optional** ([kserve\#4970](https://github.com/kserve/kserve/pull/4970)) — enabling RunAI Model Streamer as an alternative to the default storage initializer
+* **Added support for latest Gateway API Inference Extension** ([kserve\#4886](https://github.com/kserve/kserve/pull/4886))
 
-The combination of **KServe's** industry-leading standard for model serving, **llm-d's** intelligent routing capabilities, and **vLLM's** high-throughput inference engine provides the best foundation for managing the next generation of AI workloads at enterprise scale.
+These contributions came directly from hitting production edge cases. Validating KServe and llm-d at this scale helped harden the platform for everyone running LLM workloads on Kubernetes.
 
 ## Get Involved with llm-d
 
