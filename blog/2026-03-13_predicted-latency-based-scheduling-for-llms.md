@@ -15,6 +15,8 @@ tags: [blog, scheduling, inference]
 
 Not all LLM requests cost the same. A short prompt might complete in milliseconds, while a long one can occupy a GPU for seconds. If we can predict how long a request will take on each candidate server before dispatching it, we can make substantially better routing decisions. This post describes a system that does exactly that: a lightweight ML model trained online from live traffic that replaces manually tuned heuristic weights with direct latency predictions.
 
+
+
 <!-- truncate -->
 
 ## The Load Balancing Problem in LLM Serving
@@ -57,7 +59,7 @@ At scheduling time, the model predicts the TTFT and TPOT a new request would exp
 
 This largely eliminates manual weight tuning. Rather than deciding how much to value cache locality versus queue depth versus memory pressure, the model learns those tradeoffs directly from observed latency data.
 
-Across five benchmark scenarios ranging from cache-friendly to cache-intensive workloads, predicted-latency aware scheduling outperforms or matches load+prefix-aware routing in four out of five cases. Additionally we achieve 43% improvement in P50 end-to-end latency on a representative MaaS workload, with 70% improvements in TTFT.
+Across five benchmark scenarios ranging from cache-friendly to cache-intensive workloads, predicted-latency aware scheduling outperforms or matches load+prefix-aware routing in four out of five cases. Additionally we achieve 43% improvement in P50 end-to-end latency on a representative MaaS workload, with 70% improvements in TTFT. In production, we have deployed this in Vertex AI clusters at Google and observed up to 40% reduction in TTFT and ITL.
 
 ## How It Works
 
@@ -167,11 +169,13 @@ The table below contrasts five scenarios, ranging from cache-friendly (high pref
 
 Note that **Predicted Latency Scorer** eliminates the need to manually tune relative weights between different scoring components, as the ML model learns optimal trade-offs from historical data.
 
----
+### Hardware Configuration
 
-**Hardware Configuration:** 10 model servers, each with 2x H100 80GB GPUs (TP=2, DP=1, EP=1, no disaggregation) for scenario A - D. For ShareGPT workload, which has much shorter prompts, to achieve high KV Cache utilization, we have 8 model servers, each with 1x H100 80GB GPUs (TP=1).
+10 model servers, each with 2x H100 80GB GPUs (TP=2, DP=1, EP=1, no disaggregation) for scenario A - D. For ShareGPT workload, which has much shorter prompts, to achieve high KV Cache utilization, we have 8 model servers, each with 1x H100 80GB GPUs (TP=1).
 
-Benchmark configuration: we tested multiple scenarios detailed in the following table. Think of *num_groups* as the number of unique system prompts and *num_prompts_per_group* as the number of users that share a system prompt.
+### Benchmark Configuration
+
+We tested multiple scenarios detailed in the following table. Think of *num_groups* as the number of unique system prompts and *num_prompts_per_group* as the number of users that share a system prompt.
 
 | Scenario | Description | Benchmark Configuration | Best Performing Scorer |
 | :---- | :---- | :---- | :---- |
