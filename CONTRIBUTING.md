@@ -522,4 +522,4 @@ For detailed information, see [Component Version Management](README.md#component
 - **General questions**: <a href="/slack" target="_self">Join the llm-d Slack</a>
 - **Website issues**: [Create an issue](https://github.com/llm-d/llm-d.github.io/issues)
 - **Content questions**: Check if content is synced, then edit in appropriate repository
-- **Technical details**: See [README.md](README.md) for architecture and transformation details 
+- **Technical details**: See [README.md](README.md) for architecture and transformation details
