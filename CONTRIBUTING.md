@@ -52,30 +52,126 @@ For content **without** "Content Source" banners:
 
 ### 🔧 Adding Remote Content
 
-To sync new content from repositories:
+There are **three different approaches** for adding remote content, depending on the content type:
+
+| Content Type | How to Add | Configuration File |
+|--------------|-----------|-------------------|
+| **Components** | Edit YAML file | `components-data.yaml` |
+| **Guides** | Edit generator file | `guide-generator.js` |
+| **Other Content** | Copy template + import | `example-readme.js.template` → `remote-content.js` |
+
+**Quick Decision Tree:**
+- Adding a component README? → Edit `components-data.yaml`
+- Adding a guide from the main repo? → Edit `guide-generator.js`
+- Adding other documentation? → Copy template, edit, and import
+
+#### Option 1: Adding New Components (Easiest - Auto-generated)
+
+Components are automatically generated from `components-data.yaml`:
+
+1. **Edit the YAML file:**
+   ```bash
+   # Edit remote-content/remote-sources/components-data.yaml
+   ```
+
+2. **Add your component entry:**
+   ```yaml
+   components:
+     # ... existing components
+     - name: llm-d-your-component
+       org: llm-d
+       sidebarLabel: Your Component    # Display name in sidebar
+       description: Description of your component
+       sidebarPosition: 8
+       version: v1.0.0                 # Version tag for Latest Release page
+   ```
+
+3. **Test:** `npm start`
+
+The component's README.md from the `main` branch will be automatically synced to `/docs/architecture/Components/your-component.md`.
+
+#### Option 2: Adding New Guides (Generator-based)
+
+Guides are configured in the `guide-generator.js` file, **not via templates**:
+
+1. **Edit the generator file:**
+   ```bash
+   # Edit remote-content/remote-sources/guide/guide-generator.js
+   ```
+
+2. **Add your guide to the `DYNAMIC_GUIDES` array:**
+   ```javascript
+   const DYNAMIC_GUIDES = [
+     // ... existing guides
+     {
+       dirName: 'your-guide-folder',           // Directory in llm-d/llm-d/guides/
+       title: 'Your Guide Title',
+       description: 'Brief description for SEO',
+       sidebarPosition: 15,
+       keywords: ['llm-d', 'your', 'keywords']
+     }
+   ];
+   ```
+
+   This will sync `guides/your-guide-folder/README.md` → `docs/guide/Installation/your-guide-folder.md`
+
+3. **For nested guides with custom paths**, use `sourceFile` and `targetFilename`:
+   ```javascript
+   {
+     dirName: 'parent-folder/nested-guide',      // Source directory path
+     sourceFile: 'guides/parent-folder/nested-guide/README.md',  // Explicit source
+     title: 'Nested Guide Title',
+     description: 'Guide description',
+     sidebarPosition: 16,
+     targetFilename: 'nested-guide.md',          // Output as top-level guide
+     keywords: ['llm-d', 'nested', 'guide']
+   }
+   ```
+
+   **Example:** `guides/workload-autoscaling/wva/README.md` → `docs/guide/Installation/wva.md` (appears as top-level guide, not nested)
+
+4. **Test:** `npm start`
+
+**Note:** Guides always sync from the `main` branch of the `llm-d/llm-d` repository.
+
+#### Option 3: Other Content (Template-based)
+
+For content that doesn't fit the component or guide pattern (e.g., community docs, architecture overviews):
 
 1. **Choose the right directory** based on content type:
    - `architecture/` → `docs/architecture/`
-   - `guide/` → `docs/guide/`
    - `community/` → `docs/community/`
 
 2. **Copy the template:**
    ```bash
    # Choose appropriate directory
-   cp remote-content/remote-sources/example-readme.js.template remote-content/remote-sources/DIRECTORY/my-content.js
-   
-   # Examples:
-   cp remote-content/remote-sources/example-readme.js.template remote-content/remote-sources/guide/my-guide.js
-   cp remote-content/remote-sources/example-readme.js.template remote-content/remote-sources/architecture/my-arch-doc.js
+   cp remote-content/remote-sources/example-readme.js.template \
+      remote-content/remote-sources/DIRECTORY/my-content.js
+
+   # Example:
+   cp remote-content/remote-sources/example-readme.js.template \
+      remote-content/remote-sources/community/my-doc.js
    ```
 
-3. **Edit configuration** in the new file (note the `../` imports for utils)
+3. **Edit configuration** in the new file:
+   - Update repository name
+   - Set output directory and filename
+   - Configure title, description, sidebar position
+   - Note the `../` imports for utils (since you're in a subdirectory)
 
-4. **Add to system** in `remote-content/remote-content.js`
+4. **Import in `remote-content/remote-content.js`:**
+   ```javascript
+   import myContentSource from './remote-sources/DIRECTORY/my-content.js';
 
-5. **Test** with `npm start`
+   const remoteContentPlugins = [
+     // ... existing sources
+     myContentSource,  // Add your source
+   ];
+   ```
 
-See the "Remote Content System" section in the main [README.md](README.md) for detailed instructions.
+5. **Test:** `npm start`
+
+See the "Remote Content System" section in the main [README.md](README.md) for detailed technical information.
 
 ### ⚙️ Adding New Components
 
@@ -302,8 +398,39 @@ If you're converting content from Google Docs:
 5. **Add frontmatter** and `<!-- truncate -->` tag as described above
 6. **Review and test** locally before submitting
 
+## ❓ Frequently Asked Questions
+
+### Why are there different approaches for adding content?
+
+The website uses an optimized system based on content type:
+- **Components**: Auto-generated from YAML for consistency
+- **Guides**: Generator-based for flexible directory mapping
+- **Other content**: Template-based for maximum customization
+
+### What happens to my markdown when it's synced?
+
+The build system automatically transforms GitHub markdown to work with Docusaurus:
+- GitHub callouts (e.g., `> [!NOTE]`) → Docusaurus admonitions (`:::note`)
+- HTML tab markers (`<!-- TABS:START -->`) → Docusaurus Tabs components
+- Relative links → Absolute GitHub links (to prevent broken links)
+- Relative images → GitHub raw URLs
+- HTML tags → MDX-compatible format
+
+**Your source files remain unchanged** - transformations only apply to the synced copy.
+
+### Why does all content sync from `main` branch?
+
+This ensures the documentation always reflects the latest development state. Version tags in `components-data.yaml` are for display on the Latest Release page only and don't affect which content gets synced.
+
+### Can I preview my changes before they go live?
+
+Yes! When you open a pull request, Netlify automatically creates a preview deployment. The preview URL is posted as a comment on your PR.
+
+For synced content from other repositories, you'll need to test changes locally (see README.md "Testing content from a feature branch" section).
+
 ## 🆘 Need Help?
 
 - **General questions**: <a href="/slack" target="_self">Join the llm-d Slack</a>
 - **Website issues**: [Create an issue](https://github.com/llm-d/llm-d.github.io/issues)
-- **Content questions**: Check if content is synced, then edit in appropriate repository 
+- **Content questions**: Check if content is synced, then edit in appropriate repository
+- **Technical details**: See [README.md](README.md) for architecture and transformation details 
