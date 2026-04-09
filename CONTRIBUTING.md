@@ -439,6 +439,32 @@ The website uses an optimized system based on content type:
 - **Guides**: Generator-based for flexible directory mapping
 - **Other content**: Template-based for maximum customization
 
+### Do keywords in the YAML actually do anything?
+
+**Yes!** Keywords are rendered as HTML meta keywords tags for SEO:
+```html
+<meta name="keywords" content="llm-d,inference scheduler,request routing">
+```
+
+This helps search engines understand page content and improve discoverability. While modern search engines don't rely heavily on keywords meta tags, they're still used by some search engines and can help with content categorization.
+
+### Can I add components from organizations outside llm-d?
+
+**Yes!** The YAML supports any GitHub organization via the `org` field:
+```yaml
+components:
+  - name: llm-d-modelservice
+    org: llm-d-incubation          # Different org
+```
+
+The system automatically constructs the URL:
+`https://raw.githubusercontent.com/llm-d-incubation/llm-d-modelservice/main/README.md`
+
+Currently synced orgs:
+- `llm-d` (main org)
+- `llm-d-incubation` (experimental components)
+- `kubernetes-sigs` (external, with `skipSync: true`)
+
 ### What happens to my markdown when it's synced?
 
 The build system automatically transforms GitHub markdown to work with Docusaurus:

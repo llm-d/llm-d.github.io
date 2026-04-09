@@ -564,16 +564,25 @@ Components are the easiest to add - just edit the YAML file:
 components:
   # ... existing components
   - name: llm-d-your-component
-    org: llm-d                       # GitHub organization
+    org: llm-d                       # GitHub organization (llm-d, llm-d-incubation, etc.)
     sidebarLabel: Your Component     # Display name in sidebar
     description: Description of your component
     sidebarPosition: 8               # Order in sidebar (lower = higher)
     version: v1.0.0                  # Version tag shown on Latest Release page
-    keywords:                        # SEO keywords
+    keywords:                        # SEO keywords (added to HTML meta tags)
       - llm-d
       - your component
       - keywords
 ```
+
+**Field explanations:**
+- `name`: Repository name (used to construct GitHub URL)
+- `org`: GitHub organization (can be `llm-d`, `llm-d-incubation`, or any org)
+- `sidebarLabel`: Display name in sidebar and on Latest Release page
+- `description`: Used in component table and meta description tag
+- `sidebarPosition`: Lower numbers appear first in sidebar
+- `version`: Display-only version tag for Latest Release page
+- `keywords`: Array of SEO keywords → rendered as `<meta name="keywords">` tags
 
 **2. Test:**
 ```bash
@@ -581,13 +590,19 @@ npm start
 ```
 
 **What happens:**
-- The component's README.md is automatically synced from the `main` branch
+- The component's README.md is automatically synced from `https://raw.githubusercontent.com/{org}/{name}/main/README.md`
 - Appears at `/docs/architecture/Components/your-component.md`
 - Added to the component navigation
 - Listed on the Latest Release page
 - Version tag is displayed on the Latest Release page (content always syncs from `main`)
+- Keywords added to HTML `<meta name="keywords">` tags for SEO
 
 **No additional configuration needed!** The `components-generator.js` automatically creates the plugin configuration from the YAML data.
+
+**Example repos currently synced:**
+- `llm-d/llm-d-inference-scheduler` (llm-d org)
+- `llm-d-incubation/llm-d-modelservice` (llm-d-incubation org)
+- `llm-d-incubation/llm-d-infra` (llm-d-incubation org)
 
 **For external components** (not in llm-d org):
 ```yaml
