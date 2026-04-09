@@ -18,9 +18,9 @@
   "dependencies": {
     "@babel/core": "^7.29.0",
     "@babel/preset-env": "^7.29.2",
-    "@docusaurus/core": "3.9.2",
-    "@docusaurus/preset-classic": "3.9.2",
-    "@docusaurus/theme-mermaid": "3.9.2",
+    "@docusaurus/core": "3.10.0",
+    "@docusaurus/preset-classic": "3.10.0",
+    "@docusaurus/theme-mermaid": "3.10.0",
     "@jest/environment": "^29.7.0",
     "@mdx-js/react": "^3.1.1",
     "babel-jest": "^29.7.0",
@@ -31,14 +31,14 @@
     "js-yaml": "^4.1.0",
     "jsdom": "^22.1.0",
     "prism-react-renderer": "^2.3.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.2.4",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "react-player": "^2.16.1"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "3.9.2",
-    "@docusaurus/types": "3.9.2",
-    "baseline-browser-mapping": "^2.10.8",
+    "@docusaurus/module-type-aliases": "3.10.0",
+    "@docusaurus/types": "3.10.0",
+    "baseline-browser-mapping": "^2.10.16",
     "jest": "^29.7.0"
   },
   "browserslist": {
