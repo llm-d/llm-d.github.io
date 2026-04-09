@@ -491,8 +491,8 @@ For synced content from other repositories, you'll need to test changes locally 
 When a new llm-d release is published:
 
 1. Run the sync script: `node remote-content/remote-sources/sync-release.mjs`
-2. Review changes: `git diff components-data.yaml`
-3. Commit and push: `git add components-data.yaml && git commit -m "Update to llm-d vX.Y.Z"`
+2. Review changes: `git diff remote-content/remote-sources/components-data.yaml`
+3. Commit and push: `git add remote-content/remote-sources/components-data.yaml && git commit -m "Update to llm-d vX.Y.Z"`
 
 The script automatically updates:
 - Release version and date
