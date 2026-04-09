@@ -441,12 +441,12 @@ If you need to test changes over multiple sessions:
 **Option 3: Local Testing (Recommended for Major Changes)**
 
 For substantial changes, consider:
-1. Make changes directly to the `docs/` folder locally (treated as generated content)
+1. Make changes directly to remote-synced files in the `docs/` folder locally
 2. Test the rendered output with `npm start`
 3. Once satisfied, implement the changes in the actual source repository
 4. The next build will sync the changes from the source repo
 
-**Note:** The `docs/` folder is generated content and changes to it are not committed to this repo.
+**Note:** Remote-synced content under `docs/` (listed in `.gitignore`) is generated during build and not committed. However, some files like `_category_.json` are source-controlled.
 
 ### Adding and Configuring Guides
 
@@ -528,14 +528,14 @@ const DYNAMIC_GUIDES = [
     // Output: docs/guide/Installation/workload-autoscaling/index.md
   },
 
-  // Nested guide flattened to top-level
+  // Nested guide with custom filename
   {
     dirName: 'workload-autoscaling/wva',
     sourceFile: 'guides/workload-autoscaling/README.wva.md',
     title: 'Workload Variant Autoscaler (WVA)',
     sidebarPosition: 12,
-    targetFilename: 'wva.md'                  // Flattened
-    // Output: docs/guide/Installation/wva.md (top-level)
+    targetFilename: 'workload-autoscaling/wva.md'  // Custom nested path
+    // Output: docs/guide/Installation/workload-autoscaling/wva.md
   }
 ];
 ```
@@ -731,9 +731,10 @@ const DYNAMIC_GUIDES = [
   title: 'Nested Guide',
   description: 'Guide description',
   sidebarPosition: 16,
-  targetFilename: 'nested-guide.md',        // Flatten to top-level
+  targetFilename: 'parent/nested-guide.md',  // Custom path (can be nested or flat)
   keywords: ['llm-d', 'nested']
-  // Output: docs/guide/Installation/nested-guide.md (top-level, not nested)
+  // Output: docs/guide/Installation/parent/nested-guide.md
+  // Note: To flatten to top-level, use targetFilename: 'nested-guide.md'
 }
 ```
 

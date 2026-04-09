@@ -18,7 +18,7 @@ Thank you for your interest in contributing to the llm-d website! This repositor
 |--------------|----------|-------------|
 | **Synced Content** | Architecture docs, guides, component docs | Edit in source repo (follow banner link) |
 | **Local Content** | Blog posts, community pages, website config | Edit in this repository |
-| **Component Documentation** | Auto-generated from component repos | Add to `component-configs.js` |
+| **Component Documentation** | Auto-generated from component repos | Add to `components-data.yaml` |
 
 ### 🚀 Making Local Changes
 
@@ -145,12 +145,12 @@ Guides are configured in the `guide-generator.js` file, **not via templates**:
      title: 'Nested Guide Title',
      description: 'Guide description',
      sidebarPosition: 16,
-     targetFilename: 'nested-guide.md',          // Output as top-level guide
+     targetFilename: 'parent-folder/nested-guide.md',  // Custom output path
      keywords: ['llm-d', 'nested', 'guide']
    }
    ```
 
-   **Example:** `guides/workload-autoscaling/wva/README.md` → `docs/guide/Installation/wva.md` (appears as top-level guide, not nested)
+   **Example:** `guides/workload-autoscaling/README.wva.md` → `docs/guide/Installation/workload-autoscaling/wva.md`
 
 4. **Test:** `npm start`
 
