@@ -65,7 +65,7 @@ There are **three different approaches** for adding remote content, depending on
 - Adding a guide from the main repo? → Edit `guide-generator.js`
 - Adding other documentation? → Copy template, edit, and import
 
-#### Option 1: Adding New Components (Easiest - Auto-generated)
+#### Option 1: Adding Component Documentation (Easiest - Auto-generated)
 
 Components are automatically generated from `components-data.yaml`:
 
@@ -79,16 +79,38 @@ Components are automatically generated from `components-data.yaml`:
    components:
      # ... existing components
      - name: llm-d-your-component
-       org: llm-d
-       sidebarLabel: Your Component    # Display name in sidebar
+       org: llm-d                       # GitHub organization
+       sidebarLabel: Your Component     # Display name in sidebar
        description: Description of your component
        sidebarPosition: 8
-       version: v1.0.0                 # Version tag for Latest Release page
+       version: v1.0.0                  # Version tag for Latest Release page
+       keywords:
+         - llm-d
+         - keywords
    ```
 
 3. **Test:** `npm start`
 
-The component's README.md from the `main` branch will be automatically synced to `/docs/architecture/Components/your-component.md`.
+**What happens:**
+- Component README.md from `main` branch → `/docs/architecture/Components/your-component.md`
+- Appears in sidebar under "Components"
+- Listed on Latest Release page
+
+**For external projects** (outside llm-d org):
+```yaml
+components:
+  - name: gateway-api-inference-extension
+    org: kubernetes-sigs               # External organization
+    skipSync: true                     # Don't sync README, link to GitHub instead
+    sidebarLabel: Gateway API Extension
+    description: Description
+    sidebarPosition: 8
+    version: v0.1.0
+```
+
+**For other architecture documentation** (design docs, patterns, ADRs):
+- Use Option 3 (template-based) and place in `remote-content/remote-sources/architecture/`
+- See README.md ["Adding Other Architecture Documentation"](README.md#adding-other-architecture-documentation-template-based) section
 
 #### Option 2: Adding New Guides (Generator-based)
 
@@ -180,13 +202,23 @@ Components are auto-generated! Just add to `remote-content/remote-sources/compon
 ```yaml
 components:
   # ... existing components
-  - name: your-component-name
+  - name: llm-d-your-component
     org: llm-d
-    branch: main
+    sidebarLabel: Your Component
     description: Component description
-    category: Core Infrastructure
     sidebarPosition: 10
+    version: v1.0.0                    # For Latest Release page display
+    keywords:
+      - llm-d
+      - your keywords
 ```
+
+**Important Notes:**
+- The `version` field is for **display only** on the Latest Release page
+- Component README content is **always synced from the `main` branch**
+- Version tags do NOT affect which content gets synced
+
+For details on how component versioning works and how to update for new releases, see the [Component Version Management](README.md#component-version-management) section in README.md.
 
 ## 📋 General Guidelines
 
@@ -427,6 +459,37 @@ This ensures the documentation always reflects the latest development state. Ver
 Yes! When you open a pull request, Netlify automatically creates a preview deployment. The preview URL is posted as a comment on your PR.
 
 For synced content from other repositories, you'll need to test changes locally (see README.md "Testing content from a feature branch" section).
+
+### How do I update the website for a new release?
+
+When a new llm-d release is published:
+
+1. Run the sync script: `node remote-content/remote-sources/sync-release.mjs`
+2. Review changes: `git diff components-data.yaml`
+3. Commit and push: `git add components-data.yaml && git commit -m "Update to llm-d vX.Y.Z"`
+
+The script automatically updates:
+- Release version and date
+- Component version tags (for Latest Release page display)
+- Container image versions
+
+**Note:** This only updates version numbers for display. Component READMEs always sync from the `main` branch during the build process.
+
+For detailed information, see [Component Version Management](README.md#component-version-management) in README.md.
+
+### What's the difference between version tags and synced content?
+
+**Version tags** (in `components-data.yaml`):
+- Displayed on the Latest Release page
+- Show which versions were included in a release
+- Updated by the `sync-release.mjs` script
+
+**Synced content** (READMEs, guides, docs):
+- Always pulled from the `main` branch
+- Updated during each build
+- Independent of version tags
+
+**Example:** A component with `version: v0.6.0` in YAML will show "v0.6.0" on the Latest Release page, but its README content comes from the `main` branch, not from the `v0.6.0` release tag.
 
 ## 🆘 Need Help?
 

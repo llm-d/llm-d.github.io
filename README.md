@@ -109,9 +109,11 @@ git diff components-data.yaml      # Review the changes
 
 This script:
 - Queries the [GitHub Releases API](https://github.com/llm-d/llm-d/releases/latest)
+- Parses the "LLM-D Component Summary" table from release notes
 - Updates release version, date, and URL in the YAML
-- Extracts component descriptions from release notes
-- Updates component versions in the YAML
+- Updates component version tags
+- Updates container image versions
+- Adds new/re-enabled images
 
 **Step 2: Commit and deploy**
 ```bash
@@ -122,9 +124,12 @@ git push                           # Triggers automatic deployment
 
 **What gets updated:**
 - Release version, date, and URLs shown on the **Latest Release** page
-- Component descriptions and version tags displayed in the component table
+- Component version tags displayed in the component table
+- Container image versions
 - **Note:** All documentation content (architecture, guides, components, community) syncs from the `main` branch
 - The version tags in YAML are only used to render the Latest Release page showing what versions are in the release
+
+**For detailed information** about the update process, troubleshooting, and manual updates, see the "Component Version Management" section below.
 
 ### Content Syncing Strategy
 
@@ -166,6 +171,220 @@ components:
     version: v0.6.0           # ← Displayed on Latest Release page ONLY
                               #   Content syncs from main branch
 ```
+
+### Component Version Management
+
+This section provides detailed information about how component versions are managed and updated on the website.
+
+#### How Component Versioning Works
+
+**Two separate systems:**
+
+1. **Display Versions** (in `components-data.yaml`):
+   - Shown on the Latest Release page
+   - Link to specific GitHub release tags
+   - Updated when new releases are published
+
+2. **Content Syncing** (always from `main`):
+   - README files synced from `main` branch
+   - Transformations applied during build
+   - Independent of version tags
+
+**Why this separation?**
+- Documentation on the website always reflects latest development
+- Latest Release page shows which versions were in each release
+- Users can see component docs while knowing which version is current
+
+#### The sync-release.mjs Script
+
+**Purpose:** Automates updating `components-data.yaml` when a new llm-d release is published.
+
+**What it does:**
+
+1. **Fetches release data from GitHub API**
+   ```bash
+   GET https://api.github.com/repos/llm-d/llm-d/releases/latest
+   ```
+
+2. **Parses the "LLM-D Component Summary" table** from release notes:
+   ```markdown
+   ## LLM-D Component Summary
+
+   | Component | Version | Previous Version | Type |
+   | --- | --- | --- | --- |
+   | llm-d/llm-d-inference-scheduler | `v0.7.1` | `v0.7.0` | Image |
+   | llm-d/llm-d-kv-cache | `v0.6.0` | `v0.5.0` | Image |
+   | llm-d/llm-d-new-component | `v0.1.0` | NA | Image (New) |
+   ```
+
+3. **Updates `components-data.yaml`:**
+   - Release metadata (version, date, URL)
+   - Component version tags
+   - Container image versions
+   - Adds new components marked as "(New)"
+   - Re-enables components marked as "(Re-enabled)"
+
+4. **Provides a summary:**
+   ```
+   Summary:
+   ============================================================
+   Release Version:          v0.6.0
+   Release Date:             April 3, 2026
+   Table entries parsed:     15
+   Components updated:       8
+   Container images updated: 12
+   New/re-enabled images:    2
+   ============================================================
+   ```
+
+**Usage:**
+
+```bash
+# Preview changes without writing
+node sync-release.mjs --dry-run
+
+# Apply changes
+node sync-release.mjs
+
+# With authentication (higher rate limits)
+GITHUB_TOKEN=ghp_xxxxx node sync-release.mjs
+```
+
+**Authentication:** The script supports `GITHUB_TOKEN` or `GH_TOKEN` environment variables for authenticated GitHub API requests (avoids rate limits).
+
+#### Component Matching Logic
+
+The script intelligently matches components from the release table to entries in the YAML:
+
+**Name variations handled:**
+- `llm-d-inference-scheduler` → matches YAML entry `llm-d-inference-scheduler`
+- `llm-d-workload-variant-autoscaler` → matches `workload-variant-autoscaler` (strips prefix)
+- `llm-d-modelservice` → applies special version tag format: `llm-d-modelservice-v0.4.9`
+- Variants: `llm-d-cuda (debug)` → `llm-d-cuda-debug`
+
+**What gets updated:**
+- Existing components: version updated in place
+- New images: appended to `containerImages` array
+- Re-enabled images: moved from `deprecatedImages` to `containerImages`
+
+#### Generated Latest Release Page
+
+The `components-generator.js` creates the Latest Release page from YAML data:
+
+**Generated content includes:**
+- Release version and date
+- Link to GitHub release notes
+- Component table with:
+  - Component name (linked to docs page)
+  - Description
+  - Repository link
+  - Version tag (linked to GitHub release)
+- Container images table with pull commands
+- Deprecation notices for removed images
+
+**Example output structure:**
+
+```markdown
+# llm-d v0.6.0
+
+**Released**: April 3, 2026
+
+**Full Release Notes**: [View on GitHub](...)
+
+## Components
+
+| Component | Description | Repository | Version |
+|-----------|-------------|------------|---------|
+| **[Inference Scheduler](./Components/inference-scheduler)** | The scheduler... | [llm-d/llm-d-inference-scheduler](...) | [v0.7.1](...) |
+
+## Container Images
+
+| Image | Description | Version | Pull Command |
+|-------|-------------|---------|--------------|
+| llm-d-cuda | CUDA runtime image | v0.6.0 | `ghcr.io/llm-d/llm-d-cuda:v0.6.0` |
+```
+
+#### Updating Component READMEs
+
+**Important:** Component READMEs are **NOT** updated by the sync script. They are synced during the build process.
+
+**How it works:**
+
+1. **During build** (`npm run build`):
+   - `components-generator.js` reads `components-data.yaml`
+   - For each component (without `skipSync: true`):
+     - Downloads README.md from `main` branch
+     - Applies transformations (links, images, etc.)
+     - Writes to `docs/architecture/Components/{name}.md`
+
+2. **Build happens:**
+   - On every push to `main` branch
+   - Nightly via cron schedule
+   - Manually via GitHub Actions
+
+3. **Component pages update automatically** with latest content from upstream repos
+
+**To manually update a single component's docs:**
+```bash
+# Force rebuild (re-downloads all READMEs)
+npm run build
+```
+
+#### Manual YAML Edits
+
+You can manually edit `components-data.yaml` if needed (e.g., adding a component not in the release table):
+
+```yaml
+components:
+  - name: llm-d-your-component
+    org: llm-d
+    sidebarLabel: Your Component
+    description: Description for the Latest Release page
+    sidebarPosition: 9
+    version: v1.0.0                    # Version tag for display
+    keywords:
+      - llm-d
+      - keywords
+      - for seo
+```
+
+**After manual edits:**
+1. Test locally: `npm run build`
+2. Review: `git diff components-data.yaml`
+3. Commit: `git commit -m "Add llm-d-your-component"`
+4. Deploy: `git push`
+
+#### Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| **Script can't find component table** | Verify release notes have "## LLM-D Component Summary" header with proper markdown table format |
+| **Component not updating** | Check name matching - script tries multiple variations but may need YAML name adjustment |
+| **Rate limit errors** | Set `GITHUB_TOKEN` environment variable for authenticated requests |
+| **Version not showing on Latest Release page** | Verify YAML was committed and pushed, then check build logs |
+| **Component README not updating** | READMEs sync from `main` branch during build, not from version tags. Check that README exists in upstream repo |
+| **New component not appearing** | Add entry to `components` array in YAML (script only updates existing entries from release table) |
+| **Dry run shows no changes** | Check release notes format - table must match expected structure exactly |
+
+#### Component skipSync Flag
+
+Some components should **NOT** have their READMEs synced (e.g., external repos):
+
+```yaml
+components:
+  - name: gateway-api-inference-extension
+    org: kubernetes-sigs
+    skipSync: true                     # Don't sync README
+    sidebarLabel: Gateway API Extension
+    description: Kubernetes Gateway API extension for inference
+    sidebarPosition: 8
+    version: v0.1.0
+```
+
+**Effect:**
+- Component appears on Latest Release page
+- No README synced to website
+- Component name links to GitHub instead of docs page
 
 ### Testing content from a feature branch
 
@@ -328,7 +547,15 @@ This allows you to:
 
 **Manual updates:** You can also manually edit `components-data.yaml` if needed.
 
-### Adding New Components (Auto-generated)
+### Adding New Architecture Documentation
+
+The architecture section (`/docs/architecture/`) contains:
+- Main architecture overview (from llm-d/llm-d README)
+- Latest Release page (generated from YAML)
+- Component pages (auto-generated from YAML)
+- Additional architecture docs (template-based)
+
+#### Adding Component Documentation (Auto-generated - Easiest)
 
 Components are the easiest to add - just edit the YAML file:
 
@@ -337,12 +564,12 @@ Components are the easiest to add - just edit the YAML file:
 components:
   # ... existing components
   - name: llm-d-your-component
-    org: llm-d
-    sidebarLabel: Your Component    # Display name in sidebar
+    org: llm-d                       # GitHub organization
+    sidebarLabel: Your Component     # Display name in sidebar
     description: Description of your component
-    sidebarPosition: 8
-    version: v1.0.0                 # Version tag shown on Latest Release page
-    keywords:                       # SEO keywords
+    sidebarPosition: 8               # Order in sidebar (lower = higher)
+    version: v1.0.0                  # Version tag shown on Latest Release page
+    keywords:                        # SEO keywords
       - llm-d
       - your component
       - keywords
@@ -357,9 +584,106 @@ npm start
 - The component's README.md is automatically synced from the `main` branch
 - Appears at `/docs/architecture/Components/your-component.md`
 - Added to the component navigation
+- Listed on the Latest Release page
 - Version tag is displayed on the Latest Release page (content always syncs from `main`)
 
 **No additional configuration needed!** The `components-generator.js` automatically creates the plugin configuration from the YAML data.
+
+**For external components** (not in llm-d org):
+```yaml
+components:
+  - name: gateway-api-inference-extension
+    org: kubernetes-sigs             # External organization
+    skipSync: true                   # Don't sync README (stays on GitHub)
+    sidebarLabel: Gateway API Extension
+    description: Kubernetes Gateway API extension for inference
+    sidebarPosition: 8
+    version: v0.1.0
+```
+
+With `skipSync: true`, the component appears on Latest Release page but doesn't create a docs page (links to GitHub instead).
+
+#### Adding Other Architecture Documentation (Template-based)
+
+For architecture documentation that isn't a component README (e.g., design docs, patterns, overviews):
+
+**1. Copy the template:**
+```bash
+cp remote-content/remote-sources/example-readme.js.template \
+   remote-content/remote-sources/architecture/your-doc.js
+```
+
+**2. Edit the configuration:**
+```javascript
+import { createContentWithSource } from '../utils.js';
+import { findRepoConfig, generateRepoUrls } from '../component-configs.js';
+import { getRepoTransform } from '../repo-transforms.js';
+
+// Option 1: Use an existing repo config
+const repoConfig = findRepoConfig('llm-d');  // or your repo name
+const { repoUrl, sourceBaseUrl, ref } = generateRepoUrls(repoConfig);
+const transform = getRepoTransform(repoConfig.org, repoConfig.name);
+const contentTransform = (content, sourcePath) => transform(content, {
+  repoUrl,
+  branch: ref,
+  org: repoConfig.org,
+  name: repoConfig.name,
+  sourcePath
+});
+
+export default [
+  'docusaurus-plugin-remote-content',
+  {
+    name: 'architecture-your-doc',
+    sourceBaseUrl,
+    outDir: 'docs/architecture',
+    documents: ['path/to/your-doc.md'],  // Path in the repo
+
+    noRuntimeDownloads: false,
+    performCleanup: true,
+
+    modifyContent(filename, content) {
+      if (filename === 'path/to/your-doc.md') {
+        return createContentWithSource({
+          title: 'Your Architecture Doc Title',
+          description: 'Description for SEO',
+          sidebarLabel: 'Your Doc',
+          sidebarPosition: 5,           // Position in architecture sidebar
+          filename: 'path/to/your-doc.md',
+          newFilename: 'your-doc.md',   // Output filename
+          repoUrl,
+          branch: ref,
+          content,
+          contentTransform,
+          keywords: ['llm-d', 'architecture', 'your-keywords']
+        });
+      }
+      return undefined;
+    },
+  },
+];
+```
+
+**3. Import in `remote-content/remote-content.js`:**
+```javascript
+import yourDoc from './remote-sources/architecture/your-doc.js';
+
+const remoteContentPlugins = [
+  // ... existing sources
+  yourDoc,  // Add your architecture doc
+];
+```
+
+**4. Test:**
+```bash
+npm start
+```
+
+**Example use cases:**
+- Design documents from the main repo
+- Architecture decision records (ADRs)
+- Integration guides
+- System overviews from related repositories
 
 ### Adding New Guides (Generator-based)
 
