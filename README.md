@@ -85,7 +85,7 @@ remote-content/
     │   └── sigs.js                    # 📄 Template-based
     │
     ├── usage/                          # → docs/usage/
-    │   └── usage-generator.js         # 🤖 AUTO: Generates from YAML
+    │   └── usage-generator.js         # 🤖 AUTO: Generates from inline configs
     │
     └── infra-providers/                # → docs/guide/InfraProviders/
         └── infra-providers-generator.js  # 🤖 AUTO: Generates from repos
@@ -108,7 +108,7 @@ git diff components-data.yaml      # Review the changes
 ```
 
 This script:
-- Queries the [GitHub Releases API](https://github.com/llm-d/llm-d/releases/latest)
+- Queries the [GitHub Releases API](https://api.github.com/repos/llm-d/llm-d/releases/latest)
 - Parses the "LLM-D Component Summary" table from release notes
 - Updates release version, date, and URL in the YAML
 - Updates component version tags
