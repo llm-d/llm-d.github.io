@@ -8,6 +8,12 @@
 
 set -euo pipefail
 
+if [[ "$(uname)" == "Darwin" ]]; then
+    sed_inplace() { sed -i '' "$@"; }
+else
+    sed_inplace() { sed -i "$@"; }
+fi
+
 BRANCH="${1:-main}"
 REPO_URL="https://github.com/llm-d/llm-d.git"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -111,15 +117,17 @@ cp "$WIP/guides/rdma/networking-stack.svg" "$STATIC_DIR/" 2>/dev/null || true
 
 # === Fix image paths for Docusaurus ===
 echo "    Fixing image references..."
-find "$DOCS_DIR" -name "*.md" -exec sed -i '' \
-    -e 's|../../assets/basic-architecture.svg|/img/docs/basic-architecture.svg|g' \
-    -e 's|../../../../assets/epp-design.svg|/img/docs/epp-design.svg|g' \
-    -e 's|networking-stack.svg|/img/docs/networking-stack.svg|g' \
-    {} +
+find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace \
+        -e 's|../../assets/basic-architecture.svg|/img/docs/basic-architecture.svg|g' \
+        -e 's|../../../../assets/epp-design.svg|/img/docs/epp-design.svg|g' \
+        -e 's|networking-stack.svg|/img/docs/networking-stack.svg|g' \
+        "$file"
+done
 
 # === Clean up known issues ===
 # Remove "NEEDS TO BE REDONE" from configuration.md
-sed -i '' '/^NEEDS TO BE REDONE/d' "$DOCS_DIR/architecture/core/epp/configuration.md" 2>/dev/null || true
+sed_inplace '/^NEEDS TO BE REDONE/d' "$DOCS_DIR/architecture/core/epp/configuration.md" 2>/dev/null || true
 
 # === Generate stubs for pages in outline that don't have source content yet ===
 echo "    Generating stubs for missing pages..."
