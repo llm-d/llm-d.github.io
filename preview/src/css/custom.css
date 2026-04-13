@@ -1,0 +1,312 @@
+@import url('@fontsource/inter/400.css');
+@import url('@fontsource/inter/500.css');
+@import url('@fontsource/inter/600.css');
+@import url('@fontsource/inter/700.css');
+
+/* llm-d docs — purple brand palette, dark gradient hero */
+
+:root {
+  /* llm-d purple as primary */
+  --ifm-color-primary: #7b2d8e;
+  --ifm-color-primary-dark: #6e2880;
+  --ifm-color-primary-darker: #682678;
+  --ifm-color-primary-darkest: #561f63;
+  --ifm-color-primary-light: #88329c;
+  --ifm-color-primary-lighter: #8e34a4;
+  --ifm-color-primary-lightest: #a142b8;
+
+  --ifm-code-font-size: 90%;
+  --ifm-font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, sans-serif;
+  --ifm-font-family-monospace: 'SF Mono', 'Cascadia Code', 'Consolas',
+    'Liberation Mono', Menlo, monospace;
+  --ifm-heading-font-weight: 600;
+  --ifm-font-weight-bold: 600;
+  --ifm-line-height-base: 1.65;
+
+  --ifm-spacing-horizontal: 1rem;
+  --ifm-navbar-height: 3.5rem;
+
+  --doc-sidebar-width: 280px;
+  --ifm-menu-link-padding-vertical: 0.3rem;
+  --ifm-menu-link-padding-horizontal: 0.75rem;
+
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.06);
+
+  /* llm-d brand tokens — sampled from official slide */
+  --llmd-dark: #000000;
+  --llmd-purple: #7b2d8e;
+  --llmd-purple-deep: #1a0b1e;
+  --llmd-purple-mid: #0f0611;
+  --llmd-gray: #666666;
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #b57ad4;
+  --ifm-color-primary-dark: #a860c9;
+  --ifm-color-primary-darker: #a254c4;
+  --ifm-color-primary-darkest: #8a3baf;
+  --ifm-color-primary-light: #c294df;
+  --ifm-color-primary-lighter: #c8a0e3;
+  --ifm-color-primary-lightest: #dec3ee;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+/* ===== Navbar — black brand ===== */
+.navbar--dark {
+  background-color: #000000;
+  box-shadow: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.navbar__title {
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+}
+
+.navbar__link {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* ===== Version dropdown — badge style next to "Documentation" ===== */
+.navbar__item.dropdown.dropdown--hoverable .navbar__link {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  gap: 0.3rem;
+}
+
+.navbar__item.dropdown.dropdown--hoverable .navbar__link:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.navbar__item.dropdown.dropdown--hoverable .dropdown__menu {
+  min-width: 160px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #0a0510;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.navbar__item.dropdown.dropdown--hoverable .dropdown__link {
+  font-size: 0.85rem;
+  color: #c9b3d4;
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+}
+
+.navbar__item.dropdown.dropdown--hoverable .dropdown__link:hover {
+  background: rgba(123, 45, 142, 0.2);
+  color: #ffffff;
+}
+
+/* ===== Announcement banner — llm-d purple palette ===== */
+div[class*='announcementBar'] {
+  font-size: 0.85rem;
+  min-height: auto;
+  padding: 8px 0;
+}
+
+div[class*='announcementBar'] a {
+  color: inherit;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+/* ===== Sidebar — clean, compact ===== */
+.menu {
+  font-size: 0.875rem;
+  padding: 0.5rem 0;
+}
+
+.menu__link {
+  border-radius: 4px;
+  font-weight: 400;
+}
+
+.menu__link--active:not(.menu__link--sublist) {
+  font-weight: 600;
+}
+
+.menu__list-item-collapsible .menu__caret::before {
+  background-size: 1.1rem 1.1rem;
+}
+
+.theme-doc-sidebar-container {
+  border-right: 1px solid var(--ifm-toc-border-color);
+}
+
+/* ===== Content area ===== */
+.markdown {
+  --ifm-h1-font-size: 2rem;
+  --ifm-h2-font-size: 1.5rem;
+  --ifm-h3-font-size: 1.2rem;
+}
+
+.markdown h1:first-child {
+  margin-bottom: 0.5rem;
+}
+
+.markdown > h2 {
+  margin-top: 2.5rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--ifm-toc-border-color);
+}
+
+/* ===== Code blocks ===== */
+.prism-code {
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* ===== Tables ===== */
+table {
+  font-size: 0.9rem;
+  display: table;
+  width: 100%;
+}
+
+table th {
+  font-weight: 600;
+  text-transform: none;
+}
+
+/* ===== Admonitions ===== */
+.admonition {
+  border-radius: 6px;
+  border-left-width: 4px;
+  box-shadow: none;
+}
+
+/* ===== Footer — dark brand ===== */
+.footer--dark {
+  background-color: #0a0510;
+}
+
+.footer__title {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+}
+
+.footer__link-item {
+  font-size: 0.875rem;
+  line-height: 2;
+}
+
+/* ===== Landing page — dark gradient hero (matches official slide) ===== */
+.hero--llmd {
+  padding: 5rem 0 3rem;
+  text-align: center;
+  background: linear-gradient(
+    180deg,
+    #000000 0%,
+    #000000 55%,
+    #0f0611 75%,
+    #1a0b1e 100%
+  );
+  color: #ffffff;
+}
+
+.hero--llmd .hero__title {
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin-top: 2rem;
+}
+
+.hero--llmd .hero__subtitle {
+  color: #ffffff;
+  font-size: 1.1rem;
+  max-width: 560px;
+  margin: 0.5rem auto 0;
+}
+
+.hero--llmd .hero__logo {
+  max-width: 320px;
+  height: auto;
+}
+
+.hero--llmd .button--primary {
+  background-color: var(--llmd-purple);
+  border-color: var(--llmd-purple);
+  color: #fff;
+}
+
+.hero--llmd .button--primary:hover {
+  background-color: var(--ifm-color-primary-dark);
+  border-color: var(--ifm-color-primary-dark);
+}
+
+.hero--llmd .button--outline {
+  color: #e0d0e8;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.hero--llmd .button--outline:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.6);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ===== Feature cards ===== */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem 0 3rem;
+}
+
+.feature-card {
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 8px;
+  padding: 1.25rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.feature-card:hover {
+  border-color: var(--ifm-color-primary);
+  box-shadow: 0 2px 12px rgba(123, 45, 142, 0.12);
+}
+
+.feature-card h3 {
+  margin-top: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.feature-card p {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+/* ===== Breadcrumbs ===== */
+.breadcrumbs__link {
+  font-size: 0.8rem;
+}
+
+/* ===== TOC ===== */
+.table-of-contents__link {
+  font-size: 0.8rem;
+}
+
+/* ===== Pagination ===== */
+.pagination-nav__label {
+  font-size: 0.85rem;
+}
+
+.pagination-nav__sublabel {
+  font-size: 0.75rem;
+}
+
+/* ===== Version banners (in-page) ===== */
+.theme-doc-version-banner {
+  border-radius: 6px;
+}

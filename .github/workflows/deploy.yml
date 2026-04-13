@@ -34,6 +34,13 @@ jobs:
       - name: Build website
         run: npm run build
 
+      - name: Install preview docs dependencies
+        run: cd preview && npm install
+      - name: Build preview docs
+        run: cd preview && npm run build
+      - name: Merge preview into main build
+        run: cp -r preview/build build/preview
+
       - name: Upload Build Artifact
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
