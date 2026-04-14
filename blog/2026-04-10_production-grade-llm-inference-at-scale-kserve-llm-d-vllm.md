@@ -65,7 +65,7 @@ These contributions came directly from hitting production edge cases. Validating
 
 We’d like to thank everyone from the community who has contributed to the successful adoption of KServe, llm-d, and vLLM in Tesla's production environment. In particular, below is the list of people from Red Hat and Tesla teams who have helped through the process (in alphabetical order).
 
-* **Red Hat team**: Sergey Bekkerman, Nati Fridman, Killian Golds,Andres Llausas, Bartosz Majsak, Greg Pereira, Pierangelo Di Pilato, Ran Pollak, Vivek Karunai Kiri Ragavan, Robert Shaw, and Yuan Tang
+* **Red Hat team**: Sergey Bekkerman, Nati Fridman, Killian Golds, Andres Llausas, Bartosz Majsak, Greg Pereira, Pierangelo Di Pilato, Ran Pollak, Vivek Karunai Kiri Ragavan, Robert Shaw, and Yuan Tang
 * **Tesla team**: Scott Cabrinha and Sai Krishna
 
 ## Get Involved with llm-d
