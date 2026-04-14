@@ -157,10 +157,12 @@ guymargalit:
 terrytangyuan:
   name: Yuan Tang
   title: Senior Principal Software Engineer, Red Hat
+  email: terrytangyuan@gmail.com
   image_url: https://github.com/terrytangyuan.png
   socials:
     linkedin: terrytangyuan
     github: https://github.com/terrytangyuan
+    twitter: TerryTangYuan
 
 cabrinha:
   name: Scott Cabrinha
