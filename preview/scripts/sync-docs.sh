@@ -90,7 +90,7 @@ cp "$WIP/architecture/advanced/kv-offloader.md"     "$DOCS_DIR/architecture/adva
 cp "$WIP/architecture/advanced/latency-predictor.md" "$DOCS_DIR/architecture/advanced/latency-predictor.md"
 
 # Architecture / Advanced / Autoscaling
-cp "$WIP/architecture/advanced/autoscaling/autoscaling.md"                  "$DOCS_DIR/architecture/advanced/autoscaling/index.md"
+cp "$WIP/architecture/advanced/autoscaling/README.md"                       "$DOCS_DIR/architecture/advanced/autoscaling/index.md"
 cp "$WIP/architecture/advanced/autoscaling/workload-variant-autoscaler.md"  "$DOCS_DIR/architecture/advanced/autoscaling/workload-variant-autoscaling.md"
 cp "$WIP/architecture/advanced/autoscaling/igw-hpa.md"                     "$DOCS_DIR/architecture/advanced/autoscaling/igw-hpa.md"
 
