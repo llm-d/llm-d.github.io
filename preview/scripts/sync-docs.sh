@@ -91,8 +91,8 @@ cp "$WIP/architecture/advanced/latency-predictor.md" "$DOCS_DIR/architecture/adv
 
 # Architecture / Advanced / Autoscaling
 cp "$WIP/architecture/advanced/autoscaling/README.md"                       "$DOCS_DIR/architecture/advanced/autoscaling/index.md"
-cp "$WIP/architecture/advanced/autoscaling/workload-variant-autoscaler.md"  "$DOCS_DIR/architecture/advanced/autoscaling/workload-variant-autoscaling.md"
-cp "$WIP/architecture/advanced/autoscaling/igw-hpa.md"                     "$DOCS_DIR/architecture/advanced/autoscaling/igw-hpa.md"
+cp "$WIP/architecture/advanced/autoscaling/wva.md"                         "$DOCS_DIR/architecture/advanced/autoscaling/workload-variant-autoscaling.md"
+cp "$WIP/architecture/advanced/autoscaling/hpa-keda.md"                    "$DOCS_DIR/architecture/advanced/autoscaling/igw-hpa.md"
 
 # === Well-Lit Paths ===
 cp "$WIP/well-lit-paths/README.md"        "$DOCS_DIR/well-lit-paths/index.md"
