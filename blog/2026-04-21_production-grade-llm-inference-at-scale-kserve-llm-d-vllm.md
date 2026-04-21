@@ -2,7 +2,7 @@
 title: "Production-Grade LLM Inference at Scale with KServe, llm-d, and vLLM"
 description: "How migrating from a simple vLLM deployment to a robust MLOps platform utilizing KServe, llm-d's intelligent routing, and vLLM solved significant scaling and operational challenges in LLM deployment through deep customization and prefix-cache aware routing to maximize GPU utilization."
 slug: production-grade-llm-inference-at-scale-kserve-llm-d-vllm
-date: 2026-04-10T09:00
+date: 2026-04-21T09:00
 
 authors:
   - terrytangyuan
