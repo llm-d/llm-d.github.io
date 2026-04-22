@@ -124,16 +124,34 @@ mkdir -p "$STATIC_DIR"
 cp "$ASSETS"/*.svg "$STATIC_DIR/" 2>/dev/null || true
 cp "$WIP/resources/rdma/networking-stack.svg" "$STATIC_DIR/" 2>/dev/null || true
 cp "$WIP/architecture/core/images/flow_control_dashboard.png" "$STATIC_DIR/" 2>/dev/null || true
+cp "$WIP/architecture/advanced/autoscaling/hpa-architecture.svg" "$STATIC_DIR/" 2>/dev/null || true
 
 # === Fix image paths for Docusaurus ===
 echo "    Fixing image references..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace \
-        -e 's|\.\./\.\./assets/\([^)]*\)|/img/docs/\1|g' \
-        -e 's|\.\./\.\./\.\./assets/\([^)]*\)|/img/docs/\1|g' \
-        -e 's|\.\./\.\./\.\./\.\./assets/\([^)]*\)|/img/docs/\1|g' \
+        -e 's|\(\.\./\)*assets/\([^)]*\)|/img/docs/\2|g' \
         -e 's|../images/flow_control_dashboard.png|/img/docs/flow_control_dashboard.png|g' \
         -e 's|networking-stack.svg|/img/docs/networking-stack.svg|g' \
+        -e 's|hpa-architecture.svg|/img/docs/hpa-architecture.svg|g' \
+        "$file"
+done
+
+# === Fix internal cross-references ===
+# Upstream files reference filenames that get renamed during copy
+echo "    Fixing internal cross-references..."
+find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace \
+        -e 's|epp\.md|epp/index.md|g' \
+        -e 's|\./hpa-keda\.md|./igw-hpa.md|g' \
+        -e 's|\./wva\.md|./workload-variant-autoscaling.md|g' \
+        -e 's|core/epp/README\.md|core/epp/index.md|g' \
+        -e 's|advanced/autoscaling/README\.md|advanced/autoscaling/index.md|g' \
+        -e 's|advanced/disaggregation/README\.md|advanced/disaggregation.md|g' \
+        -e 's|resources/gateways/README\.md|../resources/gateway/index.md|g' \
+        -e 's|guides/README\.md|guides/index.md|g' \
+        -e 's|architecture/introduction\.md|architecture/index.md|g' \
+        -e 's|advanced/autoscaling/autoscaling\.md|advanced/autoscaling/index.md|g' \
         "$file"
 done
 
