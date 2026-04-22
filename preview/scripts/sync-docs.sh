@@ -62,7 +62,6 @@ mkdir -p \
     "$DOCS_DIR/architecture/core/epp" \
     "$DOCS_DIR/architecture/advanced/disaggregation" \
     "$DOCS_DIR/architecture/advanced/autoscaling" \
-    "$DOCS_DIR/architecture/advanced/batch" \
     "$DOCS_DIR/guides/experimental" \
     "$DOCS_DIR/resources/gateway" \
     "$DOCS_DIR/resources/monitoring" \
@@ -104,53 +103,29 @@ cp_doc "$WIP/architecture/advanced/kv-offloader.md"     "$DOCS_DIR/architecture/
 cp_doc "$WIP/architecture/advanced/latency-predictor.md" "$DOCS_DIR/architecture/advanced/latency-predictor.md"
 
 # Architecture / Advanced / Autoscaling
-cp_doc "$WIP/architecture/advanced/autoscaling/README.md"                       "$DOCS_DIR/architecture/advanced/autoscaling/index.md"
-cp_doc "$WIP/architecture/advanced/autoscaling/wva.md"                         "$DOCS_DIR/architecture/advanced/autoscaling/workload-variant-autoscaling.md"
-cp_doc "$WIP/architecture/advanced/autoscaling/hpa-keda.md"                    "$DOCS_DIR/architecture/advanced/autoscaling/igw-hpa.md"
-cp "$WIP/architecture/advanced/autoscaling/"*.svg "$DOCS_DIR/architecture/advanced/autoscaling/" 2>/dev/null || true
-
-# Architecture / Advanced / Batch
-cp_doc "$WIP/architecture/advanced/batch/README.md"           "$DOCS_DIR/architecture/advanced/batch/index.md"
-cp_doc "$WIP/architecture/advanced/batch/batch-gateway.md"    "$DOCS_DIR/architecture/advanced/batch/batch-gateway.md"
-cp_doc "$WIP/architecture/advanced/batch/async-processor.md"  "$DOCS_DIR/architecture/advanced/batch/async-processor.md"
+cp "$WIP/architecture/advanced/autoscaling/README.md"                       "$DOCS_DIR/architecture/advanced/autoscaling/index.md"
+cp "$WIP/architecture/advanced/autoscaling/wva.md"                         "$DOCS_DIR/architecture/advanced/autoscaling/workload-variant-autoscaling.md"
+cp "$WIP/architecture/advanced/autoscaling/hpa-keda.md"                    "$DOCS_DIR/architecture/advanced/autoscaling/igw-hpa.md"
 
 # === Guides (formerly well-lit-paths) ===
-cp_doc "$WIP/guides/README.md"                              "$DOCS_DIR/guides/index.md"
-cp_doc "$WIP/guides/intelligent-inference-scheduling.md"    "$DOCS_DIR/guides/intelligent-inference-scheduling.md"
-cp_doc "$WIP/guides/flow-control.md"                        "$DOCS_DIR/guides/flow-control.md"
-cp_doc "$WIP/guides/kv-cache-management.md"                 "$DOCS_DIR/guides/kv-cache-management.md"
-cp_doc "$WIP/guides/pd-disaggregation.md"                   "$DOCS_DIR/guides/pd-disaggregation.md"
-cp_doc "$WIP/guides/wide-expert-parallelism.md"             "$DOCS_DIR/guides/wide-expert-parallelism.md"
-cp_doc "$WIP/guides/experimental/predicted-latency.md"      "$DOCS_DIR/guides/experimental/predicted-latency.md"
-cp_doc "$WIP/guides/experimental/batch-gateway.md"          "$DOCS_DIR/guides/experimental/batch-gateway.md"
-cp_doc "$WIP/guides/predicted-latency.md"                   "$DOCS_DIR/guides/predicted-latency.md"
-cp_doc "$WIP/guides/workload-autoscaling.md"                "$DOCS_DIR/guides/workload-autoscaling.md"
-# PR #1249 uses the pre-rename well-lit-paths/ directory — map as fallback
-cp_doc "$WIP/well-lit-paths/README.md"                              "$DOCS_DIR/guides/index.md"
-cp_doc "$WIP/well-lit-paths/flow-control.md"                        "$DOCS_DIR/guides/flow-control.md"
-cp_doc "$WIP/well-lit-paths/kv-cache-management.md"                 "$DOCS_DIR/guides/kv-cache-management.md"
-cp_doc "$WIP/well-lit-paths/pd-disaggregation.md"                   "$DOCS_DIR/guides/pd-disaggregation.md"
-cp_doc "$WIP/well-lit-paths/wide-expert-parallelism.md"             "$DOCS_DIR/guides/wide-expert-parallelism.md"
-cp_doc "$WIP/well-lit-paths/intelligent-inference-scheduling.md"    "$DOCS_DIR/guides/intelligent-inference-scheduling.md"
-cp_doc "$WIP/well-lit-paths/optimized-baseline.md"               "$DOCS_DIR/guides/intelligent-inference-scheduling.md"
-cp_doc "$WIP/well-lit-paths/experimental/predicted-latency.md"      "$DOCS_DIR/guides/experimental/predicted-latency.md"
-cp_doc "$WIP/well-lit-paths/experimental/batch-gateway.md"        "$DOCS_DIR/guides/experimental/batch-gateway.md"
+cp "$WIP/guides/README.md"                              "$DOCS_DIR/guides/index.md"
+cp "$WIP/guides/intelligent-inference-scheduling.md"    "$DOCS_DIR/guides/intelligent-inference-scheduling.md"
+cp "$WIP/guides/flow-control.md"                        "$DOCS_DIR/guides/flow-control.md"
+cp "$WIP/guides/kv-cache-management.md"                 "$DOCS_DIR/guides/kv-cache-management.md"
+cp "$WIP/guides/pd-disaggregation.md"                   "$DOCS_DIR/guides/pd-disaggregation.md"
+cp "$WIP/guides/wide-expert-parallelism.md"             "$DOCS_DIR/guides/wide-expert-parallelism.md"
+cp "$WIP/guides/experimental/predicted-latency.md"      "$DOCS_DIR/guides/experimental/predicted-latency.md"
 
 # === Resources (formerly guides) ===
-cp_doc "$WIP/resources/deploying-multiple-model.md"         "$DOCS_DIR/resources/deploying-multiple-models.md"
-cp_doc "$WIP/resources/user-apis.md"                        "$DOCS_DIR/resources/configuring-user-facing-apis.md"
-cp_doc "$WIP/resources/profiling.md"                        "$DOCS_DIR/resources/profiling.md"
-cp_doc "$WIP/resources/rollout-new-version.md"              "$DOCS_DIR/resources/rollout-new-version.md"
-cp_doc "$WIP/resources/monitoring/metrics.md"               "$DOCS_DIR/resources/monitoring/metrics.md"
-cp_doc "$WIP/resources/monitoring/tracing.md"               "$DOCS_DIR/resources/monitoring/tracing.md"
-# PR #1207 places monitoring under guides/monitoring/ — use as fallback
-cp_doc "$WIP/guides/monitoring/metrics.md"                  "$DOCS_DIR/resources/monitoring/metrics.md"
-cp_doc "$WIP/guides/monitoring/tracing.md"                  "$DOCS_DIR/resources/monitoring/tracing.md"
-# PR #1259 moved gateway docs to guides/prereq/gateways/
-cp_doc "$SRC/guides/prereq/gateways/istio.md"               "$DOCS_DIR/resources/gateway/istio.md"
-cp_doc "$SRC/guides/prereq/gateways/gke.md"                 "$DOCS_DIR/resources/gateway/gke.md"
-cp_doc "$SRC/guides/prereq/gateways/agentgateway.md"        "$DOCS_DIR/resources/gateway/agentgateway.md"
-cp_doc "$WIP/resources/rdma/README.md"                      "$DOCS_DIR/resources/rdma/rdma-configuration.md"
+cp "$WIP/resources/deploying-multiple-model.md"         "$DOCS_DIR/resources/deploying-multiple-models.md"
+cp "$WIP/resources/user-apis.md"                        "$DOCS_DIR/resources/configuring-user-facing-apis.md"
+cp "$WIP/resources/profiling.md"                        "$DOCS_DIR/resources/profiling.md"
+cp "$WIP/resources/monitoring/metrics.md"               "$DOCS_DIR/resources/monitoring/metrics.md"
+cp "$WIP/resources/monitoring/tracing.md"               "$DOCS_DIR/resources/monitoring/tracing.md"
+cp "$WIP/resources/gateways/istio.md"                   "$DOCS_DIR/resources/gateway/istio.md"
+cp "$WIP/resources/gateways/gke.md"                     "$DOCS_DIR/resources/gateway/gke.md"
+cp "$WIP/resources/gateways/agentgateway.md"            "$DOCS_DIR/resources/gateway/agentgateway.md"
+cp "$WIP/resources/rdma/README.md"                      "$DOCS_DIR/resources/rdma/rdma-configuration.md"
 
 # === API Reference ===
 cp_doc "$WIP/api-reference/README.md"         "$DOCS_DIR/api-reference/index.md"
@@ -160,14 +135,15 @@ cp_doc "$WIP/api-reference/glossary.md"       "$DOCS_DIR/api-reference/glossary.
 echo "    Copying image assets..."
 mkdir -p "$STATIC_DIR"
 cp "$ASSETS"/*.svg "$STATIC_DIR/" 2>/dev/null || true
-cp_doc "$WIP/resources/rdma/networking-stack.svg" "$STATIC_DIR/" 2>/dev/null || true
-cp_doc "$WIP/architecture/core/images/flow_control_dashboard.png" "$STATIC_DIR/" 2>/dev/null || true
-cp_doc "$WIP/architecture/advanced/autoscaling/hpa-architecture.svg" "$STATIC_DIR/" 2>/dev/null || true
+cp "$WIP/resources/rdma/networking-stack.svg" "$STATIC_DIR/" 2>/dev/null || true
+cp "$WIP/architecture/core/images/flow_control_dashboard.png" "$STATIC_DIR/" 2>/dev/null || true
+cp "$WIP/architecture/advanced/autoscaling/hpa-architecture.svg" "$STATIC_DIR/" 2>/dev/null || true
 
 # === Fix image paths for Docusaurus ===
 echo "    Fixing image references..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace \
+        -e 's|\(\.\./\)*assets/\([^)]*\)|/img/docs/\2|g' \
         -e 's|\(\.\./\)*assets/\([^)]*\)|/img/docs/\2|g' \
         -e 's|../images/flow_control_dashboard.png|/img/docs/flow_control_dashboard.png|g' \
         -e 's|networking-stack.svg|/img/docs/networking-stack.svg|g' \
@@ -185,17 +161,11 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\./wva\.md|./workload-variant-autoscaling.md|g' \
         -e 's|core/epp/README\.md|core/epp/index.md|g' \
         -e 's|advanced/autoscaling/README\.md|advanced/autoscaling/index.md|g' \
-        -e 's|advanced/disaggregation/README\.md|advanced/disaggregation/index.md|g' \
+        -e 's|advanced/disaggregation/README\.md|advanced/disaggregation.md|g' \
         -e 's|resources/gateways/README\.md|../resources/gateway/index.md|g' \
         -e 's|guides/README\.md|guides/index.md|g' \
         -e 's|architecture/introduction\.md|architecture/index.md|g' \
-        -e 's|architecture/README\.md|architecture/index.md|g' \
-        -e 's|getting-started/README\.md|getting-started/index.md|g' \
-        -e 's|api-reference/README\.md|api-reference/index.md|g' \
-        -e 's|resources/rdma/README\.md|resources/rdma/rdma-configuration.md|g' \
-        -e 's|advanced/disaggregation\.md|advanced/disaggregation/index.md|g' \
         -e 's|advanced/autoscaling/autoscaling\.md|advanced/autoscaling/index.md|g' \
-        -e 's|advanced/batch/README\.md|advanced/batch/index.md|g' \
         "$file"
 done
 
@@ -277,30 +247,18 @@ generate_stub "$DOCS_DIR/guides/kv-cache-management.md" "KV Cache Management" "H
 generate_stub "$DOCS_DIR/guides/pd-disaggregation.md" "Prefill/Decode Disaggregation" "Separating prefill and decode phases"
 generate_stub "$DOCS_DIR/guides/wide-expert-parallelism.md" "Wide Expert Parallelism" "MoE models with expert parallelism"
 generate_stub "$DOCS_DIR/guides/experimental/predicted-latency.md" "Predicted Latency Scheduling" "ML-based latency prediction for SLO-aware routing"
-generate_stub "$DOCS_DIR/guides/experimental/batch-gateway.md" "Batch Gateway Guide" "Step-by-step guide for deploying batch inference"
-generate_stub "$DOCS_DIR/guides/predicted-latency.md" "Predicted Latency" "Predicted latency scheduling guide"
-generate_stub "$DOCS_DIR/guides/workload-autoscaling.md" "Workload Autoscaling" "Configuring autoscaling for inference workloads"
 
 # Resources stubs
 generate_stub "$DOCS_DIR/resources/gateway/index.md" "Gateway" "Gateway deployment and configuration guides"
 generate_stub "$DOCS_DIR/resources/gateway/istio.md" "Istio" "Deploying llm-d with Istio gateway"
 generate_stub "$DOCS_DIR/resources/gateway/gke.md" "GKE" "Deploying llm-d with GKE gateway"
 generate_stub "$DOCS_DIR/resources/gateway/agentgateway.md" "Agent Gateway" "Deploying llm-d with Agent Gateway"
-generate_stub "$DOCS_DIR/architecture/advanced/batch/index.md" "Batch Processing" "Asynchronous batch inference architecture"
-generate_stub "$DOCS_DIR/architecture/advanced/batch/batch-gateway.md" "Batch Gateway" "Gateway for batch inference requests"
-generate_stub "$DOCS_DIR/architecture/advanced/batch/async-processor.md" "Async Processor" "Asynchronous request processing component"
-generate_stub "$DOCS_DIR/architecture/core/epp/datalayer.md" "Data Layer" "EPP data layer architecture"
-generate_stub "$DOCS_DIR/architecture/advanced/disaggregation/index.md" "Disaggregation" "Prefill/decode disaggregation architecture"
-generate_stub "$DOCS_DIR/architecture/advanced/disaggregation/configuration.md" "Disaggregation Configuration" "Configuration guide for disaggregated serving"
-generate_stub "$DOCS_DIR/architecture/advanced/disaggregation/operations-vllm.md" "vLLM Operations" "vLLM-specific operations for disaggregated serving"
 generate_stub "$DOCS_DIR/api-reference/index.md" "API Reference" "API specification and reference documentation"
-generate_stub "$DOCS_DIR/api-reference/glossary.md" "Glossary" "Terminology and definitions for llm-d"
 generate_stub "$DOCS_DIR/resources/configuring-user-facing-apis.md" "Configuring User-Facing APIs" "OpenAI-compatible API configuration"
 generate_stub "$DOCS_DIR/resources/deploying-multiple-models.md" "Deploying Multiple Models" "Multi-model inference deployment"
 generate_stub "$DOCS_DIR/resources/monitoring/metrics.md" "Metrics" "Prometheus metrics collection and configuration"
 generate_stub "$DOCS_DIR/resources/monitoring/tracing.md" "Distributed Tracing" "Setting up distributed tracing with OpenTelemetry"
 generate_stub "$DOCS_DIR/resources/profiling.md" "Profiling" "Performance profiling guides"
-generate_stub "$DOCS_DIR/resources/rollout-new-version.md" "Rollout New Version" "Rolling out a new version of the inference service"
 generate_stub "$DOCS_DIR/resources/rdma/rdma-configuration.md" "RDMA Configuration" "RDMA network configuration"
 
 TOTAL=$(find "$DOCS_DIR" -name "*.md" | wc -l | tr -d ' ')

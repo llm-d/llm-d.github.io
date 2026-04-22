@@ -82,8 +82,11 @@ const sidebars: SidebarsConfig = {
       ],
     },
     // ==================== Guides ====================
+    // ==================== Guides ====================
     {
       type: 'category',
+      label: 'Guides',
+      link: {type: 'doc', id: 'guides/index'},
       label: 'Guides',
       link: {type: 'doc', id: 'guides/index'},
       items: [
@@ -92,32 +95,38 @@ const sidebars: SidebarsConfig = {
         'guides/kv-cache-management',
         'guides/pd-disaggregation',
         'guides/wide-expert-parallelism',
-        'guides/workload-autoscaling',
         {
           type: 'category',
           label: 'Experimental',
+          label: 'Experimental',
           items: [
             'guides/experimental/predicted-latency',
-            'guides/experimental/batch-gateway',
           ],
         },
       ],
     },
     // ==================== Resources ====================
+    // ==================== Resources ====================
     {
       type: 'category',
+      label: 'Resources',
       label: 'Resources',
       items: [
         {
           type: 'category',
           label: 'Gateway',
           link: {type: 'doc', id: 'resources/gateway/index'},
+          link: {type: 'doc', id: 'resources/gateway/index'},
           items: [
+            'resources/gateway/istio',
+            'resources/gateway/gke',
+            'resources/gateway/agentgateway',
             'resources/gateway/istio',
             'resources/gateway/gke',
             'resources/gateway/agentgateway',
           ],
         },
+        'resources/configuring-user-facing-apis',
         'resources/configuring-user-facing-apis',
         {
           type: 'category',
@@ -125,10 +134,11 @@ const sidebars: SidebarsConfig = {
           items: [
             'resources/monitoring/metrics',
             'resources/monitoring/tracing',
+            'resources/monitoring/metrics',
+            'resources/monitoring/tracing',
           ],
         },
         'resources/deploying-multiple-models',
-        'resources/rollout-new-version',
         'resources/profiling',
         'resources/rdma/rdma-configuration',
       ],
