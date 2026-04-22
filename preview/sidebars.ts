@@ -63,55 +63,53 @@ const sidebars: SidebarsConfig = {
         },
       ],
     },
-    // ==================== Well-Lit Paths ====================
+    // ==================== Guides ====================
     {
       type: 'category',
-      label: 'Well-Lit Paths',
-      link: {type: 'doc', id: 'well-lit-paths/index'},
+      label: 'Guides',
+      link: {type: 'doc', id: 'guides/index'},
       items: [
+        'guides/intelligent-inference-scheduling',
+        'guides/flow-control',
+        'guides/kv-cache-management',
+        'guides/pd-disaggregation',
+        'guides/wide-expert-parallelism',
         {
           type: 'category',
-          label: 'Intelligent Inference Scheduling',
-          link: {type: 'doc', id: 'well-lit-paths/intelligent-inference-scheduling/index'},
+          label: 'Experimental',
           items: [
-            'well-lit-paths/intelligent-inference-scheduling/default',
-            'well-lit-paths/intelligent-inference-scheduling/precise-prefix-cache-aware-routing',
-            'well-lit-paths/intelligent-inference-scheduling/predicted-latency',
-            'well-lit-paths/intelligent-inference-scheduling/flow-control',
+            'guides/experimental/predicted-latency',
           ],
         },
-        'well-lit-paths/prefill-decode-disaggregation',
-        'well-lit-paths/wide-expert-parallelism',
-        'well-lit-paths/tiered-prefix-cache',
-        'well-lit-paths/workload-autoscaling',
       ],
     },
-    // ==================== User Guides ====================
+    // ==================== Resources ====================
     {
       type: 'category',
-      label: 'User Guides',
+      label: 'Resources',
       items: [
         {
           type: 'category',
           label: 'Gateway',
-          link: {type: 'doc', id: 'user-guides/gateway/index'},
+          link: {type: 'doc', id: 'resources/gateway/index'},
           items: [
-            'user-guides/gateway/istio',
-            'user-guides/gateway/gke',
-            'user-guides/gateway/agentgateway',
+            'resources/gateway/istio',
+            'resources/gateway/gke',
+            'resources/gateway/agentgateway',
           ],
         },
-        'user-guides/configuring-user-facing-apis',
+        'resources/configuring-user-facing-apis',
         {
           type: 'category',
           label: 'Monitoring',
           items: [
-            'user-guides/monitoring/metrics',
-            'user-guides/monitoring/tracing',
+            'resources/monitoring/metrics',
+            'resources/monitoring/tracing',
           ],
         },
-        'user-guides/deploying-multiple-models',
-        'user-guides/rdma-configuration',
+        'resources/deploying-multiple-models',
+        'resources/profiling',
+        'resources/rdma/rdma-configuration',
       ],
     },
     // ==================== API Reference ====================

@@ -129,8 +129,8 @@ const config: Config = {
           items: [
             {label: 'Getting Started', to: '/docs/getting-started'},
             {label: 'Architecture', to: '/docs/architecture'},
-            {label: 'Well-Lit Paths', to: '/docs/well-lit-paths'},
-            {label: 'User Guides', to: '/docs/user-guides/gateway'},
+            {label: 'Guides', to: '/docs/guides'},
+            {label: 'Resources', to: '/docs/resources/gateway'},
           ],
         },
         {

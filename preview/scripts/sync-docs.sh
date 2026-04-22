@@ -55,9 +55,10 @@ mkdir -p \
     "$DOCS_DIR/getting-started" \
     "$DOCS_DIR/architecture/core/epp" \
     "$DOCS_DIR/architecture/advanced/autoscaling" \
-    "$DOCS_DIR/well-lit-paths/intelligent-inference-scheduling" \
-    "$DOCS_DIR/user-guides/gateway" \
-    "$DOCS_DIR/user-guides/monitoring" \
+    "$DOCS_DIR/guides/experimental" \
+    "$DOCS_DIR/resources/gateway" \
+    "$DOCS_DIR/resources/monitoring" \
+    "$DOCS_DIR/resources/rdma" \
     "$DOCS_DIR/api-reference"
 
 echo "    Copying content..."
@@ -94,16 +95,25 @@ cp "$WIP/architecture/advanced/autoscaling/README.md"                       "$DO
 cp "$WIP/architecture/advanced/autoscaling/wva.md"                         "$DOCS_DIR/architecture/advanced/autoscaling/workload-variant-autoscaling.md"
 cp "$WIP/architecture/advanced/autoscaling/hpa-keda.md"                    "$DOCS_DIR/architecture/advanced/autoscaling/igw-hpa.md"
 
-# === Well-Lit Paths ===
-cp "$WIP/well-lit-paths/README.md"        "$DOCS_DIR/well-lit-paths/index.md"
-# Sub-pages are stubs until content lands in the source branch
+# === Guides (formerly well-lit-paths) ===
+cp "$WIP/guides/README.md"                              "$DOCS_DIR/guides/index.md"
+cp "$WIP/guides/intelligent-inference-scheduling.md"    "$DOCS_DIR/guides/intelligent-inference-scheduling.md"
+cp "$WIP/guides/flow-control.md"                        "$DOCS_DIR/guides/flow-control.md"
+cp "$WIP/guides/kv-cache-management.md"                 "$DOCS_DIR/guides/kv-cache-management.md"
+cp "$WIP/guides/pd-disaggregation.md"                   "$DOCS_DIR/guides/pd-disaggregation.md"
+cp "$WIP/guides/wide-expert-parallelism.md"             "$DOCS_DIR/guides/wide-expert-parallelism.md"
+cp "$WIP/guides/experimental/predicted-latency.md"      "$DOCS_DIR/guides/experimental/predicted-latency.md"
 
-# === User Guides ===
-cp "$WIP/guides/monitoring/metrics.md"           "$DOCS_DIR/user-guides/monitoring/metrics.md"
-cp "$WIP/guides/monitoring/tracing.md"           "$DOCS_DIR/user-guides/monitoring/tracing.md"
-cp "$WIP/guides/deploying-multiple-model.md"     "$DOCS_DIR/user-guides/deploying-multiple-models.md"
-cp "$WIP/guides/user-apis.md"                    "$DOCS_DIR/user-guides/configuring-user-facing-apis.md"
-cp "$WIP/guides/rdma/README.md"                  "$DOCS_DIR/user-guides/rdma-configuration.md"
+# === Resources (formerly guides) ===
+cp "$WIP/resources/deploying-multiple-model.md"         "$DOCS_DIR/resources/deploying-multiple-models.md"
+cp "$WIP/resources/user-apis.md"                        "$DOCS_DIR/resources/configuring-user-facing-apis.md"
+cp "$WIP/resources/profiling.md"                        "$DOCS_DIR/resources/profiling.md"
+cp "$WIP/resources/monitoring/metrics.md"               "$DOCS_DIR/resources/monitoring/metrics.md"
+cp "$WIP/resources/monitoring/tracing.md"               "$DOCS_DIR/resources/monitoring/tracing.md"
+cp "$WIP/resources/gateways/istio.md"                   "$DOCS_DIR/resources/gateway/istio.md"
+cp "$WIP/resources/gateways/gke.md"                     "$DOCS_DIR/resources/gateway/gke.md"
+cp "$WIP/resources/gateways/agentgateway.md"            "$DOCS_DIR/resources/gateway/agentgateway.md"
+cp "$WIP/resources/rdma/README.md"                      "$DOCS_DIR/resources/rdma/rdma-configuration.md"
 
 # === API Reference ===
 cp "$WIP/api-reference/README.md"         "$DOCS_DIR/api-reference/index.md"
@@ -111,21 +121,17 @@ cp "$WIP/api-reference/README.md"         "$DOCS_DIR/api-reference/index.md"
 # === Assets ===
 echo "    Copying image assets..."
 mkdir -p "$STATIC_DIR"
-cp "$ASSETS/basic-architecture.svg"   "$STATIC_DIR/" 2>/dev/null || true
-cp "$ASSETS/epp-design.svg"           "$STATIC_DIR/" 2>/dev/null || true
-cp "$ASSETS/standalone-design.svg"    "$STATIC_DIR/" 2>/dev/null || true
-cp "$ASSETS/gateway-design.svg"       "$STATIC_DIR/" 2>/dev/null || true
-cp "$WIP/guides/rdma/networking-stack.svg" "$STATIC_DIR/" 2>/dev/null || true
+cp "$ASSETS"/*.svg "$STATIC_DIR/" 2>/dev/null || true
+cp "$WIP/resources/rdma/networking-stack.svg" "$STATIC_DIR/" 2>/dev/null || true
 cp "$WIP/architecture/core/images/flow_control_dashboard.png" "$STATIC_DIR/" 2>/dev/null || true
 
 # === Fix image paths for Docusaurus ===
 echo "    Fixing image references..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace \
-        -e 's|../../assets/basic-architecture.svg|/img/docs/basic-architecture.svg|g' \
-        -e 's|../../../assets/standalone-design.svg|/img/docs/standalone-design.svg|g' \
-        -e 's|../../../assets/gateway-design.svg|/img/docs/gateway-design.svg|g' \
-        -e 's|../../../../assets/epp-design.svg|/img/docs/epp-design.svg|g' \
+        -e 's|\.\./\.\./assets/\([^)]*\)|/img/docs/\1|g' \
+        -e 's|\.\./\.\./\.\./assets/\([^)]*\)|/img/docs/\1|g' \
+        -e 's|\.\./\.\./\.\./\.\./assets/\([^)]*\)|/img/docs/\1|g' \
         -e 's|../images/flow_control_dashboard.png|/img/docs/flow_control_dashboard.png|g' \
         -e 's|networking-stack.svg|/img/docs/networking-stack.svg|g' \
         "$file"
@@ -160,30 +166,27 @@ STUBEOF
     fi
 }
 
-# Well-Lit Paths stubs
-generate_stub "$DOCS_DIR/well-lit-paths/index.md" "Well-Lit Paths" "Tested, benchmarked deployment recipes for production workloads"
-generate_stub "$DOCS_DIR/well-lit-paths/intelligent-inference-scheduling/index.md" "Intelligent Inference Scheduling" "Default well-lit path for intelligent request routing"
-generate_stub "$DOCS_DIR/well-lit-paths/intelligent-inference-scheduling/default.md" "Default Scheduling" "Default intelligent scheduling configuration"
-generate_stub "$DOCS_DIR/well-lit-paths/intelligent-inference-scheduling/precise-prefix-cache-aware-routing.md" "Precise Prefix Cache-Aware Routing" "Routing requests based on precise prefix cache state"
-generate_stub "$DOCS_DIR/well-lit-paths/intelligent-inference-scheduling/predicted-latency.md" "Predicted Latency Scheduling" "ML-based latency prediction for SLO-aware routing"
-generate_stub "$DOCS_DIR/well-lit-paths/intelligent-inference-scheduling/flow-control.md" "Flow Control" "Admission control and queuing for well-lit path deployments"
-generate_stub "$DOCS_DIR/well-lit-paths/prefill-decode-disaggregation.md" "Prefill/Decode Disaggregation" "Well-lit path for separating prefill and decode phases"
-generate_stub "$DOCS_DIR/well-lit-paths/wide-expert-parallelism.md" "Wide Expert Parallelism" "Well-lit path for MoE models with expert parallelism"
-generate_stub "$DOCS_DIR/well-lit-paths/tiered-prefix-cache.md" "Tiered Prefix Cache" "Well-lit path for hierarchical KV-cache offloading"
-generate_stub "$DOCS_DIR/well-lit-paths/workload-autoscaling.md" "Workload Autoscaling" "Well-lit path for workload-aware autoscaling"
+# Guides stubs
+generate_stub "$DOCS_DIR/guides/index.md" "Guides" "Step-by-step adoption procedures for production workloads"
+generate_stub "$DOCS_DIR/guides/intelligent-inference-scheduling.md" "Intelligent Inference Scheduling" "Intelligent request routing and scheduling"
+generate_stub "$DOCS_DIR/guides/flow-control.md" "Flow Control" "Admission control and queuing"
+generate_stub "$DOCS_DIR/guides/kv-cache-management.md" "KV Cache Management" "Hierarchical KV-cache offloading"
+generate_stub "$DOCS_DIR/guides/pd-disaggregation.md" "Prefill/Decode Disaggregation" "Separating prefill and decode phases"
+generate_stub "$DOCS_DIR/guides/wide-expert-parallelism.md" "Wide Expert Parallelism" "MoE models with expert parallelism"
+generate_stub "$DOCS_DIR/guides/experimental/predicted-latency.md" "Predicted Latency Scheduling" "ML-based latency prediction for SLO-aware routing"
 
-# User Guides / Gateway stubs
-generate_stub "$DOCS_DIR/user-guides/gateway/index.md" "Gateway" "Gateway deployment and configuration guides"
-generate_stub "$DOCS_DIR/user-guides/gateway/istio.md" "Istio" "Deploying llm-d with Istio gateway"
-generate_stub "$DOCS_DIR/user-guides/gateway/gke.md" "GKE" "Deploying llm-d with GKE gateway"
-generate_stub "$DOCS_DIR/user-guides/gateway/agentgateway.md" "Agent Gateway" "Deploying llm-d with Agent Gateway"
-
-# Other stubs
+# Resources stubs
+generate_stub "$DOCS_DIR/resources/gateway/index.md" "Gateway" "Gateway deployment and configuration guides"
+generate_stub "$DOCS_DIR/resources/gateway/istio.md" "Istio" "Deploying llm-d with Istio gateway"
+generate_stub "$DOCS_DIR/resources/gateway/gke.md" "GKE" "Deploying llm-d with GKE gateway"
+generate_stub "$DOCS_DIR/resources/gateway/agentgateway.md" "Agent Gateway" "Deploying llm-d with Agent Gateway"
 generate_stub "$DOCS_DIR/api-reference/index.md" "API Reference" "API specification and reference documentation"
-generate_stub "$DOCS_DIR/user-guides/configuring-user-facing-apis.md" "Configuring User-Facing APIs" "OpenAI-compatible API configuration"
-generate_stub "$DOCS_DIR/user-guides/deploying-multiple-models.md" "Deploying Multiple Models" "Multi-model inference deployment"
-generate_stub "$DOCS_DIR/user-guides/monitoring/metrics.md" "Metrics" "Prometheus metrics collection and configuration"
-generate_stub "$DOCS_DIR/user-guides/monitoring/tracing.md" "Distributed Tracing" "Setting up distributed tracing with OpenTelemetry"
+generate_stub "$DOCS_DIR/resources/configuring-user-facing-apis.md" "Configuring User-Facing APIs" "OpenAI-compatible API configuration"
+generate_stub "$DOCS_DIR/resources/deploying-multiple-models.md" "Deploying Multiple Models" "Multi-model inference deployment"
+generate_stub "$DOCS_DIR/resources/monitoring/metrics.md" "Metrics" "Prometheus metrics collection and configuration"
+generate_stub "$DOCS_DIR/resources/monitoring/tracing.md" "Distributed Tracing" "Setting up distributed tracing with OpenTelemetry"
+generate_stub "$DOCS_DIR/resources/profiling.md" "Profiling" "Performance profiling guides"
+generate_stub "$DOCS_DIR/resources/rdma/rdma-configuration.md" "RDMA Configuration" "RDMA network configuration"
 
 TOTAL=$(find "$DOCS_DIR" -name "*.md" | wc -l | tr -d ' ')
 echo "==> Done. $TOTAL docs synced from llm-d/llm-d @ $BRANCH"
