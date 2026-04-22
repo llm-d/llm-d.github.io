@@ -47,13 +47,13 @@ const sections = [
     description: 'Core components — Proxy, InferencePool, EPP, Model Servers — and advanced features.',
   },
   {
-    title: 'Well-Lit Paths',
-    to: '/docs/well-lit-paths',
-    description: 'Tested deployment recipes: scheduling, disaggregation, expert parallelism, caching.',
+    title: 'Guides',
+    to: '/docs/guides',
+    description: 'Step-by-step adoption procedures: scheduling, disaggregation, expert parallelism, caching.',
   },
   {
-    title: 'User Guides',
-    to: '/docs/user-guides/gateway',
+    title: 'Resources',
+    to: '/docs/resources/gateway',
     description: 'Gateway setup, API configuration, monitoring, multi-model deployment, and RDMA.',
   },
   {

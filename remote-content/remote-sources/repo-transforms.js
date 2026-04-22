@@ -33,7 +33,7 @@ const INTERNAL_GUIDE_MAPPINGS = {
   'guides/tiered-prefix-cache/README.md': '/docs/guide/Installation/tiered-prefix-cache',
   'guides/tiered-prefix-cache/cpu/README.md': '/docs/guide/Installation/tiered-prefix-cache/cpu',
   'guides/workload-autoscaling/README.md': '/docs/guide/Installation/workload-autoscaling',
-  'guides/workload-autoscaling/README.hpa-igw.md': '/docs/guide/Installation/workload-autoscaling/hpa-igw',
+  'guides/workload-autoscaling/README.hpa-epp.md': '/docs/guide/Installation/workload-autoscaling/hpa-epp',
   'guides/workload-autoscaling/README.wva.md': '/docs/guide/Installation/workload-autoscaling/wva'
 };
 
