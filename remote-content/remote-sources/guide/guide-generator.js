@@ -123,13 +123,13 @@ const DYNAMIC_GUIDES = [
     keywords: ['llm-d', 'workload variant autoscaler', 'WVA', 'autoscaling', 'KV cache', 'saturation', 'heterogeneous hardware']
   },
   {
-    dirName: 'workload-autoscaling/hpa-igw',
-    sourceFile: 'guides/workload-autoscaling/README.hpa-igw.md',
-    title: 'Autoscaling with HPA and IGW Metrics',
-    description: 'Configure Kubernetes HPA with Inference Gateway queue depth and running request metrics for responsive, model-aware LLM autoscaling',
+    dirName: 'workload-autoscaling/hpa-epp',
+    sourceFile: 'guides/workload-autoscaling/README.hpa-epp.md',
+    title: 'Autoscaling with HPA and EPP Metrics',
+    description: 'Configure Kubernetes HPA with EndpointPicker queue depth and running request metrics for responsive, model-aware LLM autoscaling',
     sidebarPosition: 13,
-    targetFilename: 'workload-autoscaling/hpa-igw.md',
-    keywords: ['llm-d', 'HPA', 'autoscaling', 'inference gateway', 'queue depth', 'IGW metrics', 'KEDA']
+    targetFilename: 'workload-autoscaling/hpa-epp.md',
+    keywords: ['llm-d', 'HPA', 'autoscaling', 'endpoint picker', 'queue depth', 'EPP metrics', 'KEDA']
   },
   {
     dirName: 'simulated-accelerators',
