@@ -23,8 +23,16 @@ jobs:
         run: npm install
       - name: Test build website
         run: npm run build
-      - name: Sync preview docs from llm-d/llm-d
+      - name: Merge in-flight docs PRs from llm-d/llm-d
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: cd preview && bash scripts/merge-docs-prs.sh /tmp/llmd-merged
+
+      - name: Sync preview docs (main + merged PRs)
+        env:
+          LLMD_REPO: /tmp/llmd-merged
         run: cd preview && bash scripts/sync-docs.sh main
+
       - name: Install preview docs dependencies
         run: cd preview && npm install
       - name: Test build preview docs
