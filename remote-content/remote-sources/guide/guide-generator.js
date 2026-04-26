@@ -48,7 +48,7 @@ const SPECIAL_GUIDES = {
  */
 const DYNAMIC_GUIDES = [
   {
-    dirName: 'inference-scheduling',
+    dirName: 'optimized-baseline',
     title: 'Intelligent Inference Scheduling',
     description: 'Deploy vLLM with intelligent load balancing and prefix-cache aware routing to reduce latency and increase throughput on Kubernetes',
     sidebarPosition: 3,
