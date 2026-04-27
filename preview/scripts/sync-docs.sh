@@ -15,7 +15,7 @@ else
 fi
 
 cp_doc() {
-    if [[ -f "$1" ]]; then
+    if [[ -f "$1" && -n "$2" ]]; then
         cp "$1" "$2"
     fi
 }
