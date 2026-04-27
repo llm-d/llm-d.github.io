@@ -132,6 +132,7 @@ cp_doc "$WIP/well-lit-paths/kv-cache-management.md"                 "$DOCS_DIR/g
 cp_doc "$WIP/well-lit-paths/pd-disaggregation.md"                   "$DOCS_DIR/guides/pd-disaggregation.md"
 cp_doc "$WIP/well-lit-paths/wide-expert-parallelism.md"             "$DOCS_DIR/guides/wide-expert-parallelism.md"
 cp_doc "$WIP/well-lit-paths/intelligent-inference-scheduling.md"    "$DOCS_DIR/guides/intelligent-inference-scheduling.md"
+cp_doc "$WIP/well-lit-paths/optimized-baseline.md"               "$DOCS_DIR/guides/intelligent-inference-scheduling.md"
 cp_doc "$WIP/well-lit-paths/experimental/predicted-latency.md"      "$DOCS_DIR/guides/experimental/predicted-latency.md"
 
 # === Resources (formerly guides) ===
