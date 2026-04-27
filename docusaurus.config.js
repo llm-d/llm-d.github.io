@@ -258,7 +258,7 @@ const config = {
               },
               {
                 label: "Inference Scheduling",
-                to: "docs/guide/Installation/inference-scheduling",
+                to: "docs/guide/Installation/optimized-baseline",
               },
               {
                 label: "Prefill/Decode Disaggregation",

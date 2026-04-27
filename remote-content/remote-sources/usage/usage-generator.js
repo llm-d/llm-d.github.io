@@ -32,24 +32,6 @@ const contentTransform = (content, sourcePath) => transform(content, {
  */
 const USAGE_DOCS = [
   {
-    sourceFile: 'docs/getting-started-inferencing.md',
-    title: 'Getting Started with Inference',
-    description: 'Send inference requests to llm-d model servers: expose gateways, configure endpoints, and interact with deployed vLLM instances',
-    sidebarLabel: 'Getting Started with Inference',
-    sidebarPosition: 1,
-    outputFile: 'getting-started-inferencing.md',
-    keywords: ['llm-d', 'inference', 'getting started', 'API requests', 'model serving']
-  },
-  {
-    sourceFile: 'docs/customizing-your-gateway.md',
-    title: 'Customizing Your Gateway',
-    description: 'Configure and customize the Inference Gateway: set up Ingress, adjust Envoy resources, and optimize for high-throughput benchmarks',
-    sidebarLabel: 'Customizing Your Gateway',
-    sidebarPosition: 2,
-    outputFile: 'customizing-your-gateway.md',
-    keywords: ['llm-d', 'gateway', 'configuration', 'customization', 'inference gateway']
-  },
-  {
     sourceFile: 'docs/readiness-probes.md',
     title: 'Readiness Probes',
     description: 'Configure model-aware Kubernetes readiness probes to ensure vLLM pods only receive traffic when models are fully loaded',
