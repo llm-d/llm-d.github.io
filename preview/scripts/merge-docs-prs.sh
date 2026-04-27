@@ -20,7 +20,7 @@ echo "==> Cloning llm-d/llm-d@main into $CLONE_DIR"
 if [[ ! -d "$CLONE_DIR/.git" ]]; then
     git clone --depth 100 --branch main --filter=blob:none --sparse \
         "$REPO_URL" "$CLONE_DIR" --quiet
-    (cd "$CLONE_DIR" && git sparse-checkout set docs/wip-docs-new docs/assets)
+    (cd "$CLONE_DIR" && git sparse-checkout set docs/wip-docs-new docs/assets guides)
 else
     echo "    Using existing clone at $CLONE_DIR"
 fi

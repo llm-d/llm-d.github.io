@@ -134,6 +134,7 @@ cp_doc "$WIP/well-lit-paths/wide-expert-parallelism.md"             "$DOCS_DIR/g
 cp_doc "$WIP/well-lit-paths/intelligent-inference-scheduling.md"    "$DOCS_DIR/guides/intelligent-inference-scheduling.md"
 cp_doc "$WIP/well-lit-paths/optimized-baseline.md"               "$DOCS_DIR/guides/intelligent-inference-scheduling.md"
 cp_doc "$WIP/well-lit-paths/experimental/predicted-latency.md"      "$DOCS_DIR/guides/experimental/predicted-latency.md"
+cp_doc "$WIP/well-lit-paths/experimental/batch-gateway.md"        "$DOCS_DIR/guides/experimental/batch-gateway.md"
 
 # === Resources (formerly guides) ===
 cp_doc "$WIP/resources/deploying-multiple-model.md"         "$DOCS_DIR/resources/deploying-multiple-models.md"
