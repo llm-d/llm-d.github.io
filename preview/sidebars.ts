@@ -95,12 +95,14 @@ const sidebars: SidebarsConfig = {
         'guides/kv-cache-management',
         'guides/pd-disaggregation',
         'guides/wide-expert-parallelism',
+        'guides/workload-autoscaling',
         {
           type: 'category',
           label: 'Experimental',
           label: 'Experimental',
           items: [
             'guides/experimental/predicted-latency',
+            'guides/experimental/batch-gateway',
           ],
         },
       ],
@@ -139,6 +141,7 @@ const sidebars: SidebarsConfig = {
           ],
         },
         'resources/deploying-multiple-models',
+        'resources/rollout-new-version',
         'resources/profiling',
         'resources/rdma/rdma-configuration',
       ],

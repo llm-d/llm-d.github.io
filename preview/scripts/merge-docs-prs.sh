@@ -20,7 +20,7 @@ echo "==> Cloning llm-d/llm-d@main into $CLONE_DIR"
 if [[ ! -d "$CLONE_DIR/.git" ]]; then
     git clone --depth 100 --branch main --filter=blob:none --sparse \
         "$REPO_URL" "$CLONE_DIR" --quiet
-    (cd "$CLONE_DIR" && git sparse-checkout set docs/wip-docs-new docs/assets guides)
+    (cd "$CLONE_DIR" && git sparse-checkout set docs/wip-docs-new docs/assets)
 else
     echo "    Using existing clone at $CLONE_DIR"
 fi
@@ -71,40 +71,11 @@ for pr in json.load(sys.stdin):
         continue
     fi
 
-    # Try merge with theirs strategy (prefer PR changes for content conflicts)
-    if git merge --no-edit "pr-${PR_NUM}" -X theirs 2>/dev/null; then
+    if git merge --no-edit "pr-${PR_NUM}" --quiet 2>/dev/null; then
         echo "INCLUDED: #$PR_NUM - $PR_TITLE" | tee -a "$REPORT"
     else
-        # Merge failed - try to auto-resolve common conflicts
-        echo "    Attempting auto-conflict resolution..."
-
-        # Check for directory rename conflicts (guides/ → well-lit-paths/)
-        if git status --porcelain | grep -q "DU\|UD\|AA\|UA\|AU"; then
-            # Handle deleted/modified and rename conflicts
-            git status --porcelain | while read status file; do
-                case "$status" in
-                    DU|UD)
-                        # Deleted in one branch, modified in other - keep modified version
-                        git add "$file" 2>/dev/null || true
-                        ;;
-                    AA|UA|AU)
-                        # Both added/modified - keep PR version
-                        git checkout --theirs "$file" 2>/dev/null && git add "$file" || true
-                        ;;
-                esac
-            done
-
-            # Try to complete the merge
-            if git commit --no-edit 2>/dev/null; then
-                echo "INCLUDED (auto-resolved): #$PR_NUM - $PR_TITLE" | tee -a "$REPORT"
-            else
-                git merge --abort 2>/dev/null || true
-                echo "SKIPPED (unresolvable conflict): #$PR_NUM - $PR_TITLE" | tee -a "$REPORT"
-            fi
-        else
-            git merge --abort 2>/dev/null || true
-            echo "SKIPPED (conflict): #$PR_NUM - $PR_TITLE" | tee -a "$REPORT"
-        fi
+        git merge --abort 2>/dev/null || true
+        echo "SKIPPED (conflict): #$PR_NUM - $PR_TITLE" | tee -a "$REPORT"
     fi
 done
 
