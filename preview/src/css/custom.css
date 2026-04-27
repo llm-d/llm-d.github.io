@@ -165,10 +165,7 @@ div[class*='announcementBar'] a {
 }
 
 /* ===== SVG diagram theme support ===== */
-/* In dark mode, invert SVG diagrams with light backgrounds */
-html[data-theme='dark'] .markdown img[src$='.svg'] {
-  filter: invert(0.9) hue-rotate(180deg);
-}
+/* No filters - diagrams should be created with proper light/dark color schemes */
 
 /* ===== Code blocks ===== */
 .prism-code {
