@@ -239,6 +239,43 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace 's|<->|\\<->|g' "$file"
 done
 
+# === Convert GitHub callouts to Docusaurus admonitions ===
+echo "    Converting GitHub-style callouts to Docusaurus admonitions..."
+find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    # Use awk to convert GitHub callout syntax to Docusaurus
+    awk '
+    /^> \[!NOTE\]/ { in_callout=1; type="note"; next }
+    /^> \[!TIP\]/ { in_callout=1; type="tip"; next }
+    /^> \[!IMPORTANT\]/ { in_callout=1; type="important"; next }
+    /^> \[!WARNING\]/ { in_callout=1; type="warning"; next }
+    /^> \[!CAUTION\]/ { in_callout=1; type="caution"; next }
+
+    in_callout && /^> / {
+        if (!printed_start) {
+            print ":::" type
+            printed_start=1
+        }
+        sub(/^> /, "")
+        print
+        next
+    }
+
+    in_callout && !/^> / {
+        print ":::"
+        print ""
+        in_callout=0
+        printed_start=0
+        type=""
+    }
+
+    { print }
+
+    END {
+        if (in_callout) print ":::"
+    }
+    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+done
+
 # === Generate stubs for pages in outline that don't have source content yet ===
 echo "    Generating stubs for missing pages..."
 
