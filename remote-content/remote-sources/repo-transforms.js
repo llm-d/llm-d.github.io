@@ -25,7 +25,7 @@ const INTERNAL_GUIDE_MAPPINGS = {
   'guides/README.md': '/docs/guide',
   
   // Dynamic guides (Installation section)
-  'guides/inference-scheduling/README.md': '/docs/guide/Installation/inference-scheduling',
+  'guides/optimized-baseline/README.md': '/docs/guide/Installation/optimized-baseline',
   'guides/pd-disaggregation/README.md': '/docs/guide/Installation/pd-disaggregation',
   'guides/precise-prefix-cache-aware/README.md': '/docs/guide/Installation/precise-prefix-cache-aware',
   'guides/simulated-accelerators/README.md': '/docs/guide/Installation/simulated-accelerators',

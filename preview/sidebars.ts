@@ -37,6 +37,7 @@ const sidebars: SidebarsConfig = {
                 'architecture/core/epp/flow-control',
                 'architecture/core/epp/request-handling',
                 'architecture/core/epp/configuration',
+                'architecture/core/epp/datalayer',
               ],
             },
             'architecture/core/model-servers',
@@ -46,7 +47,15 @@ const sidebars: SidebarsConfig = {
           type: 'category',
           label: 'Advanced',
           items: [
-            'architecture/advanced/disaggregation',
+            {
+              type: 'category',
+              label: 'Disaggregation',
+              link: {type: 'doc', id: 'architecture/advanced/disaggregation/index'},
+              items: [
+                'architecture/advanced/disaggregation/configuration',
+                'architecture/advanced/disaggregation/operations-vllm',
+              ],
+            },
             'architecture/advanced/kv-indexer',
             'architecture/advanced/kv-offloading',
             'architecture/advanced/latency-predictor',
@@ -57,6 +66,15 @@ const sidebars: SidebarsConfig = {
               items: [
                 'architecture/advanced/autoscaling/workload-variant-autoscaling',
                 'architecture/advanced/autoscaling/igw-hpa',
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Batch Processing',
+              link: {type: 'doc', id: 'architecture/advanced/batch/index'},
+              items: [
+                'architecture/advanced/batch/batch-gateway',
+                'architecture/advanced/batch/async-processor',
               ],
             },
           ],
@@ -74,11 +92,13 @@ const sidebars: SidebarsConfig = {
         'guides/kv-cache-management',
         'guides/pd-disaggregation',
         'guides/wide-expert-parallelism',
+        'guides/workload-autoscaling',
         {
           type: 'category',
           label: 'Experimental',
           items: [
             'guides/experimental/predicted-latency',
+            'guides/experimental/batch-gateway',
           ],
         },
       ],
@@ -108,6 +128,7 @@ const sidebars: SidebarsConfig = {
           ],
         },
         'resources/deploying-multiple-models',
+        'resources/rollout-new-version',
         'resources/profiling',
         'resources/rdma/rdma-configuration',
       ],
@@ -117,7 +138,9 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'API Reference',
       link: {type: 'doc', id: 'api-reference/index'},
-      items: [],
+      items: [
+        'api-reference/glossary',
+      ],
     },
   ],
 };
