@@ -2,6 +2,19 @@
 
 Thank you for your interest in contributing to the llm-d website! This repository manages the documentation website and follows both general project guidelines and website-specific processes.
 
+## 📋 General Guidelines
+
+This project follows the main llm-d [Contributing Guidelines](https://github.com/llm-d/llm-d/blob/main/CONTRIBUTING.md):
+
+- **GitHub Issues**: All PRs should Reference the associated Issue (e.g., `Fixes #123`)
+  If there isn't an Issue for what you're doing, please create one first to outline or discuss the change before submitting a PR - this helps maintainers review and track changes effectively.
+- **Branch Naming**: Use descriptive branch names (e.g., `feat: docs/update-autoscaling-guide`)
+- **Commit Message Format**: Use Conventional Commits (e.g., `feat: add new guide for workload autoscaling`)
+- **DCO Sign-off Required**: Use `git commit -s`
+- **All changes via PR**: No direct pushes to main
+- **Review required**: Maintainer approval needed
+- **Preview deployments**: Available for all PRs
+
 ## 🎯 Quick Guide
 
 ### 📝 Documentation Changes
@@ -219,15 +232,6 @@ components:
 - Version tags do NOT affect which content gets synced
 
 For details on how component versioning works and how to update for new releases, see the [Component Version Management](README.md#component-version-management) section in README.md.
-
-## 📋 General Guidelines
-
-This project follows the main llm-d [Contributing Guidelines](https://github.com/llm-d/llm-d/blob/main/CONTRIBUTING.md):
-
-- **DCO Sign-off Required**: Use `git commit -s`
-- **All changes via PR**: No direct pushes to main
-- **Review required**: Maintainer approval needed
-- **Preview deployments**: Available for all PRs
 
 ### 📝 Creating Blog Posts
 
