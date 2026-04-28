@@ -8,11 +8,7 @@ This project follows the main llm-d [Contributing Guidelines](https://github.com
 
 - **GitHub Issues**: All PRs should reference the associated issue. Include `Fixes #123` in the PR description when applicable so GitHub can auto-close the issue.
   If there isn't an issue for what you're doing, please create one first to outline or discuss the change before submitting a PR - this helps maintainers review and track changes effectively.
-<<<<<<< HEAD
 - **Branch Naming**: Use descriptive branch names (e.g., `feat/docs/update-autoscaling-guide`)
-=======
-- **Branch Naming**: Use descriptive branch names (e.g., `feat: docs/update-autoscaling-guide`)
->>>>>>> 90df000 (Update CONTRIBUTING.md)
 - **Commit Message Format**: Use Conventional Commits (e.g., `feat: add new guide for workload autoscaling`)
 - **DCO Sign-off Required**: Use `git commit -s`
 - **All changes via PR**: No direct pushes to main
