@@ -6,8 +6,8 @@ Thank you for your interest in contributing to the llm-d website! This repositor
 
 This project follows the main llm-d [Contributing Guidelines](https://github.com/llm-d/llm-d/blob/main/CONTRIBUTING.md):
 
-- **GitHub Issues**: All PRs should Reference the associated Issue (e.g., `Fixes #123`)
-  If there isn't an Issue for what you're doing, please create one first to outline or discuss the change before submitting a PR - this helps maintainers review and track changes effectively.
+- **GitHub Issues**: All PRs should reference the associated issue. Include `Fixes #123` in the PR description when applicable so GitHub can auto-close the issue.
+  If there isn't an issue for what you're doing, please create one first to outline or discuss the change before submitting a PR - this helps maintainers review and track changes effectively.
 - **Branch Naming**: Use descriptive branch names (e.g., `feat: docs/update-autoscaling-guide`)
 - **Commit Message Format**: Use Conventional Commits (e.g., `feat: add new guide for workload autoscaling`)
 - **DCO Sign-off Required**: Use `git commit -s`
