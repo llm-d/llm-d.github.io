@@ -1,0 +1,28 @@
+name: Test Documentation Transformations
+
+# Run tests on pull requests without deploying
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    name: Test Transformations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20.18.1
+          cache: npm
+          cache-dependency-path: preview/package-lock.json
+
+      - name: Install preview docs dependencies
+        run: cd preview && npm install
+
+      - name: Run transformation tests
+        run: cd preview && npm run test:transformations
+
+      - name: Build preview docs (test build without deploy)
+        run: cd preview && npm run build

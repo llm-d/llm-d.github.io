@@ -244,6 +244,65 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
 done
 
+# === Convert custom tab syntax to Docusaurus tabs ===
+echo "    Converting custom tab syntax to Docusaurus tabs..."
+find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    awk '
+    /^<!-- TABS:START -->/ {
+        in_tabs=1
+        print ""
+        print "import Tabs from '\''@theme/Tabs'\'';"
+        print "import TabItem from '\''@theme/TabItem'\'';"
+        print ""
+        print "<Tabs>"
+        next
+    }
+
+    /^<!-- TAB:/ && in_tabs {
+        # Close previous TabItem if exists
+        if (current_tab) {
+            print "</TabItem>"
+        }
+
+        # Extract tab label and check for :default
+        line = $0
+        sub(/^<!-- TAB:/, "", line)
+        sub(/ -->.*$/, "", line)
+
+        is_default = ""
+        if (line ~ /:default$/) {
+            is_default = " default"
+            sub(/:default$/, "", line)
+        }
+        label = line
+
+        # Generate value from label (lowercase, replace spaces/parens with dash)
+        value = tolower(label)
+        gsub(/[^a-z0-9]+/, "-", value)
+        gsub(/^-|-$/, "", value)  # trim leading/trailing dashes
+
+        print "<TabItem value=\"" value "\" label=\"" label "\"" is_default ">"
+        current_tab = 1
+        next
+    }
+
+    /^<!-- TABS:END -->/ && in_tabs {
+        # Close last TabItem
+        if (current_tab) {
+            print "</TabItem>"
+        }
+        print "</Tabs>"
+        print ""
+        in_tabs = 0
+        current_tab = 0
+        next
+    }
+
+    # Print all other lines as-is
+    { print }
+    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+done
+
 # === Generate stubs for pages in outline that don't have source content yet ===
 echo "    Generating stubs for missing pages..."
 

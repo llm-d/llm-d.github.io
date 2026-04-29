@@ -550,6 +550,109 @@ The build system automatically transforms GitHub markdown to work with Docusauru
 
 **Your source files remain unchanged** - transformations only apply to the synced copy.
 
+#### Using Custom Tab Syntax
+
+When writing documentation in the source repository (llm-d/llm-d), you can use custom HTML comment markers to create tabbed content that will be automatically transformed into Docusaurus tabs during the sync process.
+
+**Syntax:**
+
+```markdown
+<!-- TABS:START -->
+
+<!-- TAB:Tab Label One:default -->
+Content for the first tab goes here.
+This can include code blocks, lists, etc.
+
+<!-- TAB:Tab Label Two -->
+Content for the second tab.
+
+<!-- TAB:Tab Label Three -->
+Content for the third tab.
+
+<!-- TABS:END -->
+```
+
+**Features:**
+
+- **Multiple tabs**: Add as many tabs as needed between `TABS:START` and `TABS:END`
+- **Default tab**: Add `:default` after the tab label to make it the default selected tab
+- **Auto-generated values**: Tab `value` attributes are automatically generated from labels (lowercase, slugified)
+- **Any content**: Each tab can contain any valid markdown (headings, code blocks, lists, images, etc.)
+
+**Example - Platform-specific deployment instructions:**
+
+```markdown
+<!-- TABS:START -->
+
+<!-- TAB:GKE (H200):default -->
+#### GKE (H200)
+
+```bash
+kubectl apply -k ./manifests/modelserver/gke -n ${NAMESPACE}
+```
+
+<!-- TAB:GKE (B200) -->
+#### GKE (B200)
+
+```bash
+# Deploy on GKE for B200 on the a4 instance type
+kubectl apply -k ./manifests/modelserver/gke-a4 -n ${NAMESPACE}
+```
+
+<!-- TAB:CoreWeave -->
+#### CoreWeave
+
+```bash
+kubectl apply -k ./manifests/modelserver/coreweave -n ${NAMESPACE}
+```
+
+<!-- TABS:END -->
+```
+
+**What gets generated:**
+
+The above markdown will be automatically transformed into:
+
+```jsx
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<Tabs>
+<TabItem value="gke-h200" label="GKE (H200)" default>
+#### GKE (H200)
+
+```bash
+kubectl apply -k ./manifests/modelserver/gke -n ${NAMESPACE}
+```
+</TabItem>
+<TabItem value="gke-b200" label="GKE (B200)">
+#### GKE (B200)
+
+```bash
+kubectl apply -k ./manifests/modelserver/gke-a4 -n ${NAMESPACE}
+```
+</TabItem>
+<TabItem value="coreweave" label="CoreWeave">
+#### CoreWeave
+
+```bash
+kubectl apply -k ./manifests/modelserver/coreweave -n ${NAMESPACE}
+```
+</TabItem>
+</Tabs>
+```
+
+**Best Practices:**
+
+- Use descriptive tab labels that clearly indicate the content (e.g., "AWS EKS", "Google GKE", "Azure AKS")
+- Mark the most common or recommended option as `:default`
+- Keep tab content focused and parallel in structure across tabs
+- The custom syntax works in GitHub markdown (displayed as regular content) and transforms seamlessly during sync
+
+**Where the transformation happens:**
+
+The tab transformation is performed by the `preview/scripts/sync-docs.sh` script during the documentation sync process. The transformation happens automatically during the build - no manual intervention needed.
+
 ### Why does all content sync from `main` branch?
 
 This ensures the documentation always reflects the latest development state. Version tags in `components-data.yaml` are for display on the Latest Release page only and don't affect which content gets synced.
