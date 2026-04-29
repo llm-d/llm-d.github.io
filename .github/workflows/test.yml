@@ -16,13 +16,18 @@ jobs:
         with:
           node-version: 20.18.1
           cache: npm
-          cache-dependency-path: preview/package-lock.json
+
+      - name: Install dependencies
+        run: npm install
 
       - name: Install preview docs dependencies
         run: cd preview && npm install
 
       - name: Run transformation tests
-        run: cd preview && npm run test:transformations
+        run: npm run test:transformations
+
+      - name: Sync docs from llm-d/llm-d
+        run: cd preview && bash scripts/sync-docs.sh main
 
       - name: Build preview docs (test build without deploy)
         run: cd preview && npm run build

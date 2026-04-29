@@ -8,11 +8,10 @@
 
 set -euo pipefail
 
-if [[ "$(uname)" == "Darwin" ]]; then
-    sed_inplace() { sed -i '' "$@"; }
-else
-    sed_inplace() { sed -i "$@"; }
-fi
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Source shared transformations
+source "$SCRIPT_DIR/transformations.sh"
 
 cp_doc() {
     if [[ -f "$1" && -n "$2" ]]; then
@@ -164,16 +163,16 @@ cp_doc "$WIP/resources/rdma/networking-stack.svg" "$STATIC_DIR/" 2>/dev/null || 
 cp_doc "$WIP/architecture/core/images/flow_control_dashboard.png" "$STATIC_DIR/" 2>/dev/null || true
 cp_doc "$WIP/architecture/advanced/autoscaling/hpa-architecture.svg" "$STATIC_DIR/" 2>/dev/null || true
 
-# === Fix image paths for Docusaurus ===
-echo "    Fixing image references..."
+# === Fix specific image paths for Docusaurus ===
+echo "    Fixing specific image references..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace \
-        -e 's|\(\.\./\)*assets/\([^)]*\)|/img/docs/\2|g' \
         -e 's|../images/flow_control_dashboard.png|/img/docs/flow_control_dashboard.png|g' \
         -e 's|networking-stack.svg|/img/docs/networking-stack.svg|g' \
         -e 's|hpa-architecture.svg|/img/docs/hpa-architecture.svg|g' \
         "$file"
 done
+# Note: Generic ../assets/ paths are handled by apply_transformations() below
 
 # === Fix internal cross-references ===
 # Upstream files reference filenames that get renamed during copy
@@ -202,105 +201,11 @@ done
 # === Clean up known issues ===
 # Remove "NEEDS TO BE REDONE" from configuration.md
 sed_inplace '/^NEEDS TO BE REDONE/d' "$DOCS_DIR/architecture/core/epp/configuration.md" 2>/dev/null || true
-# Escape <-> in markdown (MDX parses it as JSX)
+
+# === Apply markdown transformations (shared with test-transformations.sh) ===
+echo "    Applying markdown transformations (callouts, tabs, MDX escaping)..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
-    sed_inplace 's|<->|\\<->|g' "$file"
-done
-
-# === Convert GitHub callouts to Docusaurus admonitions ===
-echo "    Converting GitHub-style callouts to Docusaurus admonitions..."
-find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
-    # Use awk to convert GitHub callout syntax to Docusaurus
-    awk '
-    /^> \[!NOTE\]/ { in_callout=1; type="note"; next }
-    /^> \[!TIP\]/ { in_callout=1; type="tip"; next }
-    /^> \[!IMPORTANT\]/ { in_callout=1; type="important"; next }
-    /^> \[!WARNING\]/ { in_callout=1; type="warning"; next }
-    /^> \[!CAUTION\]/ { in_callout=1; type="caution"; next }
-
-    in_callout && /^> / {
-        if (!printed_start) {
-            print ":::" type
-            printed_start=1
-        }
-        sub(/^> /, "")
-        print
-        next
-    }
-
-    in_callout && !/^> / {
-        print ":::"
-        print ""
-        in_callout=0
-        printed_start=0
-        type=""
-    }
-
-    { print }
-
-    END {
-        if (in_callout) print ":::"
-    }
-    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
-done
-
-# === Convert custom tab syntax to Docusaurus tabs ===
-echo "    Converting custom tab syntax to Docusaurus tabs..."
-find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
-    awk '
-    /^<!-- TABS:START -->/ {
-        in_tabs=1
-        print ""
-        print "import Tabs from '\''@theme/Tabs'\'';"
-        print "import TabItem from '\''@theme/TabItem'\'';"
-        print ""
-        print "<Tabs>"
-        next
-    }
-
-    /^<!-- TAB:/ && in_tabs {
-        # Close previous TabItem if exists
-        if (current_tab) {
-            print "</TabItem>"
-        }
-
-        # Extract tab label and check for :default
-        line = $0
-        sub(/^<!-- TAB:/, "", line)
-        sub(/ -->.*$/, "", line)
-
-        is_default = ""
-        if (line ~ /:default$/) {
-            is_default = " default"
-            sub(/:default$/, "", line)
-        }
-        label = line
-
-        # Generate value from label (lowercase, replace spaces/parens with dash)
-        value = tolower(label)
-        gsub(/[^a-z0-9]+/, "-", value)
-        gsub(/^-|-$/, "", value)  # trim leading/trailing dashes
-
-        print "<TabItem value=\"" value "\" label=\"" label "\"" is_default ">"
-        current_tab = 1
-        next
-    }
-
-    /^<!-- TABS:END -->/ && in_tabs {
-        # Close last TabItem
-        if (current_tab) {
-            print "</TabItem>"
-        }
-        print "</Tabs>"
-        print ""
-        in_tabs = 0
-        current_tab = 0
-        next
-    }
-
-    # Print all other lines as-is
-    { print }
-    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+    apply_transformations "$file"
 done
 
 # === Generate stubs for pages in outline that don't have source content yet ===

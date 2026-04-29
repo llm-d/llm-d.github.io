@@ -14,8 +14,14 @@ All transformations in `sync-docs.sh` are validated:
 ## Running Tests
 
 ```bash
-# From preview directory
+# From root directory
 npm run test:transformations
+
+# Or from preview directory
+cd preview && npm run test:transformations
+
+# Run all tests (Jest + transformations)
+npm test
 ```
 
 **Tests run automatically:**
@@ -34,7 +40,7 @@ npm run test:transformations
 ```
 transformation-test.md
          ↓
-  [Apply transformations]
+  [Apply transformations via scripts/transformations.sh]
          ↓
 transformation-test.output.md
          ↓
@@ -44,6 +50,11 @@ transformation-test.output.md
 ```
 
 If output doesn't match expected, the test fails with a diff showing what changed.
+
+**Key Architecture Detail:**
+- Both `test-transformations.sh` and `sync-docs.sh` source the same `transformations.sh` file
+- This ensures tests validate the ACTUAL production transformation code
+- No code duplication = tests can't drift out of sync with production
 
 ## Updating Tests
 
