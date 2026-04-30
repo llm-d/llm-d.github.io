@@ -79,17 +79,17 @@ cp_doc "$WIP/getting-started/artifacts.md"    "$DOCS_DIR/getting-started/artifac
 cp_doc "$WIP/architecture/README.md"          "$DOCS_DIR/architecture/index.md"
 
 # Architecture / Core
-cp_doc "$WIP/architecture/core/proxy.md"           "$DOCS_DIR/architecture/core/proxy.md"
+cp_doc "$WIP/architecture/core/router/proxy.md"           "$DOCS_DIR/architecture/core/proxy.md"
 cp_doc "$WIP/architecture/core/inferencepool.md"   "$DOCS_DIR/architecture/core/inferencepool.md"
 cp_doc "$WIP/architecture/core/model-servers.md"   "$DOCS_DIR/architecture/core/model-servers.md"
 
-# Architecture / Core / EPP
-cp_doc "$WIP/architecture/core/epp/README.md"           "$DOCS_DIR/architecture/core/epp/index.md"
-cp_doc "$WIP/architecture/core/epp/scheduling.md"       "$DOCS_DIR/architecture/core/epp/scheduling.md"
-cp_doc "$WIP/architecture/core/epp/flow-control.md"     "$DOCS_DIR/architecture/core/epp/flow-control.md"
-cp_doc "$WIP/architecture/core/epp/request-handling.md"  "$DOCS_DIR/architecture/core/epp/request-handling.md"
-cp_doc "$WIP/architecture/core/epp/configuration.md"     "$DOCS_DIR/architecture/core/epp/configuration.md"
-cp_doc "$WIP/architecture/core/epp/datalayer.md"         "$DOCS_DIR/architecture/core/epp/datalayer.md"
+# Architecture / Core / EPP (moved under router/ in upstream)
+cp_doc "$WIP/architecture/core/router/epp/README.md"           "$DOCS_DIR/architecture/core/epp/index.md"
+cp_doc "$WIP/architecture/core/router/epp/scheduling.md"       "$DOCS_DIR/architecture/core/epp/scheduling.md"
+cp_doc "$WIP/architecture/core/router/epp/flow-control.md"     "$DOCS_DIR/architecture/core/epp/flow-control.md"
+cp_doc "$WIP/architecture/core/router/epp/request-handling.md"  "$DOCS_DIR/architecture/core/epp/request-handling.md"
+cp_doc "$WIP/architecture/core/router/epp/configuration.md"     "$DOCS_DIR/architecture/core/epp/configuration.md"
+cp_doc "$WIP/architecture/core/router/epp/datalayer.md"         "$DOCS_DIR/architecture/core/epp/datalayer.md"
 
 # Architecture / Advanced / Disaggregation
 cp_doc "$WIP/architecture/advanced/disaggregation/README.md"            "$DOCS_DIR/architecture/advanced/disaggregation/index.md"

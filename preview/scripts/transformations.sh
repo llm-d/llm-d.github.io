@@ -26,6 +26,9 @@ apply_transformations() {
     # MDX escaping - escape special characters
     sed_inplace 's|<->|\\<->|g' "$file"
 
+    # Fix unclosed img tags for MDX (must be self-closing)
+    sed_inplace 's|<img \([^>]*[^/]\)>|<img \1 />|g' "$file"
+
     # GitHub callouts
     awk '
     /^> \[!NOTE\]/ { in_callout=1; type="note"; next }
