@@ -581,7 +581,7 @@ Content for the third tab.
 
 **Example - Platform-specific deployment instructions:**
 
-```markdown
+~~~markdown
 <!-- TABS:START -->
 
 <!-- TAB:GKE (H200):default -->
@@ -607,13 +607,13 @@ kubectl apply -k ./manifests/modelserver/coreweave -n ${NAMESPACE}
 ```
 
 <!-- TABS:END -->
-```
+~~~
 
 **What gets generated:**
 
 The above markdown will be automatically transformed into:
 
-```jsx
+~~~jsx
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
@@ -640,7 +640,7 @@ kubectl apply -k ./manifests/modelserver/coreweave -n ${NAMESPACE}
 ```
 </TabItem>
 </Tabs>
-```
+~~~
 
 **Best Practices:**
 
