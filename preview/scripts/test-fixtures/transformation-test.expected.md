@@ -1,3 +1,6 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Transformation Test Document
 
 This document contains examples of all markdown transformations that should occur during the sync process.
@@ -41,9 +44,6 @@ All lines should be included in the transformation.
 ## 3. Custom Tabs Test
 
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 <Tabs>
 
 <TabItem value="first-tab" label="First Tab" default>
@@ -79,9 +79,6 @@ The value should be `third-tab-complex-name`.
 
 ## 4. Nested Content in Tabs Test
 
-
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
 
 <Tabs>
 
@@ -149,9 +146,6 @@ const test = "value";
 ### Empty Tab
 
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 <Tabs>
 
 <TabItem value="empty-tab" label="Empty Tab" default>
@@ -162,9 +156,6 @@ import TabItem from '@theme/TabItem';
 
 ### Single Tab
 
-
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
 
 <Tabs>
 
@@ -177,9 +168,6 @@ This is the only tab.
 
 ### Tab with Special Characters
 
-
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
 
 <Tabs>
 

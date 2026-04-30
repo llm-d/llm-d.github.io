@@ -59,13 +59,23 @@ apply_transformations() {
     }
     ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
 
-    # Custom tabs
+    # Custom tabs - Check if file needs tab imports, add at top if so, then transform
+    if grep -q '^<!-- TABS:START -->' "$file"; then
+        # File has tabs - add imports at top if not already present
+        if ! grep -q "import Tabs from '@theme/Tabs'" "$file"; then
+            {
+                echo "import Tabs from '@theme/Tabs';"
+                echo "import TabItem from '@theme/TabItem';"
+                echo ""
+                cat "$file"
+            } > "$file.tmp" && mv "$file.tmp" "$file"
+        fi
+    fi
+
+    # Transform tab blocks
     awk '
     /^<!-- TABS:START -->/ {
         in_tabs=1
-        print ""
-        print "import Tabs from '\''@theme/Tabs'\'';"
-        print "import TabItem from '\''@theme/TabItem'\'';"
         print ""
         print "<Tabs>"
         next

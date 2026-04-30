@@ -21,7 +21,6 @@ cp_doc() {
 
 BRANCH="${1:-main}"
 REPO_URL="https://github.com/llm-d/llm-d.git"
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 DOCS_DIR="$PROJECT_DIR/docs"
 STATIC_DIR="$PROJECT_DIR/static/img/docs"

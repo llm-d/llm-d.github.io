@@ -4,12 +4,14 @@ This directory contains tests that validate markdown transformations applied dur
 
 ## What Gets Tested
 
-All transformations in `sync-docs.sh` are validated:
+These tests validate the **shared transformations** in `scripts/transformations.sh`:
 
 - **GitHub Callouts** → Docusaurus admonitions (`> [!NOTE]` → `:::note`)
 - **Custom Tabs** → Docusaurus Tabs (`<!-- TABS:START -->` → `<Tabs>`)
 - **Image Paths** → Absolute paths (`../assets/` → `/img/docs/`)
 - **MDX Escaping** → Special characters (`<->` → `\<->`)
+
+**Note:** `sync-docs.sh` also applies additional **doc-specific transformations** (cross-reference rewrites, specific image path fixes) that are NOT covered by these tests. The shared transformations are sourced from `transformations.sh` by both production (`sync-docs.sh`) and test (`test-transformations.sh`) scripts.
 
 ## Running Tests
 
@@ -58,17 +60,19 @@ If output doesn't match expected, the test fails with a diff showing what change
 
 ## Updating Tests
 
-**When modifying transformations:**
+**When modifying shared transformations:**
 
-1. Update transformation code in `sync-docs.sh`
-2. Update `test-transformations.sh` to match
-3. Run tests: `npm run test:transformations`
-4. Review the diff in `diff.txt`
-5. If changes are correct:
+1. Update transformation code in `scripts/transformations.sh`
+2. Run tests: `npm run test:transformations`
+3. Review the diff in `diff.txt`
+4. If changes are correct:
    ```bash
    cp transformation-test.output.md transformation-test.expected.md
    ```
-6. Commit both the code changes and updated expected output
+5. Commit both the code changes and updated expected output
+
+**When adding doc-specific transformations** (cross-references, specific image paths):
+- Edit `sync-docs.sh` directly - these don't need test coverage
 
 **Adding new transformation patterns:**
 
