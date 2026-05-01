@@ -386,46 +386,6 @@ table th {
   }
 }
 
-/* ===== Contributor logo strip ===== */
-.contributor-strip {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 1.75rem 0;
-  max-width: 900px;
-}
-
-.contributor-label {
-  font-size: 0.8rem;
-  color: var(--ifm-color-emphasis-600);
-  letter-spacing: 0.03em;
-  font-weight: 400;
-}
-
-.contributor-logo {
-  height: 24px;
-  width: auto;
-  max-width: 120px;
-  object-fit: contain;
-  filter: grayscale(1);
-  opacity: 0.55;
-  transition: opacity 0.15s ease;
-}
-
-.contributor-logo:hover {
-  opacity: 0.9;
-}
-
-[data-theme='dark'] .contributor-logo {
-  filter: brightness(0) invert(1);
-  opacity: 0.7;
-}
-
-[data-theme='dark'] .contributor-logo:hover {
-  opacity: 0.95;
-}
-
 /* ===== Capabilities section ===== */
 .capabilities-section {
   padding: 3rem 0 4rem;
