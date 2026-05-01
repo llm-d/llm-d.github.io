@@ -132,6 +132,20 @@ const config: Config = {
           type: 'custom-color-mode-toggle' as any,
           position: 'right',
         },
+        // Mobile-only fallbacks — hidden on desktop via CSS, surface in the
+        // hamburger drawer at <997px where the custom pills are hidden.
+        {
+          href: 'https://github.com/llm-d/llm-d',
+          label: 'GitHub',
+          position: 'right',
+          className: 'navbar-mobile-only',
+        },
+        {
+          href: 'https://llm-d.slack.com',
+          label: 'Join Slack',
+          position: 'right',
+          className: 'navbar-mobile-only',
+        },
       ],
     },
     footer: {
