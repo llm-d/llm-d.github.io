@@ -1,14 +1,12 @@
 import React from 'react';
-import clsx from 'clsx';
 import Link from '@docusaurus/Link';
-import {useBaseUrlUtils} from '@docusaurus/useBaseUrl';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import {Database, Layers, Network, Split, TrendingUp} from 'lucide-react';
 
 function HeroSection(): React.JSX.Element {
   return (
-    <header className={clsx('hero hero--llmd')}>
+    <header className="hero hero--llmd">
       <div className="container">
         <div className="hero__split">
           <div className="hero__copy">
@@ -38,34 +36,6 @@ function HeroSection(): React.JSX.Element {
         </div>
       </div>
     </header>
-  );
-}
-
-const contributors = [
-  {name: 'IBM', file: 'ibm.png'},
-  {name: 'Google', file: 'google.png'},
-  {name: 'Red Hat', file: 'redhat.png'},
-  {name: 'NVIDIA', file: 'nvidia.png'},
-  {name: 'CoreWeave', file: 'coreweave.svg'},
-  {name: 'AMD', file: 'amd.svg'},
-];
-
-function ContributorLogos(): React.JSX.Element {
-  const {withBaseUrl} = useBaseUrlUtils();
-  return (
-    <section className="container">
-      <div className="contributor-strip">
-        <span className="contributor-label">Supported by</span>
-        {contributors.map((c) => (
-          <img
-            key={c.name}
-            className="contributor-logo"
-            src={withBaseUrl(`/img/logos/${c.file}`)}
-            alt={c.name}
-          />
-        ))}
-      </div>
-    </section>
   );
 }
 
@@ -149,10 +119,6 @@ export default function Home(): React.JSX.Element {
     <Layout title="Documentation" description={siteConfig.tagline}>
       <HeroSection />
       <main>
-        {/* Contributor logo strip — hidden for now, may be restored later. To re-enable, uncomment the block below. */}
-        {/*
-        <ContributorLogos />
-        */}
         <CapabilitiesSection />
       </main>
     </Layout>
