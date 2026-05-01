@@ -8,7 +8,7 @@ export default function SlackButton(): React.JSX.Element {
       href={SLACK_URL}
       target="_blank"
       rel="noopener noreferrer"
-      className="nav-pill"
+      className="nav-pill nav-pill--slack"
     >
       <span className="nav-pill__label">Join Slack</span>
     </a>

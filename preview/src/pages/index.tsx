@@ -88,22 +88,24 @@ const capabilities = [
 
 function CapabilitiesSection(): React.JSX.Element {
   return (
-    <section className="container capabilities-section">
-      <h2 className="capabilities-heading">Key capabilities</h2>
-      <div className="capabilities-grid">
-        {capabilities.map(({icon: Icon, title, tagline, body, ctaLabel, to}) => (
-          <article key={title} className="capability-card">
-            <div className="capability-icon" aria-hidden="true">
-              <Icon size={22} strokeWidth={1.75} />
-            </div>
-            <h3 className="capability-title">{title}</h3>
-            <p className="capability-tagline">{tagline}</p>
-            <p className="capability-body">{body}</p>
-            <Link to={to} className="capability-cta">
-              {ctaLabel} <span aria-hidden="true">→</span>
-            </Link>
-          </article>
-        ))}
+    <section className="capabilities-section">
+      <div className="container">
+        <h2 className="capabilities-heading">Key capabilities</h2>
+        <div className="capabilities-grid">
+          {capabilities.map(({icon: Icon, title, tagline, body, ctaLabel, to}) => (
+            <article key={title} className="capability-card">
+              <div className="capability-icon" aria-hidden="true">
+                <Icon size={22} strokeWidth={1.75} />
+              </div>
+              <h3 className="capability-title">{title}</h3>
+              <p className="capability-tagline">{tagline}</p>
+              <p className="capability-body">{body}</p>
+              <Link to={to} className="capability-cta">
+                {ctaLabel} <span aria-hidden="true">→</span>
+              </Link>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );

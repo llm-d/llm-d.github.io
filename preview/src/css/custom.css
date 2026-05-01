@@ -288,6 +288,7 @@ table th {
 /* ===== Landing page — split-layout hero ===== */
 .hero--llmd {
   display: block;
+  width: 100%;
   padding: 5rem 0 4rem;
   text-align: left;
   background: linear-gradient(
@@ -386,8 +387,16 @@ table th {
   }
 }
 
+@media (max-width: 480px) {
+  .hero--llmd .hero__title {
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
+}
+
 /* ===== Capabilities section ===== */
 .capabilities-section {
+  width: 100%;
   padding: 3rem 0 4rem;
 }
 
@@ -588,4 +597,41 @@ table th {
 
 .color-toggle[data-state='dark'] .color-toggle__thumb {
   transform: translateX(20px);
+}
+
+/* ===== Responsive navbar — hide custom pills on mobile, hide standard
+   fallback links on desktop. The color-mode toggle stays visible at all
+   widths. ===== */
+@media (max-width: 996px) {
+  .nav-pill--gh,
+  .nav-pill--slack {
+    display: none;
+  }
+}
+
+/* The custom color-mode toggle is replicated into the mobile drawer by
+   Docusaurus. Hide that copy — the one rendered in the top navbar stays
+   visible. Targets both the toggle itself and any wrapping list item so
+   no empty space is left behind. */
+.navbar-sidebar .color-toggle,
+.navbar-sidebar li:has(> .color-toggle) {
+  display: none;
+}
+
+@media (min-width: 997px) {
+  .navbar-mobile-only {
+    display: none !important;
+  }
+}
+
+/* ===== Tablet polish: tighter pill padding on iPad-sized desktops so the
+   right-side controls don't crowd against the viewport edge. ===== */
+@media (min-width: 997px) and (max-width: 1100px) {
+  .nav-pill {
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
+  }
+  .nav-pill--gh {
+    padding-right: 0.375rem;
+  }
 }
