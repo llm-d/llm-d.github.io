@@ -1,12 +1,20 @@
 import React from 'react';
 import {usePluginData} from '@docusaurus/useGlobalData';
+import {useLocation} from '@docusaurus/router';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 
 const REPO_URL = 'https://github.com/llm-d/llm-d/tree';
 
-export default function VersionDropdown(): React.JSX.Element {
+export default function VersionDropdown(): React.JSX.Element | null {
   const {releases} = usePluginData('llmd-versions-plugin') as {
     releases: string[];
   };
+  const {pathname} = useLocation();
+  const docsBasePath = useBaseUrl('/docs/');
+
+  if (!pathname.startsWith(docsBasePath)) {
+    return null;
+  }
 
   return (
     <div className="navbar__item dropdown dropdown--hoverable">
