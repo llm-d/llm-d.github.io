@@ -68,13 +68,7 @@ const config = {
       "classic",
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
-        docs: {
-          sidebarPath: "./sidebars.js",
-          sidebarCollapsible: false,
-          exclude: [
-            '**/upstream-versions.md',
-          ],
-        },
+        docs: false, // Docs are provided by preview/ build at /docs/
         blog: {
           showReadingTime: true,
           feedOptions: {
@@ -115,6 +109,18 @@ const config = {
     // Remote content plugins (managed independently)
     ...remoteContentPlugins,
 
+    // Community docs as separate plugin instance
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'community',
+        path: 'community',
+        routeBasePath: 'community',
+        sidebarPath: require.resolve('./sidebars.js'),
+        sidebarCollapsible: false,
+      },
+    ],
+
     // Other site plugins
     [
       require.resolve("docusaurus-lunr-search"),
@@ -154,11 +160,11 @@ const config = {
         { property: 'og:locale', content: 'en_US' },
       ],
 
-      // Announcement banner for v0.5 release
+      // Announcement banner for v0.7 release
       announcementBar: {
-        id: 'llm-d-v0-5-release',
+        id: 'llm-d-v0-7-release',
         content:
-          '🎉 <b>llm-d 0.5 is now released!</b> Check out hierarchical KV offloading, cache-aware LoRA routing, resilient networking with UCCL, and scale-to-zero autoscaling. <a target="_self" rel="noopener noreferrer" href="/blog/llm-d-v0.5-sustaining-performance-at-scale"><b>Read the announcement →</b></a>',
+          '🎉 <b>llm-d 0.7 is now available!</b> Explore our completely revamped documentation with comprehensive guides, architecture deep-dives, and production deployment patterns. <a target="_self" rel="noopener noreferrer" href="/docs"><b>Browse the docs →</b></a>',
         backgroundColor: '#7f317f',
         textColor: '#fff',
         isCloseable: true,
@@ -171,31 +177,15 @@ const config = {
           src: "img/llm-d-icon.png",
         },
         items: [
+          { to: "/docs", label: "Documentation", position: "left" },
+          { to: "/blog", label: "Blog", position: "left" },
           {
             type: "docSidebar",
-            sidebarId: "structureSidebar",
-            position: "left",
-            label: "Architecture",
-          },
-          {
-            type: "docSidebar",
-            sidebarId: "guideSidebar",
-            position: "left",
-            label: "Guides",
-          },
-          {
-            type: "docSidebar",
-            sidebarId: "usageSidebar",
-            position: "left",
-            label: "Usage",
-          },
-          {
-            type: "docSidebar",
-            sidebarId: "commSidebar",
+            sidebarId: "communitySidebar",
+            docsPluginId: "community",
             position: "left",
             label: "Community",
           },
-          { to: "/blog", label: "Blog", position: "left" },
           { to: "/videos", label: "Videos", position: "left" },
           {
             type: 'html',
@@ -217,56 +207,19 @@ const config = {
         style: "dark",
         links: [
           {
-            title: "Architecture",
-            items: [
-              {
-                label: "Overview",
-                to: "docs/architecture",
-              },
-              {
-                label: "Latest Release",
-                to: "docs/architecture/latest-release",
-              },
-              {
-                label: "Inference Scheduler",
-                to: "docs/architecture/Components/inference-scheduler",
-              },
-              {
-                label: "KV Cache",
-                to: "docs/architecture/Components/kv-cache",
-              },
-              {
-                label: "Model Service",
-                to: "docs/architecture/Components/modelservice",
-              },
-              {
-                label: "Benchmark Tools",
-                to: "docs/architecture/Components/benchmark",
-              },
-            ],
-          },
-          {
-            title: "Guides",
+            title: "Documentation",
             items: [
               {
                 label: "Getting Started",
-                to: "docs/guide",
+                to: "/docs/getting-started",
               },
               {
-                label: "Prerequisites",
-                to: "docs/guide/Installation/prerequisites",
+                label: "Architecture",
+                to: "/docs/architecture",
               },
               {
-                label: "Inference Scheduling",
-                to: "docs/guide/Installation/optimized-baseline",
-              },
-              {
-                label: "Prefill/Decode Disaggregation",
-                to: "docs/guide/Installation/pd-disaggregation",
-              },
-              {
-                label: "Wide Expert Parallelism",
-                to: "docs/guide/Installation/wide-ep-lws",
+                label: "Guides",
+                to: "/docs/guides",
               },
             ],
           },
@@ -275,16 +228,15 @@ const config = {
             items: [
               {
                 label: "Contact us",
-                href: "/docs/community",
+                href: "/community",
               },
-
-              { 
+              {
                 label: "Contributing",
-                href: "/docs/community/contribute"
+                href: "/community/contribute"
               },
               {
                 label: "Code of Conduct",
-                href: "/docs/community/code-of-conduct",
+                href: "/community/code-of-conduct",
               },
             ],
           },
