@@ -1,78 +1,115 @@
-import clsx from 'clsx';
+import React from 'react';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
+import {Database, Layers, Network, Split, TrendingUp} from 'lucide-react';
 
-import styles from './index.module.css';
-
-function HeroSection() {
+function HeroSection(): React.JSX.Element {
   return (
-    <header className={clsx('hero hero--llmd')}>
+    <header className="hero hero--llmd">
       <div className="container">
-        <img
-          src="/preview/img/llm-d-logo.png"
-          alt="llm-d"
-          className="hero__logo"
-        />
-        <h1 className="hero__title">
-          Kubernetes-native distributed inference serving for LLMs
-        </h1>
-        <div className={styles.buttons}>
-          <Link
-            className="button button--primary button--lg"
-            to="/docs/getting-started">
-            Get Started
-          </Link>
-          <Link
-            className="button button--outline button--lg"
-            to="/docs/getting-started/quickstart"
-            style={{marginLeft: '0.75rem'}}>
-            Quickstart
-          </Link>
+        <div className="hero__split">
+          <div className="hero__copy">
+            <h1 className="hero__title">
+              Production-grade distributed LLM inference.
+            </h1>
+            <p className="hero__subtitle">
+              llm-d is a distributed inference stack that orchestrates vLLM and
+              SGLang across your cluster with LLM-aware routing, disaggregated
+              serving, and tiered KV caching — using Kubernetes primitives you
+              already run.
+            </p>
+            <div className="hero__buttons">
+              <Link
+                className="button button--primary"
+                to="/docs/getting-started/quickstart">
+                Get started
+              </Link>
+              <Link
+                className="button button--outline"
+                to="/docs/architecture">
+                See the architecture
+              </Link>
+            </div>
+          </div>
+          <div className="hero__visual" aria-hidden="true" />
         </div>
       </div>
     </header>
   );
 }
 
-const sections = [
+const capabilities = [
   {
-    title: 'Getting Started',
-    to: '/docs/getting-started',
-    description: 'Introduction to llm-d, quickstart guide, feature matrix, and release artifacts.',
+    icon: Network,
+    title: 'LLM-Aware Load Balancing',
+    tagline:
+      'Route every request to the replica that will serve it fastest.',
+    body:
+      "llm-d's endpoint picker scores each replica in real time across four signals: prefix cache locality, KV-cache utilization, queue depth, and predicted latency. Each request is dispatched to the replica with the lowest expected tail latency — delivering order-of-magnitude p99 improvements over round-robin routing, with no additional hardware.",
+    ctaLabel: 'Explore LLM-aware routing',
+    to: '/docs/guides/intelligent-inference-scheduling',
   },
   {
-    title: 'Architecture',
-    to: '/docs/architecture',
-    description: 'Core components — Proxy, InferencePool, EPP, Model Servers — and advanced features.',
+    icon: Split,
+    title: 'Prefill / Decode Disaggregation',
+    tagline:
+      'Scale prompt processing and token generation independently.',
+    body:
+      'Prefill and decode have fundamentally different resource profiles. llm-d splits them across dedicated worker pools and transfers KV-cache between phases over RDMA via NIXL. The result is faster TTFT, more predictable TPOT, and better GPU utilization across the cluster.',
+    ctaLabel: 'See how disaggregation works',
+    to: '/docs/guides/pd-disaggregation',
   },
   {
-    title: 'Guides',
-    to: '/docs/guides',
-    description: 'Step-by-step adoption procedures: scheduling, disaggregation, expert parallelism, caching.',
+    icon: Layers,
+    title: 'Wide Expert Parallelism',
+    tagline:
+      "Serve frontier MoE models that don't fit on a single node.",
+    body:
+      'llm-d combines data parallelism and expert parallelism across nodes to deploy large mixture-of-experts models like DeepSeek-R1. This pattern maximizes KV-cache space, enables long-context online serving, and supports high-throughput generation for batch and RL workloads.',
+    ctaLabel: 'Deploy wide-EP models',
+    to: '/docs/guides/wide-expert-parallelism',
   },
   {
-    title: 'Resources',
-    to: '/docs/resources/gateway',
-    description: 'Gateway setup, API configuration, monitoring, multi-model deployment, and RDMA.',
+    icon: Database,
+    title: 'Tiered KV Prefix Caching',
+    tagline: 'Cache at memory speed. Spill at storage cost.',
+    body:
+      'llm-d extends KV-cache beyond accelerator HBM through a configurable storage hierarchy: HBM, CPU memory, local SSD, and shared remote storage (in progress). Hot prefixes stay close to the accelerator; cold prefixes spill to cheaper tiers automatically. You serve longer contexts and higher concurrency without adding GPUs.',
+    ctaLabel: 'Configure tiered caching',
+    to: '/docs/guides/kv-cache-management',
   },
   {
-    title: 'API Reference',
-    to: '/docs/api-reference',
-    description: 'API specifications and reference documentation.',
+    icon: TrendingUp,
+    title: 'Workload Autoscaling',
+    tagline: 'Scale for the load you have, on the hardware you have.',
+    body:
+      'Two complementary patterns, both built on Kubernetes primitives. HPA scales replicas using live inference signals — queue depth and request counts from the endpoint picker. The Workload Variant Autoscaler routes across model variants on heterogeneous hardware to meet SLOs at the lowest cost.',
+    ctaLabel: 'Set up autoscaling',
+    to: '/docs/guides/workload-autoscaling',
   },
 ];
 
-function FeaturesSection() {
+function CapabilitiesSection(): React.JSX.Element {
   return (
-    <section className="container" style={{paddingBottom: '3rem'}}>
-      <div className="features">
-        {sections.map((s) => (
-          <Link key={s.title} to={s.to} className="feature-card" style={{textDecoration: 'none', color: 'inherit'}}>
-            <h3>{s.title}</h3>
-            <p>{s.description}</p>
-          </Link>
-        ))}
+    <section className="capabilities-section">
+      <div className="container">
+        <h2 className="capabilities-heading">Key capabilities</h2>
+        <div className="capabilities-grid">
+          {capabilities.map(({icon: Icon, title, tagline, body, ctaLabel, to}) => (
+            <article key={title} className="capability-card">
+              <div className="capability-icon" aria-hidden="true">
+                <Icon size={22} strokeWidth={1.75} />
+              </div>
+              <h3 className="capability-title">{title}</h3>
+              <p className="capability-tagline">{tagline}</p>
+              <p className="capability-body">{body}</p>
+              <Link to={to} className="capability-cta">
+                {ctaLabel} <span aria-hidden="true">→</span>
+              </Link>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -84,7 +121,7 @@ export default function Home(): React.JSX.Element {
     <Layout title="Documentation" description={siteConfig.tagline}>
       <HeroSection />
       <main>
-        <FeaturesSection />
+        <CapabilitiesSection />
       </main>
     </Layout>
   );

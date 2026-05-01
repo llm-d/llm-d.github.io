@@ -82,6 +82,7 @@ const config: Config = {
     colorMode: {
       defaultMode: 'light',
       respectPrefersColorScheme: true,
+      disableSwitch: true,
     },
     announcementBar: {
       id: 'dev_preview_banner',
@@ -106,18 +107,44 @@ const config: Config = {
           label: 'Documentation',
         },
         {
+          to: '/blog',
+          label: 'Blog',
+          position: 'left',
+        },
+        {
+          to: '/community',
+          label: 'Community',
+          position: 'left',
+        },
+        {
           type: 'custom-version-dropdown' as any,
           position: 'left',
         },
         {
-          href: 'https://llm-d.ai',
-          label: 'llm-d.ai',
+          type: 'custom-github-stars' as any,
           position: 'right',
         },
+        {
+          type: 'custom-slack-button' as any,
+          position: 'right',
+        },
+        {
+          type: 'custom-color-mode-toggle' as any,
+          position: 'right',
+        },
+        // Mobile-only fallbacks — hidden on desktop via CSS, surface in the
+        // hamburger drawer at <997px where the custom pills are hidden.
         {
           href: 'https://github.com/llm-d/llm-d',
           label: 'GitHub',
           position: 'right',
+          className: 'navbar-mobile-only',
+        },
+        {
+          href: 'https://llm-d.slack.com',
+          label: 'Join Slack',
+          position: 'right',
+          className: 'navbar-mobile-only',
         },
       ],
     },
@@ -147,6 +174,25 @@ const config: Config = {
             {label: 'llm-d', href: 'https://github.com/llm-d/llm-d'},
             {label: 'Inference Scheduler', href: 'https://github.com/llm-d/llm-d-inference-scheduler'},
             {label: 'KV Cache', href: 'https://github.com/llm-d/llm-d-kv-cache'},
+          ],
+        },
+        {
+          title: 'Social',
+          items: [
+            {
+              html: `
+<div class="footer-social-icons">
+  <a href="https://github.com/llm-d/" aria-label="GitHub" target="_blank" rel="noopener noreferrer"><img src="/preview/img/social/github.svg" alt="GitHub" /></a>
+  <a href="https://linkedin.com/company/llm-d" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer"><img src="/preview/img/social/linkedin.svg" alt="LinkedIn" /></a>
+  <a href="https://llm-d.slack.com" aria-label="Slack" target="_blank" rel="noopener noreferrer"><img src="/preview/img/social/slack.svg" alt="Slack" /></a>
+  <a href="https://www.reddit.com/r/llm_d/" aria-label="Reddit" target="_blank" rel="noopener noreferrer"><img src="/preview/img/social/reddit.svg" alt="Reddit" /></a>
+  <a href="https://bsky.app/profile/llm-d.ai" aria-label="Bluesky" target="_blank" rel="noopener noreferrer"><img src="/preview/img/social/bluesky.svg" alt="Bluesky" /></a>
+  <a href="https://x.com/_llm_d_" aria-label="X" target="_blank" rel="noopener noreferrer"><img src="/preview/img/social/x.svg" alt="X" /></a>
+  <a href="https://www.youtube.com/@llm-d-project" aria-label="YouTube" target="_blank" rel="noopener noreferrer"><img src="/preview/img/social/youtube.svg" alt="YouTube" /></a>
+</div>
+              `,
+            },
+            {label: 'Join our Slack', href: 'https://llm-d.slack.com'},
           ],
         },
       ],
