@@ -19,7 +19,7 @@ const config: Config = {
   ],
 
   url: 'https://llm-d.ai',
-  baseUrl: '/preview/',
+  baseUrl: '/docs/',
 
   organizationName: 'llm-d',
   projectName: 'llm-d.github.io',

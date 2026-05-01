@@ -48,13 +48,13 @@ jobs:
         run: cd preview && npm install
       - name: Build preview docs
         run: cd preview && npm run build
-      - name: Merge preview into main build
-        run: cp -r preview/build build/preview
+      - name: Merge preview into main build as /docs
+        run: cp -r preview/build build/docs
 
       - name: Include merge report in build output
         run: |
           if [[ -f /tmp/llmd-merged/merge-report.txt ]]; then
-            cp /tmp/llmd-merged/merge-report.txt build/preview/merge-report.txt
+            cp /tmp/llmd-merged/merge-report.txt build/docs/merge-report.txt
           fi
 
       - name: Upload Build Artifact
