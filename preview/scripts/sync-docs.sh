@@ -39,17 +39,14 @@ else
     trap "rm -rf $TMPDIR" EXIT
     echo "    Cloning sparse checkout into temp dir..."
     git clone --depth 1 --branch "$BRANCH" --filter=blob:none --sparse "$REPO_URL" "$TMPDIR" --quiet
-    (cd "$TMPDIR" && git sparse-checkout set docs/wip-docs-new docs/assets)
+    (cd "$TMPDIR" && git sparse-checkout set docs docs/assets)
     SRC="$TMPDIR"
 fi
 
-WIP="$SRC/docs/wip-docs-new"
+WIP="$SRC/docs"
 ASSETS="$SRC/docs/assets"
 
-if [[ ! -d "$WIP" ]]; then
-    echo "ERROR: docs/wip-docs-new not found in branch '$BRANCH'"
-    exit 1
-fi
+# Directory check no longer needed - docs/ always exists in llm-d/llm-d
 
 echo "    Cleaning docs/ directory..."
 rm -rf "$DOCS_DIR"/*
@@ -123,16 +120,6 @@ cp_doc "$WIP/guides/experimental/predicted-latency.md"      "$DOCS_DIR/guides/ex
 cp_doc "$WIP/guides/experimental/batch-gateway.md"          "$DOCS_DIR/guides/experimental/batch-gateway.md"
 cp_doc "$WIP/guides/predicted-latency.md"                   "$DOCS_DIR/guides/predicted-latency.md"
 cp_doc "$WIP/guides/workload-autoscaling.md"                "$DOCS_DIR/guides/workload-autoscaling.md"
-# PR #1249 uses the pre-rename well-lit-paths/ directory — map as fallback
-cp_doc "$WIP/well-lit-paths/README.md"                              "$DOCS_DIR/guides/index.md"
-cp_doc "$WIP/well-lit-paths/flow-control.md"                        "$DOCS_DIR/guides/flow-control.md"
-cp_doc "$WIP/well-lit-paths/kv-cache-management.md"                 "$DOCS_DIR/guides/kv-cache-management.md"
-cp_doc "$WIP/well-lit-paths/pd-disaggregation.md"                   "$DOCS_DIR/guides/pd-disaggregation.md"
-cp_doc "$WIP/well-lit-paths/wide-expert-parallelism.md"             "$DOCS_DIR/guides/wide-expert-parallelism.md"
-cp_doc "$WIP/well-lit-paths/intelligent-inference-scheduling.md"    "$DOCS_DIR/guides/intelligent-inference-scheduling.md"
-cp_doc "$WIP/well-lit-paths/optimized-baseline.md"               "$DOCS_DIR/guides/intelligent-inference-scheduling.md"
-cp_doc "$WIP/well-lit-paths/experimental/predicted-latency.md"      "$DOCS_DIR/guides/experimental/predicted-latency.md"
-cp_doc "$WIP/well-lit-paths/experimental/batch-gateway.md"        "$DOCS_DIR/guides/experimental/batch-gateway.md"
 
 # === Resources (formerly guides) ===
 cp_doc "$WIP/resources/deploying-multiple-model.md"         "$DOCS_DIR/resources/deploying-multiple-models.md"
