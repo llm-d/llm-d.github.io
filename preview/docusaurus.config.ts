@@ -162,6 +162,25 @@ const config: Config = {
             {label: 'KV Cache', href: 'https://github.com/llm-d/llm-d-kv-cache'},
           ],
         },
+        {
+          title: 'Social',
+          items: [
+            {
+              html: `
+<div class="footer-social-icons">
+  <a href="https://github.com/llm-d/" aria-label="GitHub" target="_blank" rel="noopener noreferrer"><img src="/preview/img/social/github.svg" alt="GitHub" /></a>
+  <a href="https://linkedin.com/company/llm-d" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer"><img src="/preview/img/social/linkedin.svg" alt="LinkedIn" /></a>
+  <a href="https://llm-d.slack.com" aria-label="Slack" target="_blank" rel="noopener noreferrer"><img src="/preview/img/social/slack.svg" alt="Slack" /></a>
+  <a href="https://www.reddit.com/r/llm_d/" aria-label="Reddit" target="_blank" rel="noopener noreferrer"><img src="/preview/img/social/reddit.svg" alt="Reddit" /></a>
+  <a href="https://bsky.app/profile/llm-d.ai" aria-label="Bluesky" target="_blank" rel="noopener noreferrer"><img src="/preview/img/social/bluesky.svg" alt="Bluesky" /></a>
+  <a href="https://x.com/_llm_d_" aria-label="X" target="_blank" rel="noopener noreferrer"><img src="/preview/img/social/x.svg" alt="X" /></a>
+  <a href="https://www.youtube.com/@llm-d-project" aria-label="YouTube" target="_blank" rel="noopener noreferrer"><img src="/preview/img/social/youtube.svg" alt="YouTube" /></a>
+</div>
+              `,
+            },
+            {label: 'Join our Slack', href: 'https://llm-d.slack.com'},
+          ],
+        },
       ],
       copyright: `Copyright © ${new Date().getFullYear()} llm-d project. Apache 2.0 License.`,
     },
