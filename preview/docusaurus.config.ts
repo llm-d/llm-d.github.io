@@ -73,6 +73,7 @@ const config: Config = {
     colorMode: {
       defaultMode: 'light',
       respectPrefersColorScheme: true,
+      disableSwitch: true,
     },
     announcementBar: {
       id: 'dev_preview_banner',
@@ -96,17 +97,29 @@ const config: Config = {
           label: 'Documentation',
         },
         {
+          to: '/blog',
+          label: 'Blog',
+          position: 'left',
+        },
+        {
+          to: '/community',
+          label: 'Community',
+          position: 'left',
+        },
+        {
           type: 'custom-version-dropdown' as any,
           position: 'left',
         },
         {
-          href: 'https://llm-d.ai',
-          label: 'llm-d.ai',
+          type: 'custom-github-stars' as any,
           position: 'right',
         },
         {
-          href: 'https://github.com/llm-d/llm-d',
-          label: 'GitHub',
+          type: 'custom-slack-button' as any,
+          position: 'right',
+        },
+        {
+          type: 'custom-color-mode-toggle' as any,
           position: 'right',
         },
       ],

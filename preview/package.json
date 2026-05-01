@@ -21,9 +21,10 @@
     "@docusaurus/faster": "3.10.0",
     "@docusaurus/preset-classic": "3.10.0",
     "@docusaurus/theme-mermaid": "^3.10.0",
-    "@fontsource/inter": "^5.2.8",
+    "@fontsource/ibm-plex-sans": "^5.2.8",
     "@mdx-js/react": "^3.0.0",
     "clsx": "^2.0.0",
+    "lucide-react": "^1.14.0",
     "prism-react-renderer": "^2.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
