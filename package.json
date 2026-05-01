@@ -12,8 +12,10 @@
     "serve": "docusaurus serve --no-open",
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
-    "test:images": "node tests/image_verifier.js"
+    "test": "npm run test:jest && npm run test:transformations",
+    "test:jest": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
+    "test:images": "node tests/image_verifier.js",
+    "test:transformations": "cd preview && npm run test:transformations"
   },
   "dependencies": {
     "@babel/core": "^7.29.0",

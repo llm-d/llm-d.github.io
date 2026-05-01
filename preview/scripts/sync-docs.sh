@@ -8,11 +8,10 @@
 
 set -euo pipefail
 
-if [[ "$(uname)" == "Darwin" ]]; then
-    sed_inplace() { sed -i '' "$@"; }
-else
-    sed_inplace() { sed -i "$@"; }
-fi
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Source shared transformations
+source "$SCRIPT_DIR/transformations.sh"
 
 cp_doc() {
     if [[ -f "$1" && -n "$2" ]]; then
@@ -22,7 +21,6 @@ cp_doc() {
 
 BRANCH="${1:-main}"
 REPO_URL="https://github.com/llm-d/llm-d.git"
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 DOCS_DIR="$PROJECT_DIR/docs"
 STATIC_DIR="$PROJECT_DIR/static/img/docs"
@@ -81,17 +79,17 @@ cp_doc "$WIP/getting-started/artifacts.md"    "$DOCS_DIR/getting-started/artifac
 cp_doc "$WIP/architecture/README.md"          "$DOCS_DIR/architecture/index.md"
 
 # Architecture / Core
-cp_doc "$WIP/architecture/core/proxy.md"           "$DOCS_DIR/architecture/core/proxy.md"
+cp_doc "$WIP/architecture/core/router/proxy.md"           "$DOCS_DIR/architecture/core/proxy.md"
 cp_doc "$WIP/architecture/core/inferencepool.md"   "$DOCS_DIR/architecture/core/inferencepool.md"
 cp_doc "$WIP/architecture/core/model-servers.md"   "$DOCS_DIR/architecture/core/model-servers.md"
 
-# Architecture / Core / EPP
-cp_doc "$WIP/architecture/core/epp/README.md"           "$DOCS_DIR/architecture/core/epp/index.md"
-cp_doc "$WIP/architecture/core/epp/scheduling.md"       "$DOCS_DIR/architecture/core/epp/scheduling.md"
-cp_doc "$WIP/architecture/core/epp/flow-control.md"     "$DOCS_DIR/architecture/core/epp/flow-control.md"
-cp_doc "$WIP/architecture/core/epp/request-handling.md"  "$DOCS_DIR/architecture/core/epp/request-handling.md"
-cp_doc "$WIP/architecture/core/epp/configuration.md"     "$DOCS_DIR/architecture/core/epp/configuration.md"
-cp_doc "$WIP/architecture/core/epp/datalayer.md"         "$DOCS_DIR/architecture/core/epp/datalayer.md"
+# Architecture / Core / EPP (moved under router/ in upstream)
+cp_doc "$WIP/architecture/core/router/epp/README.md"           "$DOCS_DIR/architecture/core/epp/index.md"
+cp_doc "$WIP/architecture/core/router/epp/scheduling.md"       "$DOCS_DIR/architecture/core/epp/scheduling.md"
+cp_doc "$WIP/architecture/core/router/epp/flow-control.md"     "$DOCS_DIR/architecture/core/epp/flow-control.md"
+cp_doc "$WIP/architecture/core/router/epp/request-handling.md"  "$DOCS_DIR/architecture/core/epp/request-handling.md"
+cp_doc "$WIP/architecture/core/router/epp/configuration.md"     "$DOCS_DIR/architecture/core/epp/configuration.md"
+cp_doc "$WIP/architecture/core/router/epp/datalayer.md"         "$DOCS_DIR/architecture/core/epp/datalayer.md"
 
 # Architecture / Advanced / Disaggregation
 cp_doc "$WIP/architecture/advanced/disaggregation/README.md"            "$DOCS_DIR/architecture/advanced/disaggregation/index.md"
@@ -164,16 +162,16 @@ cp_doc "$WIP/resources/rdma/networking-stack.svg" "$STATIC_DIR/" 2>/dev/null || 
 cp_doc "$WIP/architecture/core/images/flow_control_dashboard.png" "$STATIC_DIR/" 2>/dev/null || true
 cp_doc "$WIP/architecture/advanced/autoscaling/hpa-architecture.svg" "$STATIC_DIR/" 2>/dev/null || true
 
-# === Fix image paths for Docusaurus ===
-echo "    Fixing image references..."
+# === Fix specific image paths for Docusaurus ===
+echo "    Fixing specific image references..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace \
-        -e 's|\(\.\./\)*assets/\([^)]*\)|/img/docs/\2|g' \
         -e 's|../images/flow_control_dashboard.png|/img/docs/flow_control_dashboard.png|g' \
         -e 's|networking-stack.svg|/img/docs/networking-stack.svg|g' \
         -e 's|hpa-architecture.svg|/img/docs/hpa-architecture.svg|g' \
         "$file"
 done
+# Note: Generic ../assets/ paths are handled by apply_transformations() below
 
 # === Fix internal cross-references ===
 # Upstream files reference filenames that get renamed during copy
@@ -202,46 +200,11 @@ done
 # === Clean up known issues ===
 # Remove "NEEDS TO BE REDONE" from configuration.md
 sed_inplace '/^NEEDS TO BE REDONE/d' "$DOCS_DIR/architecture/core/epp/configuration.md" 2>/dev/null || true
-# Escape <-> in markdown (MDX parses it as JSX)
+
+# === Apply markdown transformations (shared with test-transformations.sh) ===
+echo "    Applying markdown transformations (callouts, tabs, MDX escaping)..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
-    sed_inplace 's|<->|\\<->|g' "$file"
-done
-
-# === Convert GitHub callouts to Docusaurus admonitions ===
-echo "    Converting GitHub-style callouts to Docusaurus admonitions..."
-find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
-    # Use awk to convert GitHub callout syntax to Docusaurus
-    awk '
-    /^> \[!NOTE\]/ { in_callout=1; type="note"; next }
-    /^> \[!TIP\]/ { in_callout=1; type="tip"; next }
-    /^> \[!IMPORTANT\]/ { in_callout=1; type="important"; next }
-    /^> \[!WARNING\]/ { in_callout=1; type="warning"; next }
-    /^> \[!CAUTION\]/ { in_callout=1; type="caution"; next }
-
-    in_callout && /^> / {
-        if (!printed_start) {
-            print ":::" type
-            printed_start=1
-        }
-        sub(/^> /, "")
-        print
-        next
-    }
-
-    in_callout && !/^> / {
-        print ":::"
-        print ""
-        in_callout=0
-        printed_start=0
-        type=""
-    }
-
-    { print }
-
-    END {
-        if (in_callout) print ":::"
-    }
-    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+    apply_transformations "$file"
 done
 
 # === Generate stubs for pages in outline that don't have source content yet ===
