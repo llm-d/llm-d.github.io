@@ -17,16 +17,17 @@ export default function Welcome() {
 
 
         <div className="button-group">
-          <a className="static-button button-link" href="docs/architecture">
-            Architecture
+          <a className="static-button button-link" href="/docs">
+            Documentation
           </a>
-          <a className="static-button button-link" href="/docs/guide" >
-            {/* Link to install page on the docs */}
-            Install Guides
+          <a className="static-button button-link" href="/blog">
+            Blog
           </a>
-          <a className="static-button button-link" href="docs/community">
-            {/* Link to Community tab */}
+          <a className="static-button button-link" href="/docs/community">
             Community
+          </a>
+          <a className="static-button button-link" href="/videos">
+            Videos
           </a>
         </div>
 
