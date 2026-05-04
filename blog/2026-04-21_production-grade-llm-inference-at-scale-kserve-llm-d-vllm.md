@@ -54,7 +54,7 @@ On one deployment, we observed a **3x improvement in output tokens/s** and a **2
 
 Running this stack in production surfaced real issues that we fixed upstream in KServe, benefiting the broader community:
 
-* **New feature requests filed:** [\#4901](https://github.com/kserve/kserve/issues/4901), [\#4900](https://github.com/kserve/kserve/issues/4900), [\#4898](https://github.com/kserve/kserve/issues/4898), [\#4899](https://github.com/kserve/kserve/issues/4899)
+* **New feature requests filed:** [kserve\#4901](https://github.com/kserve/kserve/issues/4901), [kserve\#4900](https://github.com/kserve/kserve/issues/4900), [kserve\#4898](https://github.com/kserve/kserve/issues/4898), [kserve\#4899](https://github.com/kserve/kserve/issues/4899)
 * **storageInitializer made optional** ([kserve\#4970](https://github.com/kserve/kserve/pull/4970)) — enabling RunAI Model Streamer as an alternative to the default storage initializer
 * **Added support for latest Gateway API Inference Extension** ([kserve\#4886](https://github.com/kserve/kserve/pull/4886))
 
