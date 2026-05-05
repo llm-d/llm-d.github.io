@@ -57,24 +57,8 @@ const config: Config = {
             return `https://github.com/llm-d/llm-d/blob/main/docs/${sourcePath}`;
           },
           showLastUpdateTime: true,
-          // Versioning: docs/ = latest stable (e.g., 0.7). Dev (main) is at docs/next.
-          // Stable releases are created with scripts/create-version.sh and stored in versioned_docs/.
-          // When 0.7 is released, set lastVersion to '0.7' and it becomes the default at /docs/
-          lastVersion: 'current',  // Change to '0.7' when 0.7 version is created
-          versions: {
-            current: {
-              label: 'dev',
-              path: '',      // Keep at '' until 0.7 is created, then change to 'next'
-              badge: true,
-              banner: 'unreleased',
-            },
-            // When 0.7 is released via create-version.sh, add:
-            // '0.7': {
-            //   label: '0.7',
-            //   path: '',      // Latest stable at /docs/
-            //   banner: 'none',
-            // },
-          },
+          // No Docusaurus versioning - dev (main) is always at /docs/
+          // Stable releases link to GitHub via custom version dropdown
         },
         blog: false,
         theme: {

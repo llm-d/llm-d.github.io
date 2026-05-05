@@ -58,7 +58,7 @@ mkdir -p \
     "$DOCS_DIR/architecture/advanced/disaggregation" \
     "$DOCS_DIR/architecture/advanced/autoscaling" \
     "$DOCS_DIR/architecture/advanced/batch" \
-    "$DOCS_DIR/guides/experimental" \
+    "$DOCS_DIR/guides" \
     "$DOCS_DIR/resources/gateway" \
     "$DOCS_DIR/resources/monitoring" \
     "$DOCS_DIR/resources/rdma" \
@@ -108,16 +108,17 @@ cp_doc "$WIP/architecture/advanced/batch/batch-gateway.md"    "$DOCS_DIR/archite
 cp_doc "$WIP/architecture/advanced/batch/async-processor.md"  "$DOCS_DIR/architecture/advanced/batch/async-processor.md"
 
 # === Guides (from well-lit-paths directory) ===
-cp_doc "$WIP/well-lit-paths/README.md"                              "$DOCS_DIR/guides/index.md"
-cp_doc "$WIP/well-lit-paths/intelligent-inference-scheduling.md"    "$DOCS_DIR/guides/intelligent-inference-scheduling.md"
-cp_doc "$WIP/well-lit-paths/flow-control.md"                        "$DOCS_DIR/guides/flow-control.md"
-cp_doc "$WIP/well-lit-paths/kv-cache-management.md"                 "$DOCS_DIR/guides/kv-cache-management.md"
-cp_doc "$WIP/well-lit-paths/pd-disaggregation.md"                   "$DOCS_DIR/guides/pd-disaggregation.md"
-cp_doc "$WIP/well-lit-paths/wide-expert-parallelism.md"             "$DOCS_DIR/guides/wide-expert-parallelism.md"
-cp_doc "$WIP/well-lit-paths/experimental/predicted-latency.md"      "$DOCS_DIR/guides/experimental/predicted-latency.md"
-cp_doc "$WIP/well-lit-paths/experimental/batch-gateway.md"          "$DOCS_DIR/guides/experimental/batch-gateway.md"
-cp_doc "$WIP/well-lit-paths/predicted-latency.md"                   "$DOCS_DIR/guides/predicted-latency.md"
-cp_doc "$WIP/well-lit-paths/workload-autoscaling.md"                "$DOCS_DIR/guides/workload-autoscaling.md"
+# Copy exactly what exists in source repo
+cp_doc "$WIP/well-lit-paths/README.md"                    "$DOCS_DIR/guides/index.md"
+cp_doc "$WIP/well-lit-paths/optimized-baseline.md"        "$DOCS_DIR/guides/optimized-baseline.md"
+cp_doc "$WIP/well-lit-paths/precise-prefix-cache-aware.md" "$DOCS_DIR/guides/precise-prefix-cache-aware.md"
+cp_doc "$WIP/well-lit-paths/tiered-prefix-cache.md"       "$DOCS_DIR/guides/tiered-prefix-cache.md"
+cp_doc "$WIP/well-lit-paths/asynchronous-processing.md"   "$DOCS_DIR/guides/asynchronous-processing.md"
+cp_doc "$WIP/well-lit-paths/flow-control.md"              "$DOCS_DIR/guides/flow-control.md"
+cp_doc "$WIP/well-lit-paths/pd-disaggregation.md"         "$DOCS_DIR/guides/pd-disaggregation.md"
+cp_doc "$WIP/well-lit-paths/predicted-latency.md"         "$DOCS_DIR/guides/predicted-latency.md"
+cp_doc "$WIP/well-lit-paths/wide-expert-parallelism.md"   "$DOCS_DIR/guides/wide-expert-parallelism.md"
+cp_doc "$WIP/well-lit-paths/workload-autoscaling.md"      "$DOCS_DIR/guides/workload-autoscaling.md"
 
 # === Resources (formerly guides) ===
 cp_doc "$WIP/resources/deploying-multiple-model.md"         "$DOCS_DIR/resources/deploying-multiple-models.md"
@@ -205,7 +206,8 @@ echo "    Converting SVG images to support light/dark theme switching..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     # Convert ![alt](/img/docs/diagram.svg) to picture element with both versions
     # Uses diagram.svg for light mode, diagram-dark.svg for dark mode
-    sed_inplace 's|!\[\([^]]*\)\](/img/docs/\([^)]*\)\.svg)|<picture><source media="(prefers-color-scheme: dark)" srcset="/img/docs/\2-dark.svg" /><img src="/img/docs/\2.svg" alt="\1" /></picture>|g' "$file"
+    # Note: Raw HTML needs full /docs/img/docs/ path since Docusaurus doesn't auto-prepend baseUrl to HTML attributes
+    sed_inplace 's|!\[\([^]]*\)\](/img/docs/\([^)]*\)\.svg)|<picture><source media="(prefers-color-scheme: dark)" srcset="/docs/img/docs/\2-dark.svg" /><img src="/docs/img/docs/\2.svg" alt="\1" /></picture>|g' "$file"
 done
 
 # === Generate stubs for pages in outline that don't have source content yet ===
@@ -233,16 +235,16 @@ STUBEOF
     fi
 }
 
-# Guides stubs
-generate_stub "$DOCS_DIR/guides/index.md" "Guides" "Step-by-step adoption procedures for production workloads"
-generate_stub "$DOCS_DIR/guides/intelligent-inference-scheduling.md" "Intelligent Inference Scheduling" "Intelligent request routing and scheduling"
+# Guides stubs (only for files that exist in source repo)
+generate_stub "$DOCS_DIR/guides/index.md" "Guides" "Well-lit paths for production deployments"
+generate_stub "$DOCS_DIR/guides/optimized-baseline.md" "Optimized Baseline" "Baseline deployment with intelligent routing"
+generate_stub "$DOCS_DIR/guides/precise-prefix-cache-aware.md" "Precise Prefix Cache Aware" "Prefix-aware routing configuration"
+generate_stub "$DOCS_DIR/guides/tiered-prefix-cache.md" "Tiered Prefix Cache" "Multi-tier KV cache management"
+generate_stub "$DOCS_DIR/guides/asynchronous-processing.md" "Asynchronous Processing" "Batch and async inference workflows"
 generate_stub "$DOCS_DIR/guides/flow-control.md" "Flow Control" "Admission control and queuing"
-generate_stub "$DOCS_DIR/guides/kv-cache-management.md" "KV Cache Management" "Hierarchical KV-cache offloading"
 generate_stub "$DOCS_DIR/guides/pd-disaggregation.md" "Prefill/Decode Disaggregation" "Separating prefill and decode phases"
+generate_stub "$DOCS_DIR/guides/predicted-latency.md" "Predicted Latency" "ML-based latency prediction"
 generate_stub "$DOCS_DIR/guides/wide-expert-parallelism.md" "Wide Expert Parallelism" "MoE models with expert parallelism"
-generate_stub "$DOCS_DIR/guides/experimental/predicted-latency.md" "Predicted Latency Scheduling" "ML-based latency prediction for SLO-aware routing"
-generate_stub "$DOCS_DIR/guides/experimental/batch-gateway.md" "Batch Gateway Guide" "Step-by-step guide for deploying batch inference"
-generate_stub "$DOCS_DIR/guides/predicted-latency.md" "Predicted Latency" "Predicted latency scheduling guide"
 generate_stub "$DOCS_DIR/guides/workload-autoscaling.md" "Workload Autoscaling" "Configuring autoscaling for inference workloads"
 
 # Resources stubs

@@ -19,6 +19,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Architecture',
+      collapsed: false,
       link: {type: 'doc', id: 'architecture/index'},
       items: [
         {
@@ -31,6 +32,7 @@ const sidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'EPP',
+              collapsed: false,
               link: {type: 'doc', id: 'architecture/core/epp/index'},
               items: [
                 'architecture/core/epp/scheduling',
@@ -46,10 +48,12 @@ const sidebars: SidebarsConfig = {
         {
           type: 'category',
           label: 'Advanced',
+          collapsed: false,
           items: [
             {
               type: 'category',
               label: 'Disaggregation',
+              collapsed: false,
               link: {type: 'doc', id: 'architecture/advanced/disaggregation/index'},
               items: [
                 'architecture/advanced/disaggregation/configuration',
@@ -60,6 +64,7 @@ const sidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Autoscaling',
+              collapsed: false,
               link: {type: 'doc', id: 'architecture/advanced/autoscaling/index'},
               items: [
                 'architecture/advanced/autoscaling/workload-variant-autoscaling',
@@ -69,6 +74,7 @@ const sidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Batch Processing',
+              collapsed: false,
               link: {type: 'doc', id: 'architecture/advanced/batch/index'},
               items: [
                 'architecture/advanced/batch/batch-gateway',
@@ -83,32 +89,30 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Guides',
+      collapsed: false,
       link: {type: 'doc', id: 'guides/index'},
       items: [
-        'guides/intelligent-inference-scheduling',
+        'guides/optimized-baseline',
+        'guides/precise-prefix-cache-aware',
+        'guides/tiered-prefix-cache',
+        'guides/asynchronous-processing',
         'guides/flow-control',
-        'guides/kv-cache-management',
         'guides/pd-disaggregation',
+        'guides/predicted-latency',
         'guides/wide-expert-parallelism',
         'guides/workload-autoscaling',
-        {
-          type: 'category',
-          label: 'Experimental',
-          items: [
-            'guides/experimental/predicted-latency',
-            'guides/experimental/batch-gateway',
-          ],
-        },
       ],
     },
     // ==================== Resources ====================
     {
       type: 'category',
       label: 'Resources',
+      collapsed: false,
       items: [
         {
           type: 'category',
           label: 'Gateway',
+          collapsed: false,
           link: {type: 'doc', id: 'resources/gateway/index'},
           items: [
             'resources/gateway/istio',
@@ -120,6 +124,7 @@ const sidebars: SidebarsConfig = {
         {
           type: 'category',
           label: 'Monitoring',
+          collapsed: false,
           items: [
             'resources/monitoring/metrics',
             'resources/monitoring/tracing',
@@ -135,6 +140,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'API Reference',
+      collapsed: false,
       link: {type: 'doc', id: 'api-reference/index'},
       items: [
         'api-reference/glossary',

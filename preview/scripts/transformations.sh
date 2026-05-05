@@ -19,9 +19,23 @@ apply_transformations() {
     local file="$1"
 
     # Image paths - convert relative to absolute
-    # Note: Docusaurus automatically prepends baseUrl at runtime
+    # Different handling for markdown vs HTML:
+    # - Markdown images: Use /img/docs/ (Docusaurus auto-prepends baseUrl)
+    # - HTML img/source tags: Use /docs/img/docs/ (raw HTML needs full path with baseUrl)
+
+    # Transform markdown image syntax: ![alt](../assets/...) -> ![alt](/img/docs/...)
     sed_inplace \
-        -e 's|\(\.\./\)*assets/\([^)]*\)|/img/docs/\2|g' \
+        -e 's|!\[\([^]]*\)\](\(\.\./\)*assets/\([^)]*\))|![\1](/img/docs/\3)|g' \
+        "$file"
+
+    # Transform HTML img tag src: src="../assets/..." -> src="/docs/img/docs/..."
+    sed_inplace \
+        -e 's|src="\(\.\./\)*assets/\([^"]*\)"|src="/docs/img/docs/\2"|g' \
+        "$file"
+
+    # Transform HTML source tag srcset: srcset="../assets/..." -> srcset="/docs/img/docs/..."
+    sed_inplace \
+        -e 's|srcset="\(\.\./\)*assets/\([^"]*\)"|srcset="/docs/img/docs/\2"|g' \
         "$file"
 
     # MDX escaping - escape special characters
