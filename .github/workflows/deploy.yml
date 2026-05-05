@@ -31,31 +31,16 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-      - name: Build website
-        run: npm run build
 
       - name: Merge in-flight docs PRs from llm-d/llm-d
         env:
           GH_TOKEN: ${{ github.token }}
         run: cd preview && bash scripts/merge-docs-prs.sh /tmp/llmd-merged
 
-      - name: Sync preview docs (main + merged PRs)
+      - name: Build all sites (main + docs) using unified script
         env:
           LLMD_REPO: /tmp/llmd-merged
-        run: cd preview && bash scripts/sync-docs.sh main
-
-      - name: Install preview docs dependencies
-        run: cd preview && npm install
-      - name: Build preview docs
-        run: cd preview && npm run build
-      - name: Merge preview into main build as /docs
-        run: cp -r preview/build build/docs
-
-      - name: Include merge report in build output
-        run: |
-          if [[ -f /tmp/llmd-merged/merge-report.txt ]]; then
-            cp /tmp/llmd-merged/merge-report.txt build/docs/merge-report.txt
-          fi
+        run: npm run build:all
 
       - name: Upload Build Artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
