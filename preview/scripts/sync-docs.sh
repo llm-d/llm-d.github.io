@@ -94,8 +94,6 @@ cp_doc "$WIP/architecture/advanced/disaggregation/configuration.md"     "$DOCS_D
 cp_doc "$WIP/architecture/advanced/disaggregation/operations-vllm.md"   "$DOCS_DIR/architecture/advanced/disaggregation/operations-vllm.md"
 
 # Architecture / Advanced
-cp_doc "$WIP/architecture/advanced/kv-indexer.md"       "$DOCS_DIR/architecture/advanced/kv-indexer.md"
-cp_doc "$WIP/architecture/advanced/kv-offloader.md"     "$DOCS_DIR/architecture/advanced/kv-offloading.md"
 cp_doc "$WIP/architecture/advanced/latency-predictor.md" "$DOCS_DIR/architecture/advanced/latency-predictor.md"
 
 # Architecture / Advanced / Autoscaling

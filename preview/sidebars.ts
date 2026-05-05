@@ -56,8 +56,6 @@ const sidebars: SidebarsConfig = {
                 'architecture/advanced/disaggregation/operations-vllm',
               ],
             },
-            'architecture/advanced/kv-indexer',
-            'architecture/advanced/kv-offloading',
             'architecture/advanced/latency-predictor',
             {
               type: 'category',
