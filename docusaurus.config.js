@@ -177,7 +177,11 @@ const config = {
           src: "img/llm-d-icon.png",
         },
         items: [
-          { href: "/docs", label: "Documentation", position: "left" },
+          {
+            type: 'html',
+            position: 'left',
+            value: '<a href="/docs" class="navbar__item navbar__link">Documentation</a>',
+          },
           { to: "/blog", label: "Blog", position: "left" },
           {
             type: "docSidebar",
