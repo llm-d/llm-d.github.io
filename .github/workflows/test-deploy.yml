@@ -23,5 +23,11 @@ jobs:
         run: npm install
       - name: Test build website
         run: npm run build
-      - name: Test build all sites (main + docs)
-        run: npm run build:all
+
+      - name: Sync preview docs from llm-d/llm-d
+        run: cd preview && bash scripts/sync-docs.sh main
+
+      - name: Install preview docs dependencies
+        run: cd preview && npm install
+      - name: Test build preview docs
+        run: cd preview && npm run build

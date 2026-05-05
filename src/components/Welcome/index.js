@@ -23,7 +23,7 @@ export default function Welcome() {
           <a className="static-button button-link" href="/blog">
             Blog
           </a>
-          <a className="static-button button-link" href="/docs/community">
+          <a className="static-button button-link" href="/community">
             Community
           </a>
           <a className="static-button button-link" href="/videos">

@@ -107,17 +107,17 @@ cp_doc "$WIP/architecture/advanced/batch/README.md"           "$DOCS_DIR/archite
 cp_doc "$WIP/architecture/advanced/batch/batch-gateway.md"    "$DOCS_DIR/architecture/advanced/batch/batch-gateway.md"
 cp_doc "$WIP/architecture/advanced/batch/async-processor.md"  "$DOCS_DIR/architecture/advanced/batch/async-processor.md"
 
-# === Guides (formerly well-lit-paths) ===
-cp_doc "$WIP/guides/README.md"                              "$DOCS_DIR/guides/index.md"
-cp_doc "$WIP/guides/intelligent-inference-scheduling.md"    "$DOCS_DIR/guides/intelligent-inference-scheduling.md"
-cp_doc "$WIP/guides/flow-control.md"                        "$DOCS_DIR/guides/flow-control.md"
-cp_doc "$WIP/guides/kv-cache-management.md"                 "$DOCS_DIR/guides/kv-cache-management.md"
-cp_doc "$WIP/guides/pd-disaggregation.md"                   "$DOCS_DIR/guides/pd-disaggregation.md"
-cp_doc "$WIP/guides/wide-expert-parallelism.md"             "$DOCS_DIR/guides/wide-expert-parallelism.md"
-cp_doc "$WIP/guides/experimental/predicted-latency.md"      "$DOCS_DIR/guides/experimental/predicted-latency.md"
-cp_doc "$WIP/guides/experimental/batch-gateway.md"          "$DOCS_DIR/guides/experimental/batch-gateway.md"
-cp_doc "$WIP/guides/predicted-latency.md"                   "$DOCS_DIR/guides/predicted-latency.md"
-cp_doc "$WIP/guides/workload-autoscaling.md"                "$DOCS_DIR/guides/workload-autoscaling.md"
+# === Guides (from well-lit-paths directory) ===
+cp_doc "$WIP/well-lit-paths/README.md"                              "$DOCS_DIR/guides/index.md"
+cp_doc "$WIP/well-lit-paths/intelligent-inference-scheduling.md"    "$DOCS_DIR/guides/intelligent-inference-scheduling.md"
+cp_doc "$WIP/well-lit-paths/flow-control.md"                        "$DOCS_DIR/guides/flow-control.md"
+cp_doc "$WIP/well-lit-paths/kv-cache-management.md"                 "$DOCS_DIR/guides/kv-cache-management.md"
+cp_doc "$WIP/well-lit-paths/pd-disaggregation.md"                   "$DOCS_DIR/guides/pd-disaggregation.md"
+cp_doc "$WIP/well-lit-paths/wide-expert-parallelism.md"             "$DOCS_DIR/guides/wide-expert-parallelism.md"
+cp_doc "$WIP/well-lit-paths/experimental/predicted-latency.md"      "$DOCS_DIR/guides/experimental/predicted-latency.md"
+cp_doc "$WIP/well-lit-paths/experimental/batch-gateway.md"          "$DOCS_DIR/guides/experimental/batch-gateway.md"
+cp_doc "$WIP/well-lit-paths/predicted-latency.md"                   "$DOCS_DIR/guides/predicted-latency.md"
+cp_doc "$WIP/well-lit-paths/workload-autoscaling.md"                "$DOCS_DIR/guides/workload-autoscaling.md"
 
 # === Resources (formerly guides) ===
 cp_doc "$WIP/resources/deploying-multiple-model.md"         "$DOCS_DIR/resources/deploying-multiple-models.md"
