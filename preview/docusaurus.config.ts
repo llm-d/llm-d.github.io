@@ -49,7 +49,7 @@ const config: Config = {
         docs: {
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/llm-d/llm-d-docs-wip/tree/main/',
+          editUrl: 'https://github.com/llm-d/llm-d/tree/main/docs/',
           showLastUpdateTime: true,
           // Versioning: docs/ = dev (main). Stable releases are created
           // with scripts/create-version.sh and stored in versioned_docs/.

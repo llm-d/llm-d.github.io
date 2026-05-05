@@ -18,9 +18,9 @@ fi
 apply_transformations() {
     local file="$1"
 
-    # Image paths - convert relative to absolute
+    # Image paths - convert relative to absolute with baseUrl prefix
     sed_inplace \
-        -e 's|\(\.\./\)*assets/\([^)]*\)|/img/docs/\2|g' \
+        -e 's|\(\.\./\)*assets/\([^)]*\)|/docs/img/docs/\2|g' \
         "$file"
 
     # MDX escaping - escape special characters
