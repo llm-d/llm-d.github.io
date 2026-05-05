@@ -19,7 +19,7 @@ const config: Config = {
   ],
 
   url: 'https://llm-d.ai',
-  baseUrl: '/docs/',
+  baseUrl: '/',
 
   organizationName: 'llm-d',
   projectName: 'llm-d.github.io',
@@ -47,6 +47,7 @@ const config: Config = {
       'classic',
       {
         docs: {
+          routeBasePath: '/',
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/llm-d/llm-d-docs-wip/tree/main/',
           showLastUpdateTime: true,
@@ -126,10 +127,10 @@ const config: Config = {
         {
           title: 'Documentation',
           items: [
-            {label: 'Getting Started', to: '/docs/getting-started'},
-            {label: 'Architecture', to: '/docs/architecture'},
-            {label: 'Guides', to: '/docs/guides'},
-            {label: 'Resources', to: '/docs/resources/gateway'},
+            {label: 'Getting Started', to: '/getting-started'},
+            {label: 'Architecture', to: '/architecture'},
+            {label: 'Guides', to: '/guides'},
+            {label: 'Resources', to: '/resources/gateway'},
           ],
         },
         {
