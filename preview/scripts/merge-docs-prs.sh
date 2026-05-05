@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # merge-docs-prs.sh — Clone llm-d/llm-d@main and merge open docs PRs
 #
-# Discovers all open PRs that touch docs/wip-docs-new/ or docs/assets/,
+# Discovers all open PRs that touch docs/ or docs/assets/,
 # then merges each into a local clone. PRs that conflict are skipped.
 #
 # Usage:
@@ -20,7 +20,7 @@ echo "==> Cloning llm-d/llm-d@main into $CLONE_DIR"
 if [[ ! -d "$CLONE_DIR/.git" ]]; then
     git clone --depth 100 --branch main --filter=blob:none --sparse \
         "$REPO_URL" "$CLONE_DIR" --quiet
-    (cd "$CLONE_DIR" && git sparse-checkout set docs/wip-docs-new docs/assets guides)
+    (cd "$CLONE_DIR" && git sparse-checkout set docs docs/assets)
 else
     echo "    Using existing clone at $CLONE_DIR"
 fi
@@ -38,7 +38,7 @@ prs = json.load(sys.stdin)
 result = []
 for pr in prs:
     has_docs = any(
-        f['path'].startswith('docs/wip-docs-new/') or f['path'].startswith('docs/assets/')
+        f['path'].startswith('docs/') or f['path'].startswith('docs/assets/')
         for f in pr.get('files', [])
     )
     if has_docs:
