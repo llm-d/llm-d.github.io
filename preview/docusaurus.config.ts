@@ -100,8 +100,7 @@ const config: Config = {
       },
       items: [
         {
-          type: 'docSidebar',
-          sidebarId: 'docsSidebar',
+          to: '/',
           position: 'left',
           label: 'Documentation',
         },
