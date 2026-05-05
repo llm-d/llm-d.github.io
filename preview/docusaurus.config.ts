@@ -49,7 +49,13 @@ const config: Config = {
         docs: {
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/llm-d/llm-d/tree/main/docs/',
+          editUrl: ({docPath}) => {
+            // Remove the extra 'docs/' prefix that Docusaurus adds
+            const cleanPath = docPath.replace(/^docs\//, '');
+            // Map index.md back to README.md (sync script renames these)
+            const sourcePath = cleanPath.replace(/\/index\.md$/, '/README.md');
+            return `https://github.com/llm-d/llm-d/blob/main/docs/${sourcePath}`;
+          },
           showLastUpdateTime: true,
           // Versioning: docs/ = dev (main). Stable releases are created
           // with scripts/create-version.sh and stored in versioned_docs/.
