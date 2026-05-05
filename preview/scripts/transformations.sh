@@ -131,4 +131,8 @@ apply_transformations() {
     # Print all other lines as-is
     { print }
     ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+
+    # Convert any remaining HTML comments to MDX comments
+    # (Tab-related comments have already been processed and removed)
+    sed_inplace -E 's/<!--(.*)-->/\{\/\*\1\*\/\}/g' "$file"
 }

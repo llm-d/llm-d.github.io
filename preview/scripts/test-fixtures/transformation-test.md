@@ -113,7 +113,15 @@ Images with unquoted attributes should be quoted for MDX:
   </picture>
 </p>
 
-## 8. Regular Markdown Test
+## 8. HTML Comment Test
+
+<!-- This is a regular HTML comment that should be converted to MDX -->
+
+Some text here.
+
+<!-- Another comment with special chars: <, >, &, etc. -->
+
+## 9. Regular Markdown Test
 
 This section tests that regular markdown is NOT transformed:
 
