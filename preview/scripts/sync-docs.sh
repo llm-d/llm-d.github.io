@@ -192,6 +192,14 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     apply_transformations "$file"
 done
 
+# === Convert SVG images to theme-aware picture elements ===
+echo "    Converting SVG images to support light/dark theme switching..."
+find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    # Convert ![alt](/img/docs/diagram.svg) to picture element with both versions
+    # Uses diagram.svg for light mode, diagram-dark.svg for dark mode
+    sed_inplace 's|!\[\([^]]*\)\](/img/docs/\([^)]*\)\.svg)|<picture><source media="(prefers-color-scheme: dark)" srcset="/img/docs/\2-dark.svg" /><img src="/img/docs/\2.svg" alt="\1" /></picture>|g' "$file"
+done
+
 # === Generate stubs for pages in outline that don't have source content yet ===
 echo "    Generating stubs for missing pages..."
 
