@@ -122,7 +122,24 @@ Images with relative paths should be transformed:
 
 This should escape arrows: \<->
 
-## 7. Regular Markdown Test
+## 7. HTML Image Tag Test
+
+Images with unquoted attributes should be quoted for MDX:
+
+<p align="center">
+  <img alt="Test" src="/img/docs/test.svg" width="95%" />
+</p>
+
+<img src="/img/docs/another.png" height="200" />
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" />
+    <img alt="Test Arch" src="/img/docs/arch.svg" width="90%" />
+  </picture>
+</p>
+
+## 8. Regular Markdown Test
 
 This section tests that regular markdown is NOT transformed:
 
@@ -141,7 +158,7 @@ This section tests that regular markdown is NOT transformed:
 const test = "value";
 ```
 
-## 8. Edge Cases
+## 9. Edge Cases
 
 ### Empty Tab
 

@@ -151,7 +151,7 @@ cp_doc "$WIP/architecture/advanced/autoscaling/hpa-architecture.svg" "$STATIC_DI
 echo "    Fixing specific image references..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace \
-        -e 's|../images/flow_control_dashboard.png|/img/docs/flow_control_dashboard.png|g' \
+        -e 's|\(\.\.\/\)\{1,\}images/flow_control_dashboard\.png|/img/docs/flow_control_dashboard.png|g' \
         -e 's|networking-stack.svg|/img/docs/networking-stack.svg|g' \
         -e 's|hpa-architecture.svg|/img/docs/hpa-architecture.svg|g' \
         "$file"

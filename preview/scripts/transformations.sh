@@ -26,8 +26,12 @@ apply_transformations() {
     # MDX escaping - escape special characters
     sed_inplace 's|<->|\\<->|g' "$file"
 
-    # Fix unclosed img tags for MDX (must be self-closing)
+    # Fix unclosed HTML tags for MDX (must be self-closing)
     sed_inplace 's|<img \([^>]*[^/]\)>|<img \1 />|g' "$file"
+    sed_inplace 's|<source \([^>]*[^/]\)>|<source \1 />|g' "$file"
+
+    # Fix unquoted attribute values in img tags (e.g., width=95% -> width="95%")
+    sed_inplace -E 's/(<img [^>]*)(width|height|alt|src)=([^"'\'' ][^ >]*)/\1\2="\3"/g' "$file"
 
     # GitHub callouts
     awk '
