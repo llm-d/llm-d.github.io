@@ -15,7 +15,7 @@ export default function VersionDropdown(): React.JSX.Element {
       </a>
       <ul className="dropdown__menu">
         <li>
-          <a className="dropdown__link dropdown__link--active" href="/preview/docs/getting-started">
+          <a className="dropdown__link dropdown__link--active" href="/docs/">
             latest (main)
           </a>
         </li>

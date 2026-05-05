@@ -52,6 +52,12 @@ echo "Step 4/4: Merging preview build into main build at /docs..."
 cd "$PROJECT_DIR"
 cp -r preview/build build/docs
 echo "✓ Preview merged to build/docs/"
+
+# Also copy preview images to build/img/docs for absolute path references
+echo "   Copying preview images to build/img/docs for absolute paths..."
+mkdir -p build/img/docs
+cp -r preview/build/img/docs/* build/img/docs/
+echo "✓ Preview images copied to build/img/docs/"
 echo ""
 
 # Optional: Include merge report if it exists (from GitHub Actions workflow)

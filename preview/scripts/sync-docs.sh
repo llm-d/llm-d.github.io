@@ -192,6 +192,14 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     apply_transformations "$file"
 done
 
+# === Fix /img/docs/images/ paths created by transformations ===
+# The transformations convert ../assets/images/foo.svg to /img/docs/images/foo.svg
+# but we copy all assets flat to /img/docs/, so remove the /images/ segment
+echo "    Fixing /img/docs/images/ paths..."
+find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace 's|/img/docs/images/|/img/docs/|g' "$file"
+done
+
 # === Convert SVG images to theme-aware picture elements ===
 echo "    Converting SVG images to support light/dark theme switching..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
