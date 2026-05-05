@@ -1,14 +1,3 @@
 [build]
   command = "npm run build && cd preview && bash scripts/sync-docs.sh main && npm install && npm run build && cd .. && cp -r preview/build build/docs"
   publish = "build"
-
-# SPA redirect for /docs/* routes
-[[redirects]]
-  from = "/docs"
-  to = "/docs/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/docs/*"
-  to = "/docs/index.html"
-  status = 200
