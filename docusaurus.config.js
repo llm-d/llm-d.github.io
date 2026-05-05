@@ -177,7 +177,7 @@ const config = {
           src: "img/llm-d-icon.png",
         },
         items: [
-          { to: "/docs", label: "Documentation", position: "left" },
+          { href: "/docs", label: "Documentation", position: "left" },
           { to: "/blog", label: "Blog", position: "left" },
           {
             type: "docSidebar",
@@ -211,15 +211,15 @@ const config = {
             items: [
               {
                 label: "Getting Started",
-                to: "/docs/getting-started",
+                href: "/docs/getting-started",
               },
               {
                 label: "Architecture",
-                to: "/docs/architecture",
+                href: "/docs/architecture",
               },
               {
                 label: "Guides",
-                to: "/docs/guides",
+                href: "/docs/guides",
               },
             ],
           },
