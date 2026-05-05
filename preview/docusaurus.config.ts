@@ -19,7 +19,7 @@ const config: Config = {
   ],
 
   url: 'https://llm-d.ai',
-  baseUrl: '/',
+  baseUrl: '/docs/',
 
   organizationName: 'llm-d',
   projectName: 'llm-d.github.io',
@@ -127,10 +127,10 @@ const config: Config = {
         {
           title: 'Documentation',
           items: [
-            {label: 'Getting Started', to: '/getting-started'},
-            {label: 'Architecture', to: '/architecture'},
-            {label: 'Guides', to: '/guides'},
-            {label: 'Resources', to: '/resources/gateway'},
+            {label: 'Getting Started', to: 'getting-started'},
+            {label: 'Architecture', to: 'architecture'},
+            {label: 'Guides', to: 'guides'},
+            {label: 'Resources', to: 'resources/gateway'},
           ],
         },
         {
