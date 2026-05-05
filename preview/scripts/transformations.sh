@@ -18,9 +18,10 @@ fi
 apply_transformations() {
     local file="$1"
 
-    # Image paths - convert relative to absolute with baseUrl prefix
+    # Image paths - convert relative to absolute
+    # Note: Docusaurus automatically prepends baseUrl at runtime
     sed_inplace \
-        -e 's|\(\.\./\)*assets/\([^)]*\)|/docs/img/docs/\2|g' \
+        -e 's|\(\.\./\)*assets/\([^)]*\)|/img/docs/\2|g' \
         "$file"
 
     # MDX escaping - escape special characters
