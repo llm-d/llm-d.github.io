@@ -61,27 +61,28 @@ By making a contribution to this project, I certify that:
 
 When you make a commit, add the `-s` flag to include the DCO sign-off:
 
-```bashgit
-commit -s -m "feat: add new guide for workload autoscaling"
+```bash
+git commit -s -m "feat: add new guide for workload autoscaling"
 ```
 
 #### DCO via the command line
+
 The most popular way to do DCO is to sign off your username and email address in the git command line.
 
 First, configure your local git install.
 
-```bashgit
-$ git config --global user.name "Your Name"
-$ git config --global user.email github-email@example.com
+```bash
+git config --global user.name "Your Name"
+git config --global user.email github-email@example.com
 ```
 
 Always sign your commits with the -s flag.
 
-```bashgit
-$ git commit -s -m "This is my commit message"
+```bash
+git commit -s -m "This is my commit message"
 ```
 
-That’s it. Git adds your sign-off message in the commit message, and your contribution (commit) is now DCO compliant.
+That's it. Git adds your sign-off message in the commit message, and your contribution (commit) is now DCO compliant.
 
 If you are having trouble with the DCO process, please see some [troubleshooting](https://www.secondstate.io/articles/dco/) documentation or reach out in the #website-and-docs channel on the llm-d Slack for assistance.
 
@@ -92,20 +93,52 @@ If you are having trouble with the DCO process, please see some [troubleshooting
 **Before making changes, check if the content is synced:**
 
 1. **Look for "Content Source" banners** at the bottom of pages
-2. **If banner exists**: Click "edit the source file" to edit in the source repository
+2. **If banner exists**: Click "edit the source file" to edit in the source repository (llm-d/llm-d)
 3. **If no banner**: The content is local to this repository - proceed with PR below
 
 ### 🔄 Types of Content
 
 | Content Type | Location | How to Edit |
 |--------------|----------|-------------|
-| **Synced Content** | Architecture docs, guides, component docs | Edit in source repo (follow banner link) |
-| **Local Content** | Blog posts, community pages, website config | Edit in this repository |
-| **Component Documentation** | Auto-generated from component repos | Add to `components-data.yaml` |
+| **Main Documentation** | Architecture, guides, API reference | Edit in llm-d/llm-d (synced via `preview/scripts/sync-docs.sh`) |
+| **Community Documentation** | Contributing, Code of Conduct, Security, SIGs | Edit in llm-d/llm-d (synced via `remote-content/`) |
+| **Local Content** | Blog posts, landing pages, website config | Edit in this repository |
 
-### 🚀 Making Local Changes
+## 📝 Editing Documentation
 
-For content **without** "Content Source" banners:
+### Editing Main Documentation
+
+Main documentation (architecture, guides, API reference, resources) is synced from the `llm-d/llm-d` repository.
+
+**To update main documentation:**
+1. Find the source file using the "Content Source" banner at the bottom of the page
+2. Click "edit the source file" to open the file in the llm-d/llm-d repository
+3. Submit a PR to llm-d/llm-d
+4. Once merged, changes will appear on the website after the next deployment
+
+**Files synced via `preview/scripts/sync-docs.sh`:**
+- Architecture documentation
+- User guides
+- API reference
+- Resources (monitoring, gateway, RDMA)
+- Getting Started pages
+
+### Editing Community Documentation
+
+Community documentation files are synced from the root of the `llm-d/llm-d` repository:
+- CONTRIBUTING.md
+- CODE_OF_CONDUCT.md
+- SECURITY.md
+- SIGS.md
+
+**To update community documentation:**
+1. Edit the file in the llm-d/llm-d repository
+2. Submit a PR to llm-d/llm-d
+3. Once merged, changes sync automatically during website build
+
+### Editing Local Content
+
+For content **without** "Content Source" banners (blog posts, landing pages, website configuration):
 
 1. **Fork & Clone**
    ```bash
@@ -119,584 +152,162 @@ For content **without** "Content Source" banners:
    git checkout -b docs/your-change-description
    ```
 
-3. **Test Locally**
+3. **Make Changes**
+   - Edit files directly in this repository
+   - Blog posts: `blog/`
+   - Landing pages: `src/pages/`
+   - Website config: `docusaurus.config.js`
+
+4. **Test Locally**
    ```bash
    npm start
    ```
 
-4. **Commit & Push**
+5. **Commit & Push**
    ```bash
    git add .
    git commit -s -m "docs: your change description"
    git push origin docs/your-change-description
    ```
 
-5. **Open Pull Request** with preview link for reviewers
+6. **Open Pull Request** with preview link for reviewers
 
-### 🔧 Adding Remote Content
+## 🔧 Adding New Documentation
 
-There are **three different approaches** for adding remote content, depending on the content type:
+### Adding Main Documentation
 
-| Content Type | How to Add | Configuration File |
-|--------------|-----------|-------------------|
-| **Components** | Edit YAML file | `components-data.yaml` |
-| **Guides** | Edit generator file | `guide-generator.js` |
-| **Other Content** | Copy template + import | `example-readme.js.template` → `remote-content.js` |
+To add new architecture, guide, or API documentation:
 
-**Quick Decision Tree:**
-- Adding a component README? → Edit `components-data.yaml`
-- Adding a guide from the main repo? → Edit `guide-generator.js`
-- Adding other documentation? → Copy template, edit, and import
+1. **Add the file to llm-d/llm-d repository** in the appropriate location:
+   - Architecture: `docs/architecture/`
+   - Guides: `docs/guides/`
+   - API reference: `docs/api-reference/`
+   - Resources: `docs/resources/`
 
-#### Option 1: Adding Component Documentation (Easiest - Auto-generated)
-
-Components are automatically generated from `components-data.yaml`:
-
-1. **Edit the YAML file:**
+2. **Update sync-docs.sh** to copy the new file:
    ```bash
-   # Edit remote-content/remote-sources/components-data.yaml
+   # Edit preview/scripts/sync-docs.sh
+   # Add a new cp_doc line in the appropriate section
+   cp_doc "$WIP/path/to/newfile.md" "$DOCS_DIR/destination/newfile.md"
    ```
 
-2. **Add your component entry:**
-   ```yaml
-   components:
-     # ... existing components
-     - name: llm-d-your-component
-       org: llm-d                       # GitHub organization
-       sidebarLabel: Your Component     # Display name in sidebar
-       description: Description of your component
-       sidebarPosition: 8
-       version: v1.0.0                  # Version tag for Latest Release page
-       keywords:
-         - llm-d
-         - keywords
-   ```
-
-3. **Test:** `npm start`
-
-**What happens:**
-- Component README.md from `main` branch → `/docs/architecture/Components/your-component.md`
-- Appears in sidebar under "Components"
-- Listed on Latest Release page
-
-**For external projects** (outside llm-d org):
-```yaml
-components:
-  - name: gateway-api-inference-extension
-    org: kubernetes-sigs               # External organization
-    skipSync: true                     # Don't sync README, link to GitHub instead
-    sidebarLabel: Gateway API Extension
-    description: Description
-    sidebarPosition: 8
-    version: v0.1.0
-```
-
-**For other architecture documentation** (design docs, patterns, ADRs):
-- Use Option 3 (template-based) and place in `remote-content/remote-sources/architecture/`
-- See README.md ["Adding Other Architecture Documentation"](README.md#adding-other-architecture-documentation-template-based) section
-
-#### Option 2: Adding New Guides (Generator-based)
-
-Guides are configured in the `guide-generator.js` file, **not via templates**:
-
-1. **Edit the generator file:**
+3. **Test the sync locally:**
    ```bash
-   # Edit remote-content/remote-sources/guide/guide-generator.js
+   cd preview
+   ./scripts/sync-docs.sh
+   npm run build
    ```
 
-2. **Add your guide to the `DYNAMIC_GUIDES` array:**
-   ```javascript
-   const DYNAMIC_GUIDES = [
-     // ... existing guides
-     {
-       dirName: 'your-guide-folder',           // Directory in llm-d/llm-d/guides/
-       title: 'Your Guide Title',
-       description: 'Brief description for SEO',
-       sidebarPosition: 15,
-       keywords: ['llm-d', 'your', 'keywords']
-     }
-   ];
-   ```
+4. **Submit PR to this repository** with the sync-docs.sh changes
 
-   This will sync `guides/your-guide-folder/README.md` → `docs/guide/Installation/your-guide-folder.md`
+### Adding Community Documentation
 
-3. **For nested guides with custom paths**, use `sourceFile` and `targetFilename`:
-   ```javascript
-   {
-     dirName: 'parent-folder/nested-guide',      // Source directory path
-     sourceFile: 'guides/parent-folder/nested-guide/README.md',  // Explicit source
-     title: 'Nested Guide Title',
-     description: 'Guide description',
-     sidebarPosition: 16,
-     targetFilename: 'parent-folder/nested-guide.md',  // Custom output path
-     keywords: ['llm-d', 'nested', 'guide']
-   }
-   ```
+To add a new community file (e.g., `GOVERNANCE.md`):
 
-   **Example:** `guides/workload-autoscaling/README.wva.md` → `docs/guide/Installation/workload-autoscaling/wva.md`
+1. **Create the remote source config** at `remote-content/remote-sources/community/governance.js`:
 
-4. **Test:** `npm start`
+```javascript
+import { createContentWithSource, createStandardTransform, getLlmdRepoConfig } from '../utils.js';
 
-**Note:** Guides always sync from the `main` branch of the `llm-d/llm-d` repository.
+const { sourceBaseUrl } = getLlmdRepoConfig();
+const contentTransform = createStandardTransform();
 
-#### Option 3: Other Content (Template-based)
+export default [
+  'docusaurus-plugin-remote-content',
+  {
+    name: 'governance',
+    sourceBaseUrl,
+    outDir: 'community',
+    documents: ['GOVERNANCE.md'],
+    noRuntimeDownloads: false,
+    performCleanup: true,
 
-For content that doesn't fit the component or guide pattern (e.g., community docs, architecture overviews):
+    modifyContent(filename, content) {
+      if (filename === 'GOVERNANCE.md') {
+        return createContentWithSource({
+          title: 'Project Governance',
+          description: 'Governance structure for the llm-d project',
+          sidebarLabel: 'Governance',
+          sidebarPosition: 6,
+          filename: 'GOVERNANCE.md',
+          newFilename: 'governance.md',
+          content,
+          contentTransform
+        });
+      }
+      return undefined;
+    },
+  },
+];
+```
 
-1. **Choose the right directory** based on content type:
-   - `architecture/` → `docs/architecture/`
-   - `community/` → `docs/community/`
+2. **Import in remote-content.js**:
 
-2. **Copy the template:**
+```javascript
+// remote-content/remote-content.js
+import governanceSource from './remote-sources/community/governance.js';
+
+const remoteContentPlugins = [
+  contributeSource,
+  codeOfConductSource,
+  securitySource,
+  sigsSource,
+  governanceSource,  // Add here
+];
+```
+
+3. **Add the source file to llm-d/llm-d** (e.g., `GOVERNANCE.md` in repo root)
+
+4. **Test locally:**
    ```bash
-   # Choose appropriate directory
-   cp remote-content/remote-sources/example-readme.js.template \
-      remote-content/remote-sources/DIRECTORY/my-content.js
-
-   # Example:
-   cp remote-content/remote-sources/example-readme.js.template \
-      remote-content/remote-sources/community/my-doc.js
+   npm run build
    ```
 
-3. **Edit configuration** in the new file:
-   - Update repository name
-   - Set output directory and filename
-   - Configure title, description, sidebar position
-   - Note the `../` imports for utils (since you're in a subdirectory)
+## 🧪 Testing Changes
 
-4. **Import in `remote-content/remote-content.js`:**
-   ```javascript
-   import myContentSource from './remote-sources/DIRECTORY/my-content.js';
-
-   const remoteContentPlugins = [
-     // ... existing sources
-     myContentSource,  // Add your source
-   ];
-   ```
-
-5. **Test:** `npm start`
-
-See the "Remote Content System" section in the main [README.md](README.md) for detailed technical information.
-
-### ⚙️ Adding New Components
-
-Components are auto-generated! Just add to `remote-content/remote-sources/components-data.yaml`:
-
-```yaml
-components:
-  # ... existing components
-  - name: llm-d-your-component
-    org: llm-d
-    sidebarLabel: Your Component
-    description: Component description
-    sidebarPosition: 10
-    version: v1.0.0                    # For Latest Release page display
-    keywords:
-      - llm-d
-      - your keywords
-```
-
-**Important Notes:**
-- The `version` field is for **display only** on the Latest Release page
-- Component README content is **always synced from the `main` branch**
-- Version tags do NOT affect which content gets synced
-
-For details on how component versioning works and how to update for new releases, see the [Component Version Management](README.md#component-version-management) section in README.md.
-
-### 📝 Creating Blog Posts
-
-Blog posts are local content managed directly in this repository. Follow this step-by-step process to create a new blog post:
-
-#### 1. **Create the Blog Post File**
-
-Blog posts are stored in the `/blog/` directory with a specific naming convention:
-
-```bash
-# Format: YYYY-MM-DD_slug-title.md
-# Example: 2025-10-15_my-new-blog-post.md
-touch blog/2025-10-15_my-new-blog-post.md
-```
-
-#### 2. **Add Frontmatter**
-
-Every blog post must start with YAML frontmatter. Here's the required structure:
-
-```yaml
----
-title: "Your Blog Post Title"
-description: "A brief description of your blog post for SEO and previews"
-slug: your-blog-post-slug
-date: 2025-10-15T09:00
-
-authors:
-  - authorkey1
-  - authorkey2
-
-tags: [blog, updates, llm-d, your-tags]
----
-```
-
-**Frontmatter Fields:**
-- `title`: The display title of your blog post
-- `description`: Brief description for SEO and social media previews
-- `slug`: URL-friendly version (used in `/blog/your-slug` URL)
-- `date`: Publication date in ISO format with time
-- `authors`: Array of author keys from [`blog/authors.yml`](blog/authors.yml)
-- `tags`: Array of tags for categorization (see [`blog/tags.yml`](blog/tags.yml) for existing tags)
-
-#### 3. **Add Authors**
-
-Authors are managed in [`blog/authors.yml`](blog/authors.yml). To add a new author:
-
-```yaml
-# In blog/authors.yml
-yourauthorkey:
-  name: Your Full Name
-  title: Your Job Title, Company
-  url: https://github.com/yourusername
-  image_url: https://avatars.githubusercontent.com/u/12345?v=4
-  email: your.email@company.com  # optional
-```
-
-Then reference the author in your blog post frontmatter:
-```yaml
-authors:
-  - yourauthorkey
-```
-
-**Author Image Options:**
-
-**Option 1: GitHub Avatar (Recommended)**
-```yaml
-image_url: https://avatars.githubusercontent.com/u/12345?v=4
-```
-
-**Option 2: Local Image File**
-1. Add your image to the `static/img/blogs/` directory:
-   ```bash
-   # Place your image file here
-   cp your-photo.jpg static/img/blogs/yourname.jpg
-   ```
-
-2. Reference it in `authors.yml`:
-   ```yaml
-   yourauthorkey:
-     name: Your Full Name
-     image_url: /img/blogs/yourname.jpg
-   ```
-
-**Option 3: External URL**
-```yaml
-image_url: https://your-website.com/path/to/your-photo.jpg
-```
-
-**Examples from existing authors:**
-- GitHub avatar: [`robshaw`](blog/authors.yml#L10-L11) uses `https://avatars.githubusercontent.com/u/114415538?v=4`
-- Local image: [`cnuland`](blog/authors.yml#L39) uses `/img/blogs/cnuland.webp`
-
-#### 4. **Write Your Content**
-
-After the frontmatter, write your blog post in Markdown:
-
-```markdown
----
-# frontmatter here
----
-
-# Your Blog Post Title
-
-Your opening paragraph should provide a compelling introduction to your topic.
-
-<!-- truncate -->
-
-The `<!-- truncate -->` tag splits your post on the main blog listing page. Content above this tag appears in the preview, content below is only shown on the full post page.
-
-## Your Content Sections
-
-Continue with your blog post content...
-```
-
-#### 5. **Add Images**
-
-**Image Organization:**
-Create a dedicated folder for your blog post images:
-
-```bash
-# Create folder for your blog post
-mkdir -p static/img/blogs/your-blog-slug/
-
-# Add your images
-cp your-image.png static/img/blogs/your-blog-slug/
-```
-
-**Reference Images in Markdown:**
-```markdown
-![Alt text description](/img/blogs/your-blog-slug/your-image.png)
-
-<small>*__FIGURE 1__: Caption describing your image or diagram.*</small>
-```
-
-**Examples from existing posts:**
-- See [`blog/2025-09-24_kvcache-wins-you-can-see.md`](blog/2025-09-24_kvcache-wins-you-can-see.md) for image usage examples
-- Images are stored in [`static/img/blogs/kv-cache-wins/`](static/img/blogs/kv-cache-wins/)
-
-#### 6. **Use Docusaurus Callouts**
-
-Enhance your blog post with visual callouts:
-
-```markdown
-:::tip Key Takeaway
-Important points or tips for readers
-:::
-
-:::note Additional Context
-Supplementary information or context
-:::
-```
-
-**Examples:**
-- See callout usage in [`blog/2025-09-24_kvcache-wins-you-can-see.md`](blog/2025-09-24_kvcache-wins-you-can-see.md#L25-L32)
-- See tip examples in [`blog/2025-06-25_community_update.md`](blog/2025-06-25_community_update.md#L21-L24)
-
-#### 7. **Test Your Blog Post**
-
-Before submitting, test your blog post locally:
+### Local Development Server
 
 ```bash
 npm start
-# Navigate to http://localhost:3000/blog to see your post
 ```
 
-#### 8. **Submit Your Blog Post**
+Opens a browser with live reload. Most changes reflect immediately.
 
-Follow the standard contribution process:
+### Full Build
 
 ```bash
-git checkout -b blog/your-blog-post-slug
-git add blog/your-blog-post.md static/img/blogs/your-blog-slug/
-git commit -s -m "blog: add your blog post title"
-git push origin blog/your-blog-post-slug
+npm run build
 ```
 
-Then open a pull request. The PR will automatically generate a preview deployment for review.
+Generates static content into the `build` directory. Tests the complete build including:
+1. Main site build (includes remote-content community files)
+2. Preview docs sync from llm-d/llm-d
+3. Preview docs build
+4. Merge of preview build into main site at `/docs`
 
-#### **Blog Post Checklist**
+### Preview Deployments
 
-- [ ] File named with correct format: `YYYY-MM-DD_slug.md`
-- [ ] Complete frontmatter with all required fields
-- [ ] Author(s) added to [`blog/authors.yml`](blog/authors.yml) if new
-- [ ] `<!-- truncate -->` tag placed after introduction
-- [ ] Images stored in `/static/img/blogs/your-slug/` folder
-- [ ] Images referenced with proper paths and captions
-- [ ] Tags added (check [`blog/tags.yml`](blog/tags.yml) for existing ones)
-- [ ] Content tested locally with `npm start`
-- [ ] Pull request includes preview link for reviewers
+Every PR automatically gets a Netlify preview deployment. Check the PR for the preview link.
 
-#### **Converting from Google Docs**
+## 🔍 Troubleshooting
 
-If you're converting content from Google Docs:
+| Issue | Solution |
+|-------|----------|
+| **Build errors** | Check that all remote sources are accessible from llm-d/llm-d |
+| **Content not syncing** | Verify file exists in llm-d/llm-d main branch |
+| **Preview not updating** | Netlify builds can take 5-10 minutes; check build logs |
+| **Links broken** | Ensure links use proper Docusaurus paths or full GitHub URLs |
+| **Images not showing** | Verify image paths in `preview/scripts/sync-docs.sh` |
 
-1. **Export as Markdown** from Google Docs
-   *Note*: Images are embedded in the markdown so remove those at the bottom of the markdown before step 2.
-2. **Save images separately** by exporting as HTML/ZIP to get image files
-3. **Place images** in `/static/img/blogs/your-blog-slug/` folder
-4. **Update image references** to use `/img/blogs/your-blog-slug/filename.png` format
-5. **Add frontmatter** and `<!-- truncate -->` tag as described above
-6. **Review and test** locally before submitting
+## 📚 Additional Resources
 
-## ❓ Frequently Asked Questions
+- [README.md](README.md) - Full documentation of the website structure
+- [Docusaurus Documentation](https://docusaurus.io/)
+- [llm-d Main Repository](https://github.com/llm-d/llm-d)
+- [llm-d Contributing Guidelines](https://github.com/llm-d/llm-d/blob/main/CONTRIBUTING.md)
 
-### Why are there different approaches for adding content?
+## 💬 Getting Help
 
-The website uses an optimized system based on content type:
-- **Components**: Auto-generated from YAML for consistency
-- **Guides**: Generator-based for flexible directory mapping
-- **Other content**: Template-based for maximum customization
-
-### Do keywords in the YAML actually do anything?
-
-**Yes!** Keywords are rendered as HTML meta keywords tags for SEO:
-```html
-<meta name="keywords" content="llm-d,inference scheduler,request routing">
-```
-
-This helps search engines understand page content and improve discoverability. While modern search engines don't rely heavily on keywords meta tags, they're still used by some search engines and can help with content categorization.
-
-### Can I add components from organizations outside llm-d?
-
-**Yes!** The YAML supports any GitHub organization via the `org` field:
-```yaml
-components:
-  - name: llm-d-modelservice
-    org: llm-d-incubation          # Different org
-```
-
-The system automatically constructs the URL:
-`https://raw.githubusercontent.com/llm-d-incubation/llm-d-modelservice/main/README.md`
-
-Currently synced orgs:
-- `llm-d` (main org)
-- `llm-d-incubation` (experimental components)
-- `kubernetes-sigs` (external, with `skipSync: true`)
-
-### What happens to my markdown when it's synced?
-
-The build system automatically transforms GitHub markdown to work with Docusaurus:
-- GitHub callouts (e.g., `> [!NOTE]`) → Docusaurus admonitions (`:::note`)
-- HTML tab markers (`<!-- TABS:START -->`) → Docusaurus Tabs components
-- Relative links → Absolute GitHub links (to prevent broken links)
-- Relative images → GitHub raw URLs
-- HTML tags → MDX-compatible format
-
-**Your source files remain unchanged** - transformations only apply to the synced copy.
-
-#### Using Custom Tab Syntax
-
-When writing documentation in the source repository (llm-d/llm-d), you can use custom HTML comment markers to create tabbed content that will be automatically transformed into Docusaurus tabs during the sync process.
-
-**Syntax:**
-
-```markdown
-<!-- TABS:START -->
-
-<!-- TAB:Tab Label One:default -->
-Content for the first tab goes here.
-This can include code blocks, lists, etc.
-
-<!-- TAB:Tab Label Two -->
-Content for the second tab.
-
-<!-- TAB:Tab Label Three -->
-Content for the third tab.
-
-<!-- TABS:END -->
-```
-
-**Features:**
-
-- **Multiple tabs**: Add as many tabs as needed between `TABS:START` and `TABS:END`
-- **Default tab**: Add `:default` after the tab label to make it the default selected tab
-- **Auto-generated values**: Tab `value` attributes are automatically generated from labels (lowercase, slugified)
-- **Any content**: Each tab can contain any valid markdown (headings, code blocks, lists, images, etc.)
-
-**Example - Platform-specific deployment instructions:**
-
-~~~markdown
-<!-- TABS:START -->
-
-<!-- TAB:GKE (H200):default -->
-#### GKE (H200)
-
-```bash
-kubectl apply -k ./manifests/modelserver/gke -n ${NAMESPACE}
-```
-
-<!-- TAB:GKE (B200) -->
-#### GKE (B200)
-
-```bash
-# Deploy on GKE for B200 on the a4 instance type
-kubectl apply -k ./manifests/modelserver/gke-a4 -n ${NAMESPACE}
-```
-
-<!-- TAB:CoreWeave -->
-#### CoreWeave
-
-```bash
-kubectl apply -k ./manifests/modelserver/coreweave -n ${NAMESPACE}
-```
-
-<!-- TABS:END -->
-~~~
-
-**What gets generated:**
-
-The above markdown will be automatically transformed into:
-
-~~~jsx
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
-<Tabs>
-<TabItem value="gke-h200" label="GKE (H200)" default>
-#### GKE (H200)
-
-```bash
-kubectl apply -k ./manifests/modelserver/gke -n ${NAMESPACE}
-```
-</TabItem>
-<TabItem value="gke-b200" label="GKE (B200)">
-#### GKE (B200)
-
-```bash
-kubectl apply -k ./manifests/modelserver/gke-a4 -n ${NAMESPACE}
-```
-</TabItem>
-<TabItem value="coreweave" label="CoreWeave">
-#### CoreWeave
-
-```bash
-kubectl apply -k ./manifests/modelserver/coreweave -n ${NAMESPACE}
-```
-</TabItem>
-</Tabs>
-~~~
-
-**Best Practices:**
-
-- Use descriptive tab labels that clearly indicate the content (e.g., "AWS EKS", "Google GKE", "Azure AKS")
-- Mark the most common or recommended option as `:default`
-- Keep tab content focused and parallel in structure across tabs
-- The custom syntax works in GitHub markdown (displayed as regular content) and transforms seamlessly during sync
-
-**Where the transformation happens:**
-
-The tab transformation is performed by the `preview/scripts/sync-docs.sh` script during the documentation sync process. The transformation happens automatically during the build - no manual intervention needed.
-
-### Why does all content sync from `main` branch?
-
-This ensures the documentation always reflects the latest development state. Version tags in `components-data.yaml` are for display on the Latest Release page only and don't affect which content gets synced.
-
-### Can I preview my changes before they go live?
-
-Yes! When you open a pull request, Netlify automatically creates a preview deployment. The preview URL is posted as a comment on your PR.
-
-For synced content from other repositories, you'll need to test changes locally (see README.md "Testing content from a feature branch" section).
-
-### How do I update the website for a new release?
-
-When a new llm-d release is published:
-
-1. Run the sync script: `node remote-content/remote-sources/sync-release.mjs`
-2. Review changes: `git diff remote-content/remote-sources/components-data.yaml`
-3. Commit and push: `git add remote-content/remote-sources/components-data.yaml && git commit -m "Update to llm-d vX.Y.Z"`
-
-The script automatically updates:
-- Release version and date
-- Component version tags (for Latest Release page display)
-- Container image versions
-
-**Note:** This only updates version numbers for display. Component READMEs always sync from the `main` branch during the build process.
-
-For detailed information, see [Component Version Management](README.md#component-version-management) in README.md.
-
-### What's the difference between version tags and synced content?
-
-**Version tags** (in `components-data.yaml`):
-- Displayed on the Latest Release page
-- Show which versions were included in a release
-- Updated by the `sync-release.mjs` script
-
-**Synced content** (READMEs, guides, docs):
-- Always pulled from the `main` branch
-- Updated during each build
-- Independent of version tags
-
-**Example:** A component with `version: v0.6.0` in YAML will show "v0.6.0" on the Latest Release page, but its README content comes from the `main` branch, not from the `v0.6.0` release tag.
-
-## 🆘 Need Help?
-
-- **General questions**: <a href="/slack" target="_self">Join the llm-d Slack</a>
-- **Website issues**: [Create an issue](https://github.com/llm-d/llm-d.github.io/issues)
-- **Content questions**: Check if content is synced, then edit in appropriate repository
-- **Technical details**: See [README.md](README.md) for architecture and transformation details
+- **Slack**: Join [#website-and-docs](https://llm-d.ai/slack) channel
+- **Issues**: Open an issue in this repository for website-specific questions
+- **Community**: See [Community Guidelines](https://llm-d.ai/docs/community/code-of-conduct)
