@@ -23,13 +23,13 @@ This page is your gateway to everything you need to know about participating in 
 ## Community Resources
 
 ### Getting Involved
-- 📅 **[Upcoming Events](/docs/community/events)** - Meetups, talks, and conferences
-- 📝 **[Contributing Guidelines](/docs/community/contribute)** - Complete guide to contributing code, docs, and ideas
-- 👥 **[Special Interest Groups (SIGs)](/docs/community/sigs)** - Join focused teams working on specific areas
-- 🤝 **[Code of Conduct](/docs/community/code-of-conduct)** - Our community standards and values
+- 📅 **[Upcoming Events](/community/events)** - Meetups, talks, and conferences
+- 📝 **[Contributing Guidelines](/community/contribute)** - Complete guide to contributing code, docs, and ideas
+- 👥 **[Special Interest Groups (SIGs)](/community/sigs)** - Join focused teams working on specific areas
+- 🤝 **[Code of Conduct](/community/code-of-conduct)** - Our community standards and values
 
 ### Security & Safety
-- 🛡️ **[Security Policy](/docs/community/security)** - How to report vulnerabilities and security issues
+- 🛡️ **[Security Policy](/community/security)** - How to report vulnerabilities and security issues
 - 📢 **[Security Announcements](https://groups.google.com/u/1/g/llm-d-security-announce)** - Stay updated on security news
 
 ### Communication Channels
@@ -40,7 +40,7 @@ This page is your gateway to everything you need to know about participating in 
 
 ### Regular Meetings
 - 📅 **Weekly Standup**: Every Wednesday at 12:30pm ET - Project updates and open discussion
-- 🎯 **SIG Meetings**: Various times throughout the week - See [SIG details](/docs/community/sigs#active-special-interest-groups) for schedules
+- 🎯 **SIG Meetings**: Various times throughout the week - See [SIG details](/community/sigs#active-special-interest-groups) for schedules
 - 🌟 **All meetings are open to the public** - Join to participate, ask questions, or just listen and learn
 
 ## Special Interest Groups (SIGs)
@@ -55,7 +55,7 @@ import Link from '@docusaurus/Link';
   gap: '16px',
   marginTop: '16px'
 }}>
-  <Link to="/docs/community/sigs#sig-inference-scheduler" style={{
+  <Link to="/community/sigs#sig-inference-scheduler" style={{
     padding: '16px',
     border: '1px solid var(--ifm-color-emphasis-200)',
     borderRadius: '8px',
@@ -73,7 +73,7 @@ import Link from '@docusaurus/Link';
     <p style={{margin: '0', fontSize: '14px'}}>Intelligent request routing and load balancing</p>
   </Link>
   
-  <Link to="/docs/community/sigs#sig-benchmarking" style={{
+  <Link to="/community/sigs#sig-benchmarking" style={{
     padding: '16px',
     border: '1px solid var(--ifm-color-emphasis-200)',
     borderRadius: '8px',
@@ -91,7 +91,7 @@ import Link from '@docusaurus/Link';
     <p style={{margin: '0', fontSize: '14px'}}>Performance testing and optimization</p>
   </Link>
   
-  <Link to="/docs/community/sigs#sig-pd-disaggregation" style={{
+  <Link to="/community/sigs#sig-pd-disaggregation" style={{
     padding: '16px',
     border: '1px solid var(--ifm-color-emphasis-200)',
     borderRadius: '8px',
@@ -109,7 +109,7 @@ import Link from '@docusaurus/Link';
     <p style={{margin: '0', fontSize: '14px'}}>Prefill/decode separation patterns</p>
   </Link>
   
-  <Link to="/docs/community/sigs#sig-kv-disaggregation" style={{
+  <Link to="/community/sigs#sig-kv-disaggregation" style={{
     padding: '16px',
     border: '1px solid var(--ifm-color-emphasis-200)',
     borderRadius: '8px',
@@ -127,7 +127,7 @@ import Link from '@docusaurus/Link';
     <p style={{margin: '0', fontSize: '14px'}}>KV caching and distributed storage</p>
   </Link>
   
-  <Link to="/docs/community/sigs#sig-installation" style={{
+  <Link to="/community/sigs#sig-installation" style={{
     padding: '16px',
     border: '1px solid var(--ifm-color-emphasis-200)',
     borderRadius: '8px',
@@ -145,7 +145,7 @@ import Link from '@docusaurus/Link';
     <p style={{margin: '0', fontSize: '14px'}}>Kubernetes integration and deployment</p>
   </Link>
   
-  <Link to="/docs/community/sigs#sig-autoscaling" style={{
+  <Link to="/community/sigs#sig-autoscaling" style={{
     padding: '16px',
     border: '1px solid var(--ifm-color-emphasis-200)',
     borderRadius: '8px',
@@ -163,7 +163,7 @@ import Link from '@docusaurus/Link';
     <p style={{margin: '0', fontSize: '14px'}}>Traffic-aware autoscaling and resource management</p>
   </Link>
   
-  <Link to="/docs/community/sigs#sig-observability" style={{
+  <Link to="/community/sigs#sig-observability" style={{
     padding: '16px',
     border: '1px solid var(--ifm-color-emphasis-200)',
     borderRadius: '8px',
@@ -183,7 +183,7 @@ import Link from '@docusaurus/Link';
 </div>
 
 <p style={{marginTop: '16px', textAlign: 'center'}}>
-  <a href="/docs/community/sigs" style={{
+  <a href="/community/sigs" style={{
     display: 'inline-block',
     padding: '12px 24px',
     backgroundColor: 'var(--ifm-color-primary)',

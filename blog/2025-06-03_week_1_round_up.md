@@ -40,7 +40,7 @@ We use Google Groups to share architecture diagrams and other content. Please jo
 **Project links for those wanting to track us or get involved:**
 
 * [Project Launch](https://www.youtube.com/live/Gr8jomztY2s?si=_FT4gGpWGU6MQLyl&t=4994)
-* [Contributor Guidelines](https://llm-d.ai/docs/community/contribute)
+* [Contributor Guidelines](https://llm-d.ai/community/contribute)
 * [Project Calendar](http://red.ht/llm-d-public-calendar)
     - All SIG meetings
     - Weekly Community Meeting, every Wednesday @ 12:30pm Eastern Time
