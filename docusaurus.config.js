@@ -214,16 +214,13 @@ const config = {
             title: "Documentation",
             items: [
               {
-                label: "Getting Started",
-                href: "/docs/getting-started",
+                html: '<a href="/docs/getting-started" class="footer__link-item">Getting Started</a>',
               },
               {
-                label: "Architecture",
-                href: "/docs/architecture",
+                html: '<a href="/docs/architecture" class="footer__link-item">Architecture</a>',
               },
               {
-                label: "Guides",
-                href: "/docs/guides",
+                html: '<a href="/docs/guides" class="footer__link-item">Guides</a>',
               },
             ],
           },
