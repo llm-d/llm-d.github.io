@@ -77,7 +77,12 @@ export function transformRepo(content, { repoUrl, branch, sourcePath = '' }) {
     .replace(/^\[([^\]]+)\]:(?!http|https|#|mailto:)([^\s]+)/gm, (match, label, path) => {
       const resolvedUrl = resolvePath(path, sourceDir, repoUrl, branch);
       return `[${label}]:${resolvedUrl}`;
-    });
+    })
+    // Fix HTML tags for MDX compatibility
+    .replace(/<br>/g, '<br />')
+    .replace(/<br([^/>]*?)>/g, '<br$1 />')
+    // Convert angle-bracket URLs to markdown links (MDX doesn't support <URL> syntax)
+    .replace(/<(https?:\/\/[^>]+)>/g, '[$1]($1)');
 }
 
 /**
