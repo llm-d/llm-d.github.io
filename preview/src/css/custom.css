@@ -173,7 +173,26 @@ div[class*='announcementBar'] a {
 }
 
 /* ===== SVG diagram theme support ===== */
-/* No filters - diagrams should be created with proper light/dark color schemes */
+/* Theme-aware images - show/hide based on Docusaurus theme, not OS theme */
+html[data-theme='light'] .dark-mode-only {
+  display: none;
+}
+
+html[data-theme='dark'] .light-mode-only {
+  display: none;
+}
+
+.theme-aware-image {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.theme-aware-image img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
 
 /* ===== Code blocks ===== */
 .prism-code {

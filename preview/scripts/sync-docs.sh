@@ -208,13 +208,13 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace 's|/img/docs/images/|/img/docs/|g' "$file"
 done
 
-# === Convert SVG images to theme-aware picture elements ===
+# === Convert SVG images to theme-aware dual images ===
 echo "    Converting SVG images to support light/dark theme switching..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
-    # Convert ![alt](/img/docs/diagram.svg) to picture element with both versions
-    # Uses diagram.svg for light mode, diagram-dark.svg for dark mode
+    # Convert ![alt](/img/docs/diagram.svg) to dual images with CSS-based theme switching
+    # Uses Docusaurus data-theme attribute instead of OS prefers-color-scheme
     # Note: Raw HTML needs full /docs/img/docs/ path since Docusaurus doesn't auto-prepend baseUrl to HTML attributes
-    sed_inplace 's|!\[\([^]]*\)\](/img/docs/\([^)]*\)\.svg)|<picture><source media="(prefers-color-scheme: dark)" srcset="/docs/img/docs/\2-dark.svg" /><img src="/docs/img/docs/\2.svg" alt="\1" /></picture>|g' "$file"
+    sed_inplace 's|!\[\([^]]*\)\](/img/docs/\([^)]*\)\.svg)|<span class="theme-aware-image"><img src="/docs/img/docs/\2.svg" alt="\1" class="light-mode-only" /><img src="/docs/img/docs/\2-dark.svg" alt="\1" class="dark-mode-only" /></span>|g' "$file"
 done
 
 # === Generate stubs for pages in outline that don't have source content yet ===
