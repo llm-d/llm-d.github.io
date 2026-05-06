@@ -6,7 +6,8 @@
 # - White/light colors → Black/dark colors
 # - Preserves accent colors (blues, purples, greens)
 
-set -euo pipefail
+# Don't exit on error - we handle errors ourselves
+set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"

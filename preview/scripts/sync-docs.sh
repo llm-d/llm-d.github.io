@@ -151,7 +151,9 @@ cp_doc "$WIP/architecture/core/images/flow_control_dashboard.png" "$STATIC_DIR/"
 cp_doc "$WIP/architecture/advanced/autoscaling/hpa-architecture.svg" "$STATIC_DIR/" 2>/dev/null || true
 
 # === Generate dark mode variants for all SVGs ===
-"$SCRIPT_DIR/generate-dark-svgs.sh"
+"$SCRIPT_DIR/generate-dark-svgs.sh" || {
+    echo "Warning: Dark SVG generation encountered errors, continuing build..." >&2
+}
 
 # === Fix specific image paths for Docusaurus ===
 echo "    Fixing specific image references..."
