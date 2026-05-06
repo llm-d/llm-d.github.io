@@ -1,8 +1,8 @@
 /**
  * Code of Conduct Remote Content
- * 
+ *
  * Downloads the CODE_OF_CONDUCT.md file from the llm-d repository
- * and transforms it into docs/community/code-of-conduct.md
+ * and transforms it into community/code-of-conduct.md
  */
 
 import { createContentWithSource, createStandardTransform } from '../utils.js';
@@ -19,7 +19,7 @@ export default [
     // Basic configuration - all URLs generated from centralized config
     name: 'code-of-conduct',
     sourceBaseUrl,
-    outDir: 'docs/community',
+    outDir: 'community',
     documents: ['CODE_OF_CONDUCT.md'],
     
     // Plugin behavior

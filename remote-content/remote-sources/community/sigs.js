@@ -1,8 +1,8 @@
 /**
  * Special Interest Groups (SIGs) Remote Content
- * 
+ *
  * Downloads the SIGS.md file from the llm-d repository
- * and transforms it into docs/community/sigs.md
+ * and transforms it into community/sigs.md
  */
 
 import { createContentWithSource, createStandardTransform } from '../utils.js';
@@ -19,7 +19,7 @@ export default [
     // Basic configuration - all URLs generated from centralized config
     name: 'sigs-guide',
     sourceBaseUrl,
-    outDir: 'docs/community',
+    outDir: 'community',
     documents: ['SIGS.md'],
     
     // Plugin behavior

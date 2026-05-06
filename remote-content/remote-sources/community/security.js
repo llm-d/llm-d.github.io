@@ -1,8 +1,8 @@
 /**
  * Security Policy Remote Content
- * 
+ *
  * Downloads the SECURITY.md file from the llm-d repository
- * and transforms it into docs/community/security.md
+ * and transforms it into community/security.md
  */
 
 import { createContentWithSource, createStandardTransform } from '../utils.js';
@@ -19,7 +19,7 @@ export default [
     // Basic configuration - all URLs generated from centralized config
     name: 'security-policy',
     sourceBaseUrl,
-    outDir: 'docs/community',
+    outDir: 'community',
     documents: ['SECURITY.md'],
     
     // Plugin behavior

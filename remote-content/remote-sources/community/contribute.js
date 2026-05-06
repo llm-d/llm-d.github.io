@@ -1,8 +1,8 @@
 /**
  * Contributing Guide Remote Content
- * 
+ *
  * Downloads the CONTRIBUTING.md file from the llm-d repository
- * and transforms it into docs/community/contribute.md
+ * and transforms it into community/contribute.md
  */
 
 import { createContentWithSource, createStandardTransform } from '../utils.js';
@@ -28,7 +28,7 @@ export default [
     // Basic configuration - all URLs generated from centralized config
     name: 'contribute-guide',
     sourceBaseUrl,
-    outDir: 'docs/community',
+    outDir: 'community',
     documents: ['CONTRIBUTING.md'],
     
     // Plugin behavior
