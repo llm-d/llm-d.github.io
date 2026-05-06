@@ -26,18 +26,21 @@ generate_dark_variant() {
 
     # Skip if already a dark variant
     if [[ "$light_svg" =~ -dark\.svg$ ]]; then
-        return
+        return 0
     fi
 
     # Skip if dark variant already exists and is newer than light version
     if [[ -f "$dark_svg" ]] && [[ "$dark_svg" -nt "$light_svg" ]]; then
-        return
+        return 0
     fi
 
     echo "      Generating $(basename "$dark_svg")"
 
     # Copy light version to dark version
-    cp "$light_svg" "$dark_svg"
+    cp "$light_svg" "$dark_svg" || {
+        echo "Error: Failed to copy $light_svg to $dark_svg" >&2
+        return 1
+    }
 
     # Apply color transformations using two-pass approach to avoid conflicts
     # Pass 1: Replace light theme colors with placeholders
@@ -126,7 +129,10 @@ generate_dark_variant() {
         -e 's/stroke:#222222/stroke:TEMP_DARKGRAY_TO_LIGHTGRAY/g' \
         -e 's/stroke:#222/stroke:TEMP_DARKGRAY_TO_LIGHTGRAY/g' \
         -e 's/stroke:#1a1a1a/stroke:TEMP_DARKGRAY_TO_LIGHTGRAY/g' \
-        "$dark_svg"
+        "$dark_svg" || {
+            echo "Error: sed pass 1 failed for $(basename "$dark_svg")" >&2
+            return 1
+        }
 
     # Pass 2: Replace temp placeholders with dark theme colors
     sed_inplace \
@@ -135,23 +141,50 @@ generate_dark_variant() {
         -e 's/TEMP_LIGHTGRAY_TO_DARKGRAY/#2a2a2a/g' \
         -e 's/TEMP_MEDGRAY_TO_DARKERGRAY/#3a3a3a/g' \
         -e 's/TEMP_DARKGRAY_TO_LIGHTGRAY/#e5e5e5/g' \
-        "$dark_svg"
+        "$dark_svg" || {
+            echo "Error: sed pass 2 failed for $(basename "$dark_svg")" >&2
+            return 1
+        }
 }
 
 # Main execution
 if [[ ! -d "$STATIC_DIR" ]]; then
-    echo "Error: Static directory not found: $STATIC_DIR"
-    exit 1
+    echo "Warning: Static directory not found: $STATIC_DIR" >&2
+    echo "    Skipping dark mode SVG generation"
+    exit 0
 fi
 
 echo "    Generating dark mode SVG variants..."
 
+# Check if there are any SVG files
+shopt -s nullglob
+svg_files=("$STATIC_DIR"/*.svg)
+shopt -u nullglob
+
+if [[ ${#svg_files[@]} -eq 0 ]]; then
+    echo "    No SVG files found in $STATIC_DIR"
+    echo "    Skipping dark mode SVG generation"
+    exit 0
+fi
+
 count=0
-for svg_file in "$STATIC_DIR"/*.svg; do
-    if [[ -f "$svg_file" ]] && [[ ! "$svg_file" =~ -dark\.svg$ ]]; then
-        generate_dark_variant "$svg_file"
-        ((count++))
+failed=0
+for svg_file in "${svg_files[@]}"; do
+    if [[ ! "$svg_file" =~ -dark\.svg$ ]]; then
+        if generate_dark_variant "$svg_file"; then
+            ((count++))
+        else
+            ((failed++))
+            echo "    Warning: Failed to generate dark variant for $(basename "$svg_file")" >&2
+        fi
     fi
 done
 
-echo "    Generated $count dark mode variants"
+if [[ $failed -gt 0 ]]; then
+    echo "    Generated $count dark mode variants ($failed failed)" >&2
+else
+    echo "    Generated $count dark mode variants"
+fi
+
+# Exit with success even if some failed - don't break the build
+exit 0
