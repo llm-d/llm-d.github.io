@@ -117,10 +117,10 @@ const config: Config = {
         {
           title: 'Documentation',
           items: [
-            {label: 'Getting Started', to: 'getting-started'},
-            {label: 'Architecture', to: 'architecture'},
-            {label: 'Guides', to: 'guides'},
-            {label: 'Resources', to: 'resources/gateway'},
+            {label: 'Getting Started', href: '/docs/getting-started'},
+            {label: 'Architecture', href: '/docs/architecture'},
+            {label: 'Guides', href: '/docs/guides'},
+            {label: 'Resources', href: '/docs/resources/gateway'},
           ],
         },
         {
