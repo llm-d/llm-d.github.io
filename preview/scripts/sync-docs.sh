@@ -54,7 +54,7 @@ rm -rf "$DOCS_DIR"/*
 echo "    Creating directory structure from outline..."
 mkdir -p \
     "$DOCS_DIR/getting-started" \
-    "$DOCS_DIR/architecture/core/epp" \
+    "$DOCS_DIR/architecture/core/router/epp" \
     "$DOCS_DIR/architecture/advanced/disaggregation" \
     "$DOCS_DIR/architecture/advanced/autoscaling" \
     "$DOCS_DIR/architecture/advanced/batch" \
@@ -76,17 +76,19 @@ cp_doc "$WIP/getting-started/artifacts.md"    "$DOCS_DIR/getting-started/artifac
 cp_doc "$WIP/architecture/README.md"          "$DOCS_DIR/architecture/index.md"
 
 # Architecture / Core
-cp_doc "$WIP/architecture/core/router/proxy.md"           "$DOCS_DIR/architecture/core/proxy.md"
 cp_doc "$WIP/architecture/core/inferencepool.md"   "$DOCS_DIR/architecture/core/inferencepool.md"
 cp_doc "$WIP/architecture/core/model-servers.md"   "$DOCS_DIR/architecture/core/model-servers.md"
 
-# Architecture / Core / EPP (moved under router/ in upstream)
-cp_doc "$WIP/architecture/core/router/epp/README.md"           "$DOCS_DIR/architecture/core/epp/index.md"
-cp_doc "$WIP/architecture/core/router/epp/scheduling.md"       "$DOCS_DIR/architecture/core/epp/scheduling.md"
-cp_doc "$WIP/architecture/core/router/epp/flow-control.md"     "$DOCS_DIR/architecture/core/epp/flow-control.md"
-cp_doc "$WIP/architecture/core/router/epp/request-handling.md"  "$DOCS_DIR/architecture/core/epp/request-handling.md"
-cp_doc "$WIP/architecture/core/router/epp/configuration.md"     "$DOCS_DIR/architecture/core/epp/configuration.md"
-cp_doc "$WIP/architecture/core/router/epp/datalayer.md"         "$DOCS_DIR/architecture/core/epp/datalayer.md"
+# Architecture / Core / Router
+cp_doc "$WIP/architecture/core/router/proxy.md"           "$DOCS_DIR/architecture/core/router/proxy.md"
+
+# Architecture / Core / Router / EPP
+cp_doc "$WIP/architecture/core/router/epp/README.md"           "$DOCS_DIR/architecture/core/router/epp/index.md"
+cp_doc "$WIP/architecture/core/router/epp/scheduling.md"       "$DOCS_DIR/architecture/core/router/epp/scheduling.md"
+cp_doc "$WIP/architecture/core/router/epp/flow-control.md"     "$DOCS_DIR/architecture/core/router/epp/flow-control.md"
+cp_doc "$WIP/architecture/core/router/epp/request-handling.md"  "$DOCS_DIR/architecture/core/router/epp/request-handling.md"
+cp_doc "$WIP/architecture/core/router/epp/configuration.md"     "$DOCS_DIR/architecture/core/router/epp/configuration.md"
+cp_doc "$WIP/architecture/core/router/epp/datalayer.md"         "$DOCS_DIR/architecture/core/router/epp/datalayer.md"
 
 # Architecture / Advanced / Disaggregation
 cp_doc "$WIP/architecture/advanced/disaggregation/README.md"            "$DOCS_DIR/architecture/advanced/disaggregation/index.md"
@@ -185,7 +187,7 @@ done
 
 # === Clean up known issues ===
 # Remove "NEEDS TO BE REDONE" from configuration.md
-sed_inplace '/^NEEDS TO BE REDONE/d' "$DOCS_DIR/architecture/core/epp/configuration.md" 2>/dev/null || true
+sed_inplace '/^NEEDS TO BE REDONE/d' "$DOCS_DIR/architecture/core/router/epp/configuration.md" 2>/dev/null || true
 
 # === Apply markdown transformations (shared with test-transformations.sh) ===
 echo "    Applying markdown transformations (callouts, tabs, MDX escaping)..."
@@ -255,7 +257,7 @@ generate_stub "$DOCS_DIR/resources/gateway/agentgateway.md" "Agent Gateway" "Dep
 generate_stub "$DOCS_DIR/architecture/advanced/batch/index.md" "Batch Processing" "Asynchronous batch inference architecture"
 generate_stub "$DOCS_DIR/architecture/advanced/batch/batch-gateway.md" "Batch Gateway" "Gateway for batch inference requests"
 generate_stub "$DOCS_DIR/architecture/advanced/batch/async-processor.md" "Async Processor" "Asynchronous request processing component"
-generate_stub "$DOCS_DIR/architecture/core/epp/datalayer.md" "Data Layer" "EPP data layer architecture"
+generate_stub "$DOCS_DIR/architecture/core/router/epp/datalayer.md" "Data Layer" "EPP data layer architecture"
 generate_stub "$DOCS_DIR/architecture/advanced/disaggregation/index.md" "Disaggregation" "Prefill/decode disaggregation architecture"
 generate_stub "$DOCS_DIR/architecture/advanced/disaggregation/configuration.md" "Disaggregation Configuration" "Configuration guide for disaggregated serving"
 generate_stub "$DOCS_DIR/architecture/advanced/disaggregation/operations-vllm.md" "vLLM Operations" "vLLM-specific operations for disaggregated serving"

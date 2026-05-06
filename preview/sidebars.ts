@@ -27,19 +27,24 @@ const sidebars: SidebarsConfig = {
           label: 'Core',
           collapsed: false,
           items: [
-            'architecture/core/proxy',
             'architecture/core/inferencepool',
             {
               type: 'category',
-              label: 'EPP',
-              collapsed: false,
-              link: {type: 'doc', id: 'architecture/core/epp/index'},
+              label: 'Router',
               items: [
-                'architecture/core/epp/scheduling',
-                'architecture/core/epp/flow-control',
-                'architecture/core/epp/request-handling',
-                'architecture/core/epp/configuration',
-                'architecture/core/epp/datalayer',
+                'architecture/core/router/proxy',
+                {
+                  type: 'category',
+                  label: 'EPP',
+                  link: {type: 'doc', id: 'architecture/core/router/epp/index'},
+                  items: [
+                    'architecture/core/router/epp/scheduling',
+                    'architecture/core/router/epp/flow-control',
+                    'architecture/core/router/epp/request-handling',
+                    'architecture/core/router/epp/configuration',
+                    'architecture/core/router/epp/datalayer',
+                  ],
+                },
               ],
             },
             'architecture/core/model-servers',
