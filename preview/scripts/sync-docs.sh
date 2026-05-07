@@ -31,8 +31,9 @@ echo "==> Syncing docs from llm-d/llm-d @ $BRANCH"
 if [[ -n "${LLMD_REPO:-}" ]]; then
     echo "    Using local repo: $LLMD_REPO"
     SRC="$LLMD_REPO"
-    # Ensure we're on the right branch
-    (cd "$SRC" && git checkout "$BRANCH" --quiet 2>/dev/null || git fetch origin "$BRANCH" --quiet && git checkout "$BRANCH" --quiet)
+    # ALWAYS fetch and reset to ensure we have the latest content from origin
+    echo "    Fetching latest $BRANCH from origin..."
+    (cd "$SRC" && git fetch origin "$BRANCH" --quiet && git reset --hard origin/"$BRANCH" --quiet)
 else
     # Sparse checkout into a temp dir
     TMPDIR=$(mktemp -d)
