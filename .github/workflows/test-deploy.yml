@@ -53,10 +53,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Check if comment already exists
+          # Check if comment already exists (use databaseId for REST API compatibility)
           COMMENT_ID=$(gh pr view ${{ github.event.pull_request.number }} \
             --repo ${{ github.repository }} \
-            --json comments --jq '.comments[] | select(.body | startswith("<!-- broken-links-report -->")) | .id' \
+            --json comments --jq '.comments[] | select(.body | startswith("<!-- broken-links-report -->")) | .databaseId' \
             | head -1)
 
           # Prepare comment body with marker
