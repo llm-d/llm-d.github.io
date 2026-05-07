@@ -31,6 +31,7 @@ const sidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Router',
+              link: {type: 'doc', id: 'architecture/core/router/index'},
               items: [
                 'architecture/core/router/proxy',
                 {

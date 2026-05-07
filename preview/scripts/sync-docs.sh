@@ -80,6 +80,7 @@ cp_doc "$WIP/architecture/core/inferencepool.md"   "$DOCS_DIR/architecture/core/
 cp_doc "$WIP/architecture/core/model-servers.md"   "$DOCS_DIR/architecture/core/model-servers.md"
 
 # Architecture / Core / Router
+cp_doc "$WIP/architecture/core/router/README.md"          "$DOCS_DIR/architecture/core/router/index.md"
 cp_doc "$WIP/architecture/core/router/proxy.md"           "$DOCS_DIR/architecture/core/router/proxy.md"
 
 # Architecture / Core / Router / EPP
@@ -151,9 +152,6 @@ cp_doc "$WIP/architecture/core/images/flow_control_dashboard.png" "$STATIC_DIR/"
 cp_doc "$WIP/architecture/advanced/autoscaling/hpa-architecture.svg" "$STATIC_DIR/" 2>/dev/null || true
 
 # === Generate dark mode variants for all SVGs ===
-"$SCRIPT_DIR/generate-dark-svgs.sh" || {
-    echo "Warning: Dark SVG generation encountered errors, continuing build..." >&2
-}
 
 # === Fix specific image paths for Docusaurus ===
 echo "    Fixing specific image references..."
@@ -209,13 +207,6 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
 done
 
 # === Convert SVG images to theme-aware dual images ===
-echo "    Converting SVG images to support light/dark theme switching..."
-find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
-    # Convert ![alt](/img/docs/diagram.svg) to dual images with CSS-based theme switching
-    # Uses Docusaurus data-theme attribute instead of OS prefers-color-scheme
-    # Note: Raw HTML needs full /docs/img/docs/ path since Docusaurus doesn't auto-prepend baseUrl to HTML attributes
-    sed_inplace 's|!\[\([^]]*\)\](/img/docs/\([^)]*\)\.svg)|<span class="theme-aware-image"><img src="/docs/img/docs/\2.svg" alt="\1" class="light-mode-only" /><img src="/docs/img/docs/\2-dark.svg" alt="\1" class="dark-mode-only" /></span>|g' "$file"
-done
 
 # === Generate stubs for pages in outline that don't have source content yet ===
 echo "    Generating stubs for missing pages..."
