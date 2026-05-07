@@ -22,7 +22,7 @@
   "dependencies": {
     "@babel/core": "^7.29.0",
     "@babel/preset-env": "^7.29.5",
-    "@docusaurus/core": "3.10.0",
+    "@docusaurus/core": "3.10.1",
     "@docusaurus/preset-classic": "3.10.0",
     "@docusaurus/theme-mermaid": "3.10.0",
     "@jest/environment": "^29.7.0",
