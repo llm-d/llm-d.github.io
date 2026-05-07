@@ -147,6 +147,8 @@ cp_doc "$WIP/api-reference/glossary.md"       "$DOCS_DIR/api-reference/glossary.
 echo "    Copying image assets..."
 mkdir -p "$STATIC_DIR"
 cp "$ASSETS"/*.svg "$STATIC_DIR/" 2>/dev/null || true
+cp "$ASSETS"/images/*.svg "$STATIC_DIR/" 2>/dev/null || true
+cp "$ASSETS"/images/*.png "$STATIC_DIR/" 2>/dev/null || true
 cp_doc "$WIP/resources/rdma/networking-stack.svg" "$STATIC_DIR/" 2>/dev/null || true
 cp_doc "$WIP/architecture/core/images/flow_control_dashboard.png" "$STATIC_DIR/" 2>/dev/null || true
 cp_doc "$WIP/architecture/advanced/autoscaling/hpa-architecture.svg" "$STATIC_DIR/" 2>/dev/null || true
