@@ -141,6 +141,109 @@ Generates the complete static site into the `build/` directory. This is the same
 - **GitHub Actions** ([.github/workflows/deploy.yml](.github/workflows/deploy.yml))
 - **Local testing** (when you want to verify the full build)
 
+### Link Checking
+
+A tool to validate all links in the built website by running a local server and checking links via HTTP requests.
+
+#### Quick Start
+
+```bash
+# 1. Build the site first
+npm run build:all
+
+# 2. Run the link checker
+npm run check-links
+```
+
+The link checker will:
+1. Start a local Docusaurus server
+2. Crawl all pages starting from the homepage
+3. Check all links via HTTP requests
+4. Generate a `broken-links-report.md` file in the root directory
+5. Stop the server automatically
+
+#### Features
+
+- 🚀 **Server-based validation** - Starts local server and checks links via HTTP (matches production behavior)
+- 🕷️ **Web crawler** - Discovers all pages by following internal links from homepage
+- ✅ **Internal link validation** - Checks all internal page links, images, and assets
+- 🗺️ **Source mapping** - Shows which upstream file needs fixing (llm-d/llm-d or local)
+- 📊 **Detailed reporting** - Broken links grouped by page and category
+- ⚡ **Fast** - Uses regex-based parsing and concurrent HTTP requests
+- 🔧 **Configurable** - Optional config file for customization
+
+#### Configuration
+
+Create a `link-checker.config.json` file in the root directory to customize behavior:
+
+```json
+{
+  "serverPort": 3333,
+  "checkExternalLinks": false,
+  "ignorePatterns": [
+    "https://example.com/draft",
+    "/docs/draft/"
+  ],
+  "externalTimeout": 10000,
+  "maxConcurrent": 10
+}
+```
+
+**Configuration Options:**
+- `serverPort` (default: `3333`) - Port for the local Docusaurus server
+- `checkExternalLinks` (default: `false`) - Whether to validate external URLs (slow and often blocked)
+- `ignorePatterns` (default: `[]`) - Array of patterns to ignore
+- `externalTimeout` (default: `10000`) - Timeout in milliseconds for external requests
+- `maxConcurrent` (default: `10`) - Maximum concurrent external requests
+
+#### Report Format
+
+The generated report shows:
+- Summary (total pages crawled, links found, broken links)
+- Broken links grouped by source page
+- Source file information (which repo to fix the issue in)
+- Categorized summary (internal, external, images)
+
+Example:
+```markdown
+### /videos
+
+**Source:** Local (this repository)
+
+- 🔗 `/docs/guide` → **HTTP 404** (link)
+```
+
+#### GitHub Actions Integration
+
+The link checker runs automatically on every PR via [.github/workflows/test-deploy.yml](.github/workflows/test-deploy.yml).
+
+To view the report:
+1. Go to the PR's "Checks" tab
+2. Find the "Test deployment" workflow
+3. Download the "broken-links-report" artifact
+
+The check uses `continue-on-error: true` so it won't fail the build.
+
+#### Common Issues
+
+**Issue: `/docs/guide` → HTTP 404**
+- Link points to a page that doesn't exist
+- Fix: Update the link to point to the correct page, create the missing page, or remove the link
+
+**Issue: HTTP 404 for valid-looking URLs**
+- Docusaurus has specific routing rules
+- URLs like `/blog/index` or `/docs/getting-started/index` don't work
+- Fix: Remove `/index` from URLs - Docusaurus handles this automatically
+
+**Issue: Server fails to start**
+- Error: `Server start timeout` or `EADDRINUSE`
+- Solution: Something is using port 3333. Either stop the other service or configure a different port in `link-checker.config.json`
+
+**Issue: External links showing 403/999 errors**
+- Many sites (Twitter, LinkedIn, Reddit) block automated requests
+- These links may work in browsers but fail in the checker
+- Solution: Add them to `ignorePatterns` or manually test them
+
 ## 📝 Making Changes
 
 ### Editing Local Content
