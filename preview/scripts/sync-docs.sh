@@ -35,12 +35,11 @@ if [[ -n "${LLMD_REPO:-}" ]]; then
     echo "    Fetching latest $BRANCH from origin..."
     (cd "$SRC" && git fetch origin "$BRANCH" --quiet && git reset --hard origin/"$BRANCH" --quiet)
 else
-    # Sparse checkout into a temp dir
+    # Clone into a temp dir
     TMPDIR=$(mktemp -d)
     trap "rm -rf $TMPDIR" EXIT
-    echo "    Cloning sparse checkout into temp dir..."
-    git clone --depth 1 --branch "$BRANCH" --filter=blob:none --sparse "$REPO_URL" "$TMPDIR" --quiet
-    (cd "$TMPDIR" && git sparse-checkout set docs docs/assets)
+    echo "    Cloning into temp dir..."
+    git clone --depth 1 --branch "$BRANCH" --filter=blob:none "$REPO_URL" "$TMPDIR" --quiet
     SRC="$TMPDIR"
 fi
 
