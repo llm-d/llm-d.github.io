@@ -47,3 +47,31 @@ jobs:
           name: broken-links-report
           path: broken-links-report.md
           if-no-files-found: ignore
+
+      - name: Post broken links report to PR
+        if: always() && github.event_name == 'pull_request' && hashFiles('broken-links-report.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Check if comment already exists
+          COMMENT_ID=$(gh pr view ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --json comments --jq '.comments[] | select(.body | startswith("<!-- broken-links-report -->")) | .id' \
+            | head -1)
+
+          # Prepare comment body with marker
+          COMMENT_BODY="<!-- broken-links-report -->
+          $(cat broken-links-report.md)"
+
+          if [ -n "$COMMENT_ID" ]; then
+            # Update existing comment
+            echo "Updating existing comment ID: $COMMENT_ID"
+            gh api -X PATCH "/repos/${{ github.repository }}/issues/comments/$COMMENT_ID" \
+              -f body="$COMMENT_BODY"
+          else
+            # Create new comment
+            echo "Creating new comment"
+            gh pr comment ${{ github.event.pull_request.number }} \
+              --repo ${{ github.repository }} \
+              --body "$COMMENT_BODY"
+          fi
