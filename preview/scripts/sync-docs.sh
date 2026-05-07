@@ -58,6 +58,7 @@ mkdir -p \
     "$DOCS_DIR/architecture/advanced/disaggregation" \
     "$DOCS_DIR/architecture/advanced/autoscaling" \
     "$DOCS_DIR/architecture/advanced/batch" \
+    "$DOCS_DIR/architecture/advanced/kv-management" \
     "$DOCS_DIR/guides" \
     "$DOCS_DIR/resources/gateway" \
     "$DOCS_DIR/resources/monitoring" \
@@ -98,6 +99,12 @@ cp_doc "$WIP/architecture/advanced/disaggregation/operations-vllm.md"   "$DOCS_D
 
 # Architecture / Advanced
 cp_doc "$WIP/architecture/advanced/latency-predictor.md" "$DOCS_DIR/architecture/advanced/latency-predictor.md"
+
+# Architecture / Advanced / KV Management
+cp_doc "$WIP/architecture/advanced/kv-management/README.md"                     "$DOCS_DIR/architecture/advanced/kv-management/index.md"
+cp_doc "$WIP/architecture/advanced/kv-management/kv-indexer.md"                "$DOCS_DIR/architecture/advanced/kv-management/kv-indexer.md"
+cp_doc "$WIP/architecture/advanced/kv-management/kv-offloader.md"              "$DOCS_DIR/architecture/advanced/kv-management/kv-offloader.md"
+cp_doc "$WIP/architecture/advanced/kv-management/prefix-cache-aware-routing.md" "$DOCS_DIR/architecture/advanced/kv-management/prefix-cache-aware-routing.md"
 
 # Architecture / Advanced / Autoscaling
 cp_doc "$WIP/architecture/advanced/autoscaling/README.md"                       "$DOCS_DIR/architecture/advanced/autoscaling/index.md"
@@ -259,6 +266,10 @@ generate_stub "$DOCS_DIR/architecture/core/router/epp/datalayer.md" "Data Layer"
 generate_stub "$DOCS_DIR/architecture/advanced/disaggregation/index.md" "Disaggregation" "Prefill/decode disaggregation architecture"
 generate_stub "$DOCS_DIR/architecture/advanced/disaggregation/configuration.md" "Disaggregation Configuration" "Configuration guide for disaggregated serving"
 generate_stub "$DOCS_DIR/architecture/advanced/disaggregation/operations-vllm.md" "vLLM Operations" "vLLM-specific operations for disaggregated serving"
+generate_stub "$DOCS_DIR/architecture/advanced/kv-management/index.md" "KV Cache Management" "KV cache optimization and management"
+generate_stub "$DOCS_DIR/architecture/advanced/kv-management/prefix-cache-aware-routing.md" "Prefix Cache Aware Routing" "Routing requests to maximize KV cache hits"
+generate_stub "$DOCS_DIR/architecture/advanced/kv-management/kv-indexer.md" "KV-Cache Indexer" "Globally consistent KV cache block tracking"
+generate_stub "$DOCS_DIR/architecture/advanced/kv-management/kv-offloader.md" "KV Offloader" "Tiered KV cache storage hierarchy"
 generate_stub "$DOCS_DIR/api-reference/index.md" "API Reference" "API specification and reference documentation"
 generate_stub "$DOCS_DIR/api-reference/glossary.md" "Glossary" "Terminology and definitions for llm-d"
 generate_stub "$DOCS_DIR/resources/configuring-user-facing-apis.md" "Configuring User-Facing APIs" "OpenAI-compatible API configuration"
