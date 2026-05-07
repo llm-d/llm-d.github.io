@@ -1,9 +1,0 @@
-{
-    "serverPort": 3333,
-    "checkExternalLinks": false,
-    "ignorePatterns": [
-      
-    ],
-    "externalTimeout": 10000,
-    "maxConcurrent": 10
-  }

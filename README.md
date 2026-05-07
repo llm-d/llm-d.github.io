@@ -174,7 +174,7 @@ The link checker will:
 
 #### Configuration
 
-Create a `link-checker.config.json` file in the root directory to customize behavior:
+The link checker uses sensible defaults and runs without configuration in GitHub Actions. For local development, you can optionally create a `link-checker.config.json` file in the root directory to customize behavior:
 
 ```json
 {
@@ -189,12 +189,14 @@ Create a `link-checker.config.json` file in the root directory to customize beha
 }
 ```
 
-**Configuration Options:**
+**Available Options:**
 - `serverPort` (default: `3333`) - Port for the local Docusaurus server
 - `checkExternalLinks` (default: `false`) - Whether to validate external URLs (slow and often blocked)
-- `ignorePatterns` (default: `[]`) - Array of patterns to ignore
+- `ignorePatterns` (default: `[]`) - Array of URL patterns to skip
 - `externalTimeout` (default: `10000`) - Timeout in milliseconds for external requests
 - `maxConcurrent` (default: `10`) - Maximum concurrent external requests
+
+**Note:** The config file is gitignored and only used for local customization.
 
 #### Report Format
 

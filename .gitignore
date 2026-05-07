@@ -9,6 +9,7 @@ preview/docs
 preview/static/img/docs/
 
 # Link checker
+link-checker.config.json
 broken-links-report.md
 
 # Remote content files (downloaded automatically from GitHub repositories)

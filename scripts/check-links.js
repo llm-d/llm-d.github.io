@@ -129,16 +129,17 @@ function buildSourceMap() {
   );
 
   // Extract cp_doc commands: cp_doc "$WIP/path/file.md" "$DOCS_DIR/dest/file.md"
-  const cpDocPattern = /cp_doc\s+"[^"]*\/([^"]+)"\s+"[^"]*\/docs\/(.+)"/g;
+  // Pattern matches: cp_doc "$WIP/..." "$DOCS_DIR/..."
+  const cpDocPattern = /cp_doc\s+"\$WIP\/([^"]+)"\s+"\$DOCS_DIR\/(.+)"/g;
   let match;
 
   while ((match = cpDocPattern.exec(syncScript)) !== null) {
     const sourceFile = match[1];
     const destFile = match[2];
 
-    // Convert .md to .html and handle index files
-    let htmlPath = destFile.replace(/\.md$/, '.html').replace(/index\.html$/, '');
-    if (!htmlPath.endsWith('.html') && !htmlPath.endsWith('/')) {
+    // Convert .md to / for Docusaurus routing and handle index files
+    let htmlPath = destFile.replace(/\.md$/, '').replace(/\/index$/, '');
+    if (htmlPath && !htmlPath.endsWith('/')) {
       htmlPath += '/';
     }
 
@@ -651,6 +652,8 @@ async function checkLinks() {
 
     if (brokenLinks.length > 0) {
       console.log(`\n⚠️  Found ${brokenLinks.length} broken links. See report for details.`);
+      stopServer();
+      process.exit(1); // Exit with error code to fail CI
     } else {
       console.log(`\n🎉 No broken links found!`);
     }
@@ -705,10 +708,12 @@ function generateReport(brokenLinks, totalLinks, totalPages, sourceMap) {
     .sort((a, b) => b[1].length - a[1].length);
 
   for (const [page, links] of sortedPages) {
-    report += `### /${page}\n\n`;
+    // Remove leading slash for display since page already has it
+    const displayPage = page.startsWith('/') ? page.slice(1) : page;
+    report += `### /${displayPage}\n\n`;
 
-    // Get source file info
-    const sourceInfo = getSourceInfo(page, sourceMap);
+    // Get source file info (pass page with leading slash removed for lookup)
+    const sourceInfo = getSourceInfo(displayPage, sourceMap);
     if (sourceInfo) {
       report += `**Source:** ${sourceInfo}\n\n`;
     }
@@ -736,7 +741,8 @@ function generateReport(brokenLinks, totalLinks, totalPages, sourceMap) {
     report += `| Source Page | Broken Link | Issue |\n`;
     report += `|-------------|-------------|-------|\n`;
     for (const link of byCategory.internal) {
-      report += `| /${link.sourcePage} | \`${link.url}\` | ${link.reason} |\n`;
+      const displayPage = link.sourcePage.startsWith('/') ? link.sourcePage.slice(1) : link.sourcePage;
+      report += `| /${displayPage} | \`${link.url}\` | ${link.reason} |\n`;
     }
     report += `\n`;
   }
@@ -746,7 +752,8 @@ function generateReport(brokenLinks, totalLinks, totalPages, sourceMap) {
     report += `| Source Page | Broken Link | Status |\n`;
     report += `|-------------|-------------|--------|\n`;
     for (const link of byCategory.external) {
-      report += `| /${link.sourcePage} | ${link.url} | ${link.reason} |\n`;
+      const displayPage = link.sourcePage.startsWith('/') ? link.sourcePage.slice(1) : link.sourcePage;
+      report += `| /${displayPage} | ${link.url} | ${link.reason} |\n`;
     }
     report += `\n`;
   }
@@ -756,7 +763,8 @@ function generateReport(brokenLinks, totalLinks, totalPages, sourceMap) {
     report += `| Source Page | Missing Asset | Issue |\n`;
     report += `|-------------|---------------|-------|\n`;
     for (const link of byCategory.image) {
-      report += `| /${link.sourcePage} | \`${link.url}\` | ${link.reason} |\n`;
+      const displayPage = link.sourcePage.startsWith('/') ? link.sourcePage.slice(1) : link.sourcePage;
+      report += `| /${displayPage} | \`${link.url}\` | ${link.reason} |\n`;
     }
     report += `\n`;
   }

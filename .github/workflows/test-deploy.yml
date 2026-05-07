@@ -32,11 +32,13 @@ jobs:
       - name: Test build preview docs
         run: cd preview && npm run build
       - name: Merge preview into main build as /docs
-        run: cp -r preview/build build/docs
+        run: |
+          cp -r preview/build build/docs
+          mkdir -p build/img/docs
+          cp -r preview/build/img/docs/* build/img/docs/
 
       - name: Check links
         run: npm run check-links
-        continue-on-error: true
 
       - name: Upload broken links report
         if: always()
