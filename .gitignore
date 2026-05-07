@@ -6,7 +6,7 @@ preview/node_modules
 preview/build
 preview/.docusaurus
 preview/docs
-preview/static/img/docs/
+preview/static/img/docs/*
 
 # Link checker
 link-checker.config.json
