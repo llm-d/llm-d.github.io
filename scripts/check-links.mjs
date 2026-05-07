@@ -727,48 +727,6 @@ function generateReport(brokenLinks, totalLinks, totalPages, sourceMap) {
     report += `\n`;
   }
 
-  // Summary by category
-  report += `## Broken Links by Category\n\n`;
-
-  const byCategory = {
-    internal: brokenLinks.filter(l => l.category === 'internal'),
-    external: brokenLinks.filter(l => l.category === 'external'),
-    image: brokenLinks.filter(l => l.category === 'image')
-  };
-
-  if (byCategory.internal.length > 0) {
-    report += `### Internal Links (${byCategory.internal.length})\n\n`;
-    report += `| Source Page | Broken Link | Issue |\n`;
-    report += `|-------------|-------------|-------|\n`;
-    for (const link of byCategory.internal) {
-      const displayPage = link.sourcePage.startsWith('/') ? link.sourcePage.slice(1) : link.sourcePage;
-      report += `| /${displayPage} | \`${link.url}\` | ${link.reason} |\n`;
-    }
-    report += `\n`;
-  }
-
-  if (byCategory.external.length > 0) {
-    report += `### External Links (${byCategory.external.length})\n\n`;
-    report += `| Source Page | Broken Link | Status |\n`;
-    report += `|-------------|-------------|--------|\n`;
-    for (const link of byCategory.external) {
-      const displayPage = link.sourcePage.startsWith('/') ? link.sourcePage.slice(1) : link.sourcePage;
-      report += `| /${displayPage} | ${link.url} | ${link.reason} |\n`;
-    }
-    report += `\n`;
-  }
-
-  if (byCategory.image.length > 0) {
-    report += `### Images/Assets (${byCategory.image.length})\n\n`;
-    report += `| Source Page | Missing Asset | Issue |\n`;
-    report += `|-------------|---------------|-------|\n`;
-    for (const link of byCategory.image) {
-      const displayPage = link.sourcePage.startsWith('/') ? link.sourcePage.slice(1) : link.sourcePage;
-      report += `| /${displayPage} | \`${link.url}\` | ${link.reason} |\n`;
-    }
-    report += `\n`;
-  }
-
   return report;
 }
 

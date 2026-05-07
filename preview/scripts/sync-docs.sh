@@ -232,8 +232,6 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](/guides/asynchronous-processing)|\](https://github.com/llm-d/llm-d/tree/main/guides/asynchronous-processing)|g' \
         -e 's|\](/guides/optimized-baseline)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
         -e 's|\](/guides/precise-prefix-cache-aware)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware)|g' \
-        -e 's|\](/guides/prereq/gateways/\([^)]*\)\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/\1.md)|g' \
-        -e 's|\](/guides/prereq/gateways/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/README.md)|g' \
         -e 's|\](/docs/\([^)]*\)/README\.md)|\](/docs/\1)|g' \
         "$file"
 done
