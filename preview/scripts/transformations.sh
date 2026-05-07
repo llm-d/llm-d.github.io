@@ -41,6 +41,23 @@ apply_transformations() {
     # MDX escaping - escape special characters
     sed_inplace 's|<->|\\<->|g' "$file"
 
+    # Fix escaped curly braces in tables (MDX interprets \{var\} as JS expression)
+    # Convert \{key,value\} -> (key,value) for MDX compatibility
+    sed_inplace 's|\\{|(|g' "$file"
+    sed_inplace 's|\\}|)|g' "$file"
+
+    # Also fix unescaped curly braces in table cells
+    # Convert {key,value} -> (key,value) in table cells (lines with |)
+    sed_inplace '/^|.*|$/ s|{|(|g' "$file"
+    sed_inplace '/^|.*|$/ s|}|)|g' "$file"
+
+    # Fix well-lit-paths links (convert to /docs/guides for Docusaurus)
+    # Source files use ../well-lit-paths/*.md for GitHub compatibility
+    # Convert to /docs/guides/* for Docusaurus
+    sed_inplace \
+        -E 's|\(\.\./well-lit-paths/([^)]+)\.md\)|(/docs/guides/\1)|g' \
+        "$file"
+
     # Fix unclosed HTML tags for MDX (must be self-closing)
     sed_inplace 's|<img \([^>]*[^/]\)>|<img \1 />|g' "$file"
     sed_inplace 's|<source \([^>]*[^/]\)>|<source \1 />|g' "$file"

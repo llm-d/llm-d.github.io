@@ -23,6 +23,7 @@ BRANCH="${1:-main}"
 REPO_URL="https://github.com/llm-d/llm-d.git"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 DOCS_DIR="$PROJECT_DIR/docs"
+GUIDES_DIR="$PROJECT_DIR/guides"
 STATIC_DIR="$PROJECT_DIR/static/img/docs"
 
 echo "==> Syncing docs from llm-d/llm-d @ $BRANCH"
@@ -32,8 +33,8 @@ if [[ -n "${LLMD_REPO:-}" ]]; then
     echo "    Using local repo: $LLMD_REPO"
     SRC="$LLMD_REPO"
     # ALWAYS fetch and reset to ensure we have the latest content from origin
-    echo "    Fetching latest $BRANCH from origin..."
-    (cd "$SRC" && git fetch origin "$BRANCH" --quiet && git reset --hard origin/"$BRANCH" --quiet)
+    #echo "    Fetching latest $BRANCH from origin..."
+    #(cd "$SRC" && git fetch origin "$BRANCH" --quiet && git reset --hard origin/"$BRANCH" --quiet)
 else
     # Clone into a temp dir
     TMPDIR=$(mktemp -d)
@@ -63,7 +64,8 @@ mkdir -p \
     "$DOCS_DIR/resources/gateway" \
     "$DOCS_DIR/resources/monitoring" \
     "$DOCS_DIR/resources/rdma" \
-    "$DOCS_DIR/api-reference"
+    "$DOCS_DIR/api-reference" \
+    "$DOCS_DIR/accelerators"
 
 echo "    Copying content..."
 
@@ -130,6 +132,10 @@ cp_doc "$WIP/well-lit-paths/predicted-latency.md"         "$DOCS_DIR/guides/pred
 cp_doc "$WIP/well-lit-paths/wide-expert-parallelism.md"   "$DOCS_DIR/guides/wide-expert-parallelism.md"
 cp_doc "$WIP/well-lit-paths/workload-autoscaling.md"      "$DOCS_DIR/guides/workload-autoscaling.md"
 
+# Experimental guides
+mkdir -p "$DOCS_DIR/guides/experimental"
+cp_doc "$WIP/well-lit-paths/experimental/batch-gateway.md" "$DOCS_DIR/guides/experimental/batch-gateway.md"
+
 # === Resources (formerly guides) ===
 cp_doc "$WIP/resources/deploying-multiple-model.md"         "$DOCS_DIR/resources/deploying-multiple-models.md"
 cp_doc "$WIP/resources/user-apis.md"                        "$DOCS_DIR/resources/configuring-user-facing-apis.md"
@@ -149,6 +155,18 @@ cp_doc "$WIP/resources/rdma/README.md"                      "$DOCS_DIR/resources
 # === API Reference ===
 cp_doc "$WIP/api-reference/README.md"         "$DOCS_DIR/api-reference/index.md"
 cp_doc "$WIP/api-reference/glossary.md"       "$DOCS_DIR/api-reference/glossary.md"
+cp_doc "$WIP/api-reference/inferencepool.md"         "$DOCS_DIR/api-reference/inferencepool.md"
+cp_doc "$WIP/api-reference/inferenceobjective.md"    "$DOCS_DIR/api-reference/inferenceobjective.md"
+cp_doc "$WIP/api-reference/inferencemodelrewrite.md" "$DOCS_DIR/api-reference/inferencemodelrewrite.md"
+cp_doc "$WIP/api-reference/endpointpickerconfig.md"  "$DOCS_DIR/api-reference/endpointpickerconfig.md"
+cp_doc "$WIP/api-reference/epp-http-headers.md"      "$DOCS_DIR/api-reference/epp-http-headers.md"
+
+# === Accelerators ===
+cp_doc "$WIP/accelerators/README.md"                 "$DOCS_DIR/accelerators/index.md"
+
+# === Deployment Guides ===
+# Note: Deployment guides live in llm-d/guides/ and are linked via GitHub URLs
+# See transformation section below that converts ../../guides/ links to GitHub
 
 # === Assets ===
 echo "    Copying image assets..."
@@ -194,15 +212,94 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|advanced/disaggregation\.md|advanced/disaggregation/index.md|g' \
         -e 's|advanced/autoscaling/autoscaling\.md|advanced/autoscaling/index.md|g' \
         -e 's|advanced/batch/README\.md|advanced/batch/index.md|g' \
+        -e 's|\](/docs/guides/README)|\](/docs/guides)|g' \
+        -e 's|\](/docs/experimental/batch-gateway)|\](/docs/guides/experimental/batch-gateway)|g' \
+        -e 's|\](/docs/architecture/core/epp)|\](/docs/architecture/core/router/epp)|g' \
+        -e 's|\](/docs/well-lit-paths/\([^)]*\)\.md)|\](/docs/guides/\1)|g' \
+        -e 's|\](well-lit-paths/\([^)]*\))|\](/docs/guides/\1)|g' \
+        -e 's|\](.*\/guides/tiered-prefix-cache)|\](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache)|g' \
+        -e 's|\](.*\/guides/batch-gateway)|\](https://github.com/llm-d/llm-d/tree/main/guides/batch-gateway)|g' \
+        -e 's|\](.*\/guides/asynchronous-processing)|\](https://github.com/llm-d/llm-d/tree/main/guides/asynchronous-processing)|g' \
+        -e 's|\](.*\/guides/optimized-baseline)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
+        -e 's|\](.*\/guides/precise-prefix-cache-aware)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware)|g' \
+        -e 's|\](.*\/guides/pd-disaggregation)|\](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation)|g' \
+        -e 's|\](.*\/guides/wide-ep-lws)|\](https://github.com/llm-d/llm-d/tree/main/guides/wide-ep-lws)|g' \
+        -e 's|\](.*\/guides/predicted-latency-based-scheduling)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-based-scheduling)|g' \
+        -e 's|\](.*\/guides/workload-autoscaling)|\](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling)|g' \
+        -e 's|\](.*\/guides/flow-control)|\](https://github.com/llm-d/llm-d/tree/main/guides/flow-control)|g' \
+        -e 's|\](/guides/tiered-prefix-cache)|\](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache)|g' \
+        -e 's|\](/guides/batch-gateway)|\](https://github.com/llm-d/llm-d/tree/main/guides/batch-gateway)|g' \
+        -e 's|\](/guides/asynchronous-processing)|\](https://github.com/llm-d/llm-d/tree/main/guides/asynchronous-processing)|g' \
+        -e 's|\](/guides/optimized-baseline)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
+        -e 's|\](/guides/precise-prefix-cache-aware)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware)|g' \
+        -e 's|\](/guides/prereq/gateways/\([^)]*\)\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/\1.md)|g' \
+        -e 's|\](/guides/prereq/gateways/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/README.md)|g' \
+        -e 's|\](/docs/\([^)]*\)/README\.md)|\](/docs/\1)|g' \
         "$file"
 done
+
+# === Fix API reference links ===
+# API reference pages link to each other with .md extensions
+# Convert them to Docusaurus-compatible paths
+echo "    Fixing API reference links..."
+sed_inplace \
+    -e 's|\](inferencepool\.md)|\](/docs/api-reference/inferencepool)|g' \
+    -e 's|\](inferenceobjective\.md)|\](/docs/api-reference/inferenceobjective)|g' \
+    -e 's|\](inferencemodelrewrite\.md)|\](/docs/api-reference/inferencemodelrewrite)|g' \
+    -e 's|\](endpointpickerconfig\.md)|\](/docs/api-reference/endpointpickerconfig)|g' \
+    -e 's|\](epp-http-headers\.md)|\](/docs/api-reference/epp-http-headers)|g' \
+    -e 's|\](glossary\.md)|\](/docs/api-reference/glossary)|g' \
+    "$DOCS_DIR/api-reference/index.md"
+
+# === Fix architecture index.md relative paths ===
+# When architecture/README.md becomes index.md, relative paths break
+# Convert ./core/* and ./advanced/* to absolute paths with /architecture/ prefix
+echo "    Fixing architecture index.md relative paths..."
+sed_inplace \
+    -e 's|\(\[.*\]\)(\./core/inferencepool)|\1(/docs/architecture/core/inferencepool)|g' \
+    -e 's|\(\[.*\]\)(\./core/model-servers)|\1(/docs/architecture/core/model-servers)|g' \
+    -e 's|\(\[.*\]\)(\./core/router/proxy)|\1(/docs/architecture/core/router/proxy)|g' \
+    -e 's|\(\[.*\]\)(\./core/router/)|\1(/docs/architecture/core/router)|g' \
+    -e 's|\(\[.*\]\)(\./core/router)|\1(/docs/architecture/core/router)|g' \
+    -e 's|\(\[.*\]\)(\./core/router/epp/)|\1(/docs/architecture/core/router/epp)|g' \
+    -e 's|\(\[.*\]\)(\./advanced/kv-management/)|\1(/docs/architecture/advanced/kv-management)|g' \
+    -e 's|\(\[.*\]\)(\./advanced/kv-management)|\1(/docs/architecture/advanced/kv-management)|g' \
+    -e 's|\](core/router/README\.md)|\](/docs/architecture/core/router)|g' \
+    -e 's|\](core/router/epp/README\.md)|\](/docs/architecture/core/router/epp)|g' \
+    -e 's|\](core/inferencepool\.md)|\](/docs/architecture/core/inferencepool)|g' \
+    -e 's|\](core/model-servers\.md)|\](/docs/architecture/core/model-servers)|g' \
+    -e 's|\](advanced/kv-management/README\.md)|\](/docs/architecture/advanced/kv-management)|g' \
+    -e 's|\](/docs/core/router/README\.md)|\](/docs/architecture/core/router)|g' \
+    -e 's|\](/docs/core/router/epp/README\.md)|\](/docs/architecture/core/router/epp)|g' \
+    -e 's|\](/docs/advanced/kv-management/README\.md)|\](/docs/architecture/advanced/kv-management)|g' \
+    "$DOCS_DIR/architecture/index.md"
+
+# === Fix router index.md relative paths ===
+# Similar issue with router/index.md
+sed_inplace \
+    -e 's|\](\.\/epp/)|\](/docs/architecture/core/router/epp)|g' \
+    -e 's|\](\.\/epp)|\](/docs/architecture/core/router/epp)|g' \
+    -e 's|\](epp/README\.md)|\](/docs/architecture/core/router/epp)|g' \
+    -e 's|\](/docs/architecture/core/epp/README\.md)|\](/docs/architecture/core/router/epp)|g' \
+    "$DOCS_DIR/architecture/core/router/index.md"
 
 # === Clean up known issues ===
 # Remove "NEEDS TO BE REDONE" from configuration.md
 sed_inplace '/^NEEDS TO BE REDONE/d' "$DOCS_DIR/architecture/core/router/epp/configuration.md" 2>/dev/null || true
 
+# Fix unclosed <br> tags (MDX requires self-closing tags)
+find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace 's|<br>|<br />|g' "$file"
+done
+
+# Fix email addresses in angle brackets (MDX interprets them as HTML tags)
+# Replace <email@domain.com> with email@domain.com
+find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace 's|<\([^<>]*@[^<>]*\)>|\1|g' "$file"
+done
+
 # === Apply markdown transformations (shared with test-transformations.sh) ===
-echo "    Applying markdown transformations (callouts, tabs, MDX escaping)..."
+echo "    Applying markdown transformations (callouts, tabs, MDX escaping, well-lit-paths links)..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     apply_transformations "$file"
 done
