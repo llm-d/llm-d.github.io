@@ -85,7 +85,7 @@ export default function Videos() {
             Dive into our documentation or join our community to learn more.
           </p>
           <div className={styles.ctaButtons}>
-            <a href="/docs/guide" className={styles.ctaButtonPrimary}>
+            <a href="/docs/guides" className={styles.ctaButtonPrimary}>
               Read the Docs
             </a>
             <a href="/slack" className={styles.ctaButtonSecondary}>
