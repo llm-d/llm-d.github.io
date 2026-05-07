@@ -35,7 +35,7 @@
     "js-yaml": "^4.1.0",
     "jsdom": "^22.1.0",
     "prism-react-renderer": "^2.3.0",
-    "react": "^19.2.5",
+    "react": "^19.2.6",
     "react-dom": "^19.2.5",
     "react-player": "^2.16.1"
   },
