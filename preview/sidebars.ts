@@ -69,6 +69,17 @@ const sidebars: SidebarsConfig = {
             'architecture/advanced/latency-predictor',
             {
               type: 'category',
+              label: 'KV Cache Management',
+              collapsed: false,
+              link: {type: 'doc', id: 'architecture/advanced/kv-management/index'},
+              items: [
+                'architecture/advanced/kv-management/prefix-cache-aware-routing',
+                'architecture/advanced/kv-management/kv-indexer',
+                'architecture/advanced/kv-management/kv-offloader',
+              ],
+            },
+            {
+              type: 'category',
               label: 'Autoscaling',
               collapsed: false,
               link: {type: 'doc', id: 'architecture/advanced/autoscaling/index'},
