@@ -31,25 +31,22 @@ echo "==> Syncing docs from llm-d/llm-d @ $BRANCH"
 if [[ -n "${LLMD_REPO:-}" ]]; then
     echo "    Using local repo: $LLMD_REPO"
     SRC="$LLMD_REPO"
-    # Ensure we're on the right branch
-    (cd "$SRC" && git checkout "$BRANCH" --quiet 2>/dev/null || git fetch origin "$BRANCH" --quiet && git checkout "$BRANCH" --quiet)
+    # ALWAYS fetch and reset to ensure we have the latest content from origin
+    echo "    Fetching latest $BRANCH from origin..."
+    (cd "$SRC" && git fetch origin "$BRANCH" --quiet && git reset --hard origin/"$BRANCH" --quiet)
 else
-    # Sparse checkout into a temp dir
+    # Clone into a temp dir
     TMPDIR=$(mktemp -d)
     trap "rm -rf $TMPDIR" EXIT
-    echo "    Cloning sparse checkout into temp dir..."
-    git clone --depth 1 --branch "$BRANCH" --filter=blob:none --sparse "$REPO_URL" "$TMPDIR" --quiet
-    (cd "$TMPDIR" && git sparse-checkout set docs/wip-docs-new docs/assets)
+    echo "    Cloning into temp dir..."
+    git clone --depth 1 --branch "$BRANCH" --filter=blob:none "$REPO_URL" "$TMPDIR" --quiet
     SRC="$TMPDIR"
 fi
 
-WIP="$SRC/docs/wip-docs-new"
+WIP="$SRC/docs"
 ASSETS="$SRC/docs/assets"
 
-if [[ ! -d "$WIP" ]]; then
-    echo "ERROR: docs/wip-docs-new not found in branch '$BRANCH'"
-    exit 1
-fi
+# Directory check no longer needed - docs/ always exists in llm-d/llm-d
 
 echo "    Cleaning docs/ directory..."
 rm -rf "$DOCS_DIR"/*
@@ -57,11 +54,11 @@ rm -rf "$DOCS_DIR"/*
 echo "    Creating directory structure from outline..."
 mkdir -p \
     "$DOCS_DIR/getting-started" \
-    "$DOCS_DIR/architecture/core/epp" \
+    "$DOCS_DIR/architecture/core/router/epp" \
     "$DOCS_DIR/architecture/advanced/disaggregation" \
     "$DOCS_DIR/architecture/advanced/autoscaling" \
     "$DOCS_DIR/architecture/advanced/batch" \
-    "$DOCS_DIR/guides/experimental" \
+    "$DOCS_DIR/guides" \
     "$DOCS_DIR/resources/gateway" \
     "$DOCS_DIR/resources/monitoring" \
     "$DOCS_DIR/resources/rdma" \
@@ -79,17 +76,20 @@ cp_doc "$WIP/getting-started/artifacts.md"    "$DOCS_DIR/getting-started/artifac
 cp_doc "$WIP/architecture/README.md"          "$DOCS_DIR/architecture/index.md"
 
 # Architecture / Core
-cp_doc "$WIP/architecture/core/router/proxy.md"           "$DOCS_DIR/architecture/core/proxy.md"
 cp_doc "$WIP/architecture/core/inferencepool.md"   "$DOCS_DIR/architecture/core/inferencepool.md"
 cp_doc "$WIP/architecture/core/model-servers.md"   "$DOCS_DIR/architecture/core/model-servers.md"
 
-# Architecture / Core / EPP (moved under router/ in upstream)
-cp_doc "$WIP/architecture/core/router/epp/README.md"           "$DOCS_DIR/architecture/core/epp/index.md"
-cp_doc "$WIP/architecture/core/router/epp/scheduling.md"       "$DOCS_DIR/architecture/core/epp/scheduling.md"
-cp_doc "$WIP/architecture/core/router/epp/flow-control.md"     "$DOCS_DIR/architecture/core/epp/flow-control.md"
-cp_doc "$WIP/architecture/core/router/epp/request-handling.md"  "$DOCS_DIR/architecture/core/epp/request-handling.md"
-cp_doc "$WIP/architecture/core/router/epp/configuration.md"     "$DOCS_DIR/architecture/core/epp/configuration.md"
-cp_doc "$WIP/architecture/core/router/epp/datalayer.md"         "$DOCS_DIR/architecture/core/epp/datalayer.md"
+# Architecture / Core / Router
+cp_doc "$WIP/architecture/core/router/README.md"          "$DOCS_DIR/architecture/core/router/index.md"
+cp_doc "$WIP/architecture/core/router/proxy.md"           "$DOCS_DIR/architecture/core/router/proxy.md"
+
+# Architecture / Core / Router / EPP
+cp_doc "$WIP/architecture/core/router/epp/README.md"           "$DOCS_DIR/architecture/core/router/epp/index.md"
+cp_doc "$WIP/architecture/core/router/epp/scheduling.md"       "$DOCS_DIR/architecture/core/router/epp/scheduling.md"
+cp_doc "$WIP/architecture/core/router/epp/flow-control.md"     "$DOCS_DIR/architecture/core/router/epp/flow-control.md"
+cp_doc "$WIP/architecture/core/router/epp/request-handling.md"  "$DOCS_DIR/architecture/core/router/epp/request-handling.md"
+cp_doc "$WIP/architecture/core/router/epp/configuration.md"     "$DOCS_DIR/architecture/core/router/epp/configuration.md"
+cp_doc "$WIP/architecture/core/router/epp/datalayer.md"         "$DOCS_DIR/architecture/core/router/epp/datalayer.md"
 
 # Architecture / Advanced / Disaggregation
 cp_doc "$WIP/architecture/advanced/disaggregation/README.md"            "$DOCS_DIR/architecture/advanced/disaggregation/index.md"
@@ -97,8 +97,6 @@ cp_doc "$WIP/architecture/advanced/disaggregation/configuration.md"     "$DOCS_D
 cp_doc "$WIP/architecture/advanced/disaggregation/operations-vllm.md"   "$DOCS_DIR/architecture/advanced/disaggregation/operations-vllm.md"
 
 # Architecture / Advanced
-cp_doc "$WIP/architecture/advanced/kv-indexer.md"       "$DOCS_DIR/architecture/advanced/kv-indexer.md"
-cp_doc "$WIP/architecture/advanced/kv-offloader.md"     "$DOCS_DIR/architecture/advanced/kv-offloading.md"
 cp_doc "$WIP/architecture/advanced/latency-predictor.md" "$DOCS_DIR/architecture/advanced/latency-predictor.md"
 
 # Architecture / Advanced / Autoscaling
@@ -112,27 +110,18 @@ cp_doc "$WIP/architecture/advanced/batch/README.md"           "$DOCS_DIR/archite
 cp_doc "$WIP/architecture/advanced/batch/batch-gateway.md"    "$DOCS_DIR/architecture/advanced/batch/batch-gateway.md"
 cp_doc "$WIP/architecture/advanced/batch/async-processor.md"  "$DOCS_DIR/architecture/advanced/batch/async-processor.md"
 
-# === Guides (formerly well-lit-paths) ===
-cp_doc "$WIP/guides/README.md"                              "$DOCS_DIR/guides/index.md"
-cp_doc "$WIP/guides/intelligent-inference-scheduling.md"    "$DOCS_DIR/guides/intelligent-inference-scheduling.md"
-cp_doc "$WIP/guides/flow-control.md"                        "$DOCS_DIR/guides/flow-control.md"
-cp_doc "$WIP/guides/kv-cache-management.md"                 "$DOCS_DIR/guides/kv-cache-management.md"
-cp_doc "$WIP/guides/pd-disaggregation.md"                   "$DOCS_DIR/guides/pd-disaggregation.md"
-cp_doc "$WIP/guides/wide-expert-parallelism.md"             "$DOCS_DIR/guides/wide-expert-parallelism.md"
-cp_doc "$WIP/guides/experimental/predicted-latency.md"      "$DOCS_DIR/guides/experimental/predicted-latency.md"
-cp_doc "$WIP/guides/experimental/batch-gateway.md"          "$DOCS_DIR/guides/experimental/batch-gateway.md"
-cp_doc "$WIP/guides/predicted-latency.md"                   "$DOCS_DIR/guides/predicted-latency.md"
-cp_doc "$WIP/guides/workload-autoscaling.md"                "$DOCS_DIR/guides/workload-autoscaling.md"
-# PR #1249 uses the pre-rename well-lit-paths/ directory — map as fallback
-cp_doc "$WIP/well-lit-paths/README.md"                              "$DOCS_DIR/guides/index.md"
-cp_doc "$WIP/well-lit-paths/flow-control.md"                        "$DOCS_DIR/guides/flow-control.md"
-cp_doc "$WIP/well-lit-paths/kv-cache-management.md"                 "$DOCS_DIR/guides/kv-cache-management.md"
-cp_doc "$WIP/well-lit-paths/pd-disaggregation.md"                   "$DOCS_DIR/guides/pd-disaggregation.md"
-cp_doc "$WIP/well-lit-paths/wide-expert-parallelism.md"             "$DOCS_DIR/guides/wide-expert-parallelism.md"
-cp_doc "$WIP/well-lit-paths/intelligent-inference-scheduling.md"    "$DOCS_DIR/guides/intelligent-inference-scheduling.md"
-cp_doc "$WIP/well-lit-paths/optimized-baseline.md"               "$DOCS_DIR/guides/intelligent-inference-scheduling.md"
-cp_doc "$WIP/well-lit-paths/experimental/predicted-latency.md"      "$DOCS_DIR/guides/experimental/predicted-latency.md"
-cp_doc "$WIP/well-lit-paths/experimental/batch-gateway.md"        "$DOCS_DIR/guides/experimental/batch-gateway.md"
+# === Guides (from well-lit-paths directory) ===
+# Copy exactly what exists in source repo
+cp_doc "$WIP/well-lit-paths/README.md"                    "$DOCS_DIR/guides/index.md"
+cp_doc "$WIP/well-lit-paths/optimized-baseline.md"        "$DOCS_DIR/guides/optimized-baseline.md"
+cp_doc "$WIP/well-lit-paths/precise-prefix-cache-aware.md" "$DOCS_DIR/guides/precise-prefix-cache-aware.md"
+cp_doc "$WIP/well-lit-paths/tiered-prefix-cache.md"       "$DOCS_DIR/guides/tiered-prefix-cache.md"
+cp_doc "$WIP/well-lit-paths/asynchronous-processing.md"   "$DOCS_DIR/guides/asynchronous-processing.md"
+cp_doc "$WIP/well-lit-paths/flow-control.md"              "$DOCS_DIR/guides/flow-control.md"
+cp_doc "$WIP/well-lit-paths/pd-disaggregation.md"         "$DOCS_DIR/guides/pd-disaggregation.md"
+cp_doc "$WIP/well-lit-paths/predicted-latency.md"         "$DOCS_DIR/guides/predicted-latency.md"
+cp_doc "$WIP/well-lit-paths/wide-expert-parallelism.md"   "$DOCS_DIR/guides/wide-expert-parallelism.md"
+cp_doc "$WIP/well-lit-paths/workload-autoscaling.md"      "$DOCS_DIR/guides/workload-autoscaling.md"
 
 # === Resources (formerly guides) ===
 cp_doc "$WIP/resources/deploying-multiple-model.md"         "$DOCS_DIR/resources/deploying-multiple-models.md"
@@ -158,15 +147,19 @@ cp_doc "$WIP/api-reference/glossary.md"       "$DOCS_DIR/api-reference/glossary.
 echo "    Copying image assets..."
 mkdir -p "$STATIC_DIR"
 cp "$ASSETS"/*.svg "$STATIC_DIR/" 2>/dev/null || true
+cp "$ASSETS"/images/*.svg "$STATIC_DIR/" 2>/dev/null || true
+cp "$ASSETS"/images/*.png "$STATIC_DIR/" 2>/dev/null || true
 cp_doc "$WIP/resources/rdma/networking-stack.svg" "$STATIC_DIR/" 2>/dev/null || true
 cp_doc "$WIP/architecture/core/images/flow_control_dashboard.png" "$STATIC_DIR/" 2>/dev/null || true
 cp_doc "$WIP/architecture/advanced/autoscaling/hpa-architecture.svg" "$STATIC_DIR/" 2>/dev/null || true
+
+# === Generate dark mode variants for all SVGs ===
 
 # === Fix specific image paths for Docusaurus ===
 echo "    Fixing specific image references..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace \
-        -e 's|../images/flow_control_dashboard.png|/img/docs/flow_control_dashboard.png|g' \
+        -e 's|\(\.\.\/\)\{1,\}images/flow_control_dashboard\.png|/img/docs/flow_control_dashboard.png|g' \
         -e 's|networking-stack.svg|/img/docs/networking-stack.svg|g' \
         -e 's|hpa-architecture.svg|/img/docs/hpa-architecture.svg|g' \
         "$file"
@@ -199,13 +192,23 @@ done
 
 # === Clean up known issues ===
 # Remove "NEEDS TO BE REDONE" from configuration.md
-sed_inplace '/^NEEDS TO BE REDONE/d' "$DOCS_DIR/architecture/core/epp/configuration.md" 2>/dev/null || true
+sed_inplace '/^NEEDS TO BE REDONE/d' "$DOCS_DIR/architecture/core/router/epp/configuration.md" 2>/dev/null || true
 
 # === Apply markdown transformations (shared with test-transformations.sh) ===
 echo "    Applying markdown transformations (callouts, tabs, MDX escaping)..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     apply_transformations "$file"
 done
+
+# === Fix /img/docs/images/ paths created by transformations ===
+# The transformations convert ../assets/images/foo.svg to /img/docs/images/foo.svg
+# but we copy all assets flat to /img/docs/, so remove the /images/ segment
+echo "    Fixing /img/docs/images/ paths..."
+find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace 's|/img/docs/images/|/img/docs/|g' "$file"
+done
+
+# === Convert SVG images to theme-aware dual images ===
 
 # === Generate stubs for pages in outline that don't have source content yet ===
 echo "    Generating stubs for missing pages..."
@@ -232,16 +235,16 @@ STUBEOF
     fi
 }
 
-# Guides stubs
-generate_stub "$DOCS_DIR/guides/index.md" "Guides" "Step-by-step adoption procedures for production workloads"
-generate_stub "$DOCS_DIR/guides/intelligent-inference-scheduling.md" "Intelligent Inference Scheduling" "Intelligent request routing and scheduling"
+# Guides stubs (only for files that exist in source repo)
+generate_stub "$DOCS_DIR/guides/index.md" "Guides" "Well-lit paths for production deployments"
+generate_stub "$DOCS_DIR/guides/optimized-baseline.md" "Optimized Baseline" "Baseline deployment with intelligent routing"
+generate_stub "$DOCS_DIR/guides/precise-prefix-cache-aware.md" "Precise Prefix Cache Aware" "Prefix-aware routing configuration"
+generate_stub "$DOCS_DIR/guides/tiered-prefix-cache.md" "Tiered Prefix Cache" "Multi-tier KV cache management"
+generate_stub "$DOCS_DIR/guides/asynchronous-processing.md" "Asynchronous Processing" "Batch and async inference workflows"
 generate_stub "$DOCS_DIR/guides/flow-control.md" "Flow Control" "Admission control and queuing"
-generate_stub "$DOCS_DIR/guides/kv-cache-management.md" "KV Cache Management" "Hierarchical KV-cache offloading"
 generate_stub "$DOCS_DIR/guides/pd-disaggregation.md" "Prefill/Decode Disaggregation" "Separating prefill and decode phases"
+generate_stub "$DOCS_DIR/guides/predicted-latency.md" "Predicted Latency" "ML-based latency prediction"
 generate_stub "$DOCS_DIR/guides/wide-expert-parallelism.md" "Wide Expert Parallelism" "MoE models with expert parallelism"
-generate_stub "$DOCS_DIR/guides/experimental/predicted-latency.md" "Predicted Latency Scheduling" "ML-based latency prediction for SLO-aware routing"
-generate_stub "$DOCS_DIR/guides/experimental/batch-gateway.md" "Batch Gateway Guide" "Step-by-step guide for deploying batch inference"
-generate_stub "$DOCS_DIR/guides/predicted-latency.md" "Predicted Latency" "Predicted latency scheduling guide"
 generate_stub "$DOCS_DIR/guides/workload-autoscaling.md" "Workload Autoscaling" "Configuring autoscaling for inference workloads"
 
 # Resources stubs
@@ -252,7 +255,7 @@ generate_stub "$DOCS_DIR/resources/gateway/agentgateway.md" "Agent Gateway" "Dep
 generate_stub "$DOCS_DIR/architecture/advanced/batch/index.md" "Batch Processing" "Asynchronous batch inference architecture"
 generate_stub "$DOCS_DIR/architecture/advanced/batch/batch-gateway.md" "Batch Gateway" "Gateway for batch inference requests"
 generate_stub "$DOCS_DIR/architecture/advanced/batch/async-processor.md" "Async Processor" "Asynchronous request processing component"
-generate_stub "$DOCS_DIR/architecture/core/epp/datalayer.md" "Data Layer" "EPP data layer architecture"
+generate_stub "$DOCS_DIR/architecture/core/router/epp/datalayer.md" "Data Layer" "EPP data layer architecture"
 generate_stub "$DOCS_DIR/architecture/advanced/disaggregation/index.md" "Disaggregation" "Prefill/decode disaggregation architecture"
 generate_stub "$DOCS_DIR/architecture/advanced/disaggregation/configuration.md" "Disaggregation Configuration" "Configuration guide for disaggregated serving"
 generate_stub "$DOCS_DIR/architecture/advanced/disaggregation/operations-vllm.md" "vLLM Operations" "vLLM-specific operations for disaggregated serving"

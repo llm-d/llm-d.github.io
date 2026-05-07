@@ -1,32 +1,25 @@
 /**
  * Security Policy Remote Content
- * 
+ *
  * Downloads the SECURITY.md file from the llm-d repository
- * and transforms it into docs/community/security.md
+ * and transforms it into community/security.md
  */
 
-import { createContentWithSource, createStandardTransform } from '../utils.js';
-import { findRepoConfig, generateRepoUrls } from '../component-configs.js';
+import { createContentWithSource, createStandardTransform, getLlmdRepoConfig } from '../utils.js';
 
-// Get repository configuration from centralized config
-const repoConfig = findRepoConfig('llm-d');
-const { repoUrl, sourceBaseUrl } = generateRepoUrls(repoConfig);
-const contentTransform = createStandardTransform('llm-d');
+const { sourceBaseUrl } = getLlmdRepoConfig();
+const contentTransform = createStandardTransform();
 
 export default [
   'docusaurus-plugin-remote-content',
   {
-    // Basic configuration - all URLs generated from centralized config
     name: 'security-policy',
     sourceBaseUrl,
-    outDir: 'docs/community',
+    outDir: 'community',
     documents: ['SECURITY.md'],
-    
-    // Plugin behavior
     noRuntimeDownloads: false,
     performCleanup: true,
-    
-    // Transform the content for this specific document
+
     modifyContent(filename, content) {
       if (filename === 'SECURITY.md') {
         return createContentWithSource({
@@ -36,8 +29,6 @@ export default [
           sidebarPosition: 5,
           filename: 'SECURITY.md',
           newFilename: 'security.md',
-          repoUrl,
-          branch: repoConfig.branch,
           content,
           contentTransform
         });
@@ -45,4 +36,4 @@ export default [
       return undefined;
     },
   },
-]; 
+];

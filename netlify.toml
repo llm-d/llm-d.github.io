@@ -1,3 +1,20 @@
 [build]
-  command = "npm run build && cd preview && bash scripts/sync-docs.sh main && npm install && npm run build && cd .. && cp -r preview/build build/preview"
+  command = "npm run build:all"
   publish = "build"
+
+# Redirect old /preview/* to /docs/* (backward compatibility)
+[[redirects]]
+  from = "/preview/*"
+  to = "/docs/:splat"
+  status = 301
+
+# SPA redirect for /docs/* routes
+[[redirects]]
+  from = "/docs"
+  to = "/docs/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/docs/*"
+  to = "/docs/index.html"
+  status = 200

@@ -19,7 +19,7 @@ const config: Config = {
   ],
 
   url: 'https://llm-d.ai',
-  baseUrl: '/preview/',
+  baseUrl: '/docs/',
 
   organizationName: 'llm-d',
   projectName: 'llm-d.github.io',
@@ -47,27 +47,18 @@ const config: Config = {
       'classic',
       {
         docs: {
+          routeBasePath: '/',
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/llm-d/llm-d-docs-wip/tree/main/',
-          showLastUpdateTime: true,
-          // Versioning: docs/ = dev (main). Stable releases are created
-          // with scripts/create-version.sh and stored in versioned_docs/.
-          // When a stable version exists, set lastVersion to it (e.g., '0.5')
-          // so the dev banner appears and stable is the default.
-          lastVersion: 'current',
-          versions: {
-            current: {
-              label: 'latest',
-              path: '',
-              badge: true,
-              banner: 'unreleased',
-            },
-            // When adding a release, uncomment and update:
-            // '0.5': {
-            //   label: 'v0.5 (stable)',
-            //   banner: 'none',
-            // },
+          editUrl: ({docPath}) => {
+            // Remove the extra 'docs/' prefix that Docusaurus adds
+            const cleanPath = docPath.replace(/^docs\//, '');
+            // Map index.md back to README.md (sync script renames these)
+            const sourcePath = cleanPath.replace(/\/index\.md$/, '/README.md');
+            return `https://github.com/llm-d/llm-d/blob/main/docs/${sourcePath}`;
           },
+          showLastUpdateTime: true,
+          // No Docusaurus versioning - dev (main) is always at /docs/
+          // Stable releases link to GitHub via custom version dropdown
         },
         blog: false,
         theme: {
@@ -100,8 +91,7 @@ const config: Config = {
       },
       items: [
         {
-          type: 'docSidebar',
-          sidebarId: 'docsSidebar',
+          to: '/',
           position: 'left',
           label: 'Documentation',
         },
@@ -127,10 +117,10 @@ const config: Config = {
         {
           title: 'Documentation',
           items: [
-            {label: 'Getting Started', to: '/docs/getting-started'},
-            {label: 'Architecture', to: '/docs/architecture'},
-            {label: 'Guides', to: '/docs/guides'},
-            {label: 'Resources', to: '/docs/resources/gateway'},
+            {label: 'Getting Started', to: '/getting-started'},
+            {label: 'Architecture', to: '/architecture'},
+            {label: 'Guides', to: '/guides'},
+            {label: 'Resources', to: '/resources/gateway'},
           ],
         },
         {

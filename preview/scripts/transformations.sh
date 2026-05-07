@@ -19,15 +19,34 @@ apply_transformations() {
     local file="$1"
 
     # Image paths - convert relative to absolute
+    # Different handling for markdown vs HTML:
+    # - Markdown images: Use /img/docs/ (Docusaurus auto-prepends baseUrl)
+    # - HTML img/source tags: Use /docs/img/docs/ (raw HTML needs full path with baseUrl)
+
+    # Transform markdown image syntax: ![alt](../assets/...) -> ![alt](/img/docs/...)
     sed_inplace \
-        -e 's|\(\.\./\)*assets/\([^)]*\)|/img/docs/\2|g' \
+        -e 's|!\[\([^]]*\)\](\(\.\./\)*assets/\([^)]*\))|![\1](/img/docs/\3)|g' \
+        "$file"
+
+    # Transform HTML img tag src: src="../assets/..." -> src="/docs/img/docs/..."
+    sed_inplace \
+        -e 's|src="\(\.\./\)*assets/\([^"]*\)"|src="/docs/img/docs/\2"|g' \
+        "$file"
+
+    # Transform HTML source tag srcset: srcset="../assets/..." -> srcset="/docs/img/docs/..."
+    sed_inplace \
+        -e 's|srcset="\(\.\./\)*assets/\([^"]*\)"|srcset="/docs/img/docs/\2"|g' \
         "$file"
 
     # MDX escaping - escape special characters
     sed_inplace 's|<->|\\<->|g' "$file"
 
-    # Fix unclosed img tags for MDX (must be self-closing)
+    # Fix unclosed HTML tags for MDX (must be self-closing)
     sed_inplace 's|<img \([^>]*[^/]\)>|<img \1 />|g' "$file"
+    sed_inplace 's|<source \([^>]*[^/]\)>|<source \1 />|g' "$file"
+
+    # Fix unquoted attribute values in img tags (e.g., width=95% -> width="95%")
+    sed_inplace -E 's/(<img [^>]*)(width|height|alt|src)=([^"'\'' ][^ >]*)/\1\2="\3"/g' "$file"
 
     # GitHub callouts
     awk '
@@ -127,4 +146,8 @@ apply_transformations() {
     # Print all other lines as-is
     { print }
     ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+
+    # Convert any remaining HTML comments to MDX comments
+    # (Tab-related comments have already been processed and removed)
+    sed_inplace -E 's/<!--(.*)-->/\{\/\*\1\*\/\}/g' "$file"
 }

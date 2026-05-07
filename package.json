@@ -6,6 +6,8 @@
     "docusaurus": "docusaurus",
     "start": "docusaurus start --no-open",
     "build": "docusaurus build",
+    "build:all": "bash scripts/build-all.sh",
+    "serve:production": "npm run build:all && npm run serve",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",
