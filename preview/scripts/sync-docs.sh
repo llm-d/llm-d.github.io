@@ -33,8 +33,8 @@ if [[ -n "${LLMD_REPO:-}" ]]; then
     echo "    Using local repo: $LLMD_REPO"
     SRC="$LLMD_REPO"
     # ALWAYS fetch and reset to ensure we have the latest content from origin
-    #echo "    Fetching latest $BRANCH from origin..."
-    #(cd "$SRC" && git fetch origin "$BRANCH" --quiet && git reset --hard origin/"$BRANCH" --quiet)
+    echo "    Fetching latest $BRANCH from origin..."
+    (cd "$SRC" && git fetch origin "$BRANCH" --quiet && git reset --hard origin/"$BRANCH" --quiet)
 else
     # Clone into a temp dir
     TMPDIR=$(mktemp -d)
