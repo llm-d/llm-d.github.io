@@ -8,9 +8,10 @@
 # 4. Merging preview build into main build at /docs
 #
 # Usage:
-#   ./scripts/build-all.sh              # Standard build (syncs from main branch)
-#   ./scripts/build-all.sh release-0.7  # Build with specific branch
-#   LLMD_REPO=/path/to/local ./scripts/build-all.sh  # Use local llm-d clone
+#   ./scripts/build-all.sh                                        # clone from GitHub (main)
+#   ./scripts/build-all.sh release-0.7                           # clone from GitHub (branch)
+#   LLMD_REPO=/path/to/local/llm-d ./scripts/build-all.sh        # use local clone as-is
+#   LLMD_REPO=/path/to/local/llm-d LLMD_FETCH=1 ./scripts/build-all.sh  # fetch before sync
 
 set -euo pipefail
 

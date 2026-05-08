@@ -2,9 +2,10 @@
 # sync-docs.sh — Pull WiP docs from a specific branch of llm-d/llm-d
 #
 # Usage:
-#   ./scripts/sync-docs.sh                    # sync from 'main'
-#   ./scripts/sync-docs.sh release-0.5        # sync from 'release-0.5'
-#   LLMD_REPO=/path/to/local/llm-d ./scripts/sync-docs.sh  # use local clone
+#   ./scripts/sync-docs.sh                    # clone from GitHub (main branch)
+#   ./scripts/sync-docs.sh release-0.5        # clone from GitHub (release-0.5 branch)
+#   LLMD_REPO=/path/to/local/llm-d ./scripts/sync-docs.sh        # use local clone as-is
+#   LLMD_REPO=/path/to/local/llm-d LLMD_FETCH=1 ./scripts/sync-docs.sh  # fetch before sync
 
 set -euo pipefail
 
@@ -28,13 +29,15 @@ STATIC_DIR="$PROJECT_DIR/static/img/docs"
 
 echo "==> Syncing docs from llm-d/llm-d @ $BRANCH"
 
-# Use local clone if LLMD_REPO is set, otherwise do a sparse checkout
+# Use local clone if LLMD_REPO is set, otherwise clone from GitHub into a temp dir
 if [[ -n "${LLMD_REPO:-}" ]]; then
     echo "    Using local repo: $LLMD_REPO"
     SRC="$LLMD_REPO"
-    # ALWAYS fetch and reset to ensure we have the latest content from origin
-    echo "    Fetching latest $BRANCH from origin..."
-    (cd "$SRC" && git fetch origin "$BRANCH" --quiet && git reset --hard origin/"$BRANCH" --quiet)
+    # Optionally fetch latest from origin (set LLMD_FETCH=1 to enable)
+    if [[ -n "${LLMD_FETCH:-}" ]]; then
+        echo "    Fetching latest $BRANCH from origin..."
+        (cd "$SRC" && git fetch origin "$BRANCH" --quiet && git reset --hard origin/"$BRANCH" --quiet)
+    fi
 else
     # Clone into a temp dir
     TMPDIR=$(mktemp -d)
@@ -148,6 +151,7 @@ cp_doc "$WIP/resources/monitoring/tracing.md"               "$DOCS_DIR/resources
 cp_doc "$WIP/guides/monitoring/metrics.md"                  "$DOCS_DIR/resources/monitoring/metrics.md"
 cp_doc "$WIP/guides/monitoring/tracing.md"                  "$DOCS_DIR/resources/monitoring/tracing.md"
 # PR #1259 moved gateway docs to guides/prereq/gateways/
+cp_doc "$SRC/guides/prereq/gateways/README.md"              "$DOCS_DIR/resources/gateway/index.md"
 cp_doc "$SRC/guides/prereq/gateways/istio.md"               "$DOCS_DIR/resources/gateway/istio.md"
 cp_doc "$SRC/guides/prereq/gateways/gke.md"                 "$DOCS_DIR/resources/gateway/gke.md"
 cp_doc "$SRC/guides/prereq/gateways/agentgateway.md"        "$DOCS_DIR/resources/gateway/agentgateway.md"
@@ -278,6 +282,37 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](/docs/\([^)]*\)/README\.md)|\](/docs/\1)|g' \
         "$file"
 done
+
+# === Fix gateway index.md links ===
+# gateway/index.md comes from guides/prereq/gateways/README.md — fix relative paths
+if [[ -f "$DOCS_DIR/resources/gateway/index.md" ]]; then
+    sed_inplace \
+        -e 's|\](../../guides/README\.md)|\](/docs/guides)|g' \
+        -e 's|\](../../guides/index\.md)|\](/docs/guides)|g' \
+        -e 's|\](./gke\.md)|\](/docs/resources/gateway/gke)|g' \
+        -e 's|\](./istio\.md)|\](/docs/resources/gateway/istio)|g' \
+        -e 's|\](./agentgateway\.md)|\](/docs/resources/gateway/agentgateway)|g' \
+        "$DOCS_DIR/resources/gateway/index.md"
+fi
+
+# === Fix rdma well-lit-paths links ===
+# rdma/rdma-configuration.md comes from resources-new/rdma/README.md
+if [[ -f "$DOCS_DIR/resources/rdma/rdma-configuration.md" ]]; then
+    sed_inplace \
+        -e 's|\](../../well-lit-paths/pd-disaggregation\.md)|\](/docs/guides/pd-disaggregation)|g' \
+        -e 's|\](../../well-lit-paths/wide-expert-parallelism\.md)|\](/docs/guides/wide-expert-parallelism)|g' \
+        -e 's|\](../../architecture/core/model-servers\.md)|\](/docs/architecture/core/model-servers)|g' \
+        "$DOCS_DIR/resources/rdma/rdma-configuration.md"
+fi
+
+# === Fix monitoring metrics.md links ===
+# Link to github for internal repo paths not available on this site
+if [[ -f "$DOCS_DIR/resources/monitoring/metrics.md" ]]; then
+    sed_inplace \
+        -e 's|\](../../../guides/recipes/modelserver/components/monitoring/)|\](https://github.com/llm-d/llm-d/tree/main/guides/recipes/modelserver/components/monitoring)|g' \
+        -e 's|\](../../getting-started/quickstart\.md)|\](/docs/getting-started/quickstart)|g' \
+        "$DOCS_DIR/resources/monitoring/metrics.md"
+fi
 
 # === Fix API reference links ===
 # API reference pages link to each other with .md extensions

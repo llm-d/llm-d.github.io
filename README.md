@@ -42,7 +42,7 @@ The primary documentation sync system in `preview/scripts/sync-docs.sh`:
 - Getting Started (`/docs/getting-started/`)
 
 **How it works:**
-1. Performs sparse checkout of `llm-d/llm-d` repository
+1. Clones `llm-d/llm-d` into a temp dir (or uses a local clone via `LLMD_REPO`)
 2. Copies specific files to `preview/docs/` with explicit path mapping
 3. Applies transformations (tabs, callouts, images, MDX fixes)
 4. Builds preview site and merges into main site at `/docs`
@@ -113,14 +113,24 @@ Starts a live development server with hot reload for fast iteration on:
 #### Full Site Preview (All Content)
 
 ```bash
-# Build everything once (includes all synced docs)
+# Build everything once (includes all synced docs — clones llm-d/llm-d from GitHub)
 npm run build:all
 
 # Serve the built site
 npm run serve
 ```
 
-This is the recommended workflow for previewing the complete site locally, including all documentation synced from llm-d/llm-d. Re-run `npm run build:all` when you need to refresh synced content.
+If you have a local clone of `llm-d/llm-d`, point `LLMD_REPO` at it to skip the GitHub clone and use your local files as-is:
+
+```bash
+# Use local llm-d clone (fast, no network required, uses current local state)
+LLMD_REPO=~/repos/llm-d npm run build:all
+
+# Use local clone but pull the latest from origin first
+LLMD_REPO=~/repos/llm-d LLMD_FETCH=1 npm run build:all
+```
+
+This is the recommended workflow for previewing the complete site locally, including all documentation synced from llm-d/llm-d. Re-run when you need to refresh synced content.
 
 **What gets built:**
 1. Main site (landing page, blog, community docs via remote-content)
@@ -336,8 +346,12 @@ Main documentation (architecture, guides, API reference) is synced via `preview/
 2. Update `preview/scripts/sync-docs.sh` to copy the new file
 3. Test the sync:
    ```bash
+   # Using a local llm-d clone (recommended — no network required)
+   LLMD_REPO=~/repos/llm-d npm run build:all
+
+   # Or sync only, then build
    cd preview
-   ./scripts/sync-docs.sh
+   LLMD_REPO=~/repos/llm-d bash scripts/sync-docs.sh
    npm run build
    ```
 
