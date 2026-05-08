@@ -54,9 +54,11 @@ async function startServer() {
     console.log(`🚀 Starting local server on port ${config.serverPort}...`);
 
     // Start docusaurus serve
+    // Use detached: true to create a process group that we can kill together
     serverProcess = spawn('npx', ['docusaurus', 'serve', '--port', config.serverPort.toString(), '--no-open'], {
       cwd: rootDir,
-      stdio: ['ignore', 'pipe', 'pipe']
+      stdio: ['ignore', 'pipe', 'pipe'],
+      detached: true
     });
 
     let output = '';
@@ -104,13 +106,31 @@ async function stopServer() {
     console.log('\n🛑 Stopping server...');
 
     return new Promise((resolve) => {
-      // Set a timeout to force kill if it doesn't stop gracefully
-      const timeout = setTimeout(() => {
-        if (serverProcess && !serverProcess.killed) {
-          serverProcess.kill('SIGKILL'); // Force kill
+      // Set a shorter timeout to force kill if it doesn't stop gracefully
+      const timeout = setTimeout(async () => {
+        // Try to find and kill process by port as last resort
+        try {
+          await killProcessOnPort(config.serverPort);
+        } catch (e) {
+          // Ignore errors
         }
+
+        if (serverProcess && !serverProcess.killed) {
+          // Kill the entire process group to ensure all child processes are terminated
+          try {
+            process.kill(-serverProcess.pid, 'SIGKILL');
+          } catch (e) {
+            // Fallback to killing just the main process
+            try {
+              serverProcess.kill('SIGKILL');
+            } catch (e2) {
+              // Process already dead
+            }
+          }
+        }
+        serverProcess = null;
         resolve();
-      }, 5000);
+      }, 1000); // Reduced from 5s to 1s
 
       serverProcess.once('exit', () => {
         clearTimeout(timeout);
@@ -118,16 +138,87 @@ async function stopServer() {
         resolve();
       });
 
-      // Try graceful shutdown first
-      serverProcess.kill('SIGTERM');
+      // Kill the entire process group for better cleanup
+      try {
+        // Negative PID kills the process group
+        process.kill(-serverProcess.pid, 'SIGTERM');
+      } catch (e) {
+        // Fallback to killing just the main process if process group fails
+        try {
+          serverProcess.kill('SIGTERM');
+        } catch (e2) {
+          // Process might already be dead, that's fine
+          clearTimeout(timeout);
+          serverProcess = null;
+          resolve();
+        }
+      }
     });
   }
+}
+
+// Kill process listening on a specific port (fallback for cleanup)
+async function killProcessOnPort(port) {
+  return new Promise((resolve) => {
+    // Try lsof first (macOS/BSD/some Linux)
+    const lsof = spawn('lsof', ['-ti', `tcp:${port}`], { stdio: ['ignore', 'pipe', 'ignore'] });
+
+    let pid = '';
+    lsof.stdout.on('data', (data) => {
+      pid += data.toString().trim();
+    });
+
+    lsof.on('close', (code) => {
+      if (pid) {
+        try {
+          process.kill(parseInt(pid), 'SIGKILL');
+        } catch (e) {
+          // Process might already be dead
+        }
+        resolve();
+      } else if (code !== 0) {
+        // lsof failed, try fuser (Linux)
+        tryFuser(port, resolve);
+      } else {
+        resolve();
+      }
+    });
+
+    lsof.on('error', () => {
+      // lsof not available, try fuser (Linux)
+      tryFuser(port, resolve);
+    });
+  });
+}
+
+// Try using fuser to kill process on port (Linux fallback)
+function tryFuser(port, resolve) {
+  const fuser = spawn('fuser', ['-k', '-SIGKILL', `${port}/tcp`], { stdio: 'ignore' });
+
+  fuser.on('close', () => {
+    resolve();
+  });
+
+  fuser.on('error', () => {
+    // Neither lsof nor fuser available, just resolve
+    // The process group kill should have worked anyway
+    resolve();
+  });
 }
 
 // Cleanup on exit
 process.on('exit', () => {
   if (serverProcess && !serverProcess.killed) {
-    serverProcess.kill('SIGKILL'); // Force kill on exit
+    try {
+      // Try to kill process group first
+      process.kill(-serverProcess.pid, 'SIGKILL');
+    } catch (e) {
+      try {
+        serverProcess.kill('SIGKILL'); // Force kill on exit
+      } catch (e2) {
+        // Process already dead
+      }
+    }
   }
 });
 process.on('SIGINT', async () => {
