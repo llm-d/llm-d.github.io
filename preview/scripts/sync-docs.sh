@@ -64,6 +64,7 @@ mkdir -p \
     "$DOCS_DIR/resources/gateway" \
     "$DOCS_DIR/resources/monitoring" \
     "$DOCS_DIR/resources/rdma" \
+    "$DOCS_DIR/resources/infra-providers" \
     "$DOCS_DIR/api-reference" \
     "$DOCS_DIR/accelerators"
 
@@ -152,6 +153,15 @@ cp_doc "$SRC/guides/prereq/gateways/gke.md"                 "$DOCS_DIR/resources
 cp_doc "$SRC/guides/prereq/gateways/agentgateway.md"        "$DOCS_DIR/resources/gateway/agentgateway.md"
 cp_doc "$WIP/resources/rdma/README.md"                      "$DOCS_DIR/resources/rdma/rdma-configuration.md"
 
+# === Infrastructure Providers ===
+cp_doc "$WIP/infra-providers/README.md"                  "$DOCS_DIR/resources/infra-providers/index.md"
+cp_doc "$WIP/infra-providers/aks/README.md"              "$DOCS_DIR/resources/infra-providers/aks.md"
+cp_doc "$WIP/infra-providers/digitalocean/README.md"     "$DOCS_DIR/resources/infra-providers/digitalocean.md"
+cp_doc "$WIP/infra-providers/gke/README.md"              "$DOCS_DIR/resources/infra-providers/gke.md"
+cp_doc "$WIP/infra-providers/minikube/README.md"         "$DOCS_DIR/resources/infra-providers/minikube.md"
+cp_doc "$WIP/infra-providers/openshift/README.md"        "$DOCS_DIR/resources/infra-providers/openshift.md"
+cp_doc "$WIP/infra-providers/openshift-aws/README.md"    "$DOCS_DIR/resources/infra-providers/openshift-aws.md"
+
 # === API Reference ===
 cp_doc "$WIP/api-reference/README.md"         "$DOCS_DIR/api-reference/index.md"
 cp_doc "$WIP/api-reference/glossary.md"       "$DOCS_DIR/api-reference/glossary.md"
@@ -163,6 +173,13 @@ cp_doc "$WIP/api-reference/epp-http-headers.md"      "$DOCS_DIR/api-reference/ep
 
 # === Accelerators ===
 cp_doc "$WIP/accelerators/README.md"                 "$DOCS_DIR/accelerators/index.md"
+
+# Fix accelerators links to infra-providers
+if [[ -f "$DOCS_DIR/accelerators/index.md" ]]; then
+    sed_inplace \
+        -e 's|\.\./infra-providers/gke/README\.md|/docs/resources/infra-providers/gke|g' \
+        "$DOCS_DIR/accelerators/index.md"
+fi
 
 # === Deployment Guides ===
 # Note: Deployment guides live in llm-d/guides/ and are linked via GitHub URLs
@@ -178,6 +195,10 @@ cp_doc "$WIP/resources/rdma/networking-stack.svg" "$STATIC_DIR/" 2>/dev/null || 
 cp_doc "$WIP/architecture/core/images/flow_control_dashboard.png" "$STATIC_DIR/" 2>/dev/null || true
 cp_doc "$WIP/architecture/advanced/autoscaling/hpa-architecture.svg" "$STATIC_DIR/" 2>/dev/null || true
 
+# Infrastructure Providers images
+echo "    Copying infrastructure provider images..."
+find "$WIP/infra-providers" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.svg" \) -exec cp {} "$STATIC_DIR/" \; 2>/dev/null || true
+
 # === Generate dark mode variants for all SVGs ===
 
 # === Fix specific image paths for Docusaurus ===
@@ -190,6 +211,24 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         "$file"
 done
 # Note: Generic ../assets/ paths are handled by apply_transformations() below
+
+# === Fix infra-providers image paths and links ===
+echo "    Fixing infra-providers image paths and cross-references..."
+find "$DOCS_DIR/resources/infra-providers" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace \
+        -e 's|\./images/\([^)]*\)|/img/docs/\1|g' \
+        -e 's|](images/\([^)]*\))|](/img/docs/\1)|g' \
+        -e 's|\.\./\.\./\.\./guides/optimized-baseline/README\.md|/docs/guides/optimized-baseline|g' \
+        -e 's|\.\./\.\./\.\./guides/precise-prefix-cache-aware/README\.md|/docs/guides/precise-prefix-cache-aware|g' \
+        -e 's|\.\./\.\./\.\./guides/pd-disaggregation/README\.md|/docs/guides/pd-disaggregation|g' \
+        -e 's|\.\./\.\./\.\./guides/wide-ep-lws/README\.md|https://github.com/llm-d/llm-d/tree/main/guides/wide-ep-lws|g' \
+        -e 's|\.\./\.\./\.\./guides/tiered-prefix-cache/README\.md|https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache|g' \
+        -e 's|\.\./\.\./\.\./guides/index\.md|/docs/guides|g' \
+        -e 's|\.\./\.\./\.\./guides/)|/docs/guides)|g' \
+        -e 's|\.\./\.\./\.\./guides)|/docs/guides)|g' \
+        -e 's|\.\./\.\./\.\./helpers/client-setup/README\.md|https://github.com/llm-d/llm-d/tree/main/helpers/client-setup|g' \
+        "$file"
+done
 
 # === Fix internal cross-references ===
 # Upstream files reference filenames that get renamed during copy
@@ -232,6 +271,10 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](/guides/asynchronous-processing)|\](https://github.com/llm-d/llm-d/tree/main/guides/asynchronous-processing)|g' \
         -e 's|\](/guides/optimized-baseline)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
         -e 's|\](/guides/precise-prefix-cache-aware)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware)|g' \
+        -e 's|\](.*\/docs/infra-providers)|\](/docs/resources/infra-providers)|g' \
+        -e 's|\](.*\/infra-providers)|\](/docs/resources/infra-providers)|g' \
+        -e 's|\](/docs/infra-providers)|\](/docs/resources/infra-providers)|g' \
+        -e 's|\](infra-providers/\([^)]*\))|\](/docs/resources/infra-providers/\1)|g' \
         -e 's|\](/docs/\([^)]*\)/README\.md)|\](/docs/\1)|g' \
         "$file"
 done
@@ -374,6 +417,15 @@ generate_stub "$DOCS_DIR/resources/monitoring/tracing.md" "Distributed Tracing" 
 generate_stub "$DOCS_DIR/resources/profiling.md" "Profiling" "Performance profiling guides"
 generate_stub "$DOCS_DIR/resources/rollout-new-version.md" "Rollout New Version" "Rolling out a new version of the inference service"
 generate_stub "$DOCS_DIR/resources/rdma/rdma-configuration.md" "RDMA Configuration" "RDMA network configuration"
+
+# Infrastructure Providers stubs
+generate_stub "$DOCS_DIR/resources/infra-providers/index.md" "Infrastructure Providers" "Kubernetes provider setup and configuration"
+generate_stub "$DOCS_DIR/resources/infra-providers/aks.md" "Azure Kubernetes Service" "Deploy llm-d on AKS"
+generate_stub "$DOCS_DIR/resources/infra-providers/digitalocean.md" "DigitalOcean Kubernetes" "Deploy llm-d on DigitalOcean"
+generate_stub "$DOCS_DIR/resources/infra-providers/gke.md" "Google Kubernetes Engine" "Deploy llm-d on GKE"
+generate_stub "$DOCS_DIR/resources/infra-providers/minikube.md" "Minikube" "Deploy llm-d on Minikube"
+generate_stub "$DOCS_DIR/resources/infra-providers/openshift.md" "OpenShift" "Deploy llm-d on OpenShift"
+generate_stub "$DOCS_DIR/resources/infra-providers/openshift-aws.md" "OpenShift on AWS" "Deploy llm-d on OpenShift on AWS"
 
 TOTAL=$(find "$DOCS_DIR" -name "*.md" | wc -l | tr -d ' ')
 echo "==> Done. $TOTAL docs synced from llm-d/llm-d @ $BRANCH"

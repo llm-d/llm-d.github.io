@@ -137,6 +137,20 @@ const sidebars: SidebarsConfig = {
             'resources/gateway/agentgateway',
           ],
         },
+        {
+          type: 'category',
+          label: 'Infrastructure Providers',
+          collapsed: false,
+          link: {type: 'doc', id: 'resources/infra-providers/index'},
+          items: [
+            'resources/infra-providers/aks',
+            'resources/infra-providers/digitalocean',
+            'resources/infra-providers/gke',
+            'resources/infra-providers/minikube',
+            'resources/infra-providers/openshift',
+            'resources/infra-providers/openshift-aws',
+          ],
+        },
         'resources/configuring-user-facing-apis',
         {
           type: 'category',
