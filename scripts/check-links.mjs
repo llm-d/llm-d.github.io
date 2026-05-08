@@ -99,22 +99,43 @@ async function startServer() {
 }
 
 // Stop local server
-function stopServer() {
+async function stopServer() {
   if (serverProcess && !serverProcess.killed) {
     console.log('\n🛑 Stopping server...');
-    serverProcess.kill();
-    serverProcess = null;
+
+    return new Promise((resolve) => {
+      // Set a timeout to force kill if it doesn't stop gracefully
+      const timeout = setTimeout(() => {
+        if (serverProcess && !serverProcess.killed) {
+          serverProcess.kill('SIGKILL'); // Force kill
+        }
+        resolve();
+      }, 5000);
+
+      serverProcess.once('exit', () => {
+        clearTimeout(timeout);
+        serverProcess = null;
+        resolve();
+      });
+
+      // Try graceful shutdown first
+      serverProcess.kill('SIGTERM');
+    });
   }
 }
 
 // Cleanup on exit
-process.on('exit', stopServer);
-process.on('SIGINT', () => {
-  stopServer();
+process.on('exit', () => {
+  if (serverProcess && !serverProcess.killed) {
+    serverProcess.kill('SIGKILL'); // Force kill on exit
+  }
+});
+process.on('SIGINT', async () => {
+  await stopServer();
   process.exit(0);
 });
-process.on('SIGTERM', () => {
-  stopServer();
+process.on('SIGTERM', async () => {
+  await stopServer();
   process.exit(0);
 });
 
@@ -652,14 +673,14 @@ async function checkLinks() {
 
     if (brokenLinks.length > 0) {
       console.log(`\n⚠️  Found ${brokenLinks.length} broken links. See report for details.`);
-      stopServer();
+      await stopServer();
       process.exit(1); // Exit with error code to fail CI
     } else {
       console.log(`\n🎉 No broken links found!`);
     }
   } finally {
     // Stop the server
-    stopServer();
+    await stopServer();
   }
 }
 
@@ -767,8 +788,9 @@ function getSourceInfo(htmlPath, sourceMap) {
 }
 
 // Run the checker
-checkLinks().catch(err => {
+checkLinks().catch(async (err) => {
   console.error('❌ Error:', err.message);
   console.error(err.stack);
+  await stopServer();
   process.exit(1);
 });
