@@ -9,26 +9,31 @@ function HeroSection(): React.JSX.Element {
   return (
     <header className="hero hero--llmd">
       <div className="container">
-        <img
-          src={useBaseUrl('/img/llm-d-logo.png')}
-          alt="llm-d"
-          className="hero__logo"
-        />
-        <h1 className="hero__title">
-          Kubernetes-native distributed inference serving for LLMs
-        </h1>
-        <div className={styles.buttons}>
-          <Link
-            className="button button--primary button--lg"
-            to="/docs/getting-started">
-            Get Started
-          </Link>
-          <Link
-            className="button button--outline button--lg"
-            to="/docs/getting-started/quickstart"
-            style={{marginLeft: '0.75rem'}}>
-            Quickstart
-          </Link>
+        <div className="hero__split">
+          <div className="hero__copy">
+            <h1 className="hero__title">
+              Production-grade distributed LLM inference.
+            </h1>
+            <p className="hero__subtitle">
+              llm-d is a distributed inference stack that orchestrates vLLM and
+              SGLang across your cluster with LLM-aware routing, disaggregated
+              serving, and tiered KV caching — using Kubernetes primitives you
+              already run.
+            </p>
+            <div className="hero__buttons">
+              <Link
+                className="button button--primary"
+                to="/docs/getting-started/quickstart">
+                Get started
+              </Link>
+              <Link
+                className="button button--outline"
+                to="/docs/architecture">
+                See the architecture
+              </Link>
+            </div>
+          </div>
+          <div className="hero__visual" aria-hidden="true" />
         </div>
       </div>
     </header>
