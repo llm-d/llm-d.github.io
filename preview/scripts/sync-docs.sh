@@ -2,9 +2,10 @@
 # sync-docs.sh — Pull WiP docs from a specific branch of llm-d/llm-d
 #
 # Usage:
-#   ./scripts/sync-docs.sh                    # sync from 'main'
-#   ./scripts/sync-docs.sh release-0.5        # sync from 'release-0.5'
-#   LLMD_REPO=/path/to/local/llm-d ./scripts/sync-docs.sh  # use local clone
+#   ./scripts/sync-docs.sh                    # clone from GitHub (main branch)
+#   ./scripts/sync-docs.sh release-0.5        # clone from GitHub (release-0.5 branch)
+#   LLMD_REPO=/path/to/local/llm-d ./scripts/sync-docs.sh        # use local clone as-is
+#   LLMD_REPO=/path/to/local/llm-d LLMD_FETCH=1 ./scripts/sync-docs.sh  # fetch before sync
 
 set -euo pipefail
 
@@ -23,17 +24,20 @@ BRANCH="${1:-main}"
 REPO_URL="https://github.com/llm-d/llm-d.git"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 DOCS_DIR="$PROJECT_DIR/docs"
+GUIDES_DIR="$PROJECT_DIR/guides"
 STATIC_DIR="$PROJECT_DIR/static/img/docs"
 
 echo "==> Syncing docs from llm-d/llm-d @ $BRANCH"
 
-# Use local clone if LLMD_REPO is set, otherwise do a sparse checkout
+# Use local clone if LLMD_REPO is set, otherwise clone from GitHub into a temp dir
 if [[ -n "${LLMD_REPO:-}" ]]; then
     echo "    Using local repo: $LLMD_REPO"
     SRC="$LLMD_REPO"
-    # ALWAYS fetch and reset to ensure we have the latest content from origin
-    echo "    Fetching latest $BRANCH from origin..."
-    (cd "$SRC" && git fetch origin "$BRANCH" --quiet && git reset --hard origin/"$BRANCH" --quiet)
+    # Optionally fetch latest from origin (set LLMD_FETCH=1 to enable)
+    if [[ -n "${LLMD_FETCH:-}" ]]; then
+        echo "    Fetching latest $BRANCH from origin..."
+        (cd "$SRC" && git fetch origin "$BRANCH" --quiet && git reset --hard origin/"$BRANCH" --quiet)
+    fi
 else
     # Clone into a temp dir
     TMPDIR=$(mktemp -d)
@@ -63,7 +67,9 @@ mkdir -p \
     "$DOCS_DIR/resources/gateway" \
     "$DOCS_DIR/resources/monitoring" \
     "$DOCS_DIR/resources/rdma" \
-    "$DOCS_DIR/api-reference"
+    "$DOCS_DIR/resources/infra-providers" \
+    "$DOCS_DIR/api-reference" \
+    "$DOCS_DIR/accelerators"
 
 echo "    Copying content..."
 
@@ -94,7 +100,6 @@ cp_doc "$WIP/architecture/core/router/epp/datalayer.md"         "$DOCS_DIR/archi
 
 # Architecture / Advanced / Disaggregation
 cp_doc "$WIP/architecture/advanced/disaggregation/README.md"            "$DOCS_DIR/architecture/advanced/disaggregation/index.md"
-cp_doc "$WIP/architecture/advanced/disaggregation/configuration.md"     "$DOCS_DIR/architecture/advanced/disaggregation/configuration.md"
 cp_doc "$WIP/architecture/advanced/disaggregation/operations-vllm.md"   "$DOCS_DIR/architecture/advanced/disaggregation/operations-vllm.md"
 
 # Architecture / Advanced
@@ -130,25 +135,54 @@ cp_doc "$WIP/well-lit-paths/predicted-latency.md"         "$DOCS_DIR/guides/pred
 cp_doc "$WIP/well-lit-paths/wide-expert-parallelism.md"   "$DOCS_DIR/guides/wide-expert-parallelism.md"
 cp_doc "$WIP/well-lit-paths/workload-autoscaling.md"      "$DOCS_DIR/guides/workload-autoscaling.md"
 
+# Experimental guides
+mkdir -p "$DOCS_DIR/guides/experimental"
+cp_doc "$WIP/well-lit-paths/experimental/batch-gateway.md" "$DOCS_DIR/guides/experimental/batch-gateway.md"
+
 # === Resources (formerly guides) ===
-cp_doc "$WIP/resources/deploying-multiple-model.md"         "$DOCS_DIR/resources/deploying-multiple-models.md"
-cp_doc "$WIP/resources/user-apis.md"                        "$DOCS_DIR/resources/configuring-user-facing-apis.md"
-cp_doc "$WIP/resources/profiling.md"                        "$DOCS_DIR/resources/profiling.md"
-cp_doc "$WIP/resources/rollout-new-version.md"              "$DOCS_DIR/resources/rollout-new-version.md"
 cp_doc "$WIP/resources/monitoring/metrics.md"               "$DOCS_DIR/resources/monitoring/metrics.md"
 cp_doc "$WIP/resources/monitoring/tracing.md"               "$DOCS_DIR/resources/monitoring/tracing.md"
 # PR #1207 places monitoring under guides/monitoring/ — use as fallback
 cp_doc "$WIP/guides/monitoring/metrics.md"                  "$DOCS_DIR/resources/monitoring/metrics.md"
 cp_doc "$WIP/guides/monitoring/tracing.md"                  "$DOCS_DIR/resources/monitoring/tracing.md"
 # PR #1259 moved gateway docs to guides/prereq/gateways/
+cp_doc "$SRC/guides/prereq/gateways/README.md"              "$DOCS_DIR/resources/gateway/index.md"
 cp_doc "$SRC/guides/prereq/gateways/istio.md"               "$DOCS_DIR/resources/gateway/istio.md"
 cp_doc "$SRC/guides/prereq/gateways/gke.md"                 "$DOCS_DIR/resources/gateway/gke.md"
 cp_doc "$SRC/guides/prereq/gateways/agentgateway.md"        "$DOCS_DIR/resources/gateway/agentgateway.md"
 cp_doc "$WIP/resources/rdma/README.md"                      "$DOCS_DIR/resources/rdma/rdma-configuration.md"
 
+# === Infrastructure Providers ===
+cp_doc "$WIP/infra-providers/README.md"                  "$DOCS_DIR/resources/infra-providers/index.md"
+cp_doc "$WIP/infra-providers/aks/README.md"              "$DOCS_DIR/resources/infra-providers/aks.md"
+cp_doc "$WIP/infra-providers/digitalocean/README.md"     "$DOCS_DIR/resources/infra-providers/digitalocean.md"
+cp_doc "$WIP/infra-providers/gke/README.md"              "$DOCS_DIR/resources/infra-providers/gke.md"
+cp_doc "$WIP/infra-providers/minikube/README.md"         "$DOCS_DIR/resources/infra-providers/minikube.md"
+cp_doc "$WIP/infra-providers/openshift/README.md"        "$DOCS_DIR/resources/infra-providers/openshift.md"
+cp_doc "$WIP/infra-providers/openshift-aws/README.md"    "$DOCS_DIR/resources/infra-providers/openshift-aws.md"
+
 # === API Reference ===
 cp_doc "$WIP/api-reference/README.md"         "$DOCS_DIR/api-reference/index.md"
 cp_doc "$WIP/api-reference/glossary.md"       "$DOCS_DIR/api-reference/glossary.md"
+cp_doc "$WIP/api-reference/inferencepool.md"         "$DOCS_DIR/api-reference/inferencepool.md"
+cp_doc "$WIP/api-reference/inferenceobjective.md"    "$DOCS_DIR/api-reference/inferenceobjective.md"
+cp_doc "$WIP/api-reference/inferencemodelrewrite.md" "$DOCS_DIR/api-reference/inferencemodelrewrite.md"
+cp_doc "$WIP/api-reference/endpointpickerconfig.md"  "$DOCS_DIR/api-reference/endpointpickerconfig.md"
+cp_doc "$WIP/api-reference/epp-http-headers.md"      "$DOCS_DIR/api-reference/epp-http-headers.md"
+
+# === Accelerators ===
+cp_doc "$WIP/accelerators/README.md"                 "$DOCS_DIR/accelerators/index.md"
+
+# Fix accelerators links to infra-providers
+if [[ -f "$DOCS_DIR/accelerators/index.md" ]]; then
+    sed_inplace \
+        -e 's|\.\./infra-providers/gke/README\.md|/docs/resources/infra-providers/gke|g' \
+        "$DOCS_DIR/accelerators/index.md"
+fi
+
+# === Deployment Guides ===
+# Note: Deployment guides live in llm-d/guides/ and are linked via GitHub URLs
+# See transformation section below that converts ../../guides/ links to GitHub
 
 # === Assets ===
 echo "    Copying image assets..."
@@ -159,6 +193,10 @@ cp "$ASSETS"/images/*.png "$STATIC_DIR/" 2>/dev/null || true
 cp_doc "$WIP/resources/rdma/networking-stack.svg" "$STATIC_DIR/" 2>/dev/null || true
 cp_doc "$WIP/architecture/core/images/flow_control_dashboard.png" "$STATIC_DIR/" 2>/dev/null || true
 cp_doc "$WIP/architecture/advanced/autoscaling/hpa-architecture.svg" "$STATIC_DIR/" 2>/dev/null || true
+
+# Infrastructure Providers images
+echo "    Copying infrastructure provider images..."
+find "$WIP/infra-providers" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.svg" \) -exec cp {} "$STATIC_DIR/" \; 2>/dev/null || true
 
 # === Generate dark mode variants for all SVGs ===
 
@@ -172,6 +210,24 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         "$file"
 done
 # Note: Generic ../assets/ paths are handled by apply_transformations() below
+
+# === Fix infra-providers image paths and links ===
+echo "    Fixing infra-providers image paths and cross-references..."
+find "$DOCS_DIR/resources/infra-providers" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace \
+        -e 's|\./images/\([^)]*\)|/img/docs/\1|g' \
+        -e 's|](images/\([^)]*\))|](/img/docs/\1)|g' \
+        -e 's|\.\./\.\./\.\./guides/optimized-baseline/README\.md|/docs/guides/optimized-baseline|g' \
+        -e 's|\.\./\.\./\.\./guides/precise-prefix-cache-aware/README\.md|/docs/guides/precise-prefix-cache-aware|g' \
+        -e 's|\.\./\.\./\.\./guides/pd-disaggregation/README\.md|/docs/guides/pd-disaggregation|g' \
+        -e 's|\.\./\.\./\.\./guides/wide-ep-lws/README\.md|https://github.com/llm-d/llm-d/tree/main/guides/wide-ep-lws|g' \
+        -e 's|\.\./\.\./\.\./guides/tiered-prefix-cache/README\.md|https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache|g' \
+        -e 's|\.\./\.\./\.\./guides/index\.md|/docs/guides|g' \
+        -e 's|\.\./\.\./\.\./guides/)|/docs/guides)|g' \
+        -e 's|\.\./\.\./\.\./guides)|/docs/guides)|g' \
+        -e 's|\.\./\.\./\.\./helpers/client-setup/README\.md|https://github.com/llm-d/llm-d/tree/main/helpers/client-setup|g' \
+        "$file"
+done
 
 # === Fix internal cross-references ===
 # Upstream files reference filenames that get renamed during copy
@@ -194,15 +250,127 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|advanced/disaggregation\.md|advanced/disaggregation/index.md|g' \
         -e 's|advanced/autoscaling/autoscaling\.md|advanced/autoscaling/index.md|g' \
         -e 's|advanced/batch/README\.md|advanced/batch/index.md|g' \
+        -e 's|\](/docs/guides/README)|\](/docs/guides)|g' \
+        -e 's|\](/docs/experimental/batch-gateway)|\](/docs/guides/experimental/batch-gateway)|g' \
+        -e 's|\](/docs/architecture/core/epp)|\](/docs/architecture/core/router/epp)|g' \
+        -e 's|\](/docs/well-lit-paths/\([^)]*\)\.md)|\](/docs/guides/\1)|g' \
+        -e 's|\](well-lit-paths/\([^)]*\))|\](/docs/guides/\1)|g' \
+        -e 's|\](.*\/guides/tiered-prefix-cache)|\](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache)|g' \
+        -e 's|\](.*\/guides/batch-gateway)|\](https://github.com/llm-d/llm-d/tree/main/guides/batch-gateway)|g' \
+        -e 's|\](.*\/guides/asynchronous-processing)|\](https://github.com/llm-d/llm-d/tree/main/guides/asynchronous-processing)|g' \
+        -e 's|\](.*\/guides/optimized-baseline)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
+        -e 's|\](.*\/guides/precise-prefix-cache-aware)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware)|g' \
+        -e 's|\](.*\/guides/pd-disaggregation)|\](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation)|g' \
+        -e 's|\](.*\/guides/wide-ep-lws)|\](https://github.com/llm-d/llm-d/tree/main/guides/wide-ep-lws)|g' \
+        -e 's|\](.*\/guides/predicted-latency-based-scheduling)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-based-scheduling)|g' \
+        -e 's|\](.*\/guides/workload-autoscaling)|\](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling)|g' \
+        -e 's|\](.*\/guides/flow-control)|\](https://github.com/llm-d/llm-d/tree/main/guides/flow-control)|g' \
+        -e 's|\](/guides/tiered-prefix-cache)|\](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache)|g' \
+        -e 's|\](/guides/batch-gateway)|\](https://github.com/llm-d/llm-d/tree/main/guides/batch-gateway)|g' \
+        -e 's|\](/guides/asynchronous-processing)|\](https://github.com/llm-d/llm-d/tree/main/guides/asynchronous-processing)|g' \
+        -e 's|\](/guides/optimized-baseline)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
+        -e 's|\](/guides/precise-prefix-cache-aware)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware)|g' \
+        -e 's|\](.*\/docs/infra-providers)|\](/docs/resources/infra-providers)|g' \
+        -e 's|\](.*\/infra-providers)|\](/docs/resources/infra-providers)|g' \
+        -e 's|\](/docs/infra-providers)|\](/docs/resources/infra-providers)|g' \
+        -e 's|\](infra-providers/\([^)]*\))|\](/docs/resources/infra-providers/\1)|g' \
+        -e 's|\](/docs/\([^)]*\)/README\.md)|\](/docs/\1)|g' \
         "$file"
 done
+
+# === Fix gateway index.md links ===
+# gateway/index.md comes from guides/prereq/gateways/README.md — fix relative paths
+if [[ -f "$DOCS_DIR/resources/gateway/index.md" ]]; then
+    sed_inplace \
+        -e 's|\](../../guides/README\.md)|\](/docs/guides)|g' \
+        -e 's|\](../../guides/index\.md)|\](/docs/guides)|g' \
+        -e 's|\](./gke\.md)|\](/docs/resources/gateway/gke)|g' \
+        -e 's|\](./istio\.md)|\](/docs/resources/gateway/istio)|g' \
+        -e 's|\](./agentgateway\.md)|\](/docs/resources/gateway/agentgateway)|g' \
+        "$DOCS_DIR/resources/gateway/index.md"
+fi
+
+# === Fix rdma well-lit-paths links ===
+# rdma/rdma-configuration.md comes from resources-new/rdma/README.md
+if [[ -f "$DOCS_DIR/resources/rdma/rdma-configuration.md" ]]; then
+    sed_inplace \
+        -e 's|\](../../well-lit-paths/pd-disaggregation\.md)|\](/docs/guides/pd-disaggregation)|g' \
+        -e 's|\](../../well-lit-paths/wide-expert-parallelism\.md)|\](/docs/guides/wide-expert-parallelism)|g' \
+        -e 's|\](../../architecture/core/model-servers\.md)|\](/docs/architecture/core/model-servers)|g' \
+        "$DOCS_DIR/resources/rdma/rdma-configuration.md"
+fi
+
+# === Fix monitoring metrics.md links ===
+# Link to github for internal repo paths not available on this site
+if [[ -f "$DOCS_DIR/resources/monitoring/metrics.md" ]]; then
+    sed_inplace \
+        -e 's|\](../../../guides/recipes/modelserver/components/monitoring/)|\](https://github.com/llm-d/llm-d/tree/main/guides/recipes/modelserver/components/monitoring)|g' \
+        -e 's|\](../../getting-started/quickstart\.md)|\](/docs/getting-started/quickstart)|g' \
+        "$DOCS_DIR/resources/monitoring/metrics.md"
+fi
+
+# === Fix API reference links ===
+# API reference pages link to each other with .md extensions
+# Convert them to Docusaurus-compatible paths
+echo "    Fixing API reference links..."
+sed_inplace \
+    -e 's|\](inferencepool\.md)|\](/docs/api-reference/inferencepool)|g' \
+    -e 's|\](inferenceobjective\.md)|\](/docs/api-reference/inferenceobjective)|g' \
+    -e 's|\](inferencemodelrewrite\.md)|\](/docs/api-reference/inferencemodelrewrite)|g' \
+    -e 's|\](endpointpickerconfig\.md)|\](/docs/api-reference/endpointpickerconfig)|g' \
+    -e 's|\](epp-http-headers\.md)|\](/docs/api-reference/epp-http-headers)|g' \
+    -e 's|\](glossary\.md)|\](/docs/api-reference/glossary)|g' \
+    "$DOCS_DIR/api-reference/index.md"
+
+# === Fix architecture index.md relative paths ===
+# When architecture/README.md becomes index.md, relative paths break
+# Convert ./core/* and ./advanced/* to absolute paths with /architecture/ prefix
+echo "    Fixing architecture index.md relative paths..."
+sed_inplace \
+    -e 's|\(\[.*\]\)(\./core/inferencepool)|\1(/docs/architecture/core/inferencepool)|g' \
+    -e 's|\(\[.*\]\)(\./core/model-servers)|\1(/docs/architecture/core/model-servers)|g' \
+    -e 's|\(\[.*\]\)(\./core/router/proxy)|\1(/docs/architecture/core/router/proxy)|g' \
+    -e 's|\(\[.*\]\)(\./core/router/)|\1(/docs/architecture/core/router)|g' \
+    -e 's|\(\[.*\]\)(\./core/router)|\1(/docs/architecture/core/router)|g' \
+    -e 's|\(\[.*\]\)(\./core/router/epp/)|\1(/docs/architecture/core/router/epp)|g' \
+    -e 's|\(\[.*\]\)(\./advanced/kv-management/)|\1(/docs/architecture/advanced/kv-management)|g' \
+    -e 's|\(\[.*\]\)(\./advanced/kv-management)|\1(/docs/architecture/advanced/kv-management)|g' \
+    -e 's|\](core/router/README\.md)|\](/docs/architecture/core/router)|g' \
+    -e 's|\](core/router/epp/README\.md)|\](/docs/architecture/core/router/epp)|g' \
+    -e 's|\](core/inferencepool\.md)|\](/docs/architecture/core/inferencepool)|g' \
+    -e 's|\](core/model-servers\.md)|\](/docs/architecture/core/model-servers)|g' \
+    -e 's|\](advanced/kv-management/README\.md)|\](/docs/architecture/advanced/kv-management)|g' \
+    -e 's|\](/docs/core/router/README\.md)|\](/docs/architecture/core/router)|g' \
+    -e 's|\](/docs/core/router/epp/README\.md)|\](/docs/architecture/core/router/epp)|g' \
+    -e 's|\](/docs/advanced/kv-management/README\.md)|\](/docs/architecture/advanced/kv-management)|g' \
+    "$DOCS_DIR/architecture/index.md"
+
+# === Fix router index.md relative paths ===
+# Similar issue with router/index.md
+sed_inplace \
+    -e 's|\](\.\/epp/)|\](/docs/architecture/core/router/epp)|g' \
+    -e 's|\](\.\/epp)|\](/docs/architecture/core/router/epp)|g' \
+    -e 's|\](epp/README\.md)|\](/docs/architecture/core/router/epp)|g' \
+    -e 's|\](/docs/architecture/core/epp/README\.md)|\](/docs/architecture/core/router/epp)|g' \
+    "$DOCS_DIR/architecture/core/router/index.md"
 
 # === Clean up known issues ===
 # Remove "NEEDS TO BE REDONE" from configuration.md
 sed_inplace '/^NEEDS TO BE REDONE/d' "$DOCS_DIR/architecture/core/router/epp/configuration.md" 2>/dev/null || true
 
+# Fix unclosed <br> tags (MDX requires self-closing tags)
+find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace 's|<br>|<br />|g' "$file"
+done
+
+# Fix email addresses in angle brackets (MDX interprets them as HTML tags)
+# Replace <email@domain.com> with email@domain.com
+find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace 's|<\([^<>]*@[^<>]*\)>|\1|g' "$file"
+done
+
 # === Apply markdown transformations (shared with test-transformations.sh) ===
-echo "    Applying markdown transformations (callouts, tabs, MDX escaping)..."
+echo "    Applying markdown transformations (callouts, tabs, MDX escaping, well-lit-paths links)..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     apply_transformations "$file"
 done
@@ -264,7 +432,6 @@ generate_stub "$DOCS_DIR/architecture/advanced/batch/batch-gateway.md" "Batch Ga
 generate_stub "$DOCS_DIR/architecture/advanced/batch/async-processor.md" "Async Processor" "Asynchronous request processing component"
 generate_stub "$DOCS_DIR/architecture/core/router/epp/datalayer.md" "Data Layer" "EPP data layer architecture"
 generate_stub "$DOCS_DIR/architecture/advanced/disaggregation/index.md" "Disaggregation" "Prefill/decode disaggregation architecture"
-generate_stub "$DOCS_DIR/architecture/advanced/disaggregation/configuration.md" "Disaggregation Configuration" "Configuration guide for disaggregated serving"
 generate_stub "$DOCS_DIR/architecture/advanced/disaggregation/operations-vllm.md" "vLLM Operations" "vLLM-specific operations for disaggregated serving"
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/index.md" "KV Cache Management" "KV cache optimization and management"
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/prefix-cache-aware-routing.md" "Prefix Cache Aware Routing" "Routing requests to maximize KV cache hits"
@@ -272,13 +439,18 @@ generate_stub "$DOCS_DIR/architecture/advanced/kv-management/kv-indexer.md" "KV-
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/kv-offloader.md" "KV Offloader" "Tiered KV cache storage hierarchy"
 generate_stub "$DOCS_DIR/api-reference/index.md" "API Reference" "API specification and reference documentation"
 generate_stub "$DOCS_DIR/api-reference/glossary.md" "Glossary" "Terminology and definitions for llm-d"
-generate_stub "$DOCS_DIR/resources/configuring-user-facing-apis.md" "Configuring User-Facing APIs" "OpenAI-compatible API configuration"
-generate_stub "$DOCS_DIR/resources/deploying-multiple-models.md" "Deploying Multiple Models" "Multi-model inference deployment"
 generate_stub "$DOCS_DIR/resources/monitoring/metrics.md" "Metrics" "Prometheus metrics collection and configuration"
 generate_stub "$DOCS_DIR/resources/monitoring/tracing.md" "Distributed Tracing" "Setting up distributed tracing with OpenTelemetry"
-generate_stub "$DOCS_DIR/resources/profiling.md" "Profiling" "Performance profiling guides"
-generate_stub "$DOCS_DIR/resources/rollout-new-version.md" "Rollout New Version" "Rolling out a new version of the inference service"
 generate_stub "$DOCS_DIR/resources/rdma/rdma-configuration.md" "RDMA Configuration" "RDMA network configuration"
+
+# Infrastructure Providers stubs
+generate_stub "$DOCS_DIR/resources/infra-providers/index.md" "Infrastructure Providers" "Kubernetes provider setup and configuration"
+generate_stub "$DOCS_DIR/resources/infra-providers/aks.md" "Azure Kubernetes Service" "Deploy llm-d on AKS"
+generate_stub "$DOCS_DIR/resources/infra-providers/digitalocean.md" "DigitalOcean Kubernetes" "Deploy llm-d on DigitalOcean"
+generate_stub "$DOCS_DIR/resources/infra-providers/gke.md" "Google Kubernetes Engine" "Deploy llm-d on GKE"
+generate_stub "$DOCS_DIR/resources/infra-providers/minikube.md" "Minikube" "Deploy llm-d on Minikube"
+generate_stub "$DOCS_DIR/resources/infra-providers/openshift.md" "OpenShift" "Deploy llm-d on OpenShift"
+generate_stub "$DOCS_DIR/resources/infra-providers/openshift-aws.md" "OpenShift on AWS" "Deploy llm-d on OpenShift on AWS"
 
 TOTAL=$(find "$DOCS_DIR" -name "*.md" | wc -l | tr -d ' ')
 echo "==> Done. $TOTAL docs synced from llm-d/llm-d @ $BRANCH"

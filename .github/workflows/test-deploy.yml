@@ -31,3 +31,26 @@ jobs:
         run: cd preview && npm install
       - name: Test build preview docs
         run: cd preview && npm run build
+      - name: Merge preview into main build as /docs
+        run: |
+          cp -r preview/build build/docs
+          mkdir -p build/img/docs
+          cp -r preview/build/img/docs/* build/img/docs/
+
+      - name: Check links
+        run: npm run check-links
+
+      - name: Upload broken links report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: broken-links-report
+          path: broken-links-report.md
+          if-no-files-found: ignore
+
+      - name: Post broken links report to PR
+        if: always() && github.event_name == 'pull_request' && hashFiles('broken-links-report.md') != ''
+        uses: marocchino/sticky-pull-request-comment@v3.0.4
+        with:
+          header: broken-links-report
+          path: broken-links-report.md

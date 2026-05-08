@@ -14,6 +14,28 @@ npm start
 
 This starts a local dev server at `http://localhost:3000/llm-d-docs-wip/`.
 
+## Syncing Docs from llm-d/llm-d
+
+Docs are synced from the upstream `llm-d/llm-d` repo before building. Run from the repo root:
+
+```bash
+# Clone from GitHub and build everything (CI/production)
+npm run build:all
+
+# Use a local llm-d clone (fast, no network required)
+LLMD_REPO=~/repos/llm-d npm run build:all
+
+# Use local clone but pull latest from origin first
+LLMD_REPO=~/repos/llm-d LLMD_FETCH=1 npm run build:all
+```
+
+To sync docs only (without a full build):
+
+```bash
+# From the preview/ directory
+LLMD_REPO=~/repos/llm-d bash scripts/sync-docs.sh
+```
+
 ## Build
 
 ```bash

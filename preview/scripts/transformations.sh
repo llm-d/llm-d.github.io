@@ -41,6 +41,50 @@ apply_transformations() {
     # MDX escaping - escape special characters
     sed_inplace 's|<->|\\<->|g' "$file"
 
+    # Fix escaped curly braces in tables (MDX interprets \{var\} as JS expression)
+    # Convert \{key,value\} -> (key,value) for MDX compatibility
+    sed_inplace 's|\\{|(|g' "$file"
+    sed_inplace 's|\\}|)|g' "$file"
+
+    # Also fix unescaped curly braces in table cells
+    # Convert {key,value} -> (key,value) in table cells (lines with |)
+    sed_inplace '/^|.*|$/ s|{|(|g' "$file"
+    sed_inplace '/^|.*|$/ s|}|)|g' "$file"
+
+    # Fix well-lit-paths links (convert to /docs/guides for Docusaurus)
+    # Source files use ../well-lit-paths/*.md for GitHub compatibility
+    # Convert to /docs/guides/* for Docusaurus
+    sed_inplace \
+        -E 's|\(\.\./well-lit-paths/([^)]+)\.md\)|(/docs/guides/\1)|g' \
+        "$file"
+
+    # Also handle paths with multiple ../ and any path to well-lit-paths
+    sed_inplace \
+        -e 's|\](.*\/well-lit-paths/\([^)]*\)\.md)|\](/docs/guides/\1)|g' \
+        "$file"
+
+    # Fix README.md links to index pages
+    # Convert paths like ../architecture/core/router/epp/README.md to /docs/architecture/core/router/epp
+    sed_inplace \
+        -e 's|\](.*\/accelerators/README\.md)|\](/docs/accelerators)|g' \
+        -e 's|\](.*\/architecture/core/router/epp/README\.md)|\](/docs/architecture/core/router/epp)|g' \
+        -e 's|\](.*\/architecture/advanced/kv-management/README\.md)|\](/docs/architecture/advanced/kv-management)|g' \
+        "$file"
+
+    # Fix /docs/guides/README (without .md extension)
+    sed_inplace \
+        -e 's|\](/docs/guides/README)|\](/docs/guides)|g' \
+        "$file"
+
+    # Fix deployment guide links to GitHub URLs
+    # These guides live in llm-d/guides/ and should link to GitHub
+    sed_inplace \
+        -e 's|\](.*\/guides/prereq/gateways/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/README.md)|g' \
+        -e 's|\](.*\/guides/prereq/gateways/istio\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/istio.md)|g' \
+        -e 's|\](.*\/guides/prereq/gateways/gke\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/gke.md)|g' \
+        -e 's|\](.*\/guides/prereq/gateways/agentgateway\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/agentgateway.md)|g' \
+        "$file"
+
     # Fix unclosed HTML tags for MDX (must be self-closing)
     sed_inplace 's|<img \([^>]*[^/]\)>|<img \1 />|g' "$file"
     sed_inplace 's|<source \([^>]*[^/]\)>|<source \1 />|g' "$file"
