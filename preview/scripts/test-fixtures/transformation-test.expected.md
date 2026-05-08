@@ -206,3 +206,32 @@ Content with @ symbol.
 </TabItem>
 </Tabs>
 
+
+## 10. Well-Lit Paths Link Transformations
+
+Test that well-lit-paths links are transformed correctly:
+
+Single level up:
+[Optimized Baseline](/docs/guides/optimized-baseline)
+
+Two levels up:
+[PD Disaggregation](/docs/guides/pd-disaggregation)
+
+Index/README:
+[All Guides](/docs/guides)
+
+With any number of parent directories:
+[Guide Link](/docs/guides/flow-control)
+
+## 11. README.md Link Transformations
+
+Test that README links are transformed correctly:
+
+Link to accelerators README:
+[Accelerators](/docs/accelerators)
+
+Link to architecture router epp README:
+[EPP](/docs/architecture/core/router/epp)
+
+Link to KV management README:
+[KV Management](/docs/architecture/advanced/kv-management)
