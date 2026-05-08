@@ -62,7 +62,6 @@ const sidebars: SidebarsConfig = {
               collapsed: false,
               link: {type: 'doc', id: 'architecture/advanced/disaggregation/index'},
               items: [
-                'architecture/advanced/disaggregation/configuration',
                 'architecture/advanced/disaggregation/operations-vllm',
               ],
             },
@@ -151,7 +150,6 @@ const sidebars: SidebarsConfig = {
             'resources/infra-providers/openshift-aws',
           ],
         },
-        'resources/configuring-user-facing-apis',
         {
           type: 'category',
           label: 'Monitoring',
@@ -161,9 +159,6 @@ const sidebars: SidebarsConfig = {
             'resources/monitoring/tracing',
           ],
         },
-        'resources/deploying-multiple-models',
-        'resources/rollout-new-version',
-        'resources/profiling',
         'resources/rdma/rdma-configuration',
       ],
     },

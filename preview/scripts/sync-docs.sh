@@ -100,7 +100,6 @@ cp_doc "$WIP/architecture/core/router/epp/datalayer.md"         "$DOCS_DIR/archi
 
 # Architecture / Advanced / Disaggregation
 cp_doc "$WIP/architecture/advanced/disaggregation/README.md"            "$DOCS_DIR/architecture/advanced/disaggregation/index.md"
-cp_doc "$WIP/architecture/advanced/disaggregation/configuration.md"     "$DOCS_DIR/architecture/advanced/disaggregation/configuration.md"
 cp_doc "$WIP/architecture/advanced/disaggregation/operations-vllm.md"   "$DOCS_DIR/architecture/advanced/disaggregation/operations-vllm.md"
 
 # Architecture / Advanced
@@ -141,10 +140,6 @@ mkdir -p "$DOCS_DIR/guides/experimental"
 cp_doc "$WIP/well-lit-paths/experimental/batch-gateway.md" "$DOCS_DIR/guides/experimental/batch-gateway.md"
 
 # === Resources (formerly guides) ===
-cp_doc "$WIP/resources/deploying-multiple-model.md"         "$DOCS_DIR/resources/deploying-multiple-models.md"
-cp_doc "$WIP/resources/user-apis.md"                        "$DOCS_DIR/resources/configuring-user-facing-apis.md"
-cp_doc "$WIP/resources/profiling.md"                        "$DOCS_DIR/resources/profiling.md"
-cp_doc "$WIP/resources/rollout-new-version.md"              "$DOCS_DIR/resources/rollout-new-version.md"
 cp_doc "$WIP/resources/monitoring/metrics.md"               "$DOCS_DIR/resources/monitoring/metrics.md"
 cp_doc "$WIP/resources/monitoring/tracing.md"               "$DOCS_DIR/resources/monitoring/tracing.md"
 # PR #1207 places monitoring under guides/monitoring/ — use as fallback
@@ -437,7 +432,6 @@ generate_stub "$DOCS_DIR/architecture/advanced/batch/batch-gateway.md" "Batch Ga
 generate_stub "$DOCS_DIR/architecture/advanced/batch/async-processor.md" "Async Processor" "Asynchronous request processing component"
 generate_stub "$DOCS_DIR/architecture/core/router/epp/datalayer.md" "Data Layer" "EPP data layer architecture"
 generate_stub "$DOCS_DIR/architecture/advanced/disaggregation/index.md" "Disaggregation" "Prefill/decode disaggregation architecture"
-generate_stub "$DOCS_DIR/architecture/advanced/disaggregation/configuration.md" "Disaggregation Configuration" "Configuration guide for disaggregated serving"
 generate_stub "$DOCS_DIR/architecture/advanced/disaggregation/operations-vllm.md" "vLLM Operations" "vLLM-specific operations for disaggregated serving"
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/index.md" "KV Cache Management" "KV cache optimization and management"
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/prefix-cache-aware-routing.md" "Prefix Cache Aware Routing" "Routing requests to maximize KV cache hits"
@@ -445,12 +439,8 @@ generate_stub "$DOCS_DIR/architecture/advanced/kv-management/kv-indexer.md" "KV-
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/kv-offloader.md" "KV Offloader" "Tiered KV cache storage hierarchy"
 generate_stub "$DOCS_DIR/api-reference/index.md" "API Reference" "API specification and reference documentation"
 generate_stub "$DOCS_DIR/api-reference/glossary.md" "Glossary" "Terminology and definitions for llm-d"
-generate_stub "$DOCS_DIR/resources/configuring-user-facing-apis.md" "Configuring User-Facing APIs" "OpenAI-compatible API configuration"
-generate_stub "$DOCS_DIR/resources/deploying-multiple-models.md" "Deploying Multiple Models" "Multi-model inference deployment"
 generate_stub "$DOCS_DIR/resources/monitoring/metrics.md" "Metrics" "Prometheus metrics collection and configuration"
 generate_stub "$DOCS_DIR/resources/monitoring/tracing.md" "Distributed Tracing" "Setting up distributed tracing with OpenTelemetry"
-generate_stub "$DOCS_DIR/resources/profiling.md" "Profiling" "Performance profiling guides"
-generate_stub "$DOCS_DIR/resources/rollout-new-version.md" "Rollout New Version" "Rolling out a new version of the inference service"
 generate_stub "$DOCS_DIR/resources/rdma/rdma-configuration.md" "RDMA Configuration" "RDMA network configuration"
 
 # Infrastructure Providers stubs
