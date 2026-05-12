@@ -40,6 +40,12 @@ bash scripts/sync-docs.sh "$DOCS_BRANCH"
 echo "✓ Preview docs synced"
 echo ""
 
+# === INJECT PRISM DASHBOARD ===
+echo "Injecting Prism dashboard into optimized-baseline.md..."
+echo -e '\n## Results Dashboard\n\nThe graphs below are powered by [Prism](https://prism.llm-d.ai/?view=intelligent-routing), our visualization dashboard for analyzing inference benchmark results. This specific view shows the performance of intelligent routing.\n\n<div style={{width: "100%", height: "600px", overflow: "hidden", position: "relative"}}><iframe src="https://prism.llm-d.ai/?view=intelligent-routing" style={{width: "150%", height: "150%", transform: "scale(0.67)", transformOrigin: "0 0", border: 0, position: "absolute", top: 0, left: 0}} allowFullScreen title="Prism Intelligent Routing Dashboard"></iframe></div>' >> "$PROJECT_DIR/preview/docs/guides/optimized-baseline.md"
+echo "✓ Dashboard injected"
+echo ""
+
 # Step 3: Build preview docs site
 echo "Step 3/4: Building preview docs site..."
 cd "$PROJECT_DIR/preview"
