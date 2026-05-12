@@ -1,0 +1,74 @@
+name: Create Release Branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 0.7.0)'
+        required: true
+        type: string
+      source_branch:
+        description: 'Source branch in llm-d/llm-d (e.g., release-0.7)'
+        required: true
+        type: string
+
+jobs:
+  create-release-branch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create and checkout release branch
+        run: |
+          git checkout -b release-${{ inputs.version }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20.18.1
+          cache: npm
+          cache-dependency-path: preview/package-lock.json
+
+      - name: Install dependencies
+        run: cd preview && npm install
+
+      - name: Sync docs from llm-d/llm-d release branch
+        run: |
+          cd preview
+          bash scripts/sync-docs.sh ${{ inputs.source_branch }}
+
+      - name: Commit synced docs
+        run: |
+          git add preview/docs preview/static/img/docs
+          if ! git diff --staged --quiet; then
+            git commit -m "Initial docs sync from llm-d/llm-d@${{ inputs.source_branch }}"
+          else
+            echo "No changes to commit"
+          fi
+
+      - name: Push release branch
+        run: |
+          git push origin release-${{ inputs.version }}
+
+      - name: Summary
+        run: |
+          echo "## Release Branch Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** release-${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Source:** llm-d/llm-d@${{ inputs.source_branch }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Synced:** $(find preview/docs -name '*.md' | wc -l) markdown files" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Nightly sync will keep this branch updated from the source branch." >> $GITHUB_STEP_SUMMARY

@@ -44,6 +44,47 @@ jobs:
       - name: Merge preview into main build as /docs
         run: cp -r preview/build build/docs
 
+      - name: Build and merge release branches
+        run: |
+          # Fetch all branches
+          git fetch origin
+
+          # Find all release branches
+          RELEASE_BRANCHES=$(git branch -r | grep 'origin/release-' | sed 's|origin/||' | grep -v HEAD || true)
+
+          if [ -z "$RELEASE_BRANCHES" ]; then
+            echo "No release branches found, skipping"
+            exit 0
+          fi
+
+          echo "Building release branches:"
+          echo "$RELEASE_BRANCHES"
+
+          for branch in $RELEASE_BRANCHES; do
+            # Extract version (e.g., release-0.7.0 -> 0.7.0)
+            VERSION=${branch#release-}
+
+            echo "Building docs for version $VERSION from $branch"
+
+            # Checkout the release branch (in a worktree to avoid conflicts)
+            git worktree add "../release-${VERSION}" "$branch"
+
+            # Build the release docs
+            cd "../release-${VERSION}/preview"
+            npm install
+            npm run build
+
+            # Copy build output to versioned path
+            mkdir -p "../../llm-d.github.io/build/docs/${VERSION}"
+            cp -r build/* "../../llm-d.github.io/build/docs/${VERSION}/"
+
+            # Clean up worktree
+            cd "../../llm-d.github.io"
+            git worktree remove "../release-${VERSION}"
+
+            echo "✓ Built version $VERSION"
+          done
+
       - name: Upload Build Artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
