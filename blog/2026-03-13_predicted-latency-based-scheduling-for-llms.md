@@ -126,7 +126,7 @@ Below we show predicted vs actual TTFT and TPOT over a benchmark run (scenario C
 <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Predicted (red) vs actual (blue) TTFT over time. The model tracks TTFT closely as it ramps from near zero to 5 minutes across increasing QPS levels.</em></p>
 </div>
 
-Across multiple benchmark runs, the model achieves a Mean Absolute Percentage Error (MAPE) of approximately 5%. This is not surprising -- accelerator performance is fairly deterministic given the current server state and request characteristics. The same prompt length, at the same KV cache utilization, with the same number of running requests, will produce similar TTFT and TPOT. The model simply learns this mapping.
+Across multiple benchmark runs, the model achieves a Mean Absolute Percentage Error (MAP) of approximately 5%. This is not surprising -- accelerator performance is fairly deterministic given the current server state and request characteristics. The same prompt length, at the same KV cache utilization, with the same number of running requests, will produce similar TTFT and TPOT. The model simply learns this mapping.
 
 ### Endpoint Selection
 
