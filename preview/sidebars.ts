@@ -11,7 +11,6 @@ const sidebars: SidebarsConfig = {
       link: {type: 'doc', id: 'getting-started/index'},
       items: [
         'getting-started/quickstart',
-        'getting-started/feature-matrix',
         'getting-started/artifacts',
       ],
     },
