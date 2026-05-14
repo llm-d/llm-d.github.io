@@ -63,6 +63,18 @@ const config = {
     },
   ],
 
+  // Add kapa.ai AI assistant widget
+  scripts: [
+    {
+      src: 'https://widget.kapa.ai/kapa-widget.bundle.js',
+      'data-website-id': '1eea1a6a-a57b-48d7-a4aa-c993481daad7',
+      'data-project-name': 'llm-d',
+      'data-project-color': '#9b4d9b',
+      'data-project-logo': 'https://llm-d.ai/img/llm-d-favicon.png',
+      async: true,
+    },
+  ],
+
   presets: [
     [
       "classic",
