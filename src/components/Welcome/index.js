@@ -12,7 +12,7 @@ export default function Welcome() {
         ></img>
 
         <h2 className="welcome-h2">
-          llm-d: a Kubernetes-native high-performance distributed LLM inference framework
+          llm-d: a high-performance and scalable distributed LLM inference framework
         </h2>
 
 
