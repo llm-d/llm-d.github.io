@@ -70,7 +70,6 @@ const config = {
       'data-website-id': '1eea1a6a-a57b-48d7-a4aa-c993481daad7',
       'data-project-name': 'llm-d',
       'data-project-color': '#7f317f',
-      'data-project-logo': 'https://llm-d.ai/img/llm-d-icon.png',
       async: true,
     },
   ],
