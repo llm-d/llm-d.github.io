@@ -33,10 +33,22 @@ export default function VersionDropdown(): React.JSX.Element {
 
   // Extract current page path to preserve when switching versions
   // e.g., /docs/architecture/core/proxy -> architecture/core/proxy
+  // e.g., /docs/0.7.0/architecture -> architecture (strip version)
   const getCurrentPagePath = () => {
     const path = location.pathname;
     const match = path.match(/^\/docs\/(.+)$/);
-    return match ? match[1] : 'getting-started';
+    if (!match) return 'getting-started';
+
+    let pagePath = match[1];
+
+    // Strip version number if present (e.g., "0.7.0/architecture" -> "architecture")
+    // Version pattern: starts with digit(s).digit(s) optionally followed by .digit(s)
+    const versionMatch = pagePath.match(/^(\d+\.\d+(?:\.\d+)?)\/(.*)/);
+    if (versionMatch) {
+      pagePath = versionMatch[2];
+    }
+
+    return pagePath || 'getting-started';
   };
 
   // Generate URL for a version
