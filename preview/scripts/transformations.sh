@@ -93,6 +93,24 @@ apply_transformations() {
         -e 's|\](/docs/guides/README)|\](/docs/guides)|g' \
         "$file"
 
+    # Fix relative README.md links in guides
+    sed_inplace \
+        -e 's|\](./gcp-pubsub/README\.md)|\](./gcp-pubsub/index.md)|g' \
+        -e 's|\](./redis/README\.md)|\](./redis/index.md)|g' \
+        -e 's|\](./gcp-pubsub/README\.md#testing)|\](./gcp-pubsub/index.md#testing)|g' \
+        -e 's|\](./redis/README\.md#testing)|\](./redis/index.md#testing)|g' \
+        -e 's|\](./cpu/README\.md)|\](./cpu/index.md)|g' \
+        -e 's|\](./storage/README\.md)|\](./storage/index.md)|g' \
+        "$file"
+
+    # Fix guide name variations and relative paths
+    sed_inplace \
+        -e 's|\](/docs/guides/predicted-latency)|\](/docs/guides/predicted-latency-based-scheduling)|g' \
+        -e 's|\](/docs/guides/wide-expert-parallelism)|\](/docs/guides/wide-ep-lws)|g' \
+        -e 's|\](../../prereq/gateway-provider/common-configurations/*)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider#common-configurations)|g' \
+        -e 's|\](../gateway/*)|\](/docs/guides/recipes/gateway)|g' \
+        "$file"
+
     # Fix deployment guide links to GitHub URLs
     # These guides live in llm-d/guides/ and should link to GitHub
     sed_inplace \

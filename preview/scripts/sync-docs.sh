@@ -149,6 +149,20 @@ echo "    Copying well-lit-paths overview pages as fallback..."
 # Copy well-lit-paths overview as top-level guides/index.md
 cp_doc "$WIP/well-lit-paths/README.md" "$DOCS_DIR/guides/index.md"
 
+# Fix guide links in guides/index.md (well-lit-paths uses .md links, need to convert to proper paths)
+sed_inplace \
+    -e 's|\](optimized-baseline\.md)|\](/docs/guides/optimized-baseline)|g' \
+    -e 's|\](predicted-latency\.md)|\](/docs/guides/predicted-latency-based-scheduling)|g' \
+    -e 's|\](precise-prefix-cache-aware\.md)|\](/docs/guides/precise-prefix-cache-aware)|g' \
+    -e 's|\](tiered-prefix-cache\.md)|\](/docs/guides/tiered-prefix-cache)|g' \
+    -e 's|\](pd-disaggregation\.md)|\](/docs/guides/pd-disaggregation)|g' \
+    -e 's|\](wide-expert-parallelism\.md)|\](/docs/guides/wide-ep-lws)|g' \
+    -e 's|\](flow-control\.md)|\](/docs/guides/flow-control)|g' \
+    -e 's|\](workload-autoscaling\.md)|\](/docs/guides/workload-autoscaling)|g' \
+    -e 's|\](asynchronous-processing\.md)|\](/docs/guides/asynchronous-processing)|g' \
+    -e 's|\](experimental/batch-gateway\.md)|\](/docs/guides/batch-gateway)|g' \
+    "$DOCS_DIR/guides/index.md"
+
 # For guides that don't have detailed guides/, copy well-lit-paths overview
 # Only copy if the detailed guide directory doesn't exist
 if [[ ! -d "$SRC/guides/predicted-latency-based-scheduling" ]]; then
@@ -298,6 +312,15 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](/docs/infra-providers)|\](/docs/resources/infra-providers)|g' \
         -e 's|\](infra-providers/\([^)]*\))|\](/docs/resources/infra-providers/\1)|g' \
         -e 's|\](/docs/\([^)]*\)/README\.md)|\](/docs/\1)|g' \
+        -e 's|\](/docs/guides/predicted-latency)|\](/docs/guides/predicted-latency-based-scheduling)|g' \
+        -e 's|\](/docs/guides/wide-expert-parallelism)|\](/docs/guides/wide-ep-lws)|g' \
+        -e 's|\](../../../../guides/tiered-prefix-cache)|\](/docs/guides/tiered-prefix-cache)|g' \
+        -e 's|\](/guides/tiered-prefix-cache)|\](/docs/guides/tiered-prefix-cache)|g' \
+        -e 's|\](../../../../guides/batch-gateway)|\](/docs/guides/batch-gateway)|g' \
+        -e 's|\](/guides/batch-gateway)|\](/docs/guides/batch-gateway)|g' \
+        -e 's|\](../../../guides/batch-gateway)|\](/docs/guides/batch-gateway)|g' \
+        -e 's|\](../../../guides/asynchronous-processing)|\](/docs/guides/asynchronous-processing)|g' \
+        -e 's|\](../../guides/pd-disaggregation/README\.md)|\](/docs/guides/pd-disaggregation)|g' \
         "$file"
 done
 
@@ -318,10 +341,27 @@ find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\]\(redis/README\.md\)|\](redis/index.md)|g' \
         -e 's|\]\(./gcp-pubsub/README\.md\)|\](./gcp-pubsub/index.md)|g' \
         -e 's|\]\(./redis/README\.md\)|\](./redis/index.md)|g' \
+        -e 's|\]\(./gcp-pubsub/README\.md#testing\)|\](./gcp-pubsub/index.md#testing)|g' \
+        -e 's|\]\(./redis/README\.md#testing\)|\](./redis/index.md#testing)|g' \
         -e 's|\](../optimized-baseline/README\.md)|\](../optimized-baseline/index.md)|g' \
-        -e 's|\](../prereq/gateway-provider/README\.md)|\](../prereq/gateway-provider/index.md)|g' \
-        -e 's|\](../../prereq/gateway-provider/README\.md)|\](../../prereq/gateway-provider/index.md)|g' \
+        -e 's|\](../prereq/gateway-provider/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider)|g' \
+        -e 's|\](../../prereq/gateway-provider/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider)|g' \
+        -e 's|\](../prereq/gateway-provider/index\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider)|g' \
+        -e 's|\](../../prereq/gateway-provider/index\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider)|g' \
         -e 's|\](../asynchronous-processing/README\.md)|\](../asynchronous-processing/index.md)|g' \
+        -e 's|\](/docs/guides/cpu/README\.md)|\](/docs/guides/tiered-prefix-cache/cpu)|g' \
+        -e 's|\](/docs/guides/storage/README\.md)|\](/docs/guides/tiered-prefix-cache/storage)|g' \
+        -e 's|\](/docs/guides/redis/README\.md)|\](/docs/guides/asynchronous-processing/redis)|g' \
+        -e 's|\](/docs/guides/gcp-pubsub/README\.md)|\](/docs/guides/asynchronous-processing/gcp-pubsub)|g' \
+        -e 's|\](/docs/guides/README\.md)|\](/docs/guides)|g' \
+        -e 's|\](../README\.md#installation)|\](../index.md#installation)|g' \
+        -e 's|\](../../recipes/gateway/README\.md)|\](/docs/guides/recipes/gateway)|g' \
+        -e 's|\](../gateway)|\](/docs/guides/recipes/gateway)|g' \
+        -e 's|\](/docs/guides/gateway)|\](/docs/guides/recipes/gateway)|g' \
+        -e 's|\](/docs/guides/tiered-prefix-cache/manifests/backends/lustre/README\.md)|\](/docs/guides/tiered-prefix-cache/storage/manifests/backends/lustre)|g' \
+        -e 's|\](/docs/guides/tiered-prefix-cache/manifests/backends/aws/README\.md)|\](/docs/guides/tiered-prefix-cache/storage/manifests/backends/aws)|g' \
+        -e 's|\](./manifests/backends/lustre/README\.md)|\](./manifests/backends/lustre/index.md)|g' \
+        -e 's|\](./manifests/backends/aws/README\.md)|\](./manifests/backends/aws/index.md)|g' \
         "$file"
 
     # Convert relative image paths to local static paths
@@ -337,6 +377,86 @@ find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
             -e "s|!\[\([^]]*\)\](./images/\([^)]*\))|![\1](/img/docs/guides/$guide_subdir/\2)|g" \
             "$file"
     fi
+done
+
+# === Fix prereq and helper references ===
+# We excluded prereq pages, so point to upstream GitHub
+# Helper files don't exist on the site, so point to upstream GitHub
+echo "    Fixing prereq and helper file references..."
+find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace \
+        -e 's|\](../prereq/gateways)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways)|g' \
+        -e 's|\](../../prereq/gateways)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways)|g' \
+        -e 's|\](/docs/prereq/gateways)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways)|g' \
+        -e 's|\](/docs/guides/prereq/gateway-provider)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider)|g' \
+        -e 's|\](../../prereq/gateway-provider/README\.md#supported-providers)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider#supported-providers)|g' \
+        -e 's|\](../../prereq/gateway-provider/common-configurations)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider#common-configurations)|g' \
+        -e 's|\](/docs/prereq/gateway-provider/index\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider)|g' \
+        -e 's|\](../../helpers/client-setup/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/helpers/client-setup)|g' \
+        -e 's|\](../../../helpers/client-setup/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/helpers/client-setup)|g' \
+        -e 's|\](/helpers/client-setup/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/helpers/client-setup)|g' \
+        -e 's|\](../../helpers/hf-token\.md)|\](https://github.com/llm-d/llm-d/tree/main/helpers/hf-token.md)|g' \
+        -e 's|\](../../../helpers/hf-token\.md)|\](https://github.com/llm-d/llm-d/tree/main/helpers/hf-token.md)|g' \
+        -e 's|\](/helpers/hf-token\.md)|\](https://github.com/llm-d/llm-d/tree/main/helpers/hf-token.md)|g' \
+        -e 's|\](../../helpers/benchmark\.md)|\](https://github.com/llm-d/llm-d/tree/main/helpers/benchmark.md)|g' \
+        -e 's|\](../../../helpers/benchmark\.md)|\](https://github.com/llm-d/llm-d/tree/main/helpers/benchmark.md)|g' \
+        -e 's|\](/helpers/benchmark\.md)|\](https://github.com/llm-d/llm-d/tree/main/helpers/benchmark.md)|g' \
+        -e 's|\](../../docs/monitoring/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/docs/monitoring)|g' \
+        -e 's|\](../../../docs/monitoring/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/docs/monitoring)|g' \
+        -e 's|\](/docs/monitoring/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/docs/monitoring)|g' \
+        -e 's|\](../../../../../prereq/infrastructure/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/infrastructure)|g' \
+        -e 's|\](/docs/prereq/infrastructure/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/infrastructure)|g' \
+        "$file"
+done
+
+# === Fix placeholder and missing file references ===
+echo "    Fixing placeholder and missing file references..."
+find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace \
+        -e 's|\](placeholder-link)|\](https://github.com/llm-d/llm-d)|g' \
+        -e 's|\](/docs/guides/placeholder-link)|\](https://github.com/llm-d/llm-d)|g' \
+        -e 's|\](tuning\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/flow-control/tuning.md)|g' \
+        -e 's|\](/docs/guides/tuning\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/flow-control/tuning.md)|g' \
+        -e 's|\](./objectives\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/flow-control/objectives.yaml)|g' \
+        -e 's|\](/docs/guides/objectives\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/flow-control/objectives.yaml)|g' \
+        -e 's|\](scheduler/precise-prefix-cache-aware\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware/scheduler/precise-prefix-cache-aware.values.yaml)|g' \
+        -e 's|\](/docs/guides/scheduler/precise-prefix-cache-aware\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware/scheduler/precise-prefix-cache-aware.values.yaml)|g' \
+        -e 's|\](./scheduler/predicted-latency\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-based-scheduling/scheduler/predicted-latency.values.yaml)|g' \
+        -e 's|\](/docs/guides/scheduler/predicted-latency\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-based-scheduling/scheduler/predicted-latency.values.yaml)|g' \
+        -e 's|\](./scheduler/predicted-latency-slo\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-based-scheduling/scheduler/predicted-latency-slo.values.yaml)|g' \
+        -e 's|\](/docs/guides/scheduler/predicted-latency-slo\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-based-scheduling/scheduler/predicted-latency-slo.values.yaml)|g' \
+        -e 's|\](./storage_class\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache/storage/manifests/backends/lustre/storage_class.yaml)|g' \
+        -e 's|\](/docs/guides/tiered-prefix-cache/storage/manifests/backends/storage_class\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache/storage/manifests/backends/lustre/storage_class.yaml)|g' \
+        -e 's|\](./README\.hpa-epp/index\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling)|g' \
+        -e 's|\](/docs/guides/README\.hpa-epp/index\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling)|g' \
+        -e 's|\](./README\.wva\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling)|g' \
+        -e 's|\](/docs/guides/README\.wva\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling)|g' \
+        -e 's|\](../../04_customizing_a_guide\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/04_customizing_a_guide.md)|g' \
+        -e 's|\](/docs/04_customizing_a_guide\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/04_customizing_a_guide.md)|g' \
+        -e 's|\](../../02_verifying_a_guide\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/02_verifying_a_guide.md)|g' \
+        -e 's|\](/docs/02_verifying_a_guide\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/02_verifying_a_guide.md)|g' \
+        -e 's|\](../../02_verifying_a_guide\.md#following-logs-for-requests)|\](https://github.com/llm-d/llm-d/tree/main/guides/02_verifying_a_guide.md#following-logs-for-requests)|g' \
+        "$file"
+done
+
+# === Fix architecture and other cross-references ===
+echo "    Fixing architecture references..."
+find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace \
+        -e 's|\](../../docs/architecture/advanced/latency-predictor\.md)|\](/docs/architecture/advanced/latency-predictor)|g' \
+        -e 's|\](/docs/architecture/advanced/latency-predictor\.md)|\](/docs/architecture/advanced/latency-predictor)|g' \
+        -e 's|\](../../docs/architecture/advanced/latency-predictor\.md#observability)|\](/docs/architecture/advanced/latency-predictor#observability)|g' \
+        -e 's|\](../../docs/architecture/core/router/epp/flow-control\.md)|\](/docs/architecture/core/router/epp/flow-control)|g' \
+        -e 's|\](/docs/architecture/core/router/epp/flow-control\.md)|\](/docs/architecture/core/router/epp/flow-control)|g' \
+        -e 's|\](../../docs/architecture/core/epp/flow-control\.md)|\](/docs/architecture/core/router/epp/flow-control)|g' \
+        -e 's|\](/docs/architecture/core/epp/flow-control\.md)|\](/docs/architecture/core/router/epp/flow-control)|g' \
+        -e 's|\](../optimized-baseline/README\.md#supported-hardware-backends)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline#supported-hardware-backends)|g' \
+        -e 's|\](/docs/optimized-baseline/README\.md#supported-hardware-backends)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline#supported-hardware-backends)|g' \
+        -e 's|\](../optimized-baseline)|\](/docs/guides/optimized-baseline)|g' \
+        -e 's|\](/docs/optimized-baseline)|\](/docs/guides/optimized-baseline)|g' \
+        -e 's|\](../optimized-baseline/README\.md#2-deploy-the-model-server)|\](/docs/guides/optimized-baseline#2-deploy-the-model-server)|g' \
+        -e 's|\](../optimized-baseline/README\.md#3-enable-monitoring-optional)|\](/docs/guides/optimized-baseline#3-enable-monitoring-optional)|g' \
+        "$file"
 done
 
 # === Fix gateway index.md links ===
