@@ -2,6 +2,12 @@
   command = "npm run build:all"
   publish = "build"
 
+# Slack invite redirect
+[[redirects]]
+  from = "/slack"
+  to = "https://join.slack.com/t/llm-d/shared_invite/zt-3vjxmypf9-63gI5wHRhn6D60zzad67Bw"
+  status = 302
+
 # Redirect old /preview/* to /docs/* (backward compatibility)
 [[redirects]]
   from = "/preview/*"
