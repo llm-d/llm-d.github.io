@@ -1,0 +1,101 @@
+name: Sync Release Branch Docs
+
+on:
+  schedule:
+    # Run nightly at 1:00 AM UTC (after main deploy at midnight)
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+jobs:
+  discover-and-sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20.18.1
+          cache: npm
+          cache-dependency-path: preview/package-lock.json
+
+      - name: Install dependencies
+        run: cd preview && npm install
+
+      - name: Discover and sync release branches
+        run: |
+          # Fetch all remote branches
+          git fetch origin
+
+          # Find all release branches (e.g., release-0.7.0)
+          RELEASE_BRANCHES=$(git branch -r | grep 'origin/release-' | sed 's|origin/||' | grep -v HEAD || true)
+
+          if [ -z "$RELEASE_BRANCHES" ]; then
+            echo "No release branches found"
+            exit 0
+          fi
+
+          echo "Found release branches:"
+          echo "$RELEASE_BRANCHES"
+          echo ""
+
+          # Process each release branch
+          for branch in $RELEASE_BRANCHES; do
+            echo "========================================="
+            echo "Processing: $branch"
+            echo "========================================="
+
+            # Extract version (e.g., release-0.7.0 -> 0.7.0)
+            VERSION=${branch#release-}
+
+            # Extract major.minor for source branch (e.g., 0.7.0 -> 0.7)
+            MAJOR_MINOR=$(echo "$VERSION" | cut -d. -f1,2)
+            SOURCE_BRANCH="release-${MAJOR_MINOR}"
+
+            echo "Version: $VERSION"
+            echo "Source branch in llm-d/llm-d: $SOURCE_BRANCH"
+
+            # Checkout the release branch
+            git checkout "$branch"
+            git pull origin "$branch"
+
+            # Sync docs from llm-d/llm-d
+            cd preview
+            bash scripts/sync-docs.sh "$SOURCE_BRANCH" || {
+              echo "Warning: Sync failed for $branch"
+              cd ..
+              continue
+            }
+            cd ..
+
+            # Commit changes if any
+            git add preview/docs preview/static/img/docs
+            if ! git diff --staged --quiet; then
+              COMMIT_MSG="Nightly docs sync from llm-d/llm-d@${SOURCE_BRANCH}
+
+          Auto-synced on $(date -u +"%Y-%m-%d %H:%M UTC")"
+              git commit -m "$COMMIT_MSG"
+              git push origin "$branch"
+              echo "✓ Updated $branch"
+            else
+              echo "✓ No changes for $branch"
+            fi
+
+            echo ""
+          done
+
+          echo "========================================="
+          echo "Sync complete"
+          echo "========================================="
