@@ -41,6 +41,23 @@ apply_transformations() {
     # MDX escaping - escape special characters
     sed_inplace 's|<->|\\<->|g' "$file"
 
+    # Escape HTML comments for MDX (MDX doesn't support <!-- --> syntax)
+    # Replace HTML comments with MDX comments: <!-- text --> becomes {/* text */}
+    # Handle both single-line and multi-line comments
+    # Use perl for multi-line regex support
+    perl -i -pe 'BEGIN{undef $/;} s/<!--(.*?)-->/{\/\*$1\*\/}/gs' "$file"
+
+    # Escape angle brackets that look like HTML tags but aren't (e.g., <your_gateway_choice>)
+    # These appear in template/placeholder text and confuse MDX parser
+    # Only escape patterns with underscores or specific placeholder patterns
+    # Don't escape real HTML tags (picture, source, img, div, p, etc.)
+    sed_inplace 's|<\([a-z][a-z0-9]*_[a-z0-9_]*\)>|\\<\1\\>|g' "$file"
+
+    # Escape comparison operators in text (<=, >=) that MDX interprets as JSX
+    # Replace with HTML entities
+    sed_inplace 's|<=|\\&le;|g' "$file"
+    sed_inplace 's|>=|\\&ge;|g' "$file"
+
     # Fix escaped curly braces in tables (MDX interprets \{var\} as JS expression)
     # Convert \{key,value\} -> (key,value) for MDX compatibility
     sed_inplace 's|\\{|(|g' "$file"
