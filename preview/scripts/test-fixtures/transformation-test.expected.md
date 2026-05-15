@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Transformation Test Document
 
 This document contains examples of all markdown transformations that should occur during the sync process.
@@ -43,10 +40,9 @@ All lines should be included in the transformation.
 
 ## 3. Custom Tabs Test
 
+{/* TABS:START */}
 
-<Tabs>
-
-<TabItem value="first-tab" label="First Tab" default>
+{/* TAB:First Tab:default */}
 ### First Tab Content
 
 This is the content of the first tab.
@@ -56,8 +52,7 @@ It should be marked as default.
 echo "First tab code block"
 ```
 
-</TabItem>
-<TabItem value="second-tab" label="Second Tab">
+{/* TAB:Second Tab */}
 ### Second Tab Content
 
 This is the content of the second tab.
@@ -66,23 +61,19 @@ This is the content of the second tab.
 - List item 2
 - List item 3
 
-</TabItem>
-<TabItem value="third-tab-complex-name" label="Third Tab (Complex Name)">
+{/* TAB:Third Tab (Complex Name) */}
 ### Third Tab with Complex Name
 
 This tab has parentheses and spaces in the label.
 The value should be `third-tab-complex-name`.
 
-</TabItem>
-</Tabs>
-
+{/* TABS:END */}
 
 ## 4. Nested Content in Tabs Test
 
+{/* TABS:START */}
 
-<Tabs>
-
-<TabItem value="aws-eks" label="AWS EKS" default>
+{/* TAB:AWS EKS:default */}
 #### Deploy on AWS
 
 ```yaml
@@ -99,17 +90,14 @@ This note is inside a tab!
 :::
 
 
-</TabItem>
-<TabItem value="google-gke" label="Google GKE">
+{/* TAB:Google GKE */}
 #### Deploy on GKE
 
 ```bash
 gcloud container clusters create my-cluster
 ```
 
-</TabItem>
-</Tabs>
-
+{/* TABS:END */}
 
 ## 5. Image Path Test
 
@@ -170,42 +158,32 @@ const test = "value";
 
 ### Empty Tab
 
+{/* TABS:START */}
 
-<Tabs>
+{/* TAB:Empty Tab:default */}
 
-<TabItem value="empty-tab" label="Empty Tab" default>
-
-</TabItem>
-</Tabs>
-
+{/* TABS:END */}
 
 ### Single Tab
 
+{/* TABS:START */}
 
-<Tabs>
-
-<TabItem value="only-tab" label="Only Tab" default>
+{/* TAB:Only Tab:default */}
 This is the only tab.
 
-</TabItem>
-</Tabs>
-
+{/* TABS:END */}
 
 ### Tab with Special Characters
 
+{/* TABS:START */}
 
-<Tabs>
-
-<TabItem value="gke-h100-h200" label="GKE (H100/H200)" default>
+{/* TAB:GKE (H100/H200):default */}
 Content for H100/H200 GPUs.
 
-</TabItem>
-<TabItem value="coreweave-us-east" label="CoreWeave @ US-East">
+{/* TAB:CoreWeave @ US-East */}
 Content with @ symbol.
 
-</TabItem>
-</Tabs>
-
+{/* TABS:END */}
 
 ## 10. Well-Lit Paths Link Transformations
 
