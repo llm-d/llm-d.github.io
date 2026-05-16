@@ -54,6 +54,12 @@ const config: Config = {
             const cleanPath = docPath.replace(/^docs\//, '');
             // Map index.md back to README.md (sync script renames these)
             const sourcePath = cleanPath.replace(/\/index\.md$/, '/README.md');
+
+            // Guide pages come from guides/ in the upstream repo, not docs/
+            if (cleanPath.startsWith('guides/')) {
+              return `https://github.com/llm-d/llm-d/blob/main/${sourcePath}`;
+            }
+
             return `https://github.com/llm-d/llm-d/blob/main/docs/${sourcePath}`;
           },
           showLastUpdateTime: true,

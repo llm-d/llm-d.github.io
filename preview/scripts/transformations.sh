@@ -45,7 +45,9 @@ apply_transformations() {
     # Replace HTML comments with MDX comments: <!-- text --> becomes {/* text */}
     # Handle both single-line and multi-line comments
     # Use perl for multi-line regex support
-    perl -i -pe 'BEGIN{undef $/;} s/<!--(.*?)-->/{\/\*$1\*\/}/gs' "$file"
+    # IMPORTANT: Exclude tab markers (<!-- TABS:START -->, <!-- TAB:... -->, <!-- TABS:END -->)
+    # which need to be processed by the tab transformation later
+    perl -i -pe 'BEGIN{undef $/;} s/<!--(?!\s*TABS?:)(.*?)-->/{\/\*$1\*\/}/gs' "$file"
 
     # Escape angle brackets that look like HTML tags but aren't (e.g., <your_gateway_choice>)
     # These appear in template/placeholder text and confuse MDX parser
