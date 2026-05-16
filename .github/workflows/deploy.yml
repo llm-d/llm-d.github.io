@@ -80,7 +80,7 @@ jobs:
 
             # Clean up worktree
             cd "../../llm-d.github.io"
-            git worktree remove "../release-${VERSION}"
+            git worktree remove --force "../release-${VERSION}"
 
             echo "✓ Built version $VERSION"
           done
