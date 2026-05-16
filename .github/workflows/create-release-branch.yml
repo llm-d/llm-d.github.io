@@ -52,7 +52,7 @@ jobs:
 
       - name: Commit synced docs
         run: |
-          git add preview/docs preview/static/img/docs
+          git add -f preview/docs preview/static/img/docs
           if ! git diff --staged --quiet; then
             git commit -m "Initial docs sync from llm-d/llm-d@${{ inputs.source_branch }}"
           else
