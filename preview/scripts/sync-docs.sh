@@ -144,6 +144,17 @@ find "$SRC/guides" -name "README.md" -type f 2>/dev/null | grep -v "/prereq/" | 
     cp "$readme_file" "$dst_path"
 done
 
+# Fix unclosed tab blocks in upstream content
+echo "    Fixing unclosed tab blocks..."
+# experimental-dp-aware has <!-- TABS:START --> and <!-- TAB:CoreWeave --> but missing <!-- TABS:END -->
+# The tab should close after the kubectl command, before "### Deploy InferencePool"
+if [[ -f "$DOCS_DIR/guides/wide-ep-lws/experimental-dp-aware/index.md" ]]; then
+    # Insert <!-- TABS:END --> before the "### Deploy InferencePool" heading
+    sed_inplace '/^### Deploy InferencePool$/i\
+<!-- TABS:END -->\
+' "$DOCS_DIR/guides/wide-ep-lws/experimental-dp-aware/index.md"
+fi
+
 echo "    Copying well-lit-paths overview pages as fallback..."
 
 # Copy well-lit-paths overview as top-level guides/index.md
@@ -248,6 +259,21 @@ find "$SRC/guides" -type d -name "images" 2>/dev/null | grep -v "/prereq/" | gre
 
     # Copy all images from this directory
     find "$img_dir" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.svg" -o -name "*.gif" \) -exec cp {} "$dest_dir/" \; 2>/dev/null || true
+done
+
+# Guide benchmark-results - copy with directory structure preserved
+# Exclude prereq and experimental directories
+echo "    Copying guide benchmark-results..."
+find "$SRC/guides" -type d -name "benchmark-results" 2>/dev/null | grep -v "/prereq/" | grep -v "/experimental/" | while read -r bench_dir; do
+    # Calculate relative path from guides/
+    rel_path="${bench_dir#$SRC/guides/}"
+
+    # Create destination directory structure (e.g., /img/docs/guides/precise-prefix-cache-aware/benchmark-results/)
+    dest_dir="$STATIC_DIR/guides/${rel_path}"
+    mkdir -p "$dest_dir"
+
+    # Copy all images from benchmark-results directory
+    find "$bench_dir" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.svg" -o -name "*.gif" \) -exec cp {} "$dest_dir/" \; 2>/dev/null || true
 done
 
 # === Generate dark mode variants for all SVGs ===
@@ -375,6 +401,18 @@ find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         sed_inplace \
             -e "s|!\[\([^]]*\)\](images/\([^)]*\))|![\1](/img/docs/guides/$guide_subdir/\2)|g" \
             -e "s|!\[\([^]]*\)\](./images/\([^)]*\))|![\1](/img/docs/guides/$guide_subdir/\2)|g" \
+            "$file"
+    fi
+
+    # Convert benchmark-results/ paths to /img/docs/guides/[path]/benchmark-results/
+    # Example: ./benchmark-results/foo.png -> /img/docs/guides/precise-prefix-cache-aware/benchmark-results/foo.png
+    # This handles both <img src="./benchmark-results/..."> and markdown images
+    if [[ "$guide_subdir" != "." ]]; then
+        sed_inplace \
+            -e "s|src=\"\./benchmark-results/\([^\"]*\)\"|src=\"/img/docs/guides/$guide_subdir/benchmark-results/\1\"|g" \
+            -e "s|src=\"benchmark-results/\([^\"]*\)\"|src=\"/img/docs/guides/$guide_subdir/benchmark-results/\1\"|g" \
+            -e "s|!\[\([^]]*\)\](./benchmark-results/\([^)]*\))|![\1](/img/docs/guides/$guide_subdir/benchmark-results/\2)|g" \
+            -e "s|!\[\([^]]*\)\](benchmark-results/\([^)]*\))|![\1](/img/docs/guides/$guide_subdir/benchmark-results/\2)|g" \
             "$file"
     fi
 done
