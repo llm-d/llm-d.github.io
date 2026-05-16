@@ -81,7 +81,7 @@ jobs:
             cd ..
 
             # Commit changes if any
-            git add preview/docs preview/static/img/docs
+            git add -f preview/docs preview/static/img/docs
             if ! git diff --staged --quiet; then
               COMMIT_MSG="Nightly docs sync from llm-d/llm-d@${SOURCE_BRANCH}
 
