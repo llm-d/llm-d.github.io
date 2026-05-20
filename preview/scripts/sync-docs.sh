@@ -339,7 +339,11 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](infra-providers/\([^)]*\))|\](/docs/resources/infra-providers/\1)|g' \
         -e 's|\](/docs/\([^)]*\)/README\.md)|\](/docs/\1)|g' \
         -e 's|\](/docs/guides/predicted-latency)|\](/docs/guides/predicted-latency-based-scheduling)|g' \
+        -e 's|\](/guides/predicted-latency)|\](/docs/guides/predicted-latency-based-scheduling)|g' \
+        -e 's|\](../../guides/predicted-latency)|\](/docs/guides/predicted-latency-based-scheduling)|g' \
         -e 's|\](/docs/guides/wide-expert-parallelism)|\](/docs/guides/wide-ep-lws)|g' \
+        -e 's|\](/guides/wide-expert-parallelism)|\](/docs/guides/wide-ep-lws)|g' \
+        -e 's|\](../../guides/wide-expert-parallelism)|\](/docs/guides/wide-ep-lws)|g' \
         -e 's|\](../../../../guides/tiered-prefix-cache)|\](/docs/guides/tiered-prefix-cache)|g' \
         -e 's|\](/guides/tiered-prefix-cache)|\](/docs/guides/tiered-prefix-cache)|g' \
         -e 's|\](../../../../guides/batch-gateway)|\](/docs/guides/batch-gateway)|g' \
@@ -513,8 +517,8 @@ fi
 # rdma/rdma-configuration.md comes from resources-new/rdma/README.md
 if [[ -f "$DOCS_DIR/resources/rdma/rdma-configuration.md" ]]; then
     sed_inplace \
-        -e 's|\](../../well-lit-paths/pd-disaggregation\.md)|\](/guides/pd-disaggregation)|g' \
-        -e 's|\](../../well-lit-paths/wide-expert-parallelism\.md)|\](/guides/wide-expert-parallelism)|g' \
+        -e 's|\](../../well-lit-paths/pd-disaggregation\.md)|\](/docs/guides/pd-disaggregation)|g' \
+        -e 's|\](../../well-lit-paths/wide-expert-parallelism\.md)|\](/docs/guides/wide-ep-lws)|g' \
         -e 's|\](../../architecture/core/model-servers\.md)|\](/architecture/core/model-servers)|g' \
         "$DOCS_DIR/resources/rdma/rdma-configuration.md"
 fi
