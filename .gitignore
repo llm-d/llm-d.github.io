@@ -41,4 +41,4 @@ docs/guide/Installation/workload-autoscaling/*.md
 docs/usage/**/*.md
 # Keep category files for sidebar configuration
 !docs/guide/Installation/_category_.json
-!docs/guide/InfraProviders/_category_.json
+!docs/guide/InfraProviders/_category_.jsonpreview/static/releases.json
