@@ -95,15 +95,6 @@ const config: Config = {
       defaultMode: 'light',
       respectPrefersColorScheme: true,
     },
-    announcementBar: {
-      id: 'dev_preview_banner',
-      content:
-        'You are viewing the <strong>latest developer preview</strong> docs. ' +
-        'For stable release docs, use the version picker.',
-      backgroundColor: '#1a0b1e',
-      textColor: '#c9b3d4',
-      isCloseable: false,
-    },
     navbar: {
       style: 'dark',
       logo: {
