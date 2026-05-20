@@ -50,8 +50,6 @@ fi
 WIP="$SRC/docs"
 ASSETS="$SRC/docs/assets"
 
-# Directory check no longer needed - docs/ always exists in llm-d/llm-d
-
 echo "    Cleaning docs/ directory..."
 rm -rf "$DOCS_DIR"/*
 
@@ -123,24 +121,12 @@ cp_doc "$WIP/architecture/advanced/batch/batch-gateway.md"    "$DOCS_DIR/archite
 cp_doc "$WIP/architecture/advanced/batch/async-processor.md"  "$DOCS_DIR/architecture/advanced/batch/async-processor.md"
 
 # === Guides ===
-# Strategy: Copy detailed guides from guides/ directory (as index.md)
-# Only use well-lit-paths overviews as fallback for guides without detailed versions
-
 echo "    Copying detailed guide README.md files from guides/..."
 
-# Find and copy all README.md files from guides/, converting them to index.md
-# Exclude prereq and experimental directories
 find "$SRC/guides" -name "README.md" -type f 2>/dev/null | grep -v "/prereq/" | grep -v "/experimental/" | while read -r readme_file; do
-    # Calculate relative path from guides/
     rel_path="${readme_file#$SRC/guides/}"
-
-    # Convert README.md to index.md, preserve directory structure
     dst_path="$DOCS_DIR/guides/${rel_path%README.md}index.md"
-
-    # Create directory if needed
     mkdir -p "$(dirname "$dst_path")"
-
-    # Copy the file
     cp "$readme_file" "$dst_path"
 done
 
@@ -157,46 +143,32 @@ fi
 
 echo "    Copying well-lit-paths overview pages as fallback..."
 
-# Copy well-lit-paths overview as top-level guides/index.md
 cp_doc "$WIP/well-lit-paths/README.md" "$DOCS_DIR/guides/index.md"
 
-# Fix guide links in guides/index.md (well-lit-paths uses .md links, need to convert to proper paths)
 sed_inplace \
-    -e 's|\](optimized-baseline\.md)|\](/docs/guides/optimized-baseline)|g' \
-    -e 's|\](predicted-latency\.md)|\](/docs/guides/predicted-latency-based-scheduling)|g' \
-    -e 's|\](precise-prefix-cache-aware\.md)|\](/docs/guides/precise-prefix-cache-aware)|g' \
-    -e 's|\](tiered-prefix-cache\.md)|\](/docs/guides/tiered-prefix-cache)|g' \
-    -e 's|\](pd-disaggregation\.md)|\](/docs/guides/pd-disaggregation)|g' \
-    -e 's|\](wide-expert-parallelism\.md)|\](/docs/guides/wide-ep-lws)|g' \
-    -e 's|\](flow-control\.md)|\](/docs/guides/flow-control)|g' \
-    -e 's|\](workload-autoscaling\.md)|\](/docs/guides/workload-autoscaling)|g' \
-    -e 's|\](asynchronous-processing\.md)|\](/docs/guides/asynchronous-processing)|g' \
-    -e 's|\](experimental/batch-gateway\.md)|\](/docs/guides/batch-gateway)|g' \
+    -e 's|\](optimized-baseline\.md)|\](/guides/optimized-baseline)|g' \
+    -e 's|\](predicted-latency\.md)|\](/guides/predicted-latency-based-scheduling)|g' \
+    -e 's|\](precise-prefix-cache-aware\.md)|\](/guides/precise-prefix-cache-aware)|g' \
+    -e 's|\](tiered-prefix-cache\.md)|\](/guides/tiered-prefix-cache)|g' \
+    -e 's|\](pd-disaggregation\.md)|\](/guides/pd-disaggregation)|g' \
+    -e 's|\](wide-expert-parallelism\.md)|\](/guides/wide-ep-lws)|g' \
+    -e 's|\](flow-control\.md)|\](/guides/flow-control)|g' \
+    -e 's|\](workload-autoscaling\.md)|\](/guides/workload-autoscaling)|g' \
+    -e 's|\](asynchronous-processing\.md)|\](/guides/asynchronous-processing)|g' \
+    -e 's|\](experimental/batch-gateway\.md)|\](/guides/batch-gateway)|g' \
     "$DOCS_DIR/guides/index.md"
 
-# For guides that don't have detailed guides/, copy well-lit-paths overview
-# Only copy if the detailed guide directory doesn't exist
 if [[ ! -d "$SRC/guides/predicted-latency-based-scheduling" ]]; then
     cp_doc "$WIP/well-lit-paths/predicted-latency.md" "$DOCS_DIR/guides/predicted-latency.md"
 fi
 
-# Experimental guides (these don't have detailed versions in guides/)
-# Excluded per user request:
-# mkdir -p "$DOCS_DIR/guides/experimental"
-# cp_doc "$WIP/well-lit-paths/experimental/batch-gateway.md" "$DOCS_DIR/guides/experimental/batch-gateway.md"
-
-# === Resources (formerly guides) ===
+# === Resources ===
 cp_doc "$WIP/resources/monitoring/metrics.md"               "$DOCS_DIR/resources/monitoring/metrics.md"
 cp_doc "$WIP/resources/monitoring/tracing.md"               "$DOCS_DIR/resources/monitoring/tracing.md"
-# PR #1207 places monitoring under guides/monitoring/ — use as fallback
+
 cp_doc "$WIP/guides/monitoring/metrics.md"                  "$DOCS_DIR/resources/monitoring/metrics.md"
 cp_doc "$WIP/guides/monitoring/tracing.md"                  "$DOCS_DIR/resources/monitoring/tracing.md"
-# PR #1259 moved gateway docs to guides/prereq/gateways/
-# Excluded per user request - prereq pages should not be synced:
-# cp_doc "$SRC/guides/prereq/gateways/README.md"              "$DOCS_DIR/resources/gateway/index.md"
-# cp_doc "$SRC/guides/prereq/gateways/istio.md"               "$DOCS_DIR/resources/gateway/istio.md"
-# cp_doc "$SRC/guides/prereq/gateways/gke.md"                 "$DOCS_DIR/resources/gateway/gke.md"
-# cp_doc "$SRC/guides/prereq/gateways/agentgateway.md"        "$DOCS_DIR/resources/gateway/agentgateway.md"
+
 cp_doc "$WIP/resources/rdma/README.md"                      "$DOCS_DIR/resources/rdma/rdma-configuration.md"
 
 # === Infrastructure Providers ===
@@ -219,17 +191,11 @@ cp_doc "$WIP/api-reference/epp-http-headers.md"      "$DOCS_DIR/api-reference/ep
 
 # === Accelerators ===
 cp_doc "$WIP/accelerators/README.md"                 "$DOCS_DIR/accelerators/index.md"
-
-# Fix accelerators links to infra-providers
 if [[ -f "$DOCS_DIR/accelerators/index.md" ]]; then
     sed_inplace \
         -e 's|\.\./infra-providers/gke/README\.md|/resources/infra-providers/gke|g' \
         "$DOCS_DIR/accelerators/index.md"
 fi
-
-# === Deployment Guides ===
-# Note: Deployment guides live in llm-d/guides/ and are linked via GitHub URLs
-# See transformation section below that converts ../../guides/ links to GitHub
 
 # === Assets ===
 echo "    Copying image assets..."
@@ -245,38 +211,22 @@ cp_doc "$WIP/architecture/advanced/autoscaling/hpa-architecture.svg" "$STATIC_DI
 echo "    Copying infrastructure provider images..."
 find "$WIP/infra-providers" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.svg" \) -exec cp {} "$STATIC_DIR/" \; 2>/dev/null || true
 
-# Guide images - copy with directory structure preserved
-# Exclude prereq and experimental directories
 echo "    Copying guide images..."
 mkdir -p "$STATIC_DIR/guides"
 find "$SRC/guides" -type d -name "images" 2>/dev/null | grep -v "/prereq/" | grep -v "/experimental/" | while read -r img_dir; do
-    # Calculate relative path from guides/
     rel_path="${img_dir#$SRC/guides/}"
-
-    # Create destination directory structure
     dest_dir="$STATIC_DIR/guides/${rel_path%/images}"
     mkdir -p "$dest_dir"
-
-    # Copy all images from this directory
     find "$img_dir" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.svg" -o -name "*.gif" \) -exec cp {} "$dest_dir/" \; 2>/dev/null || true
 done
 
-# Guide benchmark-results - copy with directory structure preserved
-# Exclude prereq and experimental directories
 echo "    Copying guide benchmark-results..."
 find "$SRC/guides" -type d -name "benchmark-results" 2>/dev/null | grep -v "/prereq/" | grep -v "/experimental/" | while read -r bench_dir; do
-    # Calculate relative path from guides/
     rel_path="${bench_dir#$SRC/guides/}"
-
-    # Create destination directory structure (e.g., /img/docs/guides/precise-prefix-cache-aware/benchmark-results/)
     dest_dir="$STATIC_DIR/guides/${rel_path}"
     mkdir -p "$dest_dir"
-
-    # Copy all images from benchmark-results directory
     find "$bench_dir" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.svg" -o -name "*.gif" \) -exec cp {} "$dest_dir/" \; 2>/dev/null || true
 done
-
-# === Generate dark mode variants for all SVGs ===
 
 # === Fix specific image paths for Docusaurus ===
 echo "    Fixing specific image references..."
@@ -287,7 +237,6 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|hpa-architecture.svg|/img/docs/hpa-architecture.svg|g' \
         "$file"
 done
-# Note: Generic ../assets/ paths are handled by apply_transformations() below
 
 # === Fix infra-providers image paths and links ===
 echo "    Fixing infra-providers image paths and cross-references..."
@@ -332,25 +281,25 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](/docs/experimental/batch-gateway)|\](/docs/guides/experimental/batch-gateway)|g' \
         -e 's|\](/docs/architecture/core/epp)|\](/docs/architecture/core/router/epp)|g' \
         -e 's|\](/docs/well-lit-paths/\([^)]*\)\.md)|\](/docs/guides/\1)|g' \
-        -e 's|\](well-lit-paths/\([^)]*\))|\](/docs/guides/\1)|g' \
-        -e 's|\](.*\/docs/infra-providers)|\](/docs/resources/infra-providers)|g' \
-        -e 's|\](.*\/infra-providers)|\](/docs/resources/infra-providers)|g' \
+        -e 's|\](well-lit-paths/\([^)]*\))|\](/guides/\1)|g' \
+        -e 's|\](.*\/docs/infra-providers)|\](/resources/infra-providers)|g' \
+        -e 's|\](.*\/infra-providers)|\](/resources/infra-providers)|g' \
         -e 's|\](/docs/infra-providers)|\](/docs/resources/infra-providers)|g' \
-        -e 's|\](infra-providers/\([^)]*\))|\](/docs/resources/infra-providers/\1)|g' \
+        -e 's|\](infra-providers/\([^)]*\))|\](/resources/infra-providers/\1)|g' \
         -e 's|\](/docs/\([^)]*\)/README\.md)|\](/docs/\1)|g' \
         -e 's|\](/docs/guides/predicted-latency)|\](/docs/guides/predicted-latency-based-scheduling)|g' \
-        -e 's|\](/guides/predicted-latency)|\](/docs/guides/predicted-latency-based-scheduling)|g' \
-        -e 's|\](../../guides/predicted-latency)|\](/docs/guides/predicted-latency-based-scheduling)|g' \
+        -e 's|\](/guides/predicted-latency)|\](/guides/predicted-latency-based-scheduling)|g' \
+        -e 's|\](../../guides/predicted-latency)|\](/guides/predicted-latency-based-scheduling)|g' \
         -e 's|\](/docs/guides/wide-expert-parallelism)|\](/docs/guides/wide-ep-lws)|g' \
-        -e 's|\](/guides/wide-expert-parallelism)|\](/docs/guides/wide-ep-lws)|g' \
-        -e 's|\](../../guides/wide-expert-parallelism)|\](/docs/guides/wide-ep-lws)|g' \
-        -e 's|\](../../../../guides/tiered-prefix-cache)|\](/docs/guides/tiered-prefix-cache)|g' \
-        -e 's|\](/guides/tiered-prefix-cache)|\](/docs/guides/tiered-prefix-cache)|g' \
-        -e 's|\](../../../../guides/batch-gateway)|\](/docs/guides/batch-gateway)|g' \
-        -e 's|\](/guides/batch-gateway)|\](/docs/guides/batch-gateway)|g' \
-        -e 's|\](../../../guides/batch-gateway)|\](/docs/guides/batch-gateway)|g' \
-        -e 's|\](../../../guides/asynchronous-processing)|\](/docs/guides/asynchronous-processing)|g' \
-        -e 's|\](../../guides/pd-disaggregation/README\.md)|\](/docs/guides/pd-disaggregation)|g' \
+        -e 's|\](/guides/wide-expert-parallelism)|\](/guides/wide-ep-lws)|g' \
+        -e 's|\](../../guides/wide-expert-parallelism)|\](/guides/wide-ep-lws)|g' \
+        -e 's|\](../../../../guides/tiered-prefix-cache)|\](/guides/tiered-prefix-cache)|g' \
+        -e 's|\](/guides/tiered-prefix-cache)|\](/guides/tiered-prefix-cache)|g' \
+        -e 's|\](../../../../guides/batch-gateway)|\](/guides/batch-gateway)|g' \
+        -e 's|\](/guides/batch-gateway)|\](/guides/batch-gateway)|g' \
+        -e 's|\](../../../guides/batch-gateway)|\](/guides/batch-gateway)|g' \
+        -e 's|\](../../../guides/asynchronous-processing)|\](/guides/asynchronous-processing)|g' \
+        -e 's|\](../../guides/pd-disaggregation/README\.md)|\](/guides/pd-disaggregation)|g' \
         "$file"
 done
 
@@ -385,8 +334,8 @@ find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](/docs/guides/gcp-pubsub/README\.md)|\](/docs/guides/asynchronous-processing/gcp-pubsub)|g' \
         -e 's|\](/docs/guides/README\.md)|\](/docs/guides)|g' \
         -e 's|\](../README\.md#installation)|\](../index.md#installation)|g' \
-        -e 's|\](../../recipes/gateway/README\.md)|\](/docs/guides/recipes/gateway)|g' \
-        -e 's|\](../gateway)|\](/docs/guides/recipes/gateway)|g' \
+        -e 's|\](../../recipes/gateway/README\.md)|\](/guides/recipes/gateway)|g' \
+        -e 's|\](../gateway)|\](/guides/recipes/gateway)|g' \
         -e 's|\](/docs/guides/gateway)|\](/docs/guides/recipes/gateway)|g' \
         -e 's|\](/docs/guides/tiered-prefix-cache/manifests/backends/lustre/README\.md)|\](/docs/guides/tiered-prefix-cache/storage/manifests/backends/lustre)|g' \
         -e 's|\](/docs/guides/tiered-prefix-cache/manifests/backends/aws/README\.md)|\](/docs/guides/tiered-prefix-cache/storage/manifests/backends/aws)|g' \
@@ -394,13 +343,9 @@ find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](./manifests/backends/aws/README\.md)|\](./manifests/backends/aws/index.md)|g' \
         "$file"
 
-    # Convert relative image paths to local static paths
-    # Calculate relative path from guides/ directory
     rel_from_guides="${file#$DOCS_DIR/guides/}"
     guide_subdir="$(dirname "$rel_from_guides")"
 
-    # Convert images/ or ./images/ paths to /img/docs/guides/[path]/
-    # Example: images/foo.png -> /img/docs/guides/wide-ep-lws/experimental-dp-aware/foo.png
     if [[ "$guide_subdir" != "." ]]; then
         sed_inplace \
             -e "s|!\[\([^]]*\)\](images/\([^)]*\))|![\1](/img/docs/guides/$guide_subdir/\2)|g" \
@@ -408,9 +353,6 @@ find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
             "$file"
     fi
 
-    # Convert benchmark-results/ paths to /img/docs/guides/[path]/benchmark-results/
-    # Example: ./benchmark-results/foo.png -> /img/docs/guides/precise-prefix-cache-aware/benchmark-results/foo.png
-    # This handles both <img src="./benchmark-results/..."> and markdown images
     if [[ "$guide_subdir" != "." ]]; then
         sed_inplace \
             -e "s|src=\"\./benchmark-results/\([^\"]*\)\"|src=\"/img/docs/guides/$guide_subdir/benchmark-results/\1\"|g" \
@@ -422,8 +364,6 @@ find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
 done
 
 # === Fix prereq and helper references ===
-# We excluded prereq pages, so point to upstream GitHub
-# Helper files don't exist on the site, so point to upstream GitHub
 echo "    Fixing prereq and helper file references..."
 find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace \
@@ -485,19 +425,19 @@ done
 echo "    Fixing architecture references..."
 find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace \
-        -e 's|\](../../docs/architecture/advanced/latency-predictor\.md)|\](/docs/architecture/advanced/latency-predictor)|g' \
-        -e 's|\](/docs/architecture/advanced/latency-predictor\.md)|\](/docs/architecture/advanced/latency-predictor)|g' \
-        -e 's|\](../../docs/architecture/advanced/latency-predictor\.md#observability)|\](/docs/architecture/advanced/latency-predictor#observability)|g' \
-        -e 's|\](../../docs/architecture/core/router/epp/flow-control\.md)|\](/docs/architecture/core/router/epp/flow-control)|g' \
-        -e 's|\](/docs/architecture/core/router/epp/flow-control\.md)|\](/docs/architecture/core/router/epp/flow-control)|g' \
-        -e 's|\](../../docs/architecture/core/epp/flow-control\.md)|\](/docs/architecture/core/router/epp/flow-control)|g' \
-        -e 's|\](/docs/architecture/core/epp/flow-control\.md)|\](/docs/architecture/core/router/epp/flow-control)|g' \
+        -e 's|\](../../docs/architecture/advanced/latency-predictor\.md)|\](/architecture/advanced/latency-predictor)|g' \
+        -e 's|\](/docs/architecture/advanced/latency-predictor\.md)|\](/architecture/advanced/latency-predictor)|g' \
+        -e 's|\](../../docs/architecture/advanced/latency-predictor\.md#observability)|\](/architecture/advanced/latency-predictor#observability)|g' \
+        -e 's|\](../../docs/architecture/core/router/epp/flow-control\.md)|\](/architecture/core/router/epp/flow-control)|g' \
+        -e 's|\](/docs/architecture/core/router/epp/flow-control\.md)|\](/architecture/core/router/epp/flow-control)|g' \
+        -e 's|\](../../docs/architecture/core/epp/flow-control\.md)|\](/architecture/core/router/epp/flow-control)|g' \
+        -e 's|\](/docs/architecture/core/epp/flow-control\.md)|\](/architecture/core/router/epp/flow-control)|g' \
         -e 's|\](../optimized-baseline/README\.md#supported-hardware-backends)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline#supported-hardware-backends)|g' \
         -e 's|\](/docs/optimized-baseline/README\.md#supported-hardware-backends)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline#supported-hardware-backends)|g' \
-        -e 's|\](../optimized-baseline)|\](/docs/guides/optimized-baseline)|g' \
+        -e 's|\](../optimized-baseline)|\](/guides/optimized-baseline)|g' \
         -e 's|\](/docs/optimized-baseline)|\](/docs/guides/optimized-baseline)|g' \
-        -e 's|\](../optimized-baseline/README\.md#2-deploy-the-model-server)|\](/docs/guides/optimized-baseline#2-deploy-the-model-server)|g' \
-        -e 's|\](../optimized-baseline/README\.md#3-enable-monitoring-optional)|\](/docs/guides/optimized-baseline#3-enable-monitoring-optional)|g' \
+        -e 's|\](../optimized-baseline/README\.md#2-deploy-the-model-server)|\](/guides/optimized-baseline#2-deploy-the-model-server)|g' \
+        -e 's|\](../optimized-baseline/README\.md#3-enable-monitoring-optional)|\](/guides/optimized-baseline#3-enable-monitoring-optional)|g' \
         "$file"
 done
 
@@ -517,8 +457,8 @@ fi
 # rdma/rdma-configuration.md comes from resources-new/rdma/README.md
 if [[ -f "$DOCS_DIR/resources/rdma/rdma-configuration.md" ]]; then
     sed_inplace \
-        -e 's|\](../../well-lit-paths/pd-disaggregation\.md)|\](/docs/guides/pd-disaggregation)|g' \
-        -e 's|\](../../well-lit-paths/wide-expert-parallelism\.md)|\](/docs/guides/wide-ep-lws)|g' \
+        -e 's|\](../../well-lit-paths/pd-disaggregation\.md)|\](/guides/pd-disaggregation)|g' \
+        -e 's|\](../../well-lit-paths/wide-expert-parallelism\.md)|\](/guides/wide-ep-lws)|g' \
         -e 's|\](../../architecture/core/model-servers\.md)|\](/architecture/core/model-servers)|g' \
         "$DOCS_DIR/resources/rdma/rdma-configuration.md"
 fi
@@ -533,8 +473,6 @@ if [[ -f "$DOCS_DIR/resources/monitoring/metrics.md" ]]; then
 fi
 
 # === Fix API reference links ===
-# API reference pages link to each other with .md extensions
-# Convert them to Docusaurus-compatible paths
 echo "    Fixing API reference links..."
 sed_inplace \
     -e 's|\](inferencepool\.md)|\](/api-reference/inferencepool)|g' \
@@ -546,8 +484,6 @@ sed_inplace \
     "$DOCS_DIR/api-reference/index.md"
 
 # === Fix architecture index.md relative paths ===
-# When architecture/README.md becomes index.md, relative paths break
-# Convert ./core/* and ./advanced/* to absolute paths with /architecture/ prefix
 echo "    Fixing architecture index.md relative paths..."
 sed_inplace \
     -e 's|\(\[.*\]\)(\./core/inferencepool)|\1(/architecture/core/inferencepool)|g' \
@@ -569,7 +505,6 @@ sed_inplace \
     "$DOCS_DIR/architecture/index.md"
 
 # === Fix router index.md relative paths ===
-# Similar issue with router/index.md
 sed_inplace \
     -e 's|\](\.\/epp/)|\](/architecture/core/router/epp)|g' \
     -e 's|\](\.\/epp)|\](/architecture/core/router/epp)|g' \
@@ -578,7 +513,6 @@ sed_inplace \
     "$DOCS_DIR/architecture/core/router/index.md"
 
 # === Clean up known issues ===
-# Remove "NEEDS TO BE REDONE" from configuration.md
 sed_inplace '/^NEEDS TO BE REDONE/d' "$DOCS_DIR/architecture/core/router/epp/configuration.md" 2>/dev/null || true
 
 # Fix unclosed <br> tags (MDX requires self-closing tags)
@@ -587,7 +521,6 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
 done
 
 # Fix email addresses in angle brackets (MDX interprets them as HTML tags)
-# Replace <email@domain.com> with email@domain.com
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace 's|<\([^<>]*@[^<>]*\)>|\1|g' "$file"
 done
@@ -606,8 +539,6 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace 's|/img/docs/images/|/img/docs/|g' "$file"
 done
 
-# === Convert SVG images to theme-aware dual images ===
-
 # === Generate stubs for pages in outline that don't have source content yet ===
 echo "    Generating stubs for missing pages..."
 
@@ -616,7 +547,6 @@ generate_stub() {
     local title="$2"
     local desc="$3"
 
-    # Only create if doesn't exist or is empty
     if [[ ! -s "$filepath" ]]; then
         cat > "$filepath" << STUBEOF
 ---
@@ -632,10 +562,6 @@ This page is under active development. Content coming soon.
 STUBEOF
     fi
 }
-
-# Guides stubs - NO LONGER NEEDED
-# Detailed guides are now synced from guides/ directory as index.md files
-# Stub generation would create duplicate routes (.md and /index.md)
 
 # Resources stubs
 generate_stub "$DOCS_DIR/resources/gateway/index.md" "Gateway" "Gateway deployment and configuration guides"

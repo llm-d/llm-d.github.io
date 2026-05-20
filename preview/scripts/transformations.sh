@@ -108,13 +108,13 @@ apply_transformations() {
     # Fix guide name variations and relative paths
     sed_inplace \
         -e 's|\](/docs/guides/predicted-latency)|\](/docs/guides/predicted-latency-based-scheduling)|g' \
-        -e 's|\](/guides/predicted-latency)|\](/docs/guides/predicted-latency-based-scheduling)|g' \
-        -e 's|\](../../guides/predicted-latency)|\](/docs/guides/predicted-latency-based-scheduling)|g' \
+        -e 's|\](/guides/predicted-latency)|\](/guides/predicted-latency-based-scheduling)|g' \
+        -e 's|\](../../guides/predicted-latency)|\](/guides/predicted-latency-based-scheduling)|g' \
         -e 's|\](/docs/guides/wide-expert-parallelism)|\](/docs/guides/wide-ep-lws)|g' \
-        -e 's|\](/guides/wide-expert-parallelism)|\](/docs/guides/wide-ep-lws)|g' \
-        -e 's|\](../../guides/wide-expert-parallelism)|\](/docs/guides/wide-ep-lws)|g' \
+        -e 's|\](/guides/wide-expert-parallelism)|\](/guides/wide-ep-lws)|g' \
+        -e 's|\](../../guides/wide-expert-parallelism)|\](/guides/wide-ep-lws)|g' \
         -e 's|\](../../prereq/gateway-provider/common-configurations/*)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider#common-configurations)|g' \
-        -e 's|\](../gateway/*)|\](/docs/guides/recipes/gateway)|g' \
+        -e 's|\](../gateway/*)|\](/guides/recipes/gateway)|g' \
         "$file"
 
     # Fix deployment guide links to GitHub URLs
