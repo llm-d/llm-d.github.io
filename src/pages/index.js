@@ -3,7 +3,6 @@ import Layout from '@theme/Layout';
 import Head from '@docusaurus/Head';
 
 import Welcome from '@site/src/components/Welcome'
-import VideoEmbed from '@site/src/components/VideoEmbed'
 
 export default function Home() {
   const {siteConfig} = useDocusaurusContext();
@@ -22,25 +21,6 @@ export default function Home() {
         description={pageDescription}>
       <main>
         <Welcome />
-        
-        {/* Video Section */}
-        <div className="video-section" style={{ 
-          padding: '2rem 0', 
-          display: 'flex', 
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}>
-          <div style={{ 
-            width: '75%', 
-            maxWidth: '800px',
-            margin: '0 auto'
-          }}>
-            <VideoEmbed videoId="32MqYC3OydE" />
-          </div>
-        </div>
-        
-        {/* <About /> */}
-        {/* <Demo /> */}
       </main>
       </Layout>
     </>

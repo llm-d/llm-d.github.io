@@ -174,7 +174,8 @@ const config = {
         // title: "My Site",
         logo: {
           alt: "llm-d Logo",
-          src: "img/llm-d-icon.png",
+          src: "img/llm-d-logotype-and-icon.svg",
+          srcDark: "img/llm-d-logotype-and-icon-dark.svg",
         },
         items: [
           {

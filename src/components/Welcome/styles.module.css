@@ -1,10 +1,567 @@
-.logoSize {
-  max-width: 50px;
-  align-self: center;
-  justify-self: center;
+/* ===== Hero (dark) ===== */
+
+.hero {
+  background-color: #0f0a14;
+  background-image: radial-gradient(
+    ellipse at 20% 0%,
+    rgba(127, 49, 127, 0.18) 0%,
+    rgba(127, 49, 127, 0) 55%
+  );
+  color: #f5f3f8;
+  padding: 6rem 2rem;
+  width: 100%;
 }
 
-p {
-  align-content: center;
+.heroInner {
+  max-width: 1080px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.heroHeading {
+  font-family: var(--ifm-font-family-base);
+  font-size: 3.25rem;
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin: 0 0 1.5rem;
+  max-width: 18ch;
+}
+
+.heroSubtext {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #c8c2d1;
+  max-width: 52ch;
+  margin: 0 0 2.5rem;
+}
+
+.heroCtas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  align-items: center;
+}
+
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.4rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  font-family: inherit;
+  line-height: 1.2;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+    color 0.2s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+
+.ctaButton:hover,
+.ctaButton:focus-visible {
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.ctaPrimary {
+  background-color: #7f317f;
+  color: #ffffff;
+  border-color: #7f317f;
+}
+
+.ctaPrimary:hover,
+.ctaPrimary:focus-visible {
+  background-color: #923892;
+  border-color: #923892;
+  color: #ffffff;
+}
+
+.ctaSecondary {
+  background-color: transparent;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.ctaSecondary:hover,
+.ctaSecondary:focus-visible {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+.heroCncf {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  transition: color 150ms ease;
+  max-width: 100%;
+}
+
+.heroCncf:hover,
+.heroCncf:focus-visible {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+}
+
+.heroCncf img {
+  height: 20px;
+  width: auto;
+  opacity: 1;
+  flex-shrink: 0;
+  transition: opacity 150ms ease;
+}
+
+.heroCncf:hover img,
+.heroCncf:focus-visible img {
+  opacity: 0.85;
+}
+
+.heroFounders {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 2.5rem;
+}
+
+.heroFoundersLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.heroFoundersLogos {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  row-gap: 0.875rem;
+}
+
+.heroFoundersLogos img {
+  height: 18px;
+  width: auto;
+  opacity: 0.75;
+  filter: brightness(0) invert(1);
+  transition: opacity 150ms ease;
+}
+
+.heroFoundersLogos img:hover {
+  opacity: 1;
+}
+
+/* Optical balance: the IBM 8-bar mark is squarer than the other wordmarks,
+   so it reads as visually smaller at the shared 18px height. */
+.heroFoundersLogos img[alt="IBM Research"] {
+  height: 22px;
+}
+
+/* ===== Stats (light, matches Guides) ===== */
+
+.stats {
+  background-color: #ffffff;
+  color: #1d1727;
+  padding: 5rem 2rem 0;
+  width: 100%;
+}
+
+.statsInner {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.statsHeading {
+  font-family: var(--ifm-font-family-base);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  color: inherit;
+  text-align: left;
+}
+
+.statsSubhead {
+  font-family: var(--ifm-font-family-base);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--ifm-color-emphasis-700);
+  margin: 0 0 2rem;
+  text-align: left;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.statCard {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1.25rem;
+  background-color: var(--ifm-color-emphasis-100);
+  border-radius: 0.75rem;
+  text-align: left;
+}
+
+.statNumber {
+  font-family: var(--ifm-font-family-base);
+  font-size: 2.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ifm-color-primary);
+  letter-spacing: -0.02em;
+  margin: 0 0 0.75rem;
+}
+
+.statClaim {
+  font-size: 0.9375rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: inherit;
+  margin: 0 0 0.5rem;
+}
+
+.statAttribution {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--ifm-color-emphasis-600);
+  margin: 0;
+}
+
+.statsFooter {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.sectionCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.4rem;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ifm-color-primary);
+  background-color: transparent;
+  border: 1px solid var(--ifm-color-primary);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.sectionCta:hover {
+  background-color: var(--ifm-color-primary);
+  border-color: var(--ifm-color-primary);
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.sectionCta:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+  text-decoration: none;
+}
+
+.sectionCta:hover .arrowIcon,
+.sectionCta:focus-visible .arrowIcon {
+  transform: translateX(3px);
+}
+
+:global([data-theme='dark']) .stats {
+  background-color: #101010;
+  color: #f5f5f5;
+}
+
+:global([data-theme='dark']) .statCard {
+  background-color: #1c1c1c;
+}
+
+/* ===== Guides (light) ===== */
+
+.guides {
+  background-color: #ffffff;
+  color: #1d1727;
+  padding: 5rem 2rem;
+  width: 100%;
+}
+
+.guidesInner {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.guidesHeading {
+  font-family: var(--ifm-font-family-base);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  color: inherit;
+  text-align: left;
+}
+
+.guidesSubhead {
+  font-family: var(--ifm-font-family-base);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--ifm-color-emphasis-700);
+  margin: 0 0 2rem;
+  text-align: left;
+}
+
+.guidesGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.75rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.75rem;
+  background-color: #ffffff;
+  border: 1px solid #e6e2ec;
+  border-radius: 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+.card:hover {
+  border-color: #d4cadf;
+  box-shadow: 0 6px 20px rgba(31, 19, 45, 0.06);
+}
+
+.cardIcon {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background-color: #f3f1f6;
+  color: #4a3a55;
+  margin-bottom: 1.25rem;
+}
+
+.cardTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 0.4rem;
+  color: inherit;
+  line-height: 1.3;
+}
+
+.cardTagline {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+  color: inherit;
+  line-height: 1.4;
+}
+
+.cardDescription {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #5a5266;
+  margin: 0 0 1.5rem;
+  flex-grow: 1;
+}
+
+.cardLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--ifm-color-primary);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  margin-top: auto;
+  align-self: flex-start;
+}
+
+.cardLink:hover,
+.cardLink:focus-visible {
+  text-decoration: none;
+  color: var(--ifm-color-primary-darker);
+}
+
+.cardLink:hover .arrowIcon,
+.cardLink:focus-visible .arrowIcon {
+  transform: translateX(3px);
+}
+
+.arrowIcon {
+  transition: transform 0.18s ease;
+  flex-shrink: 0;
+}
+
+.guidesFooter {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* ===== Dark mode adjustments for the light Guides section ===== */
+
+:global([data-theme='dark']) .guides {
+  background-color: #101010;
+  color: #f5f5f5;
+}
+
+:global([data-theme='dark']) .card {
+  background-color: #1c1c1c;
+  border-color: #2a2a2a;
+}
+
+:global([data-theme='dark']) .card:hover {
+  border-color: #3d3d3d;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+:global([data-theme='dark']) .cardIcon {
+  background-color: #262626;
+  color: #e5e5e5;
+}
+
+:global([data-theme='dark']) .cardDescription {
+  color: #a3a3a3;
+}
+
+/* ===== Responsive ===== */
+
+/* iPad: 768px – 1023px */
+@media (max-width: 1023px) {
+  .hero {
+    padding: 4.5rem 1.75rem;
+  }
+
+  .heroHeading {
+    font-size: 2.5rem;
+  }
+
+  .heroSubtext {
+    font-size: 1rem;
+  }
+
+  .guides {
+    padding: 4rem 1.75rem;
+  }
+
+  .guidesGrid {
+    gap: 1.25rem;
+  }
+
+  .stats {
+    padding: 4rem 1.75rem 0;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.875rem;
+  }
+
+  .statCard {
+    grid-column: span 2;
+  }
+
+  .statCard:nth-child(n + 4) {
+    grid-column: span 3;
+  }
+
+  .statNumber {
+    font-size: 2.5rem;
+  }
+}
+
+/* iPad portrait / cramped: collapse cards to single column when needed */
+@media (max-width: 860px) and (min-width: 768px) {
+  .guidesGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile: <768px */
+@media (max-width: 767px) {
+  .hero {
+    padding: 3.5rem 1.25rem;
+  }
+
+  .heroHeading {
+    font-size: 2rem;
+    line-height: 1.1;
+    max-width: none;
+  }
+
+  .heroSubtext {
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+
+  .heroCtas {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .ctaButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .heroFoundersLogos {
+    gap: 1.25rem;
+    row-gap: 0.75rem;
+  }
+
+  .guides {
+    padding: 3rem 1.25rem;
+  }
+
+  .guidesGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .card {
+    padding: 1.5rem;
+  }
+
+  .stats {
+    padding: 3rem 1.25rem 0;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .statCard {
+    grid-column: auto;
+    padding: 1.25rem;
+  }
+
+  .statCard:nth-child(n + 4) {
+    grid-column: auto;
+  }
+
+  .statNumber {
+    font-size: 2.5rem;
+  }
 }
