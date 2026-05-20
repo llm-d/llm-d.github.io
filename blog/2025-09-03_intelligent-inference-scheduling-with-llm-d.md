@@ -155,7 +155,7 @@ Whether you're running a single model or a fleet of fine-tuned variants, the goa
 
 The llm-d project thrives on community contributions, and there are many ways to get involved:
 
-- **Explore the llm-d Community Quickstart Guide** → [Start here](https://llm-d.ai/docs/community) to learn more about getting involved in the llm-d project.
+- **Explore the llm-d Community Quickstart Guide** → [Start here](https://llm-d.ai/community) to learn more about getting involved in the llm-d project.
 - **Join our Slack** → [Get your invite](https://llm-d.ai/slack) and connect with maintainers and contributors
 - **Explore the code** → Browse our [GitHub organization](https://github.com/llm-d) and find issues that interest you
-- **Attend meetings** → All meetings are open! Add our [public calendar](https://llm-d.ai/docs/community#public-meeting-calendar) and join discussions`
+- **Attend meetings** → All meetings are open! Add our [public calendar](https://llm-d.ai/community#public-meeting-calendar) and join discussions`

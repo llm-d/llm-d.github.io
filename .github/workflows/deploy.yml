@@ -34,28 +34,56 @@ jobs:
       - name: Build website
         run: npm run build
 
-      - name: Merge in-flight docs PRs from llm-d/llm-d
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: cd preview && bash scripts/merge-docs-prs.sh /tmp/llmd-merged
-
-      - name: Sync preview docs (main + merged PRs)
-        env:
-          LLMD_REPO: /tmp/llmd-merged
+      - name: Sync preview docs from llm-d/llm-d
         run: cd preview && bash scripts/sync-docs.sh main
 
       - name: Install preview docs dependencies
         run: cd preview && npm install
       - name: Build preview docs
         run: cd preview && npm run build
-      - name: Merge preview into main build
-        run: cp -r preview/build build/preview
+      - name: Merge preview into main build as /docs
+        run: cp -r preview/build build/docs
 
-      - name: Include merge report in build output
+      - name: Build and merge release branches
         run: |
-          if [[ -f /tmp/llmd-merged/merge-report.txt ]]; then
-            cp /tmp/llmd-merged/merge-report.txt build/preview/merge-report.txt
+          # Fetch all branches
+          git fetch origin
+
+          # Find all release branches
+          RELEASE_BRANCHES=$(git branch -r | grep 'origin/release-' | sed 's|origin/||' | grep -v HEAD || true)
+
+          if [ -z "$RELEASE_BRANCHES" ]; then
+            echo "No release branches found, skipping"
+            exit 0
           fi
+
+          echo "Building release branches:"
+          echo "$RELEASE_BRANCHES"
+
+          for branch in $RELEASE_BRANCHES; do
+            # Extract version (e.g., release-0.7.0 -> 0.7.0)
+            VERSION=${branch#release-}
+
+            echo "Building docs for version $VERSION from $branch"
+
+            # Checkout the release branch (in a worktree to avoid conflicts)
+            git worktree add "../release-${VERSION}" "$branch"
+
+            # Build the release docs
+            cd "../release-${VERSION}/preview"
+            npm install
+            npm run build
+
+            # Copy build output to versioned path
+            mkdir -p "../../llm-d.github.io/build/docs/${VERSION}"
+            cp -r build/* "../../llm-d.github.io/build/docs/${VERSION}/"
+
+            # Clean up worktree
+            cd "../../llm-d.github.io"
+            git worktree remove --force "../release-${VERSION}"
+
+            echo "✓ Built version $VERSION"
+          done
 
       - name: Upload Build Artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0

@@ -1,6 +1,9 @@
 # Typos configuration for llm-d.github.io
 # https://github.com/crate-ci/typos
 
+[files]
+extend-exclude = ["docs-archive-pre-v0.7"]
+
 [default.extend-words]
 # Azure Kubernetes Service abbreviation
 AKS = "AKS"
@@ -11,6 +14,9 @@ nam = "nam"
 
 # Person's name (blog/authors.yml)
 Ofer = "Ofer"
+
+# Mean Absolute Percentage Error metric abbreviation
+MAPE = "MAPE"
 
 # Pre-existing typo in codebase (to be fixed separately)
 Kuberentes = "Kuberentes"

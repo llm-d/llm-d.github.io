@@ -137,6 +137,14 @@ div[class*='announcementBar'] a {
   background-size: 1.1rem 1.1rem;
 }
 
+/* Ensure all category arrows are the same size */
+.menu__list-item-collapsible .menu__link--sublist::after,
+.menu__list-item-collapsible > .menu__link::after {
+  background-size: 1.1rem 1.1rem !important;
+  width: 1.1rem !important;
+  height: 1.1rem !important;
+}
+
 .theme-doc-sidebar-container {
   border-right: 1px solid var(--ifm-toc-border-color);
 }
@@ -156,6 +164,34 @@ div[class*='announcementBar'] a {
   margin-top: 2.5rem;
   padding-bottom: 0.3rem;
   border-bottom: 1px solid var(--ifm-toc-border-color);
+}
+
+.markdown img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ===== SVG diagram theme support ===== */
+/* Theme-aware images - show/hide based on Docusaurus theme, not OS theme */
+html[data-theme='light'] .dark-mode-only {
+  display: none;
+}
+
+html[data-theme='dark'] .light-mode-only {
+  display: none;
+}
+
+.theme-aware-image {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.theme-aware-image img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* ===== Code blocks ===== */

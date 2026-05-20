@@ -56,7 +56,7 @@ export default function Videos() {
       </Head>
       <Layout
         title="Videos"
-        description="Watch videos about llm-d: a Kubernetes-native high-performance distributed LLM inference framework">
+        description="Watch videos about llm-d: a high-performance and scalable distributed LLM inference framework">
       <main className={styles.videosPage}>
         <div className={styles.heroSection}>
           <div className={styles.heroContent}>
@@ -85,7 +85,7 @@ export default function Videos() {
             Dive into our documentation or join our community to learn more.
           </p>
           <div className={styles.ctaButtons}>
-            <a href="/docs/guide" className={styles.ctaButtonPrimary}>
+            <a href="/docs/guides" className={styles.ctaButtonPrimary}>
               Read the Docs
             </a>
             <a href="/slack" className={styles.ctaButtonSecondary}>

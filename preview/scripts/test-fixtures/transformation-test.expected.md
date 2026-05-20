@@ -122,7 +122,32 @@ Images with relative paths should be transformed:
 
 This should escape arrows: \<->
 
-## 7. Regular Markdown Test
+## 7. HTML Image Tag Test
+
+Images with unquoted attributes should be quoted for MDX:
+
+<p align="center">
+  <img alt="Test" src="/docs/img/docs/test.svg" width="95%" />
+</p>
+
+<img src="/docs/img/docs/another.png" height="200" />
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" />
+    <img alt="Test Arch" src="/docs/img/docs/arch.svg" width="90%" />
+  </picture>
+</p>
+
+## 8. HTML Comment Test
+
+{/* This is a regular HTML comment that should be converted to MDX */}
+
+Some text here.
+
+{/* Another comment with special chars: <, >, &, etc. */}
+
+## 9. Regular Markdown Test
 
 This section tests that regular markdown is NOT transformed:
 
@@ -141,7 +166,7 @@ This section tests that regular markdown is NOT transformed:
 const test = "value";
 ```
 
-## 8. Edge Cases
+## 9. Edge Cases
 
 ### Empty Tab
 
@@ -181,3 +206,32 @@ Content with @ symbol.
 </TabItem>
 </Tabs>
 
+
+## 10. Well-Lit Paths Link Transformations
+
+Test that well-lit-paths links are transformed correctly:
+
+Single level up:
+[Optimized Baseline](/docs/guides/optimized-baseline)
+
+Two levels up:
+[PD Disaggregation](/docs/guides/pd-disaggregation)
+
+Index/README:
+[All Guides](/docs/guides)
+
+With any number of parent directories:
+[Guide Link](/docs/guides/flow-control)
+
+## 11. README.md Link Transformations
+
+Test that README links are transformed correctly:
+
+Link to accelerators README:
+[Accelerators](/docs/accelerators)
+
+Link to architecture router epp README:
+[EPP](/docs/architecture/core/router/epp)
+
+Link to KV management README:
+[KV Management](/docs/architecture/advanced/kv-management)

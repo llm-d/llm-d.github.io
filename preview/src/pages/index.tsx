@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import Layout from '@theme/Layout';
 
 import styles from './index.module.css';
@@ -10,7 +11,7 @@ function HeroSection() {
     <header className={clsx('hero hero--llmd')}>
       <div className="container">
         <img
-          src="/preview/img/llm-d-logo.png"
+          src={useBaseUrl('/img/llm-d-logo.png')}
           alt="llm-d"
           className="hero__logo"
         />

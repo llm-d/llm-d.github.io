@@ -72,6 +72,6 @@ There are many ways to contribute to llm-d:
 3. Subscribe to our [YouTube channel](https://youtube.com/@llm-d-project) for tutorials and meeting recordings
 4. Fill out the [Use Case Survey](https://docs.google.com/forms/d/e/1FAIpQLScENfBNrN1q8XpugCmDUjy8sSn1cMzi_V0mCWTRwzixcPAQkw/viewform) to help shape our benchmarks
 5. Join our <a href="/slack" target="_self">Slack workspace</a> for real-time discussions
-6. Check out our [Contributor Guidelines](https://llm-d.ai/docs/community/contribute) to start contributing code
+6. Check out our [Contributor Guidelines](https://llm-d.ai/community/contribute) to start contributing code
 
 We're looking forward to hearing from you and working together to make llm-d even better!
