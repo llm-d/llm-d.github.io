@@ -512,19 +512,6 @@ sed_inplace \
     -e 's|\](/architecture/core/epp/README\.md)|\](/architecture/core/router/epp)|g' \
     "$DOCS_DIR/architecture/core/router/index.md"
 
-# === Clean up known issues ===
-sed_inplace '/^NEEDS TO BE REDONE/d' "$DOCS_DIR/architecture/core/router/epp/configuration.md" 2>/dev/null || true
-
-# Fix unclosed <br> tags (MDX requires self-closing tags)
-find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
-    sed_inplace 's|<br>|<br />|g' "$file"
-done
-
-# Fix email addresses in angle brackets (MDX interprets them as HTML tags)
-find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
-    sed_inplace 's|<\([^<>]*@[^<>]*\)>|\1|g' "$file"
-done
-
 # === Apply markdown transformations (shared with test-transformations.sh) ===
 echo "    Applying markdown transformations (callouts, tabs, MDX escaping, well-lit-paths links)..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
