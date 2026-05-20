@@ -61,7 +61,7 @@ export default function VersionDropdown(): React.JSX.Element {
       return `/docs/${version}/${pagePath}`;
     } else {
       // Pre-0.7.0 versions link to GitHub
-      return `${REPO_URL}/${tag}/docs/wip-docs-new`;
+      return `${REPO_URL}/${tag}/docs`;
     }
   };
 
