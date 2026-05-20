@@ -38,7 +38,14 @@ export default function VersionDropdown(): React.JSX.Element {
         typeof window !== 'undefined' ? window.location.origin : '';
       fetch(`${base}/docs/releases.json`)
         .then(res => res.json())
-        .then(data => setReleases(data))
+        .then(data => {
+          // Validate that data is an array of strings
+          if (Array.isArray(data) && data.every(v => typeof v === 'string')) {
+            setReleases(data);
+          } else {
+            console.warn('[VersionDropdown] Invalid releases.json format, expected array of strings');
+          }
+        })
         .catch(err => console.warn('[VersionDropdown] Failed to load releases.json:', err));
     }
   }, [pluginData]);
@@ -67,22 +74,16 @@ export default function VersionDropdown(): React.JSX.Element {
 
   const currentVersion = getCurrentVersion();
 
-  // DEBUG: Log what the component sees
-  React.useEffect(() => {
-    console.log('[VersionDropdown] Debug:', {
-      pathname: location.pathname,
-      currentVersion,
-      latestTag,
-      releases: releases.length,
-      pluginDataExists: !!pluginData?.releases
-    });
-  }, [location.pathname, currentVersion, latestTag, releases, pluginData]);
-
   // Extract current page path to preserve when switching versions
   // e.g., /docs/architecture/core/proxy -> architecture/core/proxy
   // e.g., /docs/0.7.0/architecture -> architecture (strip version)
+  // Uses window.location.pathname for the same reason as getCurrentVersion():
+  // useLocation() is baseUrl-relative and won't contain the /docs/ prefix when
+  // the versioned build has baseUrl='/docs/0.7.0/', causing version-switch links
+  // to always fall back to 'getting-started' instead of the current page.
   const getCurrentPagePath = () => {
-    const path = location.pathname;
+    const path =
+      typeof window !== 'undefined' ? window.location.pathname : location.pathname;
     const match = path.match(/^\/docs\/(.+)$/);
     if (!match) return 'getting-started';
 
@@ -136,7 +137,7 @@ export default function VersionDropdown(): React.JSX.Element {
         <li>
           <a
             className={`dropdown__link ${!currentVersion ? 'dropdown__link--active' : ''}`}
-            href="/docs/"
+            href={`/docs/${getCurrentPagePath()}`}
           >
             dev (main)
           </a>

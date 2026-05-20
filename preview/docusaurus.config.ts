@@ -2,6 +2,27 @@ import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
+// Validate and normalize DOCS_BASE_URL to ensure it starts and ends with '/'
+function getBaseUrl(): string {
+  const envBaseUrl = process.env.DOCS_BASE_URL;
+  const defaultBaseUrl = '/docs/';
+
+  if (!envBaseUrl) {
+    return defaultBaseUrl;
+  }
+
+  // Ensure leading and trailing slashes
+  let normalized = envBaseUrl;
+  if (!normalized.startsWith('/')) {
+    normalized = '/' + normalized;
+  }
+  if (!normalized.endsWith('/')) {
+    normalized = normalized + '/';
+  }
+
+  return normalized;
+}
+
 const config: Config = {
   title: 'llm-d',
   tagline: 'Kubernetes-native distributed inference serving for LLMs',
@@ -19,7 +40,7 @@ const config: Config = {
   ],
 
   url: 'https://llm-d.ai',
-  baseUrl: process.env.DOCS_BASE_URL ?? '/docs/',
+  baseUrl: getBaseUrl(),
 
   organizationName: 'llm-d',
   projectName: 'llm-d.github.io',

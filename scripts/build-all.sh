@@ -75,8 +75,8 @@ cd "$PROJECT_DIR"
 # Fetch all remote branches (needed for finding release branches)
 git fetch origin 2>/dev/null || true
 
-# Find all release branches
-RELEASE_BRANCHES=$(git branch -r | grep 'origin/release-' | sed 's|origin/||' | grep -v HEAD || true)
+# Find all release branches (keep origin/ prefix for worktree refs)
+RELEASE_BRANCHES=$(git branch -r | grep 'origin/release-' | grep -v HEAD || true)
 
 if [ -z "$RELEASE_BRANCHES" ]; then
   echo "No release branches found, skipping"
@@ -86,22 +86,24 @@ else
   echo ""
 
   for branch in $RELEASE_BRANCHES; do
-    # Extract version (e.g., release-0.7.0 -> 0.7.0)
-    VERSION=${branch#release-}
+    # Extract version (e.g., origin/release-0.7.0 -> 0.7.0)
+    VERSION=${branch#origin/release-}
 
     echo "Building docs for version $VERSION from $branch"
 
     # Checkout the release branch (in a worktree to avoid conflicts)
     WORKTREE_PATH="../release-${VERSION}"
+    # Clean up any existing worktree first to ensure fresh builds
+    git worktree remove --force "$WORKTREE_PATH" 2>/dev/null || true
     git worktree add "$WORKTREE_PATH" "$branch" 2>/dev/null || {
-      echo "⚠ Warning: Could not create worktree for $branch (may already exist), skipping"
+      echo "⚠ Warning: Could not create worktree for $branch, skipping"
       continue
     }
 
-    # Build the release docs
+    # Build the release docs with version-specific baseUrl
     cd "${WORKTREE_PATH}/preview"
     npm install --silent
-    npm run build
+    DOCS_BASE_URL=/docs/${VERSION}/ npm run build
 
     # Copy build output to versioned path
     cd "$PROJECT_DIR"
@@ -125,7 +127,7 @@ echo "  - Main site: build/"
 echo "  - Docs site: build/docs/"
 if [ -n "${RELEASE_BRANCHES:-}" ]; then
   for branch in $RELEASE_BRANCHES; do
-    VERSION=${branch#release-}
+    VERSION=${branch#origin/release-}
     echo "  - Version $VERSION: build/docs/$VERSION/"
   done
 fi
