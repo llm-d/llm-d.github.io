@@ -564,6 +564,25 @@ function normalizeUrl(url, baseUrl) {
   }
 }
 
+// Auto-detect versioned doc paths from the build output.
+// Any directory under build/docs/ matching a version pattern (e.g. 0.7.0, 1.0.0-rc1)
+// is a Docusaurus versioned snapshot and its links are historical — skip them.
+function detectVersionedPaths(buildDir) {
+  const docsDir = path.join(buildDir, 'docs');
+  if (!fs.existsSync(docsDir)) return [];
+
+  const versionPattern = /^\d+\.\d+/;
+  return fs.readdirSync(docsDir)
+    .filter(entry => {
+      try {
+        return fs.statSync(path.join(docsDir, entry)).isDirectory() && versionPattern.test(entry);
+      } catch {
+        return false;
+      }
+    })
+    .map(version => `/docs/${version}/`);
+}
+
 // Main link checking logic
 async function checkLinks() {
   console.log('🔍 Link Checker Starting...\n');
@@ -576,6 +595,15 @@ async function checkLinks() {
   }
 
   console.log('📂 Build directory:', buildDir);
+
+  // Auto-add versioned doc paths to ignorePatterns so version-switcher 404s
+  // for new pages don't surface as broken links. This picks up any future
+  // versions automatically without needing to update the config file.
+  const versionedPaths = detectVersionedPaths(buildDir);
+  if (versionedPaths.length > 0) {
+    config.ignorePatterns = [...(config.ignorePatterns || []), ...versionedPaths];
+    console.log(`📦 Auto-ignoring versioned paths: ${versionedPaths.join(', ')}\n`);
+  }
 
   try {
     // Start local server
@@ -648,8 +676,9 @@ async function checkLinks() {
         }
         allLinks.get(normalizedUrl).sourcePages.add(currentPath);
 
-        // Add to crawl queue if not visited
-        if (!visited.has(normalizedUrl) && !toVisit.includes(normalizedUrl)) {
+        // Add to crawl queue if not visited and not ignored
+        const isIgnored = config.ignorePatterns.some(pattern => normalizedUrl.includes(pattern));
+        if (!isIgnored && !visited.has(normalizedUrl) && !toVisit.includes(normalizedUrl)) {
           toVisit.push(normalizedUrl);
         }
       }
