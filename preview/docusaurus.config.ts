@@ -84,8 +84,11 @@ const config: Config = {
             return `https://github.com/llm-d/llm-d/blob/main/docs/${sourcePath}`;
           },
           showLastUpdateTime: true,
-          // No Docusaurus versioning - dev (main) is always at /docs/
-          // Stable releases link to GitHub via custom version dropdown
+          // No Docusaurus versioning. Versioning is handled at the build layer
+          // (scripts/build-all.sh): the latest stable release is served at the
+          // canonical /docs/ URL, dev lives at /docs/dev/, and each release-X.Y.Z
+          // branch is also exposed at /docs/X.Y.Z/. The navbar dropdown
+          // (preview/src/components/VersionDropdown.tsx) routes between them.
         },
         blog: false,
         theme: {

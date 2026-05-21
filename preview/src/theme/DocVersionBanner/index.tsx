@@ -1,21 +1,18 @@
 import React from 'react';
-
-// Matches a versioned URL like /docs/0.7.0/... or /docs/1.2.3/...
-const VERSION_PATH_RE = /^\/docs\/\d+\.\d+(?:\.\d+)?\//;
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 
 export default function DocVersionBanner(): React.JSX.Element | null {
-  // This site deploys each version as a separate Docusaurus build rather than
-  // using Docusaurus's built-in multi-version feature, so the plugin version
-  // hooks always report "current". We detect the version from the URL instead.
-  const isVersionedPage =
-    typeof window !== 'undefined' && VERSION_PATH_RE.test(window.location.pathname);
+  const {siteConfig} = useDocusaurusContext();
 
-  // On a numbered-version page (e.g. /docs/0.7.0/...) — no banner needed.
-  if (isVersionedPage) {
+  // The dev build (baseUrl=/docs/dev/) is the only one that should advertise
+  // itself as a developer preview. The canonical /docs/ URL serves the latest
+  // stable release, and /docs/X.Y.Z/ URLs are explicit stable deep-links.
+  // Keying off baseUrl (a build-time constant) keeps the verdict consistent
+  // in SSR and after client hydration.
+  if (siteConfig.baseUrl !== '/docs/dev/') {
     return null;
   }
 
-  // On the dev (main) build — remind readers this is a preview.
   return (
     <div
       className="theme-doc-version-banner alert alert--warning margin-bottom--md"
