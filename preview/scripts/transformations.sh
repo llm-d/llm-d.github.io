@@ -107,9 +107,9 @@ apply_transformations() {
 
     # Fix guide name variations and relative paths
     sed_inplace \
-        -e 's|\](/docs/guides/predicted-latency)|\](/docs/guides/predicted-latency-based-scheduling)|g' \
-        -e 's|\](/guides/predicted-latency)|\](/guides/predicted-latency-based-scheduling)|g' \
-        -e 's|\](../../guides/predicted-latency)|\](/guides/predicted-latency-based-scheduling)|g' \
+        -e 's|\](/docs/guides/predicted-latency)|\](/docs/guides/predicted-latency-routing)|g' \
+        -e 's|\](/guides/predicted-latency)|\](/guides/predicted-latency-routing)|g' \
+        -e 's|\](../../guides/predicted-latency)|\](/guides/predicted-latency-routing)|g' \
         -e 's|\](/docs/guides/wide-expert-parallelism)|\](/docs/guides/wide-ep-lws)|g' \
         -e 's|\](/guides/wide-expert-parallelism)|\](/guides/wide-ep-lws)|g' \
         -e 's|\](../../guides/wide-expert-parallelism)|\](/guides/wide-ep-lws)|g' \
