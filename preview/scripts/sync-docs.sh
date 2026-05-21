@@ -147,8 +147,9 @@ cp_doc "$WIP/well-lit-paths/README.md" "$DOCS_DIR/guides/index.md"
 
 sed_inplace \
     -e 's|\](optimized-baseline\.md)|\](/guides/optimized-baseline)|g' \
-    -e 's|\](predicted-latency\.md)|\](/guides/predicted-latency-based-scheduling)|g' \
-    -e 's|\](precise-prefix-cache-aware\.md)|\](/guides/precise-prefix-cache-aware)|g' \
+    -e 's|\](predicted-latency\.md)|\](/guides/predicted-latency-routing)|g' \
+    -e 's|\](precise-prefix-cache-aware\.md)|\](/guides/precise-prefix-cache-routing)|g' \
+    -e 's|\](precise-prefix-cache-routing\.md)|\](/guides/precise-prefix-cache-routing)|g' \
     -e 's|\](tiered-prefix-cache\.md)|\](/guides/tiered-prefix-cache)|g' \
     -e 's|\](pd-disaggregation\.md)|\](/guides/pd-disaggregation)|g' \
     -e 's|\](wide-expert-parallelism\.md)|\](/guides/wide-ep-lws)|g' \
@@ -245,7 +246,8 @@ find "$DOCS_DIR/resources/infra-providers" -name "*.md" -print0 | while IFS= rea
         -e 's|\./images/\([^)]*\)|/img/docs/\1|g' \
         -e 's|](images/\([^)]*\))|](/img/docs/\1)|g' \
         -e 's|\.\./\.\./\.\./guides/optimized-baseline/README\.md|/guides/optimized-baseline|g' \
-        -e 's|\.\./\.\./\.\./guides/precise-prefix-cache-aware/README\.md|/guides/precise-prefix-cache-aware|g' \
+        -e 's|\.\./\.\./\.\./guides/precise-prefix-cache-aware/README\.md|/guides/precise-prefix-cache-routing|g' \
+        -e 's|\.\./\.\./\.\./guides/precise-prefix-cache-routing/README\.md|/guides/precise-prefix-cache-routing|g' \
         -e 's|\.\./\.\./\.\./guides/pd-disaggregation/README\.md|/guides/pd-disaggregation|g' \
         -e 's|\.\./\.\./\.\./guides/wide-ep-lws/README\.md|https://github.com/llm-d/llm-d/tree/main/guides/wide-ep-lws|g' \
         -e 's|\.\./\.\./\.\./guides/tiered-prefix-cache/README\.md|https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache|g' \
@@ -287,9 +289,11 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](/docs/infra-providers)|\](/docs/resources/infra-providers)|g' \
         -e 's|\](infra-providers/\([^)]*\))|\](/resources/infra-providers/\1)|g' \
         -e 's|\](/docs/\([^)]*\)/README\.md)|\](/docs/\1)|g' \
-        -e 's|\](/docs/guides/predicted-latency)|\](/docs/guides/predicted-latency-based-scheduling)|g' \
-        -e 's|\](/guides/predicted-latency)|\](/guides/predicted-latency-based-scheduling)|g' \
-        -e 's|\](../../guides/predicted-latency)|\](/guides/predicted-latency-based-scheduling)|g' \
+        -e 's|\](/docs/guides/predicted-latency-based-scheduling)|\](/docs/guides/predicted-latency-routing)|g' \
+        -e 's|\](/guides/predicted-latency-based-scheduling)|\](/guides/predicted-latency-routing)|g' \
+        -e 's|\](/docs/guides/predicted-latency)|\](/docs/guides/predicted-latency-routing)|g' \
+        -e 's|\](/guides/predicted-latency)|\](/guides/predicted-latency-routing)|g' \
+        -e 's|\](../../guides/predicted-latency)|\](/guides/predicted-latency-routing)|g' \
         -e 's|\](/docs/guides/wide-expert-parallelism)|\](/docs/guides/wide-ep-lws)|g' \
         -e 's|\](/guides/wide-expert-parallelism)|\](/guides/wide-ep-lws)|g' \
         -e 's|\](../../guides/wide-expert-parallelism)|\](/guides/wide-ep-lws)|g' \
@@ -401,12 +405,18 @@ find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](/docs/guides/tuning\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/flow-control/tuning.md)|g' \
         -e 's|\](./objectives\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/flow-control/objectives.yaml)|g' \
         -e 's|\](/docs/guides/objectives\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/flow-control/objectives.yaml)|g' \
-        -e 's|\](scheduler/precise-prefix-cache-aware\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware/scheduler/precise-prefix-cache-aware.values.yaml)|g' \
-        -e 's|\](/docs/guides/scheduler/precise-prefix-cache-aware\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware/scheduler/precise-prefix-cache-aware.values.yaml)|g' \
-        -e 's|\](./scheduler/predicted-latency\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-based-scheduling/scheduler/predicted-latency.values.yaml)|g' \
-        -e 's|\](/docs/guides/scheduler/predicted-latency\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-based-scheduling/scheduler/predicted-latency.values.yaml)|g' \
-        -e 's|\](./scheduler/predicted-latency-slo\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-based-scheduling/scheduler/predicted-latency-slo.values.yaml)|g' \
-        -e 's|\](/docs/guides/scheduler/predicted-latency-slo\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-based-scheduling/scheduler/predicted-latency-slo.values.yaml)|g' \
+        -e 's|\](scheduler/precise-prefix-cache-aware\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing/scheduler/precise-prefix-cache-aware.values.yaml)|g' \
+        -e 's|\](/docs/guides/scheduler/precise-prefix-cache-aware\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing/scheduler/precise-prefix-cache-aware.values.yaml)|g' \
+        -e 's|\](router/precise-prefix-cache-routing\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing/router/precise-prefix-cache-routing.values.yaml)|g' \
+        -e 's|\](/docs/guides/router/precise-prefix-cache-routing\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing/router/precise-prefix-cache-routing.values.yaml)|g' \
+        -e 's|\](./scheduler/predicted-latency\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing/scheduler/predicted-latency.values.yaml)|g' \
+        -e 's|\](/docs/guides/scheduler/predicted-latency\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing/scheduler/predicted-latency.values.yaml)|g' \
+        -e 's|\](./router/predicted-latency\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing/router/predicted-latency.values.yaml)|g' \
+        -e 's|\](/docs/guides/router/predicted-latency\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing/router/predicted-latency.values.yaml)|g' \
+        -e 's|\](./scheduler/predicted-latency-slo\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing/scheduler/predicted-latency-slo.values.yaml)|g' \
+        -e 's|\](/docs/guides/scheduler/predicted-latency-slo\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing/scheduler/predicted-latency-slo.values.yaml)|g' \
+        -e 's|\](./router/predicted-latency-slo\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing/router/predicted-latency-slo.values.yaml)|g' \
+        -e 's|\](/docs/guides/router/predicted-latency-slo\.values\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing/router/predicted-latency-slo.values.yaml)|g' \
         -e 's|\](./storage_class\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache/storage/manifests/backends/lustre/storage_class.yaml)|g' \
         -e 's|\](/docs/guides/tiered-prefix-cache/storage/manifests/backends/storage_class\.yaml)|\](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache/storage/manifests/backends/lustre/storage_class.yaml)|g' \
         -e 's|\](./README\.hpa-epp/index\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling)|g' \

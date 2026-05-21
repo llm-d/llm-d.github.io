@@ -18,7 +18,7 @@ tags: [blog, updates, llm-d]
 
 The llm-d project provides a series of “well-lit paths” \- tested, benchmarked solutions for deploying large language models in production. Our first path, [**Intelligent Inference Scheduling**](/blog/intelligent-inference-scheduling-with-llm-d), established a baseline for AI-aware routing by balancing both cluster load and prefix-cache affinities. The default configuration for that path uses an *approximate* method for the latter, predicting cache locality based on request traffic.
 
-This blog illuminates a more advanced and powerful path: [**precise prefix-cache aware scheduling**](/docs/guides/precise-prefix-cache-aware).
+This blog illuminates a more advanced and powerful path: [**precise prefix-cache aware scheduling**](/docs/guides/precise-prefix-cache-routing).
 
 We take a deep dive into the next generation of this feature, which moves beyond prediction and gives the scheduler direct introspection into distributed vLLM caches. This precision is key to maximizing cache hit rates and achieving a new level of performance and maximizing cost-efficiency in your distributed deployments.
 
