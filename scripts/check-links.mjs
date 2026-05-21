@@ -112,6 +112,7 @@ async function stopServer() {
         try {
           await killProcessOnPort(config.serverPort);
         } catch (e) {
+          console.error('Error killing process on port:', e.message);
           // Ignore errors
         }
 
@@ -120,10 +121,12 @@ async function stopServer() {
           try {
             process.kill(-serverProcess.pid, 'SIGKILL');
           } catch (e) {
+            console.error('Error killing process group:', e.message);
             // Fallback to killing just the main process
             try {
               serverProcess.kill('SIGKILL');
             } catch (e2) {
+              console.error('Error killing main process:', e2.message);
               // Process already dead
             }
           }
@@ -143,10 +146,12 @@ async function stopServer() {
         // Negative PID kills the process group
         process.kill(-serverProcess.pid, 'SIGTERM');
       } catch (e) {
+        console.error('Error killing process group:', e.message);
         // Fallback to killing just the main process if process group fails
         try {
           serverProcess.kill('SIGTERM');
         } catch (e2) {
+          console.error('Error killing main process:', e2.message);
           // Process might already be dead, that's fine
           clearTimeout(timeout);
           serverProcess = null;
@@ -173,6 +178,7 @@ async function killProcessOnPort(port) {
         try {
           process.kill(parseInt(pid), 'SIGKILL');
         } catch (e) {
+          console.error('Error killing process:', e.message);
           // Process might already be dead
         }
         resolve();
