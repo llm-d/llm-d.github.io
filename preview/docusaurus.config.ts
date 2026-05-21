@@ -100,6 +100,8 @@ const config: Config = {
       logo: {
         alt: 'llm-d',
         src: 'img/llm-d-logo-navbar.png',
+        href: 'https://llm-d.ai',
+        target: '_self',
       },
       items: [
         {
