@@ -115,8 +115,8 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
-          label: 'Precise Prefix Cache Aware',
-          link: {type: 'doc', id: 'guides/precise-prefix-cache-aware/index'},
+          label: 'Precise Prefix Cache Routing',
+          link: {type: 'doc', id: 'guides/precise-prefix-cache-routing/index'},
           items: [],
         },
         {
@@ -157,7 +157,7 @@ const sidebars: SidebarsConfig = {
           link: {type: 'doc', id: 'guides/pd-disaggregation/index'},
           items: [],
         },
-        'guides/predicted-latency-based-scheduling/index',
+        'guides/predicted-latency-routing/index',
         {
           type: 'category',
           label: 'Wide Expert Parallelism',
@@ -185,7 +185,7 @@ const sidebars: SidebarsConfig = {
           label: 'Recipes',
           items: [
             'guides/recipes/gateway/index',
-            'guides/recipes/scheduler/index',
+            'guides/recipes/router/index',
             'guides/recipes/modelserver/components/disable-gke-nccl-tuner-patch/index',
           ],
         },
