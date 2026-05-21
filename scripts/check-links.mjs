@@ -109,12 +109,7 @@ async function stopServer() {
       // Set a shorter timeout to force kill if it doesn't stop gracefully
       const timeout = setTimeout(async () => {
         // Try to find and kill process by port as last resort
-        try {
-          await killProcessOnPort(config.serverPort);
-        } catch (e) {
-          console.error('Error killing process on port:', e.message);
-          // Ignore errors
-        }
+        await killProcessOnPort(config.serverPort);
 
         if (serverProcess && !serverProcess.killed) {
           // Kill the entire process group to ensure all child processes are terminated
