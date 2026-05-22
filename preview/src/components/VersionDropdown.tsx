@@ -58,7 +58,14 @@ export default function VersionDropdown(): React.JSX.Element {
 
   const latestTag = releases?.[0];
   const latestVersion = latestTag?.replace(/^v/, '');
-  const olderReleases = releases?.slice(1) || [];
+  // Only show versions that are hosted on the website (>= MIN_WEBSITE_VERSION).
+  // Pre-0.7.0 docs live in GitHub and would otherwise render as external
+  // GitHub links in the dropdown, which is noisy and inconsistent with the
+  // rest of the navigation. When a future release ships, the previous one
+  // will naturally drop into this list as the new latest takes the top slot.
+  const olderReleases = (releases?.slice(1) || []).filter((tag) =>
+    isVersionGTE(tag.replace(/^v/, ''), MIN_WEBSITE_VERSION),
+  );
 
   // Detect current version from the actual browser URL (window.location.pathname).
   // useLocation() returns a path relative to Docusaurus's baseUrl, which strips
