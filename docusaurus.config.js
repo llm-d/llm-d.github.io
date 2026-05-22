@@ -176,7 +176,7 @@ const config = {
       announcementBar: {
         id: 'llm-d-v0-7-release',
         content:
-          '🎉 <b>llm-d 0.7 is now available!</b> Explore our completely revamped documentation with comprehensive guides, architecture deep-dives, and production deployment patterns. <a target="_self" rel="noopener noreferrer" href="/docs"><b>Browse the docs →</b></a>',
+          '🎉 <b>llm-d 0.7 is now available!</b> Explore our completely revamped documentation with comprehensive guides, architecture deep-dives, and production deployment patterns. <a target="_self" rel="noopener noreferrer" href="/docs/getting-started"><b>Browse the docs →</b></a>',
         backgroundColor: '#7f317f',
         textColor: '#fff',
         isCloseable: true,
@@ -192,7 +192,7 @@ const config = {
           {
             type: 'html',
             position: 'left',
-            value: '<a href="/docs" class="navbar__item navbar__link">Documentation</a>',
+            value: '<a href="/docs/getting-started" class="navbar__item navbar__link">Documentation</a>',
           },
           { to: "/blog", label: "Blog", position: "left" },
           {

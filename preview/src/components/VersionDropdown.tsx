@@ -88,26 +88,28 @@ export default function VersionDropdown(): React.JSX.Element {
 
   const currentVersion = getCurrentVersion();
 
-  // Generate URL for a version. Each version's landing page is the target;
-  // we deliberately don't preserve the current page path because dev and
-  // older releases have different page sets, so a path-preserving link
-  // would 404 whenever the current page doesn't exist in the target
-  // version (e.g. on a dev page added after the last release).
+  // Generate URL for a version. Lands on each version's getting-started
+  // page rather than the docs landing — that's the actual entry point for
+  // readers, and consistent with the navbar Documentation link. We don't
+  // preserve the current page path because dev and older releases have
+  // different page sets, so a path-preserving link would 404 whenever
+  // the current page doesn't exist in the target version.
   const getVersionUrl = (tag: string) => {
     const version = tag.replace(/^v/, '');
 
     if (latestTag && tag === latestTag) {
-      return '/docs/';
+      return '/docs/getting-started';
     }
     if (isVersionGTE(version, MIN_WEBSITE_VERSION)) {
-      return `/docs/${version}/`;
+      return `/docs/${version}/getting-started`;
     }
     return `${REPO_URL}/${tag}/docs`;
   };
 
   // Dev docs live under /docs/dev/ once a stable release exists; before the
   // first release they remain at /docs/ (matches build-all.sh fallback).
-  const getDevUrl = () => (latestTag ? '/docs/dev/' : '/docs/');
+  const getDevUrl = () =>
+    latestTag ? '/docs/dev/getting-started' : '/docs/getting-started';
 
   const isExternalLink = (tag: string) => {
     const version = tag.replace(/^v/, '');

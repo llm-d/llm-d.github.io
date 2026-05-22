@@ -114,7 +114,7 @@ const config: Config = {
       },
       items: [
         {
-          to: '/',
+          to: '/getting-started',
           position: 'left',
           label: 'Documentation',
         },
