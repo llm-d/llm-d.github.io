@@ -18,7 +18,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Architecture',
-      collapsed: false,
+      collapsed: true,
       link: {type: 'doc', id: 'architecture/index'},
       items: [
         {
@@ -195,7 +195,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Resources',
-      collapsed: false,
+      collapsed: true,
       items: [
         {
           type: 'category',
@@ -238,7 +238,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'API Reference',
-      collapsed: false,
+      collapsed: true,
       link: {type: 'doc', id: 'api-reference/index'},
       items: [
         'api-reference/glossary',
