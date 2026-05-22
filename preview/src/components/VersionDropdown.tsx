@@ -88,52 +88,26 @@ export default function VersionDropdown(): React.JSX.Element {
 
   const currentVersion = getCurrentVersion();
 
-  // Extract current page path to preserve when switching versions.
-  // Uses window.location.pathname for the same reason as getCurrentVersion():
-  // useLocation() is baseUrl-relative and won't contain the /docs/ prefix when
-  // the versioned build has baseUrl='/docs/0.7.0/', causing version-switch links
-  // to always fall back to 'getting-started' instead of the current page.
-  const getCurrentPagePath = () => {
-    const path = getFullPath();
-    const match = path.match(/^\/docs\/(.+)$/);
-    if (!match) return 'getting-started';
-
-    let pagePath = match[1];
-
-    if (pagePath === 'dev' || pagePath.startsWith('dev/')) {
-      pagePath = pagePath.replace(/^dev\/?/, '');
-    } else {
-      const versionMatch = pagePath.match(/^(\d+\.\d+(?:\.\d+)?)\/(.*)/);
-      if (versionMatch) {
-        pagePath = versionMatch[2];
-      }
-    }
-
-    return pagePath || 'getting-started';
-  };
-
-  // Generate URL for a version. The latest stable lives at the canonical
-  // /docs/ URL; older 0.7.0+ versions live at /docs/{version}/; pre-0.7.0
-  // versions link out to GitHub.
+  // Generate URL for a version. Each version's landing page is the target;
+  // we deliberately don't preserve the current page path because dev and
+  // older releases have different page sets, so a path-preserving link
+  // would 404 whenever the current page doesn't exist in the target
+  // version (e.g. on a dev page added after the last release).
   const getVersionUrl = (tag: string) => {
     const version = tag.replace(/^v/, '');
-    const pagePath = getCurrentPagePath();
 
     if (latestTag && tag === latestTag) {
-      return `/docs/${pagePath}`;
+      return '/docs/';
     }
     if (isVersionGTE(version, MIN_WEBSITE_VERSION)) {
-      return `/docs/${version}/${pagePath}`;
+      return `/docs/${version}/`;
     }
     return `${REPO_URL}/${tag}/docs`;
   };
 
   // Dev docs live under /docs/dev/ once a stable release exists; before the
   // first release they remain at /docs/ (matches build-all.sh fallback).
-  const getDevUrl = () => {
-    const pagePath = getCurrentPagePath();
-    return latestTag ? `/docs/dev/${pagePath}` : `/docs/${pagePath}`;
-  };
+  const getDevUrl = () => (latestTag ? '/docs/dev/' : '/docs/');
 
   const isExternalLink = (tag: string) => {
     const version = tag.replace(/^v/, '');

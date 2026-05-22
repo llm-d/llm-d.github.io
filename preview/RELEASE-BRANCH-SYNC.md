@@ -82,12 +82,14 @@ Before any release branches exist, dev docs are served at `/docs/` (no
 
 The version dropdown component (`preview/src/components/VersionDropdown.tsx`) intelligently routes users:
 
-- **Latest stable**: Links to the canonical `/docs/{page}` URL (no version segment)
-- **Dev (main)**: Links to `/docs/dev/{page}`
-- **Other versions >= 0.7.0**: Link to `/docs/{version}/{page}` on the website
+- **Latest stable**: Links to the canonical `/docs/` URL (no version segment)
+- **Dev (main)**: Links to `/docs/dev/`
+- **Other versions >= 0.7.0**: Link to `/docs/{version}/` on the website
 - **Version < 0.7.0**: Links to GitHub tree view (legacy releases)
-- **Page path preservation**: Maintains current page when switching versions
-  - Example: On `/docs/dev/architecture` → Click latest (v0.7.0) → Go to `/docs/architecture`
+- **Version switches always land on the target version's home page** rather
+  than preserving the current page path, because dev typically has pages
+  that don't yet exist in the latest release (and vice versa for renamed
+  pages), and a path-preserving link would 404 in those cases.
 
 ## Creating a New Release
 
