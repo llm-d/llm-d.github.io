@@ -69,7 +69,7 @@ import Link from '@docusaurus/Link';
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
     }
   }}>
-    <h4 style={{margin: '0 0 8px 0', color: 'var(--ifm-color-primary)'}}>Routing</h4>
+    <h4 style={{margin: '0 0 8px 0', color: 'var(--ifm-color-primary)'}}>Router</h4>
     <p style={{margin: '0', fontSize: '14px'}}>Intelligent request routing and load balancing</p>
   </Link>
   
