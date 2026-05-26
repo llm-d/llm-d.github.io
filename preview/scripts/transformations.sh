@@ -41,6 +41,10 @@ apply_transformations() {
     # MDX escaping - escape special characters
     sed_inplace 's|<->|\\<->|g' "$file"
 
+    # Convert autolinks (<https://...> / <http://...>) to plain URLs
+    # MDX parses angle brackets as JSX and fails on the / in URLs
+    sed_inplace -E 's|<(https?://[^>]+)>|\1|g' "$file"
+
     # Escape HTML comments for MDX (MDX doesn't support <!-- --> syntax)
     # Replace HTML comments with MDX comments: <!-- text --> becomes {/* text */}
     # Handle both single-line and multi-line comments
