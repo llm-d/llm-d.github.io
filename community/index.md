@@ -55,7 +55,7 @@ import Link from '@docusaurus/Link';
   gap: '16px',
   marginTop: '16px'
 }}>
-  <Link to="/community/sigs#sig-inference-scheduler" style={{
+  <Link to="/community/sigs#sig-router-formerly-inference-scheduler" style={{
     padding: '16px',
     border: '1px solid var(--ifm-color-emphasis-200)',
     borderRadius: '8px',
@@ -69,7 +69,7 @@ import Link from '@docusaurus/Link';
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
     }
   }}>
-    <h4 style={{margin: '0 0 8px 0', color: 'var(--ifm-color-primary)'}}>Inference Scheduler</h4>
+    <h4 style={{margin: '0 0 8px 0', color: 'var(--ifm-color-primary)'}}>Routing</h4>
     <p style={{margin: '0', fontSize: '14px'}}>Intelligent request routing and load balancing</p>
   </Link>
   

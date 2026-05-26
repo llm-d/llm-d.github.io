@@ -158,7 +158,7 @@ const config: Config = {
           title: 'Repositories',
           items: [
             {label: 'llm-d', href: 'https://github.com/llm-d/llm-d'},
-            {label: 'Inference Scheduler', href: 'https://github.com/llm-d/llm-d-inference-scheduler'},
+            {label: 'Router', href: 'https://github.com/llm-d/llm-d-router'},
             {label: 'KV Cache', href: 'https://github.com/llm-d/llm-d-kv-cache'},
           ],
         },
