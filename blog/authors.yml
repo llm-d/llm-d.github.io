@@ -268,3 +268,11 @@ abhisyant:
   image_url: /img/blogs/abhisyant.webp
   socials:
     linkedin: abhisyant
+
+ezrasilvera:
+  name: Ezra Silvera
+  title: Senior Technical Staff Member, IBM
+  image_url: https://avatars.githubusercontent.com/ezrasilvera?v=4
+  email: ezra@il.ibm.com
+  socials:
+    github: https://github.com/ezrasilvera
