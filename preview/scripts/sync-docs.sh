@@ -619,6 +619,13 @@ sed_inplace \
     -e 's|\](/architecture/core/epp/README\.md)|\](/architecture/core/router/epp)|g' \
     "$DOCS_DIR/architecture/core/router/index.md"
 
+
+# Fix URLs in angle brackets (MDX interprets them as HTML tags)
+# Replace <https://...> with https://...
+find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace 's|<\(https\?://[^<>]*\)>|\1|g' "$file"
+done
+
 # === Apply markdown transformations (shared with test-transformations.sh) ===
 echo "    Applying markdown transformations (callouts, tabs, MDX escaping, well-lit-paths links)..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
