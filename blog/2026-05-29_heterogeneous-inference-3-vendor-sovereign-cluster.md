@@ -108,19 +108,9 @@ We were unable to run sarvam-30b on Intel Gaudi3 due to software compatibility i
 
 ![3-vendor (NVIDIA + AMD + Gaudi) granite-4.1-8b: llm-d vs k8s round-robin](/img/blogs/heterogeneous-3vendor/3vendor-granite.png)
 
-## Prefill/Decode disaggregation
-
-We deployed sarvam-30b on llm-d v0.7 using [prefill–decode (P/D) disaggregation](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation) on a single 8-GPU AMD MI325X node. Of the different ways to slice 8 GPUs across the two roles, the configuration that worked best was **4 prefill workers + 4 decode workers, all at TP=1** — eight pods total, with the routing sidecar moving KV cache from prefill to decode using NIXL (NVIDIA Inference Xfer Library) over AMD XGMI. We compared this against a plain Kubernetes baseline of 8 monolithic vLLM pods (TP=1) using round-robin scheduling, as before.
-
-With prefill isolated to its own four pods, TTFT stays nearly flat as load increases: at 150 RPS, TTFT p50 is 4.6 s with PD vs. 17.7 s for the baseline — a 4× improvement. End-to-end p50 latency is ~2× better (59 s vs. 113 s), ITL is ~40% smoother. PD trails behind the baseline in terms of throughput by ~12%. This is directly attributed to the long-tail (p95) of TTFT and E2E latency with PD due to lesser prefill pods thus becoming a bottleneck. We observe that p95 of ITL is well below the baseline.
-
-![Prefill/Decode disaggregation on 8× AMD MI325X (4P + 4D) vs monolithic baseline](/img/blogs/heterogeneous-3vendor/pd-sarvam.png)
-
 ## What's next
 
 **Cross-accelerator P/D disaggregation.** We plan to take heterogeneous inference to the next level by enabling prefill and decode to run on mixed accelerator types within the same cluster — for example, routing compute-heavy prefill to H100 nodes and memory-bandwidth-intensive decode to MI325X nodes (or vice versa), based on where each phase runs most efficiently. This requires the KV cache transfer library to work across different GPU backends on each end, an active area of development in the llm-d community.
-
-**P/D at larger model and cluster scale.** P/D's gains scale with model size, context length, and deployment size. We plan to repeat the experiment on 120B+ models with longer contexts and bigger pools, where the prefill-decode interference cost in the monolithic baseline grows — and where the P/D advantage should grow proportionally.
 
 ## Get involved with llm-d
 
