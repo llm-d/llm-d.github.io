@@ -198,3 +198,9 @@ abdullahgharaibeh:
   url: https://github.com/ahg-g
   image_url: https://avatars.githubusercontent.com/u/40361897?v=4
 
+llm-d-maintainers:
+  name: llm-d Maintainers
+  title: llm-d Project Maintainers
+  url: https://github.com/llm-d/llm-d/blob/main/MAINTAINERS.md
+  image_url: https://llm-d.ai/img/llm-d-icon.png
+
