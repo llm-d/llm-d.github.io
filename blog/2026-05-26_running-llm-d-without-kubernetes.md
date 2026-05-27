@@ -68,7 +68,7 @@ When this plugin is used, **the EPP has no dependency on any Kubernetes service 
 
 The core EPP features are unchanged. KV-cache-utilization scoring, prefix-cache affinity, and Prometheus metrics all work identically.
 
-Some features that are currently configured through Kubernetes CRDs, FlowControl (driven by `InferenceObjective`) and model-name rewriting (driven by `InferenceModelRewrite`), are not available when using the file-discovery plugin. A subset of these may move behind plugin interfaces in the future.
+FlowControl (per-flow queueing, fairness, and admission) also works in file-discovery mode. The priority bands, fairness policies, ordering policies, and usage-limit policy are configured statically in `EndpointPickerConfig.flowControl` (the same block the Kubernetes deployment uses). Without `InferenceObjective` CRDs to consult, per-request priority falls back to a default value; static bands still apply, and a per-request `x-flow-fairness-id` header still drives fairness within a band. Model-name rewriting (driven by `InferenceModelRewrite`) is the one CRD-driven feature that is not yet available outside Kubernetes; a subset of these may move behind plugin interfaces in the future.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/running-llm-d-without-kubernetes/llm-d-file-discovery-arch.png" alt="llm-d file-discovery architecture" style={{width: '60%', height: 'auto', border: '1px solid #888', padding: '4px'}} />
@@ -525,7 +525,8 @@ The file-discovery plugin gives you most of the llm-d routing stack outside of K
 
 - **KV-cache-utilization scoring**: routes requests away from instances with high cache pressure
 - **Prefix-cache affinity**: sends requests with shared prompt prefixes to the instance most likely to have them cached
-- **Saturation-based admission**: the saturation detector still gates request admission, so a saturated pool sheds load rather than overloading backends. The full FlowControl layer (per-flow queueing and fairness, driven by `InferenceObjective`) is not active in file-discovery mode; see the caveat earlier in this post.
+- **Saturation-based admission**: the saturation detector still gates request admission, so a saturated pool sheds load rather than overloading backends.
+- **FlowControl (per-flow queueing and fairness)**: works with priority bands, fairness, and ordering policies configured statically in `EndpointPickerConfig.flowControl`. Without `InferenceObjective` CRDs, per-request priority falls back to the configured default; the `x-flow-fairness-id` request header drives fairness within a band.
 - **Prometheus metrics**: EPP exports scheduling and pool health metrics on `--metrics-port`
 
 What is no longer handled by llm-d outside Kubernetes is endpoint lifecycle: there is no automatic deregistration when a vLLM process dies. This responsibility shifts to the surrounding framework or orchestrator (Ray, Slurm, a custom controller, etc.) which needs to detect failed workers and rewrite the endpoints file accordingly. For production deployments, this typically means adding a health-monitoring agent that drops unavailable workers from the file.
