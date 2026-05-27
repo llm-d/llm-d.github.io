@@ -200,7 +200,6 @@ abdullahgharaibeh:
 
 llm-d-maintainers:
   name: llm-d Maintainers
-  title: llm-d Project Maintainers
   url: https://github.com/llm-d/llm-d/blob/main/MAINTAINERS.md
-  image_url: https://llm-d.ai/img/llm-d-icon.png
+  image_url: /img/authors/llm-d-maintainers.png
 
