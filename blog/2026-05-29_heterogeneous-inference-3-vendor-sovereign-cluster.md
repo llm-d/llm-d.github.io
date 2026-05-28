@@ -110,13 +110,13 @@ We were unable to run sarvam-30b on Intel Gaudi3 due to software compatibility i
 
 ## What's next
 
-**Cross-accelerator P/D disaggregation.** We plan to take heterogeneous inference to the next level by enabling prefill and decode to run on mixed accelerator types within the same cluster — for example, routing compute-heavy prefill to H100 nodes and memory-bandwidth-intensive decode to MI325X nodes (or vice versa), based on where each phase runs most efficiently. This requires the KV cache transfer library to work across different GPU backends on each end, an active area of development in the llm-d community.
+**Cross-accelerator P/D disaggregation.** We plan to take heterogeneous inference to the next level by enabling prefill and decode to run on mixed accelerator types within the same cluster — for example, routing compute-heavy prefill to NVIDIA H100 nodes and memory-bandwidth-intensive decode to AMD MI325X nodes (or vice versa), based on where each phase runs most efficiently. This requires the KV cache transfer library (e.g. NIXL) to work across different GPU vendors on each end, an active area of development in the llm-d community.
 
-## Get involved with llm-d
+<!-- ## Get involved with llm-d
 
 The llm-d project thrives on community contributions, and there are many ways to get involved:
 
 * Explore the llm-d Community Quickstart Guide → [Start here](/community) to learn more about getting involved in the llm-d project.
 * Join our Slack → [Get your invite](/slack) and connect with maintainers and contributors.
 * Explore the code → Browse our [GitHub organization](https://github.com/llm-d) and find issues that interest you.
-* Attend meetings → All meetings are open. Add our [public calendar](/community#public-meeting-calendar) and join discussions.
+* Attend meetings → All meetings are open. Add our [public calendar](/community#public-meeting-calendar) and join discussions. -->
