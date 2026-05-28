@@ -109,12 +109,17 @@ else
       continue
     }
 
-    # Override site UX (theme components, navbar, version dropdown, config)
-    # with main's copies so improvements propagate to every version. Doc
-    # CONTENT in preview/docs/ comes from the worktree and is left untouched.
+    # Override site UX (theme components, navbar, version dropdown, config,
+    # package deps) with main's copies so improvements propagate to every
+    # version. Doc CONTENT in preview/docs/ comes from the worktree and is
+    # left untouched.
     echo "  Syncing UX from main into worktree..."
     cp "$PROJECT_DIR/preview/docusaurus.config.ts" \
        "${WORKTREE_PATH}/preview/docusaurus.config.ts"
+    cp "$PROJECT_DIR/preview/package.json" \
+       "${WORKTREE_PATH}/preview/package.json"
+    cp "$PROJECT_DIR/preview/package-lock.json" \
+       "${WORKTREE_PATH}/preview/package-lock.json"
     rm -rf "${WORKTREE_PATH}/preview/src"
     cp -r "$PROJECT_DIR/preview/src" "${WORKTREE_PATH}/preview/src"
 
@@ -155,6 +160,13 @@ else
     git worktree remove --force "$WORKTREE_PATH" 2>/dev/null || true
   done
 fi
+
+# Step 5: Merge /docs pages into the main site search index
+echo "Step 5: Merging docs into unified search index..."
+cd "$PROJECT_DIR"
+node scripts/merge-search-index.mjs
+echo "✓ Unified search index updated"
+echo ""
 
 echo ""
 echo "========================================="

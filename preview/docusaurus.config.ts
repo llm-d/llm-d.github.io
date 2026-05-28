@@ -61,7 +61,17 @@ const config: Config = {
 
   themes: ['@docusaurus/theme-mermaid'],
 
-  plugins: [require.resolve('./plugins/versions-plugin')],
+  plugins: [
+    require.resolve('./plugins/versions-plugin'),
+    // Build docs search output so the site-root merge step can compose a
+    // unified index from build/search-doc.json + build/docs/search-doc.json.
+    [
+      require.resolve('docusaurus-lunr-search'),
+      {
+        languages: ['en'],
+      },
+    ],
+  ],
 
   presets: [
     [
