@@ -21,7 +21,7 @@
     "test:transformations": "cd preview && npm run test:transformations"
   },
   "dependencies": {
-    "@babel/core": "^7.29.0",
+    "@babel/core": "^7.29.7",
     "@babel/preset-env": "^7.29.5",
     "@docusaurus/core": "3.10.1",
     "@docusaurus/preset-classic": "3.10.1",
