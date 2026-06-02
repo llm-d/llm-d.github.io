@@ -224,11 +224,13 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
-          label: 'Monitoring',
+          label: 'Observability',
           collapsed: false,
           items: [
-            'resources/monitoring/metrics',
-            'resources/monitoring/tracing',
+            'resources/observability/setup',
+            'resources/observability/metrics',
+            'resources/observability/tracing',
+            'resources/observability/promql',
           ],
         },
         'resources/rdma/rdma-configuration',

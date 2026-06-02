@@ -129,6 +129,23 @@ const config: Config = {
               return 'https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/autoscaling/hpa-keda.md';
             }
 
+            // llm-d#1542: monitoring/ renamed to observability/ on main. Release doc
+            // branches may still build legacy resources/monitoring/* paths.
+            if (cleanPath.startsWith('resources/monitoring/')) {
+              const observabilityFile = cleanPath.replace(
+                /^resources\/monitoring\//,
+                '',
+              );
+              return `https://github.com/llm-d/llm-d/blob/main/docs/resources/observability/${observabilityFile}`;
+            }
+            if (cleanPath.startsWith('resources/observability/')) {
+              const observabilityFile = cleanPath.replace(
+                /^resources\/observability\//,
+                '',
+              );
+              return `https://github.com/llm-d/llm-d/blob/main/docs/resources/observability/${observabilityFile}`;
+            }
+
             return `https://github.com/llm-d/llm-d/blob/main/docs/${sourcePath}`;
           },
           showLastUpdateTime: true,

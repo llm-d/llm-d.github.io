@@ -63,7 +63,7 @@ mkdir -p \
     "$DOCS_DIR/architecture/advanced/kv-management" \
     "$DOCS_DIR/guides" \
     "$DOCS_DIR/resources/gateway" \
-    "$DOCS_DIR/resources/monitoring" \
+    "$DOCS_DIR/resources/observability" \
     "$DOCS_DIR/resources/rdma" \
     "$DOCS_DIR/resources/infra-providers" \
     "$DOCS_DIR/api-reference" \
@@ -164,12 +164,20 @@ if [[ ! -d "$SRC/guides/predicted-latency-based-scheduling" ]]; then
     cp_doc "$WIP/well-lit-paths/predicted-latency.md" "$DOCS_DIR/guides/predicted-latency.md"
 fi
 
-# === Resources ===
-cp_doc "$WIP/resources/monitoring/metrics.md"               "$DOCS_DIR/resources/monitoring/metrics.md"
-cp_doc "$WIP/resources/monitoring/tracing.md"               "$DOCS_DIR/resources/monitoring/tracing.md"
-
-cp_doc "$WIP/guides/monitoring/metrics.md"                  "$DOCS_DIR/resources/monitoring/metrics.md"
-cp_doc "$WIP/guides/monitoring/tracing.md"                  "$DOCS_DIR/resources/monitoring/tracing.md"
+# === Resources / Observability ===
+# llm-d/llm-d#1542: docs/resources/observability/ (setup, metrics, tracing, promql).
+# Fall back to legacy paths for release branches cut before that change.
+if [[ -f "$WIP/resources/observability/setup.md" ]]; then
+    cp_doc "$WIP/resources/observability/setup.md"            "$DOCS_DIR/resources/observability/setup.md"
+    cp_doc "$WIP/resources/observability/metrics.md"          "$DOCS_DIR/resources/observability/metrics.md"
+    cp_doc "$WIP/resources/observability/tracing.md"          "$DOCS_DIR/resources/observability/tracing.md"
+    cp_doc "$WIP/resources/observability/promql.md"           "$DOCS_DIR/resources/observability/promql.md"
+else
+    cp_doc "$WIP/resources/monitoring/metrics.md"             "$DOCS_DIR/resources/observability/metrics.md"
+    cp_doc "$WIP/resources/monitoring/tracing.md"             "$DOCS_DIR/resources/observability/tracing.md"
+    cp_doc "$WIP/guides/monitoring/metrics.md"                "$DOCS_DIR/resources/observability/metrics.md"
+    cp_doc "$WIP/guides/monitoring/tracing.md"                "$DOCS_DIR/resources/observability/tracing.md"
+fi
 
 # PR llm-d/llm-d#1259 moved gateway docs to guides/prereq/gateways/
 cp_doc "$SRC/guides/prereq/gateways/README.md"              "$DOCS_DIR/resources/gateway/index.md"
@@ -396,9 +404,19 @@ find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](../../helpers/benchmark\.md)|\](https://github.com/llm-d/llm-d/tree/main/helpers/benchmark.md)|g' \
         -e 's|\](../../../helpers/benchmark\.md)|\](https://github.com/llm-d/llm-d/tree/main/helpers/benchmark.md)|g' \
         -e 's|\](/helpers/benchmark\.md)|\](https://github.com/llm-d/llm-d/tree/main/helpers/benchmark.md)|g' \
-        -e 's|\](../../docs/monitoring/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/docs/monitoring)|g' \
-        -e 's|\](../../../docs/monitoring/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/docs/monitoring)|g' \
-        -e 's|\](/docs/monitoring/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/docs/monitoring)|g' \
+        -e 's|\](../../docs/resources/observability/setup\.md)|\](/resources/observability/setup)|g' \
+        -e 's|\](../../../docs/resources/observability/setup\.md)|\](/resources/observability/setup)|g' \
+        -e 's|\](../../docs/resources/observability/metrics\.md)|\](/resources/observability/metrics)|g' \
+        -e 's|\](../../../docs/resources/observability/metrics\.md)|\](/resources/observability/metrics)|g' \
+        -e 's|\](../../docs/resources/observability/metrics\.md#\([^)]*\))|\](/resources/observability/metrics#\1)|g' \
+        -e 's|\](../../../docs/resources/observability/metrics\.md#\([^)]*\))|\](/resources/observability/metrics#\1)|g' \
+        -e 's|\](../../docs/resources/observability/tracing\.md)|\](/resources/observability/tracing)|g' \
+        -e 's|\](../../../docs/resources/observability/tracing\.md)|\](/resources/observability/tracing)|g' \
+        -e 's|\](../../docs/monitoring/README\.md)|\](/resources/observability/setup)|g' \
+        -e 's|\](../../../docs/monitoring/README\.md)|\](/resources/observability/setup)|g' \
+        -e 's|\](/docs/monitoring/README\.md)|\](/resources/observability/setup)|g' \
+        -e 's|\](../../docs/monitoring/README\.md#\([^)]*\))|\](/resources/observability/metrics#\1)|g' \
+        -e 's|\](../../../docs/monitoring/README\.md#\([^)]*\))|\](/resources/observability/metrics#\1)|g' \
         -e 's|\](../../../../../prereq/infrastructure/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/multi-node-serving)|g' \
         -e 's|\](/docs/prereq/infrastructure/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/multi-node-serving)|g' \
         "$file"
@@ -490,14 +508,23 @@ if [[ -f "$DOCS_DIR/resources/rdma/rdma-configuration.md" ]]; then
         "$DOCS_DIR/resources/rdma/rdma-configuration.md"
 fi
 
-# === Fix monitoring metrics.md links ===
-# Link to github for internal repo paths not available on this site
-if [[ -f "$DOCS_DIR/resources/monitoring/metrics.md" ]]; then
-    sed_inplace \
-        -e 's|\](../../../guides/recipes/modelserver/components/monitoring/)|\](https://github.com/llm-d/llm-d/tree/main/guides/recipes/modelserver/components/monitoring)|g' \
-        -e 's|\](../../getting-started/quickstart\.md)|\](/getting-started/quickstart)|g' \
-        "$DOCS_DIR/resources/monitoring/metrics.md"
-fi
+# === Fix observability doc links ===
+# Link to github for repo-only paths; rewrite in-site cross-links under /resources/observability/
+for obs_file in setup.md metrics.md tracing.md promql.md; do
+    if [[ -f "$DOCS_DIR/resources/observability/$obs_file" ]]; then
+        sed_inplace \
+            -e 's|\](./setup\.md)|\](/resources/observability/setup)|g' \
+            -e 's|\](./metrics\.md)|\](/resources/observability/metrics)|g' \
+            -e 's|\](./tracing\.md)|\](/resources/observability/tracing)|g' \
+            -e 's|\](./promql\.md)|\](/resources/observability/promql)|g' \
+            -e 's|\](../../getting-started/quickstart\.md)|\](/getting-started/quickstart)|g' \
+            -e 's|\](../../../guides/recipes/modelserver/components/monitoring/)|\](https://github.com/llm-d/llm-d/tree/main/guides/recipes/modelserver/components/monitoring)|g' \
+            -e 's|\`](../../../guides/recipes/modelserver/components/monitoring/)|\`](https://github.com/llm-d/llm-d/tree/main/guides/recipes/modelserver/components/monitoring)|g' \
+            -e 's|\](../../../guides/recipes/observability/)|\](https://github.com/llm-d/llm-d/tree/main/guides/recipes/observability)|g' \
+            -e 's|\](../../../guides/recipes/observability/\([^)]*\))|\](https://github.com/llm-d/llm-d/blob/main/guides/recipes/observability/\1)|g' \
+            "$DOCS_DIR/resources/observability/$obs_file"
+    fi
+done
 
 # === Fix API reference links ===
 echo "    Fixing API reference links..."
@@ -594,8 +621,10 @@ generate_stub "$DOCS_DIR/architecture/advanced/kv-management/kv-indexer.md" "KV-
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/kv-offloader.md" "KV Offloader" "Tiered KV cache storage hierarchy"
 generate_stub "$DOCS_DIR/api-reference/index.md" "API Reference" "API specification and reference documentation"
 generate_stub "$DOCS_DIR/api-reference/glossary.md" "Glossary" "Terminology and definitions for llm-d"
-generate_stub "$DOCS_DIR/resources/monitoring/metrics.md" "Metrics" "Prometheus metrics collection and configuration"
-generate_stub "$DOCS_DIR/resources/monitoring/tracing.md" "Distributed Tracing" "Setting up distributed tracing with OpenTelemetry"
+generate_stub "$DOCS_DIR/resources/observability/setup.md" "Observability Setup" "Prometheus, Grafana, and tracing quickstart for llm-d"
+generate_stub "$DOCS_DIR/resources/observability/metrics.md" "Metrics" "Prometheus metrics collection and configuration"
+generate_stub "$DOCS_DIR/resources/observability/tracing.md" "Distributed Tracing" "Setting up distributed tracing with OpenTelemetry"
+generate_stub "$DOCS_DIR/resources/observability/promql.md" "PromQL Query Reference" "Ready-to-use PromQL queries for llm-d deployments"
 generate_stub "$DOCS_DIR/resources/rdma/rdma-configuration.md" "RDMA Configuration" "RDMA network configuration"
 
 # Infrastructure Providers stubs
