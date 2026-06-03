@@ -212,6 +212,7 @@ set_doc_slug "$DOCS_DIR/guides/batch-gateway.md" "/well-lit-paths/batch-gateway"
 # llm-d/llm-d#1542: docs/resources/observability/ (setup, metrics, tracing, promql).
 # Fall back to legacy paths for release branches cut before that change.
 if [[ -f "$WIP/resources/observability/setup.md" ]]; then
+    cp_doc "$WIP/resources/observability/README.md"           "$DOCS_DIR/resources/observability/index.md"
     cp_doc "$WIP/resources/observability/setup.md"            "$DOCS_DIR/resources/observability/setup.md"
     cp_doc "$WIP/resources/observability/metrics.md"          "$DOCS_DIR/resources/observability/metrics.md"
     cp_doc "$WIP/resources/observability/tracing.md"          "$DOCS_DIR/resources/observability/tracing.md"
@@ -423,7 +424,8 @@ find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
             "$file"
     fi
 
-    if [[ "$guide_subdir" != "." ]]; then
+    if [[ "$guide_subdir" != "." ]] && \
+       find "$STATIC_DIR/guides/$guide_subdir/benchmark-results" -maxdepth 1 -name '*.png' -print -quit 2>/dev/null | grep -q .; then
         sed_inplace \
             -e "s|src=\"\./benchmark-results/\([^\"]*\)\"|src=\"/img/docs/guides/$guide_subdir/benchmark-results/\1\"|g" \
             -e "s|src=\"benchmark-results/\([^\"]*\)\"|src=\"/img/docs/guides/$guide_subdir/benchmark-results/\1\"|g" \
@@ -455,6 +457,8 @@ find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](/helpers/benchmark\.md)|\](https://github.com/llm-d/llm-d/tree/main/helpers/benchmark.md)|g' \
         -e 's|\](../../docs/resources/observability/setup\.md)|\](/resources/observability/setup)|g' \
         -e 's|\](../../../docs/resources/observability/setup\.md)|\](/resources/observability/setup)|g' \
+        -e 's|\](../../docs/resources/observability/README\.md)|\](/resources/observability)|g' \
+        -e 's|\](../../../docs/resources/observability/README\.md)|\](/resources/observability)|g' \
         -e 's|\](../../docs/resources/observability/metrics\.md)|\](/resources/observability/metrics)|g' \
         -e 's|\](../../../docs/resources/observability/metrics\.md)|\](/resources/observability/metrics)|g' \
         -e 's|\](../../docs/resources/observability/metrics\.md#\([^)]*\))|\](/resources/observability/metrics#\1)|g' \
@@ -559,7 +563,7 @@ fi
 
 # === Fix observability doc links ===
 # Link to github for repo-only paths; rewrite in-site cross-links under /resources/observability/
-for obs_file in setup.md metrics.md tracing.md promql.md; do
+for obs_file in index.md setup.md metrics.md tracing.md promql.md; do
     if [[ -f "$DOCS_DIR/resources/observability/$obs_file" ]]; then
         sed_inplace \
             -e 's|\](./setup\.md)|\](/resources/observability/setup)|g' \
@@ -660,6 +664,7 @@ generate_stub() {
     local desc="$3"
 
     if [[ ! -s "$filepath" ]]; then
+        mkdir -p "$(dirname "$filepath")"
         cat > "$filepath" << STUBEOF
 ---
 title: "$title"
@@ -692,6 +697,7 @@ generate_stub "$DOCS_DIR/architecture/advanced/kv-management/kv-indexer.md" "KV-
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/kv-offloader.md" "KV Offloader" "Tiered KV cache storage hierarchy"
 generate_stub "$DOCS_DIR/api-reference/index.md" "API Reference" "API specification and reference documentation"
 generate_stub "$DOCS_DIR/api-reference/glossary.md" "Glossary" "Terminology and definitions for llm-d"
+generate_stub "$DOCS_DIR/resources/observability/index.md" "Observability" "Metrics, dashboards, and distributed tracing for llm-d"
 generate_stub "$DOCS_DIR/resources/observability/setup.md" "Observability Setup" "Prometheus, Grafana, and tracing quickstart for llm-d"
 generate_stub "$DOCS_DIR/resources/observability/metrics.md" "Metrics" "Prometheus metrics collection and configuration"
 generate_stub "$DOCS_DIR/resources/observability/tracing.md" "Distributed Tracing" "Setting up distributed tracing with OpenTelemetry"

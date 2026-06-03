@@ -179,7 +179,12 @@ const config: Config = {
                 /^resources\/observability\//,
                 '',
               );
-              return `https://github.com/llm-d/llm-d/blob/main/docs/resources/observability/${observabilityFile}`;
+              // sync-docs.sh copies README.md → index.md for the landing page
+              const sourceFile =
+                observabilityFile === 'index.md'
+                  ? 'README.md'
+                  : observabilityFile;
+              return `https://github.com/llm-d/llm-d/blob/main/docs/resources/observability/${sourceFile}`;
             }
 
             return `https://github.com/llm-d/llm-d/blob/main/docs/${sourcePath}`;

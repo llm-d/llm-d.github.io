@@ -155,6 +155,7 @@ const sidebars: SidebarsConfig = {
           type: 'category',
           label: 'Observability',
           collapsed: false,
+          link: {type: 'doc', id: 'resources/observability/index'},
           items: [
             'resources/observability/setup',
             'resources/observability/metrics',
