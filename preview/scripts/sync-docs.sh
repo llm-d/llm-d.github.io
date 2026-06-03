@@ -220,12 +220,12 @@ find "$DOCS_DIR/resources/infra-providers" -name "*.md" -print0 | while IFS= rea
         -e 's|\.\./\.\./\.\./guides/optimized-baseline/README\.md|/guides/optimized-baseline|g' \
         -e 's|\.\./\.\./\.\./guides/precise-prefix-cache-aware/README\.md|/guides/precise-prefix-cache-aware|g' \
         -e 's|\.\./\.\./\.\./guides/pd-disaggregation/README\.md|/guides/pd-disaggregation|g' \
-        -e 's|\.\./\.\./\.\./guides/wide-ep-lws/README\.md|https://github.com/llm-d/llm-d/tree/main/guides/wide-ep-lws|g' \
-        -e 's|\.\./\.\./\.\./guides/tiered-prefix-cache/README\.md|https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache|g' \
+        -e 's|\.\./\.\./\.\./guides/wide-ep-lws/README\.md|https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/wide-ep-lws|g' \
+        -e 's|\.\./\.\./\.\./guides/tiered-prefix-cache/README\.md|https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/tiered-prefix-cache|g' \
         -e 's|\.\./\.\./\.\./guides/index\.md|/guides|g' \
         -e 's|\.\./\.\./\.\./guides/)|/guides)|g' \
         -e 's|\.\./\.\./\.\./guides)|/guides)|g' \
-        -e 's|\.\./\.\./\.\./helpers/client-setup/README\.md|https://github.com/llm-d/llm-d/tree/main/helpers/client-setup|g' \
+        -e 's|\.\./\.\./\.\./helpers/client-setup/README\.md|https://github.com/llm-d/llm-d/tree/${BRANCH}/helpers/client-setup|g' \
         "$file"
 done
 
@@ -255,21 +255,21 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](/architecture/core/epp)|\](/architecture/core/router/epp)|g' \
         -e 's|\](/well-lit-paths/\([^)]*\)\.md)|\](/guides/\1)|g' \
         -e 's|\](well-lit-paths/\([^)]*\))|\](/guides/\1)|g' \
-        -e 's|\](.*\/guides/tiered-prefix-cache)|\](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache)|g' \
-        -e 's|\](.*\/guides/batch-gateway)|\](https://github.com/llm-d/llm-d/tree/main/guides/batch-gateway)|g' \
-        -e 's|\](.*\/guides/asynchronous-processing)|\](https://github.com/llm-d/llm-d/tree/main/guides/asynchronous-processing)|g' \
-        -e 's|\](.*\/guides/optimized-baseline)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
-        -e 's|\](.*\/guides/precise-prefix-cache-aware)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware)|g' \
-        -e 's|\](.*\/guides/pd-disaggregation)|\](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation)|g' \
-        -e 's|\](.*\/guides/wide-ep-lws)|\](https://github.com/llm-d/llm-d/tree/main/guides/wide-ep-lws)|g' \
-        -e 's|\](.*\/guides/predicted-latency-based-scheduling)|\](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-based-scheduling)|g' \
-        -e 's|\](.*\/guides/workload-autoscaling)|\](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling)|g' \
-        -e 's|\](.*\/guides/flow-control)|\](https://github.com/llm-d/llm-d/tree/main/guides/flow-control)|g' \
-        -e 's|\](/guides/tiered-prefix-cache)|\](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache)|g' \
-        -e 's|\](/guides/batch-gateway)|\](https://github.com/llm-d/llm-d/tree/main/guides/batch-gateway)|g' \
-        -e 's|\](/guides/asynchronous-processing)|\](https://github.com/llm-d/llm-d/tree/main/guides/asynchronous-processing)|g' \
-        -e 's|\](/guides/optimized-baseline)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
-        -e 's|\](/guides/precise-prefix-cache-aware)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware)|g' \
+        -e 's|\](.*\/guides/tiered-prefix-cache)|\](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/tiered-prefix-cache)|g' \
+        -e 's|\](.*\/guides/batch-gateway)|\](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/batch-gateway)|g' \
+        -e 's|\](.*\/guides/asynchronous-processing)|\](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/asynchronous-processing)|g' \
+        -e 's|\](.*\/guides/optimized-baseline)|\](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/optimized-baseline)|g' \
+        -e 's|\](.*\/guides/precise-prefix-cache-aware)|\](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/precise-prefix-cache-aware)|g' \
+        -e 's|\](.*\/guides/pd-disaggregation)|\](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/pd-disaggregation)|g' \
+        -e 's|\](.*\/guides/wide-ep-lws)|\](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/wide-ep-lws)|g' \
+        -e 's|\](.*\/guides/predicted-latency-based-scheduling)|\](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/predicted-latency-based-scheduling)|g' \
+        -e 's|\](.*\/guides/workload-autoscaling)|\](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/workload-autoscaling)|g' \
+        -e 's|\](.*\/guides/flow-control)|\](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/flow-control)|g' \
+        -e 's|\](/guides/tiered-prefix-cache)|\](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/tiered-prefix-cache)|g' \
+        -e 's|\](/guides/batch-gateway)|\](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/batch-gateway)|g' \
+        -e 's|\](/guides/asynchronous-processing)|\](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/asynchronous-processing)|g' \
+        -e 's|\](/guides/optimized-baseline)|\](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/optimized-baseline)|g' \
+        -e 's|\](/guides/precise-prefix-cache-aware)|\](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/precise-prefix-cache-aware)|g' \
         -e 's|\](.*\/docs/infra-providers)|\](/resources/infra-providers)|g' \
         -e 's|\](.*\/infra-providers)|\](/resources/infra-providers)|g' \
         -e 's|\](/infra-providers)|\](/resources/infra-providers)|g' \
@@ -304,7 +304,7 @@ fi
 # Link to github for internal repo paths not available on this site
 if [[ -f "$DOCS_DIR/resources/monitoring/metrics.md" ]]; then
     sed_inplace \
-        -e 's|\](../../../guides/recipes/modelserver/components/monitoring/)|\](https://github.com/llm-d/llm-d/tree/main/guides/recipes/modelserver/components/monitoring)|g' \
+        -e 's|\](../../../guides/recipes/modelserver/components/monitoring/)|\](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/recipes/modelserver/components/monitoring)|g' \
         -e 's|\](../../getting-started/quickstart\.md)|\](/getting-started/quickstart)|g' \
         "$DOCS_DIR/resources/monitoring/metrics.md"
 fi
