@@ -8,7 +8,7 @@ The llm-d stack provides two primary paths for workload autoscaling, both levera
 
 ## Deploy
 
-See the [workload autoscaling guide](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/workload-autoscaling) for manifests and step-by-step deployment instructions for both paths.
+See the [workload autoscaling guide](https://github.com/llm-d/llm-d/tree/release-0.7/guides/workload-autoscaling) for manifests and step-by-step deployment instructions for both paths.
 
 ## Strategies
 

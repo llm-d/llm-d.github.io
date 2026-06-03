@@ -153,7 +153,7 @@ llm-d's deployment guides formally cover LMCache today. The integration pattern 
 :::
 
 
-For existing deployment recipes, see the [Tiered Prefix Cache Guide](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/tiered-prefix-cache).
+For existing deployment recipes, see the [Tiered Prefix Cache Guide](https://github.com/llm-d/llm-d/tree/release-0.7/guides/tiered-prefix-cache).
 
 ## Configuration
 
@@ -234,7 +234,7 @@ Any POSIX filesystem is a candidate; the best choice for a given deployment depe
 
 ## Further Reading
 
-- [Tiered Prefix Cache Guide](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/tiered-prefix-cache) — Step-by-step deployment guides
+- [Tiered Prefix Cache Guide](https://github.com/llm-d/llm-d/tree/release-0.7/guides/tiered-prefix-cache) — Step-by-step deployment guides
 - [llm-d KV-Disaggregation Roadmaps](https://github.com/llm-d/llm-d-kv-cache/issues?q=is%3Aissue%20state%3Aopen%20label%3Aroadmap) — Planned features and improvements across offloading and KV-cache management
 - [llm-d FS Backend](https://github.com/llm-d/llm-d-kv-cache/tree/main/kv_connectors/llmd_fs_backend) — Implementation details, configuration, and metrics
 - [vLLM KV Offloading Connector](https://vllm.ai/blog/kv-offloading-connector) — Deep dive into vLLM's native offloading

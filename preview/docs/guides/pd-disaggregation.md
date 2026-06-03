@@ -18,7 +18,7 @@ NIXL supports TCP transfer, but high-bandwidth networking
 
 ## Deploy
 
-See the [P/D Disaggregation guide](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/pd-disaggregation) for manifests and step-by-step deployment.
+See the [P/D Disaggregation guide](https://github.com/llm-d/llm-d/tree/release-0.7/guides/pd-disaggregation) for manifests and step-by-step deployment.
 
 ## Architecture
 

@@ -16,7 +16,7 @@ This guide demonstrates one approach to prefix- and load-aware routing. The llm-
 
 ## Deploy
 
-See the [optimized baseline guide](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/optimized-baseline) for manifests and step-by-step deployment.
+See the [optimized baseline guide](https://github.com/llm-d/llm-d/tree/release-0.7/guides/optimized-baseline) for manifests and step-by-step deployment.
 
 ## Architecture
 

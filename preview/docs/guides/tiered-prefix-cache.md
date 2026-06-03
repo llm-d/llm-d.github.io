@@ -55,7 +55,7 @@ CPU KV Cache offloading is low overhead and introduces ~no additional complexity
 
 ## Deploy
 
-See the [KV Cache Management guide](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/tiered-prefix-cache) for manifests and step-by-step deployment.
+See the [KV Cache Management guide](https://github.com/llm-d/llm-d/tree/release-0.7/guides/tiered-prefix-cache) for manifests and step-by-step deployment.
 
 ## Architecture
 
