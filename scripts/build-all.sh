@@ -68,6 +68,13 @@ echo "Step 3: Syncing and building dev docs from llm-d/llm-d @ $DEV_DOCS_BRANCH.
 echo "        Output: build/$DEV_OUTPUT_SUBDIR/ (baseUrl: $DEV_BASE_URL)"
 cd "$PROJECT_DIR/preview"
 bash scripts/sync-docs.sh "$DEV_DOCS_BRANCH"
+
+# === INJECT PRISM DASHBOARD ===
+echo "Injecting Prism dashboard into dev optimized-baseline.md..."
+echo -e '\n## Results Dashboard\n\nThe graphs below are powered by [Prism](https://prism.llm-d.ai/?view=intelligent-routing), our visualization dashboard for analyzing inference benchmark results. This specific view shows the performance of intelligent routing.\n\n<div style={{width: "100%", height: "600px", overflow: "hidden", position: "relative"}}><iframe src="https://prism.llm-d.ai/?view=intelligent-routing" style={{width: "150%", height: "150%", transform: "scale(0.67)", transformOrigin: "0 0", border: 0, position: "absolute", top: 0, left: 0}} allowFullScreen title="Prism Intelligent Routing Dashboard"></iframe></div>' >> "$PROJECT_DIR/preview/docs/guides/optimized-baseline.md"
+echo "✓ Dashboard injected"
+echo ""
+
 npm install
 DOCS_BASE_URL="$DEV_BASE_URL" npm run build
 cd "$PROJECT_DIR"
@@ -137,6 +144,10 @@ else
         -e 's|github.com/llm-d/llm-d/tree/main/guides/predicted-latency-based-scheduling|github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing|g' \
         "$file"
     done < <(find "${WORKTREE_PATH}/preview/docs" -name "*.md" -print0)
+
+    # Inject Prism dashboard into the worktree docs as well
+    echo "  Injecting Prism dashboard into release ${VERSION} optimized-baseline.md..."
+    echo -e '\n## Results Dashboard\n\nThe graphs below are powered by [Prism](https://prism.llm-d.ai/?view=intelligent-routing), our visualization dashboard for analyzing inference benchmark results. This specific view shows the performance of intelligent routing.\n\n<div style={{width: "100%", height: "600px", overflow: "hidden", position: "relative"}}><iframe src="https://prism.llm-d.ai/?view=intelligent-routing" style={{width: "150%", height: "150%", transform: "scale(0.67)", transformOrigin: "0 0", border: 0, position: "absolute", top: 0, left: 0}} allowFullScreen title="Prism Intelligent Routing Dashboard"></iframe></div>' >> "${WORKTREE_PATH}/preview/docs/guides/optimized-baseline.md"
 
     cd "${WORKTREE_PATH}/preview"
     npm install --silent
