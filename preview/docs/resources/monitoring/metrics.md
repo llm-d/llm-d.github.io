@@ -111,7 +111,7 @@ components:
   # - ../../../recipes/modelserver/components/monitoring-pd  # add for prefill/decode disaggregation
 ```
 
-The monitoring component creates PodMonitors that scrape vLLM metrics. See [`guides/recipes/modelserver/components/monitoring/`](https://github.com/llm-d/llm-d/tree/main/guides/recipes/modelserver/components/monitoring) for details.
+The monitoring component creates PodMonitors that scrape vLLM metrics. See [`guides/recipes/modelserver/components/monitoring/`](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/recipes/modelserver/components/monitoring) for details.
 
 ### Helm Deployments
 

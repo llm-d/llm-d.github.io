@@ -6,7 +6,7 @@ This guide provides instructions for configuring Azure Kubernetes Service (AKS) 
 
 Before proceeding with this guide, ensure you have completed the following requirements:
 
-- [client setup prerequisites](https://github.com/llm-d/llm-d/tree/main/helpers/client-setup)
+- [client setup prerequisites](https://github.com/llm-d/llm-d/tree/${BRANCH}/helpers/client-setup)
 - The latest [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) with aks-preview extension installed (`az extension add --upgrade --name aks-preview`)
 - `ClusterAdmin` RBAC role assigned to your user account for the target AKS cluster
 - An AKS cluster. If you need to create one, refer to the [AKS quickstart guide](https://learn.microsoft.com/en-us/azure/aks/learn/quick-kubernetes-deploy-cli)
@@ -18,15 +18,15 @@ The following table outlines the recommended Azure GPU VM sizes optimized for hi
 
 | GPU Model | VM Size                                                                                                                                      | GPU Count | Memory per GPU | Total GPU Memory | RDMA over InfiniBand Support | Supported Well-Lit Paths                                                                                                                                                                                                                                                                                                                                                                    |
 | --------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------- | -------------- | ---------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A100      | [Standard_NC24ads_A100_v4](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware)                                                                                                                                                                                                            |
-| A100      | [Standard_ND96asr_v4](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware)                                                                                                                                                                                                            |
-| A100      | [Standard_ND96amsr_A100_v4](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware)                                                                                                                                                                                                            |
-| H100      | [Standard_ND96isr_H100_v5](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation) (2 nodes required with vLLM flag `--max-model-len=4500`)                                                                              |
-| H200      | [Standard_ND96isr_H200_v5](https://github.com/llm-d/llm-d/tree/main/guides/wide-ep-lws) (4 nodes required)|
+| A100      | [Standard_NC24ads_A100_v4](https://github.com/llm-d/llm-d/tree/$(BRANCH)/guides/precise-prefix-cache-aware)                                                                                                                                                                                                            |
+| A100      | [Standard_ND96asr_v4](https://github.com/llm-d/llm-d/tree/$(BRANCH)/guides/precise-prefix-cache-aware)                                                                                                                                                                                                            |
+| A100      | [Standard_ND96amsr_A100_v4](https://github.com/llm-d/llm-d/tree/$(BRANCH)/guides/precise-prefix-cache-aware)                                                                                                                                                                                                            |
+| H100      | [Standard_ND96isr_H100_v5](https://github.com/llm-d/llm-d/tree/$(BRANCH)/guides/pd-disaggregation) (2 nodes required with vLLM flag `--max-model-len=4500`)                                                                              |
+| H200      | [Standard_ND96isr_H200_v5](https://github.com/llm-d/llm-d/tree/$(BRANCH)/guides/wide-ep-lws) (4 nodes required)|
 
 ## Cluster Configuration
 
-GPUDirect RDMA is essential for achieving optimal performance with advanced deployment patterns such as [P/D Disaggregation](https://github.com/llm-d/llm-d/tree/main/guides/wide-ep-lws). To enable GPUDirect RDMA, you must create and configure a GPU node pool with the appropriate VM size and install the required drivers.
+GPUDirect RDMA is essential for achieving optimal performance with advanced deployment patterns such as [P/D Disaggregation](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/wide-ep-lws). To enable GPUDirect RDMA, you must create and configure a GPU node pool with the appropriate VM size and install the required drivers.
 
 ### Creating the GPU Node Pool
 

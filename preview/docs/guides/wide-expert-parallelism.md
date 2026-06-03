@@ -29,7 +29,7 @@ Dispatch/combine uses the **DeepEP** backend over NVSHMEM with GPU-initiated RDM
 
 ## Deploy
 
-See the [Wide Expert Parallelism guide](https://github.com/llm-d/llm-d/tree/main/guides/wide-ep-lws) for manifests and step-by-step deployment.
+See the [Wide Expert Parallelism guide](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/wide-ep-lws) for manifests and step-by-step deployment.
 
 ## Architecture
 

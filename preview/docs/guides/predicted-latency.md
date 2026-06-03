@@ -14,7 +14,7 @@ Predicted latency is not a fit when the pool is **heterogeneous** — mixed GPU 
 
 ## Deploy
 
-See the [Predicted Latency guide](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-based-scheduling) for manifests and step-by-step deployment.
+See the [Predicted Latency guide](https://github.com/llm-d/llm-d/tree/${BRANCH}/guides/predicted-latency-based-scheduling) for manifests and step-by-step deployment.
 
 ## Architecture
 
