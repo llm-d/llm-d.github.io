@@ -45,7 +45,7 @@
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.10.1",
     "@docusaurus/types": "3.10.1",
-    "baseline-browser-mapping": "^2.10.32",
+    "baseline-browser-mapping": "^2.10.33",
     "jest": "^29.7.0"
   },
   "browserslist": {
