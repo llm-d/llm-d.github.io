@@ -38,7 +38,7 @@
     "jsdom": "^22.1.0",
     "lunr": "^2.3.9",
     "prism-react-renderer": "^2.3.0",
-    "react": "^19.2.5",
+    "react": "^19.2.7",
     "react-dom": "^19.2.6",
     "react-player": "^2.16.1"
   },
