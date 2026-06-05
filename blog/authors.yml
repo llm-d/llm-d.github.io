@@ -201,6 +201,7 @@ abdullahgharaibeh:
 merttoslali:
   name: Mert Toslali
   title: Research Scientist, IBM
+  email: toslali@ibm.com
   url: https://github.com/mtoslalibu
   image_url: https://avatars.githubusercontent.com/u/mtoslalibu?v=4
   socials:
@@ -209,38 +210,47 @@ merttoslali:
 dipanwitaguhathakurta:
   name: Dipanwita Guhathakurta
   title: Research Scientist, IBM
+  email: dipanwita.guhathakurta3@ibm.com
 
 srinivasanparthasarathy:
   name: Srinivasan Parthasarathy
   title: Research Scientist, IBM
+  email: spartha@us.ibm.com
 
 jingchen:
   name: Jing Chen
   title: Research Scientist, IBM
+  email: Jing.Chen2@ibm.com
 
 nickmasluk:
   name: Nick Masluk
   title: Research Scientist, IBM
+  email: namasluk@us.ibm.com
 
 vishakharamani:
   name: Vishakha Ramani
   title: Research Scientist, IBM
+  email: vishakharamani@ibm.com
 
 assertantawi:
   name: Asser Tantawi
   title: Research Scientist, IBM
+  email: tantawi@us.ibm.com
 
 michaelkalantar:
   name: Michael Kalantar
   title: Research Scientist, IBM
+  email: kalantar@us.ibm.com
 
 fabiooliveira:
   name: Fabio Oliveira
   title: Research Scientist, IBM
+  email: fabolive@us.ibm.com
 
 carloscosta:
   name: Carlos Costa
   title: Distinguished Engineer, IBM
+  email: chcost@us.ibm.com
   image_url: https://avatars.githubusercontent.com/u/26551701?v=4
   socials:
     github: https://github.com/chcost
