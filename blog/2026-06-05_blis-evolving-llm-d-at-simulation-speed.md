@@ -23,7 +23,7 @@ tags: [blog]
 
 llm-d is built for distributed LLM serving: routing, flow control, placement, auto-scaling, disaggregation decisions, engine configuration, all happening at once. That makes it powerful, but also hard to evolve. A small policy change in admission, routing, batching, or autoscaling can change latency, throughput, and inference cost in unexpected ways.
 
-The only honest way to know is to test. But testing every idea on real GPU clusters is slow and expensive.
+Validating any change requires testing. But testing on real GPU clusters is slow and expensive.
 
 BLIS solves this problem.
 
@@ -56,7 +56,7 @@ BLIS is not meant to replace real clusters. It offers an opportunity for fast an
 
 ## What BLIS unlocks
 
-BLIS has two jobs. It helps llm-d evolve faster, and it helps users plan deployments before spending GPU time. Let's start with the bigger one.
+BLIS has two jobs: helping llm-d evolve faster, and helping users plan deployments before spending GPU time.
 
 ### AI-native evolution of llm-d
 
@@ -70,7 +70,7 @@ In AI-native evolution, agents try many policies (or algorithms) in BLIS. The be
 
 #### From latency cliffs to graceful admission control
 
-Under overload, default llm-d admission control can behave like a cliff. Things look fine, then suddenly they don't. Using the AI-native loop with agents exploring policies inside BLIS, we found a smooth, parameter-free shedder. On 4×H100, TTFT p90 was about 30× faster in the tail for critical requests. Sheddable traffic gets dropped early, so the queue never piles up.
+Under overload, default llm-d admission control can behave like a cliff. latency remains stable until a threshold, then degrades sharply. Using the AI-native loop with agents exploring policies inside BLIS, we found a smooth, parameter-free shedder. On 4×H100, TTFT p90 was about 30× faster in the tail for critical requests. Sheddable traffic gets dropped early, so the queue never piles up.
 
 ![Admission evolution: how it was found and what it found](/img/blogs/blis-evolving-llm-d-at-simulation-speed/admission-evolution.png)
 
@@ -95,7 +95,7 @@ Before you deploy any LLMs for any purpose, you need answers:
 - Which router knobs — scorer weights, prefix-cache priority, load-balance settings?
 - Which vLLM knobs — tensor parallelism, chunk size, batch limits?
 
-Each of these used to mean a real-cluster experiment. With BLIS, it's a sweep that runs in seconds per config. You can scan a hundred settings before lunch and walk into the deployment meeting with a much smaller, better-ranked set of choices.
+Each of these used to mean a real-cluster experiment. With BLIS, it's a sweep that runs in seconds per config. BLIS can evaluate hundreds of configurations in minutes, producing a ranked set of viable options before any GPU time is spent.
 
 ![BLIS Config Search: Pareto Frontier for Llama-3.1-70B on H100](/img/blogs/blis-evolving-llm-d-at-simulation-speed/pareto-frontier.png)
 
