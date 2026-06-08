@@ -78,13 +78,20 @@ For the full experimental setup and detailed results, see [our earlier post on t
 
 #### When to disaggregate prefill and decode
 
-We used BLIS to study a multitude of heuristic policies, ranging from always local, always disaggregate, stationary randomized, and a dynamic policy called Drift Plus Penalty (DPP), inspired by Lyapunov optimization. We analyzed their performance under various workloads and arrival processes and observed regimes where each policy stands out.
+llm-d's current P/D decider uses a fixed prefix-cache threshold: disaggregate any request with more than N=16 uncached tokens. This is cache-aware but queue-blind — it disaggregates at the same rate regardless of whether the prefill pool is idle or saturated.
 
-The figure below shows a subset of results we obtained with BLIS. The Empirical DPP (EDPP) outperforms the prefix cache-based P/D decider currently in llm-d by 2-20x on TTFT. We've even seen the llm-d decider as actively harmful on long-context workloads like code-gen.
+BLIS lets us evaluate a wider policy space: always-local, always-disaggregate, stationary randomized, and a dynamic policy we call Empirical Drift-Plus-Penalty (EDPP), derived from Lyapunov optimization. EDPP routes each request using two signals: the relative queue depths of the decode and prefill pools at decision time, and a virtual TTFT queue that accumulates deficit whenever a disaggregated request misses an operator-specified TTFT SLO. When the decode pool is backlogged and the prefill pool has spare capacity, EDPP disaggregates. When past disaggregation decisions have already pushed TTFT past the SLO, the virtual queue grows and suppresses future disaggregation until TTFT recovers. No hardware constants are required; the operator specifies goals — an ITL target and a TTFT SLO — and the policy adapts.
+
+We evaluated on a 1P+3D topology (1 prefill + 3 decode instances) using BLIS's trained-physics latency model configured for Meta Llama 3.1-70B-Instruct on NVIDIA H100 (TP=4 per instance, 16 H100s total), with workloads from the inference-perf catalog:
+
+- **Interactive chat** (5K-token prefix, ~50 uncached tokens/turn, 4 turns/session): At N=16, the prefix-based threshold decider disaggregates nearly every turn. Because uncached inputs are short, the KV-transfer round-trip adds overhead with little throughput benefit. EDPP, which only disaggregates when the decode pool is backlogged, reduces mean TTFT by 2–3× at moderate-to-high load.
+- **Code generation** (30K-token prefix, ~1,500 uncached tokens/turn, 15 turns/session): At N=16, the threshold fires on 100% of requests unconditionally — every turn has thousands of uncached tokens. This saturates the prefill pool and inflates TTFT by up to 20× relative to always-local. EDPP's SLO-feedback loop suppresses disaggregation when TTFT exceeds the target, stabilizing the disaggregation fraction near 50%.
+
+The figure below shows a subset of results obtained with BLIS.
 
 ![PD Decider: Threshold=16 vs Empirical Drift Plus Penalty](/img/blogs/blis-evolving-llm-d-at-simulation-speed/pd-decider-ttft.png)
 
-These are the kind of results that are expensive to find on real GPUs but natural to find with BLIS.
+These results are expensive to find on real GPUs but take seconds to produce in BLIS.
 
 ### Capacity planning
 
