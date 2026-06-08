@@ -52,7 +52,7 @@ BLIS is not meant to replace real clusters. It offers an opportunity for fast an
 - **Fast and cheap.** Seconds per run. No GPUs.
 - **Deterministic.** Same input, same output, every time.
 - **Pluggable.** Drop in a new admission rule, scorer, or autoscaler. BLIS runs it as llm-d would.
-- **High-fidelity.** Mimics the real llm-d cluster closely and yields realistic latency and throughput metrics.
+- **High-fidelity.** Median 7–9% error on end-to-end and inter-token latency relative to real clusters. Validated across 36 experiments spanning dense and MoE models (8B–141B parameters, Llama/Mixtral/Qwen families), workloads from chat to code generation and long-output reasoning, H100/A100/L40S GPUs, and sweeps over vLLM configuration knobs (tensor parallelism, chunk size). Approximately 200× faster than equivalent real-cluster experiments.
 
 ## What BLIS unlocks
 
