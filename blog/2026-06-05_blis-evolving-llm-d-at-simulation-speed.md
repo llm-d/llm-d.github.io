@@ -132,6 +132,17 @@ That is the shift: llm-d can evolve as fast as developers and agents can think, 
 
 ---
 
+## Limitations
+
+The following areas highlight current limitations of BLIS:
+
+- **Network effects:** BLIS models tensor-parallel and data-parallel communication overhead from profiling data, but does not explicitly model the network itself. Real network behavior varies with hardware topology, region, and is subject to jitter — none of which are captured.
+- **Platform drift:** The simulator mirrors vLLM and llm-d behavior at a point in time. As the real stack evolves, the simulator must be updated to stay accurate.
+- **Selective fidelity:** At any point in time, BLIS is not expected to model everything in llm-d and vLLM, but only the most load-bearing aspects of the real system. We focus on a few aspects at a time to improve algorithms in the stack, and those are the aspects prioritized for development in the simulator — on an as-needed-for-policy-evolution basis.
+- **Saturated regimes:** BLIS's performance model is not calibrated for deeply saturated conditions. This is expected — in heavily overloaded systems, small perturbations in arrival or service times cause disproportionate queueing effects, making precise prediction impractical for any simulator. The practical goal is to identify policies that avoid saturation, not to predict behavior within it.
+
+---
+
 ## Where to next
 
 - **BLIS:** [inference-sim.github.io/inference-sim](https://inference-sim.github.io/inference-sim/latest/)
