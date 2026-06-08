@@ -70,11 +70,11 @@ In AI-native evolution, agents try many policies (or algorithms) in BLIS. The be
 
 #### From latency cliffs to graceful admission control
 
-Under overload, default llm-d admission control can behave like a cliff. latency remains stable until a threshold, then degrades sharply. Using the AI-native loop with agents exploring policies inside BLIS, we found a smooth, parameter-free shedder. On 4×H100, TTFT p90 was about 30× faster in the tail for critical requests. Sheddable traffic gets dropped early, so the queue never piles up.
+Under overload, default llm-d admission control can behave like a cliff: latency remains stable until a threshold, then degrades sharply. Using the AI-native loop with agents exploring policies inside BLIS, we found a smooth, parameter-free shedder. Validated on Qwen3-14B served on 4×H100-SXM-80GB at near-saturation load across realistic workloads (such as chatbot and code completion), the new policy reduced critical-tier TTFT p90 by up to 97% and end-to-end latency by up to 50%. Sheddable traffic is shed early, preventing queue buildup.
 
 ![Admission evolution: how it was found and what it found](/img/blogs/blis-evolving-llm-d-at-simulation-speed/admission-evolution.png)
 
-For the full story, see [our earlier post on the admission controller loop](https://ai-native-systems-research.github.io/ai-native-systems-research/blog/2026/05/13/from-simulation-to-production-how-an-ai-native-pipeline-discovered-a-better-admission-controller-for-llm-d/).
+For the full experimental setup and detailed results, see [our earlier post on the admission controller loop](https://ai-native-systems-research.github.io/ai-native-systems-research/blog/2026/05/13/from-simulation-to-production-how-an-ai-native-pipeline-discovered-a-better-admission-controller-for-llm-d/).
 
 #### When to disaggregate prefill and decode
 
