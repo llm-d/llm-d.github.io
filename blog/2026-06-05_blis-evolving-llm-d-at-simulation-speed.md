@@ -29,22 +29,9 @@ BLIS solves this problem.
 
 <!-- truncate -->
 
-## Why distributed serving is hard
-
-Imagine 500 requests per second hitting your cluster. Here is what has to happen:
-
-- The gateway decides who gets in and who waits.
-- The router picks which vLLM instance handles each request. It looks at prefix cache hits, queue depth, and KV use.
-- Each instance decides which requests to batch together right now.
-- The KV cache has to find room. Old blocks may need to make space.
-- The autoscaler watches load and brings new instances up if needed.
-- Maybe prefill and decode should run on different pools of GPUs.
-
-Every one of these is a knob. They interact. No one can predict the result on paper. **BLIS models all of them.**
-
 ## The problem in one chart
 
-The same policy-change question can be answered in two ways: run it on a real cluster, or simulate it first. Cluster experiments can take days to configure and tune, while simulation runs on your laptop within a few minutes.
+llm-d's control plane spans admission, routing, scheduling, KV-cache management, batching, autoscaling, and prefill/decode placement. These decisions interact — a change in any one can shift latency, throughput, and cost in ways that are difficult to predict analytically. The standard approach is to test on a real cluster, but each experiment costs GPU-hours and wall-clock time:
 
 ![Cost vs wall-clock time — BLIS vs llm-d cluster](/img/blogs/blis-evolving-llm-d-at-simulation-speed/hero-cost-chart.png)
 
