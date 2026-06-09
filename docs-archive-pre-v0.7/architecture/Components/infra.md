@@ -57,7 +57,7 @@ For detailed configuration options, see the [Helm chart documentation](https://g
 
 **Note:** All quickstart guides and user documentation have moved to the main llm-d repository:
 
-- [**Deployment Guides:**](https://github.com/llm-d/llm-d/tree/main/guides)
+- [**Deployment Guides:**](https://github.com/llm-d/llm-d/tree/main/docs/well-lit-paths)
 
 **This repository contains:**
 

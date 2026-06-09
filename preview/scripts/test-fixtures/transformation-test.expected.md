@@ -135,15 +135,15 @@ A link already in markdown format should be unchanged: [llm-d](https://github.co
 Images with unquoted attributes should be quoted for MDX:
 
 <p align="center">
-  <img alt="Test" src="/docs/img/docs/test.svg" width="95%" />
+  <img alt="Test" src="/img/docs/test.svg" width="95%" />
 </p>
 
-<img src="/docs/img/docs/another.png" height="200" />
+<img src="/img/docs/another.png" height="200" />
 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" />
-    <img alt="Test Arch" src="/docs/img/docs/arch.svg" width="90%" />
+    <img alt="Test Arch" src="/img/docs/arch.svg" width="90%" />
   </picture>
 </p>
 

@@ -6,13 +6,26 @@
  * Validates all links in the built site and generates a report showing:
  * - Broken internal links
  * - Broken external links
+ * - Broken GitHub links (checked separately from other external links)
  * - Missing images/assets
  * - Invalid anchor links
  * - Source file information (from llm-d/llm-d or local)
  *
+ * Configuration:
+ * - checkExternalLinks: false (default) - Skip general external link checking
+ * - checkGitHubLinks: true (default) - Check GitHub links even when checkExternalLinks is false
+ *
+ * Environment Variables:
+ * - GITHUB_TOKEN: Optional GitHub token to avoid rate limiting on github.com HEAD requests.
+ *   Without a token, github.com may rate-limit repeated unauthenticated requests.
+ *   In GitHub Actions, this is automatically available as ${{ secrets.GITHUB_TOKEN }}
+ *
  * Usage:
  *   npm run build:all  # Build the site first
  *   npm run check-links
+ *
+ *   # In GitHub Actions with authentication:
+ *   GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} npm run check-links
  */
 
 import fs from 'fs';
@@ -33,10 +46,12 @@ const config = {
   serverPort: 3333, // Port for local test server
   serverHost: 'localhost',
   checkExternalLinks: false, // Skip external links by default (slow and often blocked)
+  checkGitHubLinks: true, // Check GitHub links even when checkExternalLinks is false
   maxConcurrent: 10,
   externalTimeout: 10000,
   ignorePatterns: [],
-  configFile: path.join(rootDir, 'link-checker.config.json')
+  configFile: path.join(rootDir, 'link-checker.config.json'),
+  githubToken: process.env.GITHUB_TOKEN || null // Use GITHUB_TOKEN from env for better rate limits
 };
 
 // Load optional config file
@@ -409,15 +424,24 @@ async function validateInternalLink(url, sourcePage) {
 }
 
 // Validate external URL
-async function validateExternalUrl(url, timeout = 10000) {
+async function validateExternalUrl(url, timeout = 10000, options = {}) {
   return new Promise((resolve) => {
     try {
       const urlObj = new URL(url);
       const protocol = urlObj.protocol === 'https:' ? https : http;
 
+      const requestOptions = {
+        method: 'HEAD',
+        timeout,
+        headers: {
+          'User-Agent': 'llm-d-link-checker/1.0',
+          ...(options.headers || {})
+        }
+      };
+
       const req = protocol.request(
         url,
-        { method: 'HEAD', timeout },
+        requestOptions,
         (res) => {
           // Accept 2xx and 3xx status codes
           if (res.statusCode >= 200 && res.statusCode < 400) {
@@ -622,6 +646,7 @@ async function checkLinks() {
     const brokenLinks = [];
     const allLinks = new Map(); // URL -> { sourcePages: Set, ... }
     let externalUrls = new Set();
+    const githubUrls = new Map(); // GitHub URL -> Set of source pages
 
     while (toVisit.length > 0) {
       const currentPath = toVisit.shift();
@@ -661,6 +686,20 @@ async function checkLinks() {
         if (url.startsWith('http://') || url.startsWith('https://')) {
           const urlObj = new URL(url);
           if (urlObj.host !== `${config.serverHost}:${config.serverPort}`) {
+            // Classify as a GitHub llm-d URL only when hostname is exactly github.com
+            // and the path starts with /llm-d/ — prevents matching substrings in query
+            // params or other domains, and avoids leaking auth tokens to third-party hosts.
+            const isLlmDGitHubUrl = urlObj.hostname === 'github.com' &&
+              urlObj.pathname.startsWith('/llm-d/');
+            if (isLlmDGitHubUrl) {
+              if (!githubUrls.has(url)) {
+                githubUrls.set(url, new Set());
+              }
+              githubUrls.get(url).add(currentPath);
+              // Only skip externalUrls when checkGitHubLinks is enabled; otherwise
+              // fall through so the URL is still validated via the external pass.
+              if (config.checkGitHubLinks) continue;
+            }
             externalUrls.add(url);
             continue;
           }
@@ -686,7 +725,8 @@ async function checkLinks() {
 
     console.log(`\r   Crawled ${visited.size} pages ✓\n`);
     console.log(`   Found ${allLinks.size} unique internal links`);
-    console.log(`   Found ${externalUrls.size} unique external URLs\n`);
+    console.log(`   Found ${externalUrls.size} unique external URLs`);
+    console.log(`   Found ${githubUrls.size} unique GitHub URLs\n`);
 
     // Validate all discovered links
     console.log('✅ Validating discovered links...');
@@ -729,6 +769,57 @@ async function checkLinks() {
     }
 
     console.log(`\r   Checked ${linksChecked} links ✓\n`);
+
+    // Validate GitHub links (if enabled)
+    if (config.checkGitHubLinks && githubUrls.size > 0) {
+      console.log('🐙 Validating GitHub URLs...');
+      if (config.githubToken) {
+        console.log('   Using GITHUB_TOKEN for authentication (better rate limits)');
+      }
+      const rateLimiter = new RateLimiter(config.maxConcurrent);
+      const githubUrlArray = Array.from(githubUrls.keys());
+      let githubChecked = 0;
+
+      const githubResults = new Map();
+
+      // Prepare auth headers if token is available
+      const githubOptions = config.githubToken
+        ? { headers: { 'Authorization': `Bearer ${config.githubToken}` } }
+        : {};
+
+      const githubPromises = githubUrlArray
+        .filter(url => !config.ignorePatterns.some(pattern => url.includes(pattern)))
+        .map(url =>
+          rateLimiter.run(() => validateExternalUrl(url, config.externalTimeout, githubOptions))
+            .then(result => {
+              githubResults.set(url, result);
+              githubChecked++;
+              if (githubChecked % 10 === 0) {
+                process.stdout.write(`\r   Checked ${githubChecked}/${githubUrlArray.length} GitHub URLs...`);
+              }
+            })
+        );
+      await Promise.all(githubPromises);
+
+      console.log(`\r   Checked ${githubChecked} GitHub URLs ✓\n`);
+
+      // Find broken GitHub links
+      for (const [url, sourcePages] of githubUrls) {
+        const result = githubResults.get(url);
+        if (result && !result.valid) {
+          // Add broken link for each source page
+          for (const sourcePage of sourcePages) {
+            brokenLinks.push({
+              sourcePage,
+              url,
+              reason: result.reason,
+              type: 'link',
+              category: 'github'
+            });
+          }
+        }
+      }
+    }
 
     // Validate external links (if enabled)
     if (config.checkExternalLinks) {
@@ -864,6 +955,7 @@ function generateReport(brokenLinks, totalLinks, totalPages, sourceMap) {
 
     for (const link of links) {
       const emoji = link.category === 'external' ? '🌐' :
+                   link.category === 'github' ? '🐙' :
                    link.category === 'image' ? '🖼️' : '🔗';
       report += `- ${emoji} \`${link.url}\` → **${link.reason}** (${link.type})\n`;
     }

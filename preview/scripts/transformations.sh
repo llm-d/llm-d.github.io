@@ -18,24 +18,23 @@ fi
 apply_transformations() {
     local file="$1"
 
-    # Image paths - convert relative to absolute
-    # Different handling for markdown vs HTML:
-    # - Markdown images: Use /img/docs/ (Docusaurus auto-prepends baseUrl)
-    # - HTML img/source tags: Use /docs/img/docs/ (raw HTML needs full path with baseUrl)
+    # Image paths - convert relative to absolute.
+    # Use /img/docs/ for both markdown and HTML so links work under /docs/, /docs/dev/,
+    # and versioned docs paths.
 
     # Transform markdown image syntax: ![alt](../assets/...) -> ![alt](/img/docs/...)
     sed_inplace \
         -e 's|!\[\([^]]*\)\](\(\.\./\)*assets/\([^)]*\))|![\1](/img/docs/\3)|g' \
         "$file"
 
-    # Transform HTML img tag src: src="../assets/..." -> src="/docs/img/docs/..."
+    # Transform HTML img tag src: src="../assets/..." -> src="/img/docs/..."
     sed_inplace \
-        -e 's|src="\(\.\./\)*assets/\([^"]*\)"|src="/docs/img/docs/\2"|g' \
+        -e 's|src="\(\.\./\)*assets/\([^"]*\)"|src="/img/docs/\2"|g' \
         "$file"
 
-    # Transform HTML source tag srcset: srcset="../assets/..." -> srcset="/docs/img/docs/..."
+    # Transform HTML source tag srcset: srcset="../assets/..." -> srcset="/img/docs/..."
     sed_inplace \
-        -e 's|srcset="\(\.\./\)*assets/\([^"]*\)"|srcset="/docs/img/docs/\2"|g' \
+        -e 's|srcset="\(\.\./\)*assets/\([^"]*\)"|srcset="/img/docs/\2"|g' \
         "$file"
 
     # MDX escaping - escape special characters
@@ -109,14 +108,14 @@ apply_transformations() {
         -e 's|\](./storage/README\.md)|\](./storage/index.md)|g' \
         "$file"
 
-    # Fix guide name variations and relative paths
+    # Normalize guide slug variations to well-lit-path canonical paths.
     sed_inplace \
-        -e 's|\](/docs/guides/predicted-latency)|\](/docs/guides/predicted-latency-routing)|g' \
-        -e 's|\](/guides/predicted-latency)|\](/guides/predicted-latency-routing)|g' \
-        -e 's|\](../../guides/predicted-latency)|\](/guides/predicted-latency-routing)|g' \
-        -e 's|\](/docs/guides/wide-expert-parallelism)|\](/docs/guides/wide-ep-lws)|g' \
-        -e 's|\](/guides/wide-expert-parallelism)|\](/guides/wide-ep-lws)|g' \
-        -e 's|\](../../guides/wide-expert-parallelism)|\](/guides/wide-ep-lws)|g' \
+        -e 's|\](/docs/guides/predicted-latency-routing)|\](/docs/guides/predicted-latency)|g' \
+        -e 's|\](/guides/predicted-latency-routing)|\](/guides/predicted-latency)|g' \
+        -e 's|\](../../guides/predicted-latency-routing)|\](/guides/predicted-latency)|g' \
+        -e 's|\](/docs/guides/wide-ep-lws)|\](/docs/guides/wide-expert-parallelism)|g' \
+        -e 's|\](/guides/wide-ep-lws)|\](/guides/wide-expert-parallelism)|g' \
+        -e 's|\](../../guides/wide-ep-lws)|\](/guides/wide-expert-parallelism)|g' \
         -e 's|\](../../prereq/gateway-provider/common-configurations/*)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider#common-configurations)|g' \
         -e 's|\](../gateway/*)|\](/guides/recipes/gateway)|g' \
         "$file"

@@ -18,7 +18,7 @@ tags: [blog, updates, llm-d]
 
 The llm-d project provides a series of “well-lit paths” \- tested, benchmarked solutions for deploying large language models in production. Our first path, [**Intelligent Inference Scheduling**](/blog/intelligent-inference-scheduling-with-llm-d), established a baseline for AI-aware routing by balancing both cluster load and prefix-cache affinities. The default configuration for that path uses an *approximate* method for the latter, predicting cache locality based on request traffic.
 
-This blog illuminates a more advanced and powerful path: [**precise prefix-cache aware scheduling**](/docs/guides/precise-prefix-cache-aware).
+This blog illuminates a more advanced and powerful path: [**precise prefix-cache aware scheduling**](/docs/dev/guides/precise-prefix-cache-routing).
 
 We take a deep dive into the next generation of this feature, which moves beyond prediction and gives the scheduler direct introspection into distributed vLLM caches. This precision is key to maximizing cache hit rates and achieving a new level of performance and maximizing cost-efficiency in your distributed deployments.
 
@@ -110,7 +110,7 @@ This single routing decision triggers a cascade of failures:
 * **Increased Latency:** Users experience significantly higher Time to First Token (TTFT)  
 * **Wasted GPU Resources:** Expensive hardware is tied up re-doing work instead of serving new requests, lowering overall system throughput
 
-In a production environment with thousands of concurrent requests, this isn't a rare event; it's the default behavior. The result is a system that is **significantly** **slower** and **more expensive** than it should be. This is the core challenge that [llm-d's precise prefix-cache aware scheduling](https://github.com/llm-d/llm-d/blob/main/guides/precise-prefix-cache-aware/README.md) is designed to solve.
+In a production environment with thousands of concurrent requests, this isn't a rare event; it's the default behavior. The result is a system that is **significantly** **slower** and **more expensive** than it should be. This is the core challenge that [llm-d's precise prefix-cache aware scheduling](https://github.com/llm-d/llm-d/blob/main/guides/precise-prefix-cache-routing/README.md) is designed to solve.
 
 ## **llm-d: Precise Prefix-Cache Aware Scheduling**
 

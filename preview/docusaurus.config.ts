@@ -61,7 +61,31 @@ const config: Config = {
 
   themes: ['@docusaurus/theme-mermaid'],
 
-  plugins: [require.resolve('./plugins/versions-plugin')],
+  plugins: [
+    require.resolve('./plugins/versions-plugin'),
+    [
+      require.resolve('@docusaurus/plugin-client-redirects'),
+      {
+        createRedirects(existingPath: string) {
+          if (existingPath.startsWith('/well-lit-paths')) {
+            return [existingPath.replace('/well-lit-paths', '/guides')];
+          }
+          if (existingPath.startsWith('/guides')) {
+            return [existingPath.replace('/guides', '/well-lit-paths')];
+          }
+          return undefined;
+        },
+      },
+    ],
+    // Build docs search output so the site-root merge step can compose a
+    // unified index from build/search-doc.json + build/docs/search-doc.json.
+    [
+      require.resolve('docusaurus-lunr-search'),
+      {
+        languages: ['en'],
+      },
+    ],
+  ],
 
   presets: [
     [
@@ -76,9 +100,91 @@ const config: Config = {
             // Map index.md back to README.md (sync script renames these)
             const sourcePath = cleanPath.replace(/\/index\.md$/, '/README.md');
 
-            // Guide pages come from guides/ in the upstream repo, not docs/
+            // Guide pages: flat .md files are overview pages from docs/well-lit-paths/;
+            // directory-based guides (*/index.md at depth >2) come from guides/*/README.md
             if (cleanPath.startsWith('guides/')) {
-              return `https://github.com/llm-d/llm-d/blob/main/${sourcePath}`;
+              const parts = cleanPath.split('/');
+              const flatGuideToWellLitFile: Record<string, string> = {
+                'precise-prefix-cache-aware.md': 'precise-prefix-cache-routing',
+                'predicted-latency-routing.md': 'predicted-latency',
+                'wide-ep-lws.md': 'wide-expert-parallelism',
+                'batch-gateway.md': 'experimental/batch-gateway',
+              };
+              const guideDirToWellLitFile: Record<string, string> = {
+                'optimized-baseline': 'optimized-baseline',
+                'precise-prefix-cache-routing': 'precise-prefix-cache-routing',
+                'tiered-prefix-cache': 'tiered-prefix-cache',
+                'asynchronous-processing': 'asynchronous-processing',
+                'flow-control': 'flow-control',
+                'pd-disaggregation': 'pd-disaggregation',
+                'predicted-latency-routing': 'predicted-latency',
+                'wide-ep-lws': 'wide-expert-parallelism',
+                'workload-autoscaling': 'workload-autoscaling',
+                'no-kubernetes-deployment': 'no-kubernetes-deployment',
+              };
+              if (cleanPath.endsWith('/index.md') && parts.length > 2) {
+                const wellLitFile = guideDirToWellLitFile[parts[1]];
+                if (wellLitFile) {
+                  return `https://github.com/llm-d/llm-d/blob/main/docs/well-lit-paths/${wellLitFile}.md`;
+                }
+                // Non Well-Lit directory content (e.g. recipes) still lives under guides/
+                return `https://github.com/llm-d/llm-d/blob/main/${sourcePath}`;
+              }
+              const flatGuideName = parts[1];
+              const flatWellLitFile = flatGuideToWellLitFile[flatGuideName];
+              if (flatWellLitFile) {
+                return `https://github.com/llm-d/llm-d/blob/main/docs/well-lit-paths/${flatWellLitFile}.md`;
+              }
+              const wellLitPath = sourcePath.replace(/^guides\//, 'docs/well-lit-paths/');
+              return `https://github.com/llm-d/llm-d/blob/main/${wellLitPath}`;
+            }
+
+            // Gateway pages come from guides/prereq/gateways/ in the upstream repo
+            if (cleanPath.startsWith('resources/gateway/')) {
+              const gatewayFile = sourcePath.replace(/^resources\/gateway\//, '');
+              return `https://github.com/llm-d/llm-d/blob/main/guides/prereq/gateways/${gatewayFile}`;
+            }
+
+            // Infra-provider pages come from docs/infra-providers/ (not docs/resources/infra-providers/)
+            if (cleanPath.startsWith('resources/infra-providers/')) {
+              if (cleanPath === 'resources/infra-providers/index.md') {
+                return 'https://github.com/llm-d/llm-d/blob/main/docs/infra-providers/README.md';
+              }
+              const providerName = cleanPath.replace(/^resources\/infra-providers\//, '').replace(/\.md$/, '');
+              return `https://github.com/llm-d/llm-d/blob/main/docs/infra-providers/${providerName}/README.md`;
+            }
+
+            // Renamed files: source file names differ from local file names
+            if (cleanPath === 'resources/rdma/rdma-configuration.md') {
+              return 'https://github.com/llm-d/llm-d/blob/main/docs/resources/rdma/README.md';
+            }
+            if (cleanPath === 'architecture/advanced/autoscaling/workload-variant-autoscaling.md') {
+              return 'https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/autoscaling/wva.md';
+            }
+            if (cleanPath === 'architecture/advanced/autoscaling/igw-hpa.md') {
+              return 'https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/autoscaling/hpa-keda.md';
+            }
+
+            // llm-d#1542: monitoring/ renamed to observability/ on main. Release doc
+            // branches may still build legacy resources/monitoring/* paths.
+            if (cleanPath.startsWith('resources/monitoring/')) {
+              const observabilityFile = cleanPath.replace(
+                /^resources\/monitoring\//,
+                '',
+              );
+              return `https://github.com/llm-d/llm-d/blob/main/docs/resources/observability/${observabilityFile}`;
+            }
+            if (cleanPath.startsWith('resources/observability/')) {
+              const observabilityFile = cleanPath.replace(
+                /^resources\/observability\//,
+                '',
+              );
+              // sync-docs.sh copies README.md → index.md for the landing page
+              const sourceFile =
+                observabilityFile === 'index.md'
+                  ? 'README.md'
+                  : observabilityFile;
+              return `https://github.com/llm-d/llm-d/blob/main/docs/resources/observability/${sourceFile}`;
             }
 
             return `https://github.com/llm-d/llm-d/blob/main/docs/${sourcePath}`;
@@ -142,7 +248,7 @@ const config: Config = {
           items: [
             {label: 'Getting Started', to: '/getting-started'},
             {label: 'Architecture', to: '/architecture'},
-            {label: 'Guides', to: '/guides'},
+            {label: 'Well-Lit Paths', to: '/well-lit-paths'},
             {label: 'Resources', to: '/resources/gateway'},
           ],
         },
