@@ -100,95 +100,24 @@ const sidebars: SidebarsConfig = {
         },
       ],
     },
-    // ==================== Guides ====================
+    // ==================== Well-Lit Paths ====================
     {
       type: 'category',
-      label: 'Guides',
+      label: 'Well-Lit Paths',
       collapsed: false,
       link: {type: 'doc', id: 'guides/index'},
       items: [
-        {
-          type: 'category',
-          label: 'Optimized Baseline',
-          link: {type: 'doc', id: 'guides/optimized-baseline/index'},
-          items: [],
-        },
-        {
-          type: 'category',
-          label: 'Precise Prefix Cache Routing',
-          link: {type: 'doc', id: 'guides/precise-prefix-cache-routing/index'},
-          items: [],
-        },
-        {
-          type: 'category',
-          label: 'Tiered Prefix Cache',
-          link: {type: 'doc', id: 'guides/tiered-prefix-cache/index'},
-          items: [
-            'guides/tiered-prefix-cache/cpu/index',
-            {
-              type: 'category',
-              label: 'Storage Offloading',
-              link: {type: 'doc', id: 'guides/tiered-prefix-cache/storage/index'},
-              items: [
-                'guides/tiered-prefix-cache/storage/manifests/backends/lustre/index',
-                'guides/tiered-prefix-cache/storage/manifests/backends/aws/index',
-              ],
-            },
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Asynchronous Processing',
-          link: {type: 'doc', id: 'guides/asynchronous-processing/index'},
-          items: [
-            'guides/asynchronous-processing/gcp-pubsub/index',
-            'guides/asynchronous-processing/redis/index',
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Flow Control',
-          link: {type: 'doc', id: 'guides/flow-control/index'},
-          items: [],
-        },
-        {
-          type: 'category',
-          label: 'Prefill/Decode Disaggregation',
-          link: {type: 'doc', id: 'guides/pd-disaggregation/index'},
-          items: [],
-        },
-        'guides/predicted-latency-routing/index',
-        {
-          type: 'category',
-          label: 'Wide Expert Parallelism',
-          link: {type: 'doc', id: 'guides/wide-ep-lws/index'},
-          items: [
-            {
-              type: 'category',
-              label: 'Experimental DP-Aware',
-              link: {type: 'doc', id: 'guides/wide-ep-lws/experimental-dp-aware/index'},
-              items: [
-                'guides/wide-ep-lws/experimental-dp-aware/benchmarks/index',
-              ],
-            },
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Workload Autoscaling',
-          link: {type: 'doc', id: 'guides/workload-autoscaling/index'},
-          items: [],
-        },
-        'guides/batch-gateway/index',
-        {
-          type: 'category',
-          label: 'Recipes',
-          items: [
-            'guides/recipes/gateway/index',
-            'guides/recipes/router/index',
-            'guides/recipes/modelserver/components/disable-gke-nccl-tuner-patch/index',
-          ],
-        },
+        'guides/optimized-baseline',
+        'guides/precise-prefix-cache-routing',
+        'guides/tiered-prefix-cache',
+        'guides/asynchronous-processing',
+        'guides/flow-control',
+        'guides/pd-disaggregation',
+        'guides/predicted-latency',
+        'guides/wide-expert-parallelism',
+        'guides/workload-autoscaling',
+        'guides/batch-gateway',
+        'guides/no-kubernetes-deployment',
       ],
     },
     // ==================== Resources ====================
@@ -224,11 +153,14 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
-          label: 'Monitoring',
+          label: 'Observability',
           collapsed: false,
+          link: {type: 'doc', id: 'resources/observability/index'},
           items: [
-            'resources/monitoring/metrics',
-            'resources/monitoring/tracing',
+            'resources/observability/setup',
+            'resources/observability/metrics',
+            'resources/observability/tracing',
+            'resources/observability/promql',
           ],
         },
         'resources/rdma/rdma-configuration',

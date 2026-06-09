@@ -109,14 +109,34 @@ else
       continue
     }
 
-    # Override site UX (theme components, navbar, version dropdown, config)
-    # with main's copies so improvements propagate to every version. Doc
-    # CONTENT in preview/docs/ comes from the worktree and is left untouched.
+    # Override site UX (theme components, navbar, version dropdown, config,
+    # package deps) with main's copies so improvements propagate to every
+    # version. Doc CONTENT in preview/docs/ comes from the worktree and is
+    # left untouched.
     echo "  Syncing UX from main into worktree..."
     cp "$PROJECT_DIR/preview/docusaurus.config.ts" \
        "${WORKTREE_PATH}/preview/docusaurus.config.ts"
+    cp "$PROJECT_DIR/preview/package.json" \
+       "${WORKTREE_PATH}/preview/package.json"
+    cp "$PROJECT_DIR/preview/package-lock.json" \
+       "${WORKTREE_PATH}/preview/package-lock.json"
     rm -rf "${WORKTREE_PATH}/preview/src"
     cp -r "$PROJECT_DIR/preview/src" "${WORKTREE_PATH}/preview/src"
+
+    # Apply fixups for known stale GitHub links in committed release-branch content.
+    # These patch specific link targets that changed in upstream after the branch was cut.
+    echo "  Applying link fixups to release branch docs..."
+    if [[ "$(uname)" == "Darwin" ]]; then
+      SED_INPLACE=(sed -i '')
+    else
+      SED_INPLACE=(sed -i)
+    fi
+    while IFS= read -r -d '' file; do
+      "${SED_INPLACE[@]}" \
+        -e 's|github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware|github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing|g' \
+        -e 's|github.com/llm-d/llm-d/tree/main/guides/predicted-latency-based-scheduling|github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing|g' \
+        "$file"
+    done < <(find "${WORKTREE_PATH}/preview/docs" -name "*.md" -print0)
 
     cd "${WORKTREE_PATH}/preview"
     npm install --silent
@@ -140,6 +160,13 @@ else
     git worktree remove --force "$WORKTREE_PATH" 2>/dev/null || true
   done
 fi
+
+# Step 5: Merge /docs pages into the main site search index
+echo "Step 5: Merging docs into unified search index..."
+cd "$PROJECT_DIR"
+node scripts/merge-search-index.mjs
+echo "✓ Unified search index updated"
+echo ""
 
 echo ""
 echo "========================================="

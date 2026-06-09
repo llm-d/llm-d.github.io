@@ -27,6 +27,8 @@ jobs:
 
       - name: Check links
         run: npm run check-links
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Add broken links to job summary
         if: always()

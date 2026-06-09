@@ -263,3 +263,9 @@ abhisyant:
   image_url: /img/blogs/abhisyant.webp
   socials:
     linkedin: abhisyant
+
+llm-d-maintainers:
+  name: llm-d maintainers
+  url: https://github.com/llm-d/llm-d/blob/main/MAINTAINERS.md
+  image_url: /img/authors/llm-d-maintainers.png
+

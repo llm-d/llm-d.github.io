@@ -7,6 +7,7 @@
     "start": "docusaurus start --no-open",
     "build": "docusaurus build",
     "build:all": "bash scripts/build-all.sh",
+    "merge-search-index": "node scripts/merge-search-index.mjs",
     "serve:production": "npm run build:all && npm run serve",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
@@ -22,7 +23,7 @@
   },
   "dependencies": {
     "@babel/core": "^7.29.0",
-    "@babel/preset-env": "^7.29.5",
+    "@babel/preset-env": "^7.29.7",
     "@docusaurus/core": "3.10.1",
     "@docusaurus/preset-classic": "3.10.1",
     "@docusaurus/theme-mermaid": "3.10.1",
@@ -33,17 +34,18 @@
     "docusaurus-lunr-search": "^3.6.0",
     "docusaurus-plugin-remote-content": "^4.0.0",
     "jest-environment-jsdom": "^29.7.0",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.2.0",
     "jsdom": "^22.1.0",
+    "lunr": "^2.3.9",
     "prism-react-renderer": "^2.3.0",
     "react": "^19.2.5",
-    "react-dom": "^19.2.6",
+    "react-dom": "^19.2.7",
     "react-player": "^2.16.1"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.10.1",
     "@docusaurus/types": "3.10.1",
-    "baseline-browser-mapping": "^2.10.31",
+    "baseline-browser-mapping": "^2.10.33",
     "jest": "^29.7.0"
   },
   "browserslist": {
