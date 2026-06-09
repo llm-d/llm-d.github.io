@@ -17,7 +17,7 @@ export default function Welcome() {
 
 
         <div className="button-group">
-          <a className="static-button button-link" href="/docs">
+          <a className="static-button button-link" href="/docs/getting-started">
             Documentation
           </a>
           <a className="static-button button-link" href="/blog">

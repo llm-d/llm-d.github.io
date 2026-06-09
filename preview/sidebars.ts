@@ -18,7 +18,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Architecture',
-      collapsed: false,
+      collapsed: true,
       link: {type: 'doc', id: 'architecture/index'},
       items: [
         {
@@ -100,15 +100,15 @@ const sidebars: SidebarsConfig = {
         },
       ],
     },
-    // ==================== Guides ====================
+    // ==================== Well-Lit Paths ====================
     {
       type: 'category',
-      label: 'Guides',
+      label: 'Well-Lit Paths',
       collapsed: false,
       link: {type: 'doc', id: 'guides/index'},
       items: [
         'guides/optimized-baseline',
-        'guides/precise-prefix-cache-aware',
+        'guides/precise-prefix-cache-routing',
         'guides/tiered-prefix-cache',
         'guides/asynchronous-processing',
         'guides/flow-control',
@@ -116,13 +116,15 @@ const sidebars: SidebarsConfig = {
         'guides/predicted-latency',
         'guides/wide-expert-parallelism',
         'guides/workload-autoscaling',
+        'guides/batch-gateway',
+        'guides/no-kubernetes-deployment',
       ],
     },
     // ==================== Resources ====================
     {
       type: 'category',
       label: 'Resources',
-      collapsed: false,
+      collapsed: true,
       items: [
         {
           type: 'category',
@@ -151,11 +153,14 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
-          label: 'Monitoring',
+          label: 'Observability',
           collapsed: false,
+          link: {type: 'doc', id: 'resources/observability/index'},
           items: [
-            'resources/monitoring/metrics',
-            'resources/monitoring/tracing',
+            'resources/observability/setup',
+            'resources/observability/metrics',
+            'resources/observability/tracing',
+            'resources/observability/promql',
           ],
         },
         'resources/rdma/rdma-configuration',
@@ -165,7 +170,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'API Reference',
-      collapsed: false,
+      collapsed: true,
       link: {type: 'doc', id: 'api-reference/index'},
       items: [
         'api-reference/glossary',

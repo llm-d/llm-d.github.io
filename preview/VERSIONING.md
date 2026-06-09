@@ -57,9 +57,14 @@ git push
 ```
 
 ## URL Structure After 0.7 Release
-- `/docs/` → 0.7 (latest stable)
-- `/docs/next/` → dev (main branch)
-- `/docs/0.6/` → 0.6 (when created)
+- `/docs/` → latest stable (e.g. 0.7) — canonical URL
+- `/docs/dev/` → dev (main branch)
+- `/docs/0.7.0/` → 0.7.0 (stable deep-link, mirrors `/docs/`)
+- `/docs/0.6.0/` → 0.6.0 (when created)
+
+> The active implementation uses release branches and a custom version
+> dropdown rather than Docusaurus's built-in versioning. See
+> [RELEASE-BRANCH-SYNC.md](./RELEASE-BRANCH-SYNC.md) for the canonical flow.
 
 ## Creating Additional Versions
 To add 0.6, 0.5, etc.:

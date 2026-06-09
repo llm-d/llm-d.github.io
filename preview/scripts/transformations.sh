@@ -18,28 +18,50 @@ fi
 apply_transformations() {
     local file="$1"
 
-    # Image paths - convert relative to absolute
-    # Different handling for markdown vs HTML:
-    # - Markdown images: Use /img/docs/ (Docusaurus auto-prepends baseUrl)
-    # - HTML img/source tags: Use /docs/img/docs/ (raw HTML needs full path with baseUrl)
+    # Image paths - convert relative to absolute.
+    # Use /img/docs/ for both markdown and HTML so links work under /docs/, /docs/dev/,
+    # and versioned docs paths.
 
     # Transform markdown image syntax: ![alt](../assets/...) -> ![alt](/img/docs/...)
     sed_inplace \
         -e 's|!\[\([^]]*\)\](\(\.\./\)*assets/\([^)]*\))|![\1](/img/docs/\3)|g' \
         "$file"
 
-    # Transform HTML img tag src: src="../assets/..." -> src="/docs/img/docs/..."
+    # Transform HTML img tag src: src="../assets/..." -> src="/img/docs/..."
     sed_inplace \
-        -e 's|src="\(\.\./\)*assets/\([^"]*\)"|src="/docs/img/docs/\2"|g' \
+        -e 's|src="\(\.\./\)*assets/\([^"]*\)"|src="/img/docs/\2"|g' \
         "$file"
 
-    # Transform HTML source tag srcset: srcset="../assets/..." -> srcset="/docs/img/docs/..."
+    # Transform HTML source tag srcset: srcset="../assets/..." -> srcset="/img/docs/..."
     sed_inplace \
-        -e 's|srcset="\(\.\./\)*assets/\([^"]*\)"|srcset="/docs/img/docs/\2"|g' \
+        -e 's|srcset="\(\.\./\)*assets/\([^"]*\)"|srcset="/img/docs/\2"|g' \
         "$file"
 
     # MDX escaping - escape special characters
     sed_inplace 's|<->|\\<->|g' "$file"
+
+    # Convert autolinks (<https://...> / <http://...>) to plain URLs
+    # MDX parses angle brackets as JSX and fails on the / in URLs
+    sed_inplace -E 's|<(https?://[^>]+)>|\1|g' "$file"
+
+    # Escape HTML comments for MDX (MDX doesn't support <!-- --> syntax)
+    # Replace HTML comments with MDX comments: <!-- text --> becomes {/* text */}
+    # Handle both single-line and multi-line comments
+    # Use perl for multi-line regex support
+    # IMPORTANT: Exclude tab markers (<!-- TABS:START -->, <!-- TAB:... -->, <!-- TABS:END -->)
+    # which need to be processed by the tab transformation later
+    perl -i -pe 'BEGIN{undef $/;} s/<!--(?!\s*TABS?:)(.*?)-->/{\/\*$1\*\/}/gs' "$file"
+
+    # Escape angle brackets that look like HTML tags but aren't (e.g., <your_gateway_choice>)
+    # These appear in template/placeholder text and confuse MDX parser
+    # Only escape patterns with underscores or specific placeholder patterns
+    # Don't escape real HTML tags (picture, source, img, div, p, etc.)
+    sed_inplace 's|<\([a-z][a-z0-9]*_[a-z0-9_]*\)>|\\<\1\\>|g' "$file"
+
+    # Escape comparison operators in text (<=, >=) that MDX interprets as JSX
+    # Replace with HTML entities
+    sed_inplace 's|<=|\\&le;|g' "$file"
+    sed_inplace 's|>=|\\&ge;|g' "$file"
 
     # Fix escaped curly braces in tables (MDX interprets \{var\} as JS expression)
     # Convert \{key,value\} -> (key,value) for MDX compatibility
@@ -51,29 +73,51 @@ apply_transformations() {
     sed_inplace '/^|.*|$/ s|{|(|g' "$file"
     sed_inplace '/^|.*|$/ s|}|)|g' "$file"
 
-    # Fix well-lit-paths links (convert to /docs/guides for Docusaurus)
+    # Fix well-lit-paths links (convert to /guides for Docusaurus)
     # Source files use ../well-lit-paths/*.md for GitHub compatibility
-    # Convert to /docs/guides/* for Docusaurus
+    # Convert to /guides/* for Docusaurus (baseUrl will be prepended)
     sed_inplace \
-        -E 's|\(\.\./well-lit-paths/([^)]+)\.md\)|(/docs/guides/\1)|g' \
+        -E 's|\(\.\./well-lit-paths/([^)]+)\.md\)|(/guides/\1)|g' \
         "$file"
 
     # Also handle paths with multiple ../ and any path to well-lit-paths
     sed_inplace \
-        -e 's|\](.*\/well-lit-paths/\([^)]*\)\.md)|\](/docs/guides/\1)|g' \
+        -e 's|\](.*\/well-lit-paths/\([^)]*\)\.md)|\](/guides/\1)|g' \
         "$file"
 
     # Fix README.md links to index pages
-    # Convert paths like ../architecture/core/router/epp/README.md to /docs/architecture/core/router/epp
+    # Convert paths like ../architecture/core/router/epp/README.md to /architecture/core/router/epp
     sed_inplace \
-        -e 's|\](.*\/accelerators/README\.md)|\](/docs/accelerators)|g' \
-        -e 's|\](.*\/architecture/core/router/epp/README\.md)|\](/docs/architecture/core/router/epp)|g' \
-        -e 's|\](.*\/architecture/advanced/kv-management/README\.md)|\](/docs/architecture/advanced/kv-management)|g' \
+        -e 's|\](.*\/accelerators/README\.md)|\](/accelerators)|g' \
+        -e 's|\](.*\/architecture/core/router/epp/README\.md)|\](/architecture/core/router/epp)|g' \
+        -e 's|\](.*\/architecture/advanced/kv-management/README\.md)|\](/architecture/advanced/kv-management)|g' \
         "$file"
 
-    # Fix /docs/guides/README (without .md extension)
+    # Fix /guides/README (without .md extension)
     sed_inplace \
-        -e 's|\](/docs/guides/README)|\](/docs/guides)|g' \
+        -e 's|\](/guides/README)|\](/guides)|g' \
+        "$file"
+
+    # Fix relative README.md links in guides
+    sed_inplace \
+        -e 's|\](./gcp-pubsub/README\.md)|\](./gcp-pubsub/index.md)|g' \
+        -e 's|\](./redis/README\.md)|\](./redis/index.md)|g' \
+        -e 's|\](./gcp-pubsub/README\.md#testing)|\](./gcp-pubsub/index.md#testing)|g' \
+        -e 's|\](./redis/README\.md#testing)|\](./redis/index.md#testing)|g' \
+        -e 's|\](./cpu/README\.md)|\](./cpu/index.md)|g' \
+        -e 's|\](./storage/README\.md)|\](./storage/index.md)|g' \
+        "$file"
+
+    # Normalize guide slug variations to well-lit-path canonical paths.
+    sed_inplace \
+        -e 's|\](/docs/guides/predicted-latency-routing)|\](/docs/guides/predicted-latency)|g' \
+        -e 's|\](/guides/predicted-latency-routing)|\](/guides/predicted-latency)|g' \
+        -e 's|\](../../guides/predicted-latency-routing)|\](/guides/predicted-latency)|g' \
+        -e 's|\](/docs/guides/wide-ep-lws)|\](/docs/guides/wide-expert-parallelism)|g' \
+        -e 's|\](/guides/wide-ep-lws)|\](/guides/wide-expert-parallelism)|g' \
+        -e 's|\](../../guides/wide-ep-lws)|\](/guides/wide-expert-parallelism)|g' \
+        -e 's|\](../../prereq/gateway-provider/common-configurations/*)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider#common-configurations)|g' \
+        -e 's|\](../gateway/*)|\](/guides/recipes/gateway)|g' \
         "$file"
 
     # Fix deployment guide links to GitHub URLs

@@ -219,3 +219,8 @@ jooyeonmok:
   socials:
     github: https://github.com/j-mok-dev
 
+llm-d-maintainers:
+  name: llm-d maintainers
+  url: https://github.com/llm-d/llm-d/blob/main/MAINTAINERS.md
+  image_url: /img/authors/llm-d-maintainers.png
+

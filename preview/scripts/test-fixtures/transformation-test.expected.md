@@ -122,20 +122,28 @@ Images with relative paths should be transformed:
 
 This should escape arrows: \<->
 
+## 6b. Autolink Test
+
+Bare HTTPS autolink: https://github.com/llm-d/llm-d/issues/680
+
+Bare HTTP autolink: http://example.com/path/to/page
+
+A link already in markdown format should be unchanged: [llm-d](https://github.com/llm-d)
+
 ## 7. HTML Image Tag Test
 
 Images with unquoted attributes should be quoted for MDX:
 
 <p align="center">
-  <img alt="Test" src="/docs/img/docs/test.svg" width="95%" />
+  <img alt="Test" src="/img/docs/test.svg" width="95%" />
 </p>
 
-<img src="/docs/img/docs/another.png" height="200" />
+<img src="/img/docs/another.png" height="200" />
 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" />
-    <img alt="Test Arch" src="/docs/img/docs/arch.svg" width="90%" />
+    <img alt="Test Arch" src="/img/docs/arch.svg" width="90%" />
   </picture>
 </p>
 
@@ -212,26 +220,26 @@ Content with @ symbol.
 Test that well-lit-paths links are transformed correctly:
 
 Single level up:
-[Optimized Baseline](/docs/guides/optimized-baseline)
+[Optimized Baseline](/guides/optimized-baseline)
 
 Two levels up:
-[PD Disaggregation](/docs/guides/pd-disaggregation)
+[PD Disaggregation](/guides/pd-disaggregation)
 
 Index/README:
-[All Guides](/docs/guides)
+[All Guides](/guides)
 
 With any number of parent directories:
-[Guide Link](/docs/guides/flow-control)
+[Guide Link](/guides/flow-control)
 
 ## 11. README.md Link Transformations
 
 Test that README links are transformed correctly:
 
 Link to accelerators README:
-[Accelerators](/docs/accelerators)
+[Accelerators](/accelerators)
 
 Link to architecture router epp README:
-[EPP](/docs/architecture/core/router/epp)
+[EPP](/architecture/core/router/epp)
 
 Link to KV management README:
-[KV Management](/docs/architecture/advanced/kv-management)
+[KV Management](/architecture/advanced/kv-management)

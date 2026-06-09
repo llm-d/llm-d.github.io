@@ -96,6 +96,14 @@ Images with relative paths should be transformed:
 
 This should escape arrows: <->
 
+## 6b. Autolink Test
+
+Bare HTTPS autolink: <https://github.com/llm-d/llm-d/issues/680>
+
+Bare HTTP autolink: <http://example.com/path/to/page>
+
+A link already in markdown format should be unchanged: [llm-d](https://github.com/llm-d)
+
 ## 7. HTML Image Tag Test
 
 Images with unquoted attributes should be quoted for MDX:

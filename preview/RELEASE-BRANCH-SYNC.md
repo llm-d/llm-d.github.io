@@ -10,10 +10,12 @@ Starting with release 0.7.0, documentation for each release is maintained on ded
 
 ### Branch Structure
 
-- **Main branch**: Always shows latest development docs (from llm-d/llm-d@main)
+- **Main branch**: Backs the development docs (from llm-d/llm-d@main)
+  - Deployed to `/docs/dev/` on the website
 - **Release branches**: Named `release-X.Y.Z` (e.g., `release-0.7.0`)
-  - Syncs nightly from `llm-d/llm-d@release-X.Y` 
+  - Syncs nightly from `llm-d/llm-d@release-X.Y`
   - Deployed to `/docs/X.Y.Z/` on the website
+  - The highest version is additionally served at the canonical `/docs/` URL
 
 ### Workflows
 
@@ -60,23 +62,34 @@ gh workflow run create-release-branch.yml \
 
 **What it does**:
 1. Builds main website
-2. Builds preview docs (dev/main)
-3. Discovers and builds all release branches
-4. Merges everything into a single artifact:
+2. Discovers all release branches and identifies the highest version
+3. Builds dev docs (from llm-d/llm-d@main) to `/docs/dev/`
+4. Builds each release branch to `/docs/{version}/`; the highest version is
+   additionally built with `DOCS_BASE_URL=/docs/` and served at the canonical
+   `/docs/` URL
+5. Merges everything into a single artifact:
    - `/` → Main website
-   - `/docs/` → Preview docs (dev)
+   - `/docs/` → Latest stable docs (mirrors the highest `/docs/X.Y.Z/`)
+   - `/docs/dev/` → Development docs (from `llm-d/llm-d@main`)
    - `/docs/0.7.0/` → Release 0.7.0 docs
    - `/docs/0.8.0/` → Release 0.8.0 docs
    - etc.
+
+Before any release branches exist, dev docs are served at `/docs/` (no
+`/docs/dev/` is produced) so the site remains usable pre-launch.
 
 ### Version Picker
 
 The version dropdown component (`preview/src/components/VersionDropdown.tsx`) intelligently routes users:
 
-- **Version >= 0.7.0**: Links to `/docs/{version}/` on the website
+- **Latest stable**: Links to the canonical `/docs/` URL (no version segment)
+- **Dev (main)**: Links to `/docs/dev/`
+- **Other versions >= 0.7.0**: Link to `/docs/{version}/` on the website
 - **Version < 0.7.0**: Links to GitHub tree view (legacy releases)
-- **Page path preservation**: Maintains current page when switching versions
-  - Example: On `/docs/architecture` → Click v0.7.0 → Go to `/docs/0.7.0/architecture`
+- **Version switches always land on the target version's home page** rather
+  than preserving the current page path, because dev typically has pages
+  that don't yet exist in the latest release (and vice versa for renamed
+  pages), and a path-preserving link would 404 in those cases.
 
 ## Creating a New Release
 
@@ -122,17 +135,18 @@ Deployment happens automatically on the next push to main or via the nightly bui
 After creating release 0.7.0:
 
 - `https://llm-d.ai/` → Main website
-- `https://llm-d.ai/docs/` → Dev docs (main branch)
-- `https://llm-d.ai/docs/0.7.0/` → Release 0.7.0 docs
+- `https://llm-d.ai/docs/` → Latest stable docs (currently 0.7.0)
+- `https://llm-d.ai/docs/dev/` → Dev docs (main branch)
+- `https://llm-d.ai/docs/0.7.0/` → Release 0.7.0 docs (stable deep-link)
 - `https://llm-d.ai/docs/0.7.0/getting-started/` → Specific page in 0.7.0
 
 ## Version Mapping
 
 | Release Branch (llm-d.github.io) | Source Branch (llm-d/llm-d) | Website Path |
 |----------------------------------|----------------------------|--------------|
-| `release-0.7.0` | `release-0.7` | `/docs/0.7.0/` |
-| `release-0.8.0` | `release-0.8` | `/docs/0.8.0/` |
-| `main` | `main` | `/docs/` (dev) |
+| highest `release-X.Y.Z`          | `release-X.Y`              | `/docs/` *and* `/docs/X.Y.Z/` |
+| other `release-X.Y.Z`            | `release-X.Y`              | `/docs/X.Y.Z/` |
+| `main`                           | `main`                     | `/docs/dev/` |
 
 ## Maintenance
 
