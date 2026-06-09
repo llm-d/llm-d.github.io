@@ -2,7 +2,7 @@
 title: "Heterogeneous inference serving across three GPU vendors with llm-d"
 description: "Benchmarking llm-d's prefix-cache-aware routing across three anonymized GPU vendor pools (A, B, C) on the NxtGen sovereign cloud — single-vendor and heterogeneous, with up to +91% throughput and 5.4× better TTFT vs plain Kubernetes round-robin."
 slug: heterogeneous-inference-3-vendor-sovereign-cluster
-date: 2026-05-29T09:00
+date: 2026-06-09T09:00
 
 authors:
   - praveinkannan
