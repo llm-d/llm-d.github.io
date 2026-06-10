@@ -15,7 +15,7 @@ tags: [blog, batch-inference, inference, llm-d]
 
 # Scalable Batch Inference with Batch Gateway
 
-As organizations deploy AI applications in production, their inference infrastructure must serve two fundamentally different workloads simultaneously: interactive requests requiring immediate replies, and batch inference jobs that process thousands of requests with a time tolerance of hours for receiving results. Use cases for batch inference include bulk document analysis, embedding generation for large corpora, and model evaluations across large datasets.
+As organizations deploy AI applications in production, their inference infrastructure must serve two fundamentally different workloads simultaneously: interactive requests requiring immediate replies, and batch inference jobs that process thousands of requests with a time tolerance of hours for receiving results. Use cases for batch inference include autonomous background agents performing multi-step reasoning and deep research, as well as user-initiated workloads like offline evaluations, dataset processing, and embedding generation.
 
 In batch inference, instead of optimizing for low latency on individual requests, the goal is to maximize throughput across a large volume of requests while meeting defined completion time targets. Users can take advantage of differential billing between batch and interactive workloads by shifting non-urgent inference work to batch processing. The result is cost-optimized processing with minimal impact on interactive inference.
 
@@ -30,6 +30,7 @@ Running batch and interactive inference workloads side by side creates a tension
 When both compete for the same GPU resources without purpose-built tools, the outcomes are typically poor:
 
 - **Letting batch workloads degrade interactive performance** is unacceptable for production services.
+- **Batch requests evict KV-cache entries** needed by interactive workloads, forcing costly prefill reconstruction.
 - **Dedicating separate GPU pools for batch workloads** is expensive and wasteful.
 - **Manually throttling batch workloads** is operationally burdensome.
 
@@ -40,9 +41,6 @@ Batch Gateway is designed to solve this with intelligent flow control between ba
 Batch Gateway is a Kubernetes-native system composed of several components:
 
 <!-- TODO: add architecture diagram -->
-<!-- <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/scalable-batch-inference-with-batch-gateway/architecture.webp" alt="Batch Gateway architecture diagram" style={{width: '90%', height: 'auto'}} />
-</div> -->
 
 ### API Server
 
@@ -60,15 +58,15 @@ Batch Gateway uses pluggable storage backends for different functions. Each func
 | Jobs status updates | Redis |
 | File storage for input and output files | S3, Filesystem |
 
-A garbage collector process periodically cleans expired batch jobs and their associated files.
+Expired batch jobs and their associated files are periodically cleaned up.
 
 ### Batch Processor
 
-The batch processor pulls jobs from a priority queue, retrieves the input file, builds execution plans, and dispatches individual inference requests with concurrency control for downstream processing. As inference results come back, the processor writes them to an output file and continuously updates the job's status. The processor also listens for job events such as cancellation, enabling real-time control over in-flight work. In addition, the processor handles recovery from crashes during processing.
+The batch processor pulls jobs from a priority queue, retrieves the input file, builds execution plans, and dispatches individual inference requests with concurrency control for downstream processing. The processor sorts requests by system-prompt hash to maximize prefix cache hits, reducing redundant prefill computation across requests that share the same system prompt. As inference results come back, the processor writes them to an output file and continuously updates the job's status. The processor also listens for job events such as cancellation, enabling real-time control over in-flight work. In addition, the processor handles recovery from crashes during processing.
 
 ## Integration with llm-d inference components
 
-Batch Gateway is part of [llm-d](https://github.com/llm-d/llm-d), an open source Kubernetes-native framework for high-performance distributed LLM inference. Batch Gateway integrates with llm-d's components, which means that batch workloads automatically benefit from llm-d's efficient inference capabilities, such as intelligent request routing and KV-cache reuse.
+Batch Gateway is part of [llm-d](https://github.com/llm-d/llm-d), a CNCF Sandbox project and open source Kubernetes-native framework for high-performance distributed LLM inference. Batch Gateway integrates with llm-d's components, which means that batch workloads automatically benefit from llm-d's efficient inference capabilities, such as intelligent request routing and KV-cache reuse.
 
 Batch Gateway is designed to work with the [Flow Control](https://gateway-api-inference-extension.sigs.k8s.io/concepts/flow-control/) component in the [Gateway API Inference Extension](https://github.com/kubernetes-sigs/gateway-api-inference-extension) (GIE) to enable dynamic tuning of batch workload flows as well as SLO-based prioritization. This integration allows the system to:
 
