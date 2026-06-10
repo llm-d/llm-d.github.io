@@ -87,6 +87,8 @@ const config = {
             type: ["rss", "atom"],
             xslt: true,
           },
+          blogSidebarTitle: "All Posts",
+          blogSidebarCount: "ALL",
 
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
