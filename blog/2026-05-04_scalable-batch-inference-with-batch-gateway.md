@@ -8,6 +8,7 @@ authors:
   - lioraronovich
   - raymondzhao
   - jooyeonmok
+  - niliguy
 
 tags: [blog, batch-inference, inference, llm-d]
 ---
@@ -18,7 +19,7 @@ As organizations deploy AI applications in production, their inference infrastru
 
 In batch inference, instead of optimizing for low latency on individual requests, the goal is to maximize throughput across a large volume of requests while meeting defined completion time targets. Users can take advantage of differential billing between batch and interactive workloads by shifting non-urgent inference work to batch processing. The result is cost-optimized processing with minimal impact on interactive inference.
 
-[**Batch Gateway**](https://github.com/llm-d-incubation/batch-gateway) brings first-class batch inference capabilities to llm-d. It provides an OpenAI-compatible API for submitting, tracking, and managing large-scale batch jobs, while coexisting with interactive inference workloads on shared infrastructure. With OpenAI API compatibility, users can migrate existing OpenAI batch scripts with minimal changes.
+[**Batch Gateway**](https://github.com/llm-d/llm-d-batch-gateway) brings first-class batch inference capabilities to llm-d. It provides an OpenAI-compatible API for submitting, tracking, and managing large-scale batch jobs, while coexisting with interactive inference workloads on shared infrastructure. With OpenAI API compatibility, users can migrate existing OpenAI batch scripts with minimal changes.
 
 <!-- truncate -->
 
@@ -95,16 +96,16 @@ Batch Gateway is built for production operations out of the box:
 
 To learn more about Batch Gateway, check out the following resources:
 
-- To run a local demo using a *kind* cluster, see the [demo resources](https://github.com/llm-d-incubation/batch-gateway/tree/main/scripts/demo) and [prerequisites](https://github.com/llm-d-incubation/batch-gateway/blob/main/docs/guides/development.md#prerequisites).
-- To deploy in a Kubernetes cluster using demo settings, see the [demo deployment resources](https://github.com/llm-d-incubation/batch-gateway/blob/main/scripts/dev-deploy).
-- For detailed deployment and setup instructions, see the [Kubernetes deployment guide](https://github.com/llm-d-incubation/batch-gateway/blob/main/docs/guides/deploy-k8s.md).
-- The project's [documentation](https://github.com/llm-d-incubation/batch-gateway) includes the main readme, [guides](https://github.com/llm-d-incubation/batch-gateway/tree/main/docs/guides), and [design documents](https://github.com/llm-d-incubation/batch-gateway/tree/main/docs/design).
+- To run a local demo using a *kind* cluster, see the [demo resources](https://github.com/llm-d/llm-d-batch-gateway/tree/main/scripts/demo) and [prerequisites](https://github.com/llm-d/llm-d-batch-gateway/blob/main/docs/guides/development.md#prerequisites).
+- To deploy in a Kubernetes cluster using demo settings, see the [demo deployment resources](https://github.com/llm-d/llm-d-batch-gateway/blob/main/scripts/dev-deploy).
+- For detailed deployment and setup instructions, see the [Kubernetes deployment guide](https://github.com/llm-d/llm-d-batch-gateway/blob/main/docs/guides/deploy-k8s.md).
+- The project's [documentation](https://github.com/llm-d/llm-d-batch-gateway) includes the main readme, [guides](https://github.com/llm-d/llm-d-batch-gateway/tree/main/docs/guides), and [design documents](https://github.com/llm-d/llm-d-batch-gateway/tree/main/docs/design).
 
 ## Get involved with llm-d
 
 Batch Gateway is developed in the open as part of the llm-d ecosystem. If you're running LLM inference at scale and need batch processing capabilities, we'd love to have you involved.
 
-* **Explore the code** -- Browse the [Batch Gateway repo](https://github.com/llm-d-incubation/batch-gateway) and the wider [llm-d organization](https://github.com/llm-d)
+* **Explore the code** -- Browse the [Batch Gateway repo](https://github.com/llm-d/llm-d-batch-gateway) and the wider [llm-d organization](https://github.com/llm-d)
 * **Join our Slack** -- [Get your invite](/slack) and connect with maintainers and contributors
 * **Attend community calls** -- All meetings are open! Add our [public calendar](https://red.ht/llm-d-public-calendar) (Wednesdays 12:30pm ET) and join the conversation
 * **Follow project updates** -- Stay current on [Twitter/X](https://twitter.com/_llm_d_), [Bluesky](https://bsky.app/profile/llm-d.ai), and [LinkedIn](https://www.linkedin.com/company/llm-d)
