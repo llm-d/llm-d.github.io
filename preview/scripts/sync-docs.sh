@@ -249,6 +249,7 @@ cp_doc "$WIP/api-reference/inferenceobjective.md"    "$DOCS_DIR/api-reference/in
 cp_doc "$WIP/api-reference/inferencemodelrewrite.md" "$DOCS_DIR/api-reference/inferencemodelrewrite.md"
 cp_doc "$WIP/api-reference/endpointpickerconfig.md"  "$DOCS_DIR/api-reference/endpointpickerconfig.md"
 cp_doc "$WIP/api-reference/epp-http-headers.md"      "$DOCS_DIR/api-reference/epp-http-headers.md"
+cp_doc "$WIP/api-reference/epp-http-apis.md"      "$DOCS_DIR/api-reference/epp-http-apis.md"
 
 # === Accelerators ===
 cp_doc "$WIP/accelerators/README.md"                 "$DOCS_DIR/accelerators/index.md"
