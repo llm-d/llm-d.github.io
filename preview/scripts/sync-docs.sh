@@ -251,7 +251,7 @@ cp_doc "$WIP/api-reference/inferenceobjective.md"    "$DOCS_DIR/api-reference/in
 cp_doc "$WIP/api-reference/inferencemodelrewrite.md" "$DOCS_DIR/api-reference/inferencemodelrewrite.md"
 cp_doc "$WIP/api-reference/endpointpickerconfig.md"  "$DOCS_DIR/api-reference/endpointpickerconfig.md"
 cp_doc "$WIP/api-reference/epp-http-headers.md"      "$DOCS_DIR/api-reference/epp-http-headers.md"
-cp_doc "$WIP/api-reference/epp-http-apis.md"      "$DOCS_DIR/api-reference/epp-http-apis.md"
+cp_doc "$WIP/api-reference/epp-http-apis.md"         "$DOCS_DIR/api-reference/epp-http-apis.md"
 
 # === Accelerators ===
 cp_doc "$WIP/accelerators/README.md"                 "$DOCS_DIR/accelerators/index.md"
@@ -355,7 +355,9 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](../../architecture/advanced/batch/batch-gateway\.md)|\](/architecture/advanced/batch/batch-gateway)|g' \
         -e 's|llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/profile)|llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/profilehandler)|g' \
         -e 's|\](../../guides/optimized-baseline)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
+        -e 's|\](../../guides/multimodal/optimized-baseline/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/multimodal/optimized-baseline)|g' \
         -e 's|\](../../guides/precise-prefix-cache-routing)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing)|g' \
+        -e 's|\](../../../../../guides/precise-prefix-cache-routing/README\.md)|\](/guides/precise-prefix-cache-routing)|g' \
         -e 's|\](../../guides/tiered-prefix-cache)|\](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache)|g' \
         -e 's|\](../../guides/asynchronous-processing)|\](https://github.com/llm-d/llm-d/tree/main/guides/asynchronous-processing)|g' \
         -e 's|\](../../guides/flow-control)|\](https://github.com/llm-d/llm-d/tree/main/guides/flow-control)|g' \
@@ -590,6 +592,7 @@ sed_inplace \
     -e 's|\](inferencemodelrewrite\.md)|\](/api-reference/inferencemodelrewrite)|g' \
     -e 's|\](endpointpickerconfig\.md)|\](/api-reference/endpointpickerconfig)|g' \
     -e 's|\](epp-http-headers\.md)|\](/api-reference/epp-http-headers)|g' \
+    -e 's|\](epp-http-apis\.md)|\](/api-reference/epp-http-apis)|g' \
     -e 's|\](glossary\.md)|\](/api-reference/glossary)|g' \
     "$DOCS_DIR/api-reference/index.md"
 
