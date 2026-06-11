@@ -207,3 +207,13 @@ Link to architecture router epp README:
 
 Link to KV management README:
 [KV Management](../../architecture/advanced/kv-management/README.md)
+
+Synced upstream guide (precise-prefix-cache-routing):
+[Precise Routing](../../../../../guides/precise-prefix-cache-routing/README.md)
+
+Synced upstream guide under old name (precise-prefix-cache-aware → routing):
+[Precise Routing Aware](../../../../../guides/precise-prefix-cache-aware/README.md)
+
+Non-synced upstream guide (multimodal → GitHub):
+[Multimodal Guide](../../guides/multimodal/optimized-baseline/README.md)
+

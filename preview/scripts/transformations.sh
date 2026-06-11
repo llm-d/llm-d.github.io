@@ -91,6 +91,8 @@ apply_transformations() {
         -e 's|\](.*\/accelerators/README\.md)|\](/accelerators)|g' \
         -e 's|\](.*\/architecture/core/router/epp/README\.md)|\](/architecture/core/router/epp)|g' \
         -e 's|\](.*\/architecture/advanced/kv-management/README\.md)|\](/architecture/advanced/kv-management)|g' \
+        -e 's|\](.*\/guides/precise-prefix-cache-routing/README\.md)|\](/guides/precise-prefix-cache-routing)|g' \
+        -e 's|\](.*\/guides/precise-prefix-cache-aware/README\.md)|\](/guides/precise-prefix-cache-routing)|g' \
         "$file"
 
     # Fix /guides/README (without .md extension)
@@ -127,6 +129,7 @@ apply_transformations() {
         -e 's|\](.*\/guides/prereq/gateways/istio\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/istio.md)|g' \
         -e 's|\](.*\/guides/prereq/gateways/gke\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/gke.md)|g' \
         -e 's|\](.*\/guides/prereq/gateways/agentgateway\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/agentgateway.md)|g' \
+        -e 's|\](.*\/guides/multimodal/optimized-baseline/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/multimodal/optimized-baseline/README.md)|g' \
         "$file"
 
     # Fix unclosed HTML tags for MDX (must be self-closing)
