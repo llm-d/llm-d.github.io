@@ -167,6 +167,7 @@ echo "    Copying well-lit-paths overview pages..."
 
 cp_doc "$WIP/well-lit-paths/README.md"                      "$DOCS_DIR/guides/index.md"
 cp_doc "$WIP/well-lit-paths/optimized-baseline.md"          "$DOCS_DIR/guides/optimized-baseline.md"
+cp_doc "$WIP/well-lit-paths/multimodal-serving.md"          "$DOCS_DIR/guides/multimodal-serving.md"
 cp_doc "$WIP/well-lit-paths/precise-prefix-cache-routing.md" "$DOCS_DIR/guides/precise-prefix-cache-routing.md"
 cp_doc "$WIP/well-lit-paths/tiered-prefix-cache.md"         "$DOCS_DIR/guides/tiered-prefix-cache.md"
 cp_doc "$WIP/well-lit-paths/asynchronous-processing.md"     "$DOCS_DIR/guides/asynchronous-processing.md"
@@ -197,6 +198,7 @@ sed_inplace \
 # under docs/guides/* for sync/edit compatibility.
 set_doc_slug "$DOCS_DIR/guides/index.md" "/well-lit-paths"
 set_doc_slug "$DOCS_DIR/guides/optimized-baseline.md" "/well-lit-paths/optimized-baseline"
+set_doc_slug "$DOCS_DIR/guides/multimodal-serving.md" "/well-lit-paths/multimodal-serving"
 set_doc_slug "$DOCS_DIR/guides/precise-prefix-cache-routing.md" "/well-lit-paths/precise-prefix-cache-routing"
 set_doc_slug "$DOCS_DIR/guides/tiered-prefix-cache.md" "/well-lit-paths/tiered-prefix-cache"
 set_doc_slug "$DOCS_DIR/guides/asynchronous-processing.md" "/well-lit-paths/asynchronous-processing"
