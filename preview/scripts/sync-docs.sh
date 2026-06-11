@@ -177,7 +177,8 @@ cp_doc "$WIP/well-lit-paths/predicted-latency.md"           "$DOCS_DIR/guides/pr
 cp_doc "$WIP/well-lit-paths/wide-expert-parallelism.md"     "$DOCS_DIR/guides/wide-expert-parallelism.md"
 cp_doc "$WIP/well-lit-paths/workload-autoscaling.md"        "$DOCS_DIR/guides/workload-autoscaling.md"
 cp_doc "$WIP/well-lit-paths/no-kubernetes-deployment.md"    "$DOCS_DIR/guides/no-kubernetes-deployment.md"
-cp_doc "$WIP/well-lit-paths/experimental/batch-gateway.md"  "$DOCS_DIR/guides/batch-gateway.md"
+cp_doc "$WIP/well-lit-paths/batch-gateway.md"               "$DOCS_DIR/guides/batch-gateway.md"
+cp_doc "$WIP/well-lit-paths/agentic-inference.md"          "$DOCS_DIR/guides/agentic-inference.md"
 
 sed_inplace \
     -e 's|\](optimized-baseline\.md)|\](/guides/optimized-baseline)|g' \
@@ -190,7 +191,10 @@ sed_inplace \
     -e 's|\](flow-control\.md)|\](/guides/flow-control)|g' \
     -e 's|\](workload-autoscaling\.md)|\](/guides/workload-autoscaling)|g' \
     -e 's|\](asynchronous-processing\.md)|\](/guides/asynchronous-processing)|g' \
+    -e 's|\](batch-gateway\.md)|\](/guides/batch-gateway)|g' \
     -e 's|\](experimental/batch-gateway\.md)|\](/guides/batch-gateway)|g' \
+    -e 's|\](agentic-inference\.md)|\](/guides/agentic-inference)|g' \
+    -e 's|\](\./multimodal-serving/optimized-baseline/README\.md)|\](/guides/multimodal-serving)|g' \
     -e 's|\](no-kubernetes-deployment\.md)|\](/guides/no-kubernetes-deployment)|g' \
     "$DOCS_DIR/guides/index.md"
 
@@ -209,6 +213,24 @@ set_doc_slug "$DOCS_DIR/guides/wide-expert-parallelism.md" "/well-lit-paths/wide
 set_doc_slug "$DOCS_DIR/guides/workload-autoscaling.md" "/well-lit-paths/workload-autoscaling"
 set_doc_slug "$DOCS_DIR/guides/no-kubernetes-deployment.md" "/well-lit-paths/no-kubernetes-deployment"
 set_doc_slug "$DOCS_DIR/guides/batch-gateway.md" "/well-lit-paths/batch-gateway"
+set_doc_slug "$DOCS_DIR/guides/agentic-inference.md" "/well-lit-paths/agentic-inference"
+
+# Patch agentic-inference internal links for Docusaurus slug resolution.
+if [[ -f "$DOCS_DIR/guides/agentic-inference.md" ]]; then
+    sed_inplace \
+        -e 's|\](../../guides/agentic-inference)|\](/guides/agentic-inference)|g' \
+        "$DOCS_DIR/guides/agentic-inference.md"
+fi
+
+# Patch upstream multimodal markdown for Docusaurus MDX compatibility and local links.
+if [[ -f "$DOCS_DIR/guides/multimodal-serving.md" ]]; then
+    sed_inplace \
+        -e 's|^\$\$\\text{Tokens} = \\frac{\\text{Image Width} \\times \\text{Image Height}}{\\text{Factor}}\$\$|`Tokens = (Image Width * Image Height) / Factor`|g' \
+        -e 's|\](../../guides/multimodal-serving/optimized-baseline)|\](/guides/optimized-baseline)|g' \
+        -e 's|\](../../guides/multimodal-serving/e-disaggregation)|\](/guides/pd-disaggregation)|g' \
+        -e 's|\](../advanced/kv-management/kv-indexer\.md)|\](/architecture/advanced/kv-management/kv-indexer)|g' \
+        "$DOCS_DIR/guides/multimodal-serving.md"
+fi
 
 # === Resources / Observability ===
 # llm-d/llm-d#1542: docs/resources/observability/ (setup, metrics, tracing, promql).
@@ -355,7 +377,7 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](../../architecture/advanced/batch/batch-gateway\.md)|\](/architecture/advanced/batch/batch-gateway)|g' \
         -e 's|llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/profile)|llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/profilehandler)|g' \
         -e 's|\](../../guides/optimized-baseline)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
-        -e 's|\](../../guides/multimodal/optimized-baseline/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/multimodal/optimized-baseline)|g' \
+        -e 's|\](../../guides/multimodal/optimized-baseline/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/optimized-baseline)|g' \
         -e 's|\](../../guides/precise-prefix-cache-routing)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing)|g' \
         -e 's|\](../../../../../guides/precise-prefix-cache-routing/README\.md)|\](/guides/precise-prefix-cache-routing)|g' \
         -e 's|\](../../guides/tiered-prefix-cache)|\](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache)|g' \

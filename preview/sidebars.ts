@@ -116,6 +116,7 @@ const sidebars: SidebarsConfig = {
         'guides/predicted-latency',
         'guides/wide-expert-parallelism',
         'guides/workload-autoscaling',
+        'guides/agentic-inference',
         'guides/batch-gateway',
         'guides/no-kubernetes-deployment',
       ],

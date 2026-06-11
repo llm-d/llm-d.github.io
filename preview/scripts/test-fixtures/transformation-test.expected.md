@@ -251,5 +251,5 @@ Synced upstream guide under old name (precise-prefix-cache-aware → routing):
 [Precise Routing Aware](/guides/precise-prefix-cache-routing)
 
 Non-synced upstream guide (multimodal → GitHub):
-[Multimodal Guide](https://github.com/llm-d/llm-d/tree/main/guides/multimodal/optimized-baseline/README.md)
+[Multimodal Guide](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/optimized-baseline/README.md)
 

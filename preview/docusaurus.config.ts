@@ -108,7 +108,8 @@ const config: Config = {
                 'precise-prefix-cache-aware.md': 'precise-prefix-cache-routing',
                 'predicted-latency-routing.md': 'predicted-latency',
                 'wide-ep-lws.md': 'wide-expert-parallelism',
-                'batch-gateway.md': 'experimental/batch-gateway',
+                'batch-gateway.md': 'batch-gateway',
+                'experimental/batch-gateway.md': 'batch-gateway',
               };
               const guideDirToWellLitFile: Record<string, string> = {
                 'optimized-baseline': 'optimized-baseline',
@@ -130,7 +131,7 @@ const config: Config = {
                 // Non Well-Lit directory content (e.g. recipes) still lives under guides/
                 return `https://github.com/llm-d/llm-d/blob/main/${sourcePath}`;
               }
-              const flatGuideName = parts[1];
+              const flatGuideName = parts.slice(1).join('/');
               const flatWellLitFile = flatGuideToWellLitFile[flatGuideName];
               if (flatWellLitFile) {
                 return `https://github.com/llm-d/llm-d/blob/main/docs/well-lit-paths/${flatWellLitFile}.md`;
