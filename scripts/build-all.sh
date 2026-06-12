@@ -29,6 +29,14 @@ echo "llm-d.ai Unified Build Script"
 echo "========================================="
 echo ""
 
+# Pre-step: Sync preview/docs so the main site build can find them
+echo "Pre-step: Syncing docs content..."
+cd "$PROJECT_DIR/preview"
+bash scripts/sync-docs.sh "$DEV_DOCS_BRANCH"
+cd "$PROJECT_DIR"
+echo "✓ Docs synced to preview/docs/"
+echo ""
+
 # Step 1: Build main site (landing, blog, community)
 echo "Step 1: Building main site..."
 cd "$PROJECT_DIR"

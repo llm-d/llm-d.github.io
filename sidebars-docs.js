@@ -1,25 +1,27 @@
-import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
+// @ts-check
 
-// Sidebar structure matching docs/wip-docs-new/outline.md exactly
-const sidebars: SidebarsConfig = {
+/** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
+const sidebars = {
   docsSidebar: [
-    // ==================== Getting Started ====================
+    {
+      type: 'doc',
+      id: 'getting-started/index',
+      label: 'Intro to llm-d',
+    },
     {
       type: 'category',
       label: 'Getting Started',
-      collapsed: false,
-      link: {type: 'doc', id: 'getting-started/index'},
+      collapsed: true,
       items: [
         'getting-started/quickstart',
         'getting-started/artifacts',
       ],
     },
-    // ==================== Architecture ====================
     {
       type: 'category',
       label: 'Architecture',
       collapsed: true,
-      link: {type: 'doc', id: 'architecture/index'},
+      link: { type: 'doc', id: 'architecture/index' },
       items: [
         {
           type: 'category',
@@ -30,13 +32,13 @@ const sidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Router',
-              link: {type: 'doc', id: 'architecture/core/router/index'},
+              link: { type: 'doc', id: 'architecture/core/router/index' },
               items: [
                 'architecture/core/router/proxy',
                 {
                   type: 'category',
                   label: 'EPP',
-                  link: {type: 'doc', id: 'architecture/core/router/epp/index'},
+                  link: { type: 'doc', id: 'architecture/core/router/epp/index' },
                   items: [
                     'architecture/core/router/epp/request-handling',
                     'architecture/core/router/epp/flow-control',
@@ -59,17 +61,15 @@ const sidebars: SidebarsConfig = {
               type: 'category',
               label: 'Disaggregation',
               collapsed: false,
-              link: {type: 'doc', id: 'architecture/advanced/disaggregation/index'},
-              items: [
-                'architecture/advanced/disaggregation/operations-vllm',
-              ],
+              link: { type: 'doc', id: 'architecture/advanced/disaggregation/index' },
+              items: ['architecture/advanced/disaggregation/operations-vllm'],
             },
             'architecture/advanced/latency-predictor',
             {
               type: 'category',
               label: 'KV Cache Management',
               collapsed: false,
-              link: {type: 'doc', id: 'architecture/advanced/kv-management/index'},
+              link: { type: 'doc', id: 'architecture/advanced/kv-management/index' },
               items: [
                 'architecture/advanced/kv-management/prefix-cache-aware-routing',
                 'architecture/advanced/kv-management/kv-indexer',
@@ -80,7 +80,7 @@ const sidebars: SidebarsConfig = {
               type: 'category',
               label: 'Autoscaling',
               collapsed: false,
-              link: {type: 'doc', id: 'architecture/advanced/autoscaling/index'},
+              link: { type: 'doc', id: 'architecture/advanced/autoscaling/index' },
               items: [
                 'architecture/advanced/autoscaling/workload-variant-autoscaling',
                 'architecture/advanced/autoscaling/igw-hpa',
@@ -90,7 +90,7 @@ const sidebars: SidebarsConfig = {
               type: 'category',
               label: 'Batch Processing',
               collapsed: false,
-              link: {type: 'doc', id: 'architecture/advanced/batch/index'},
+              link: { type: 'doc', id: 'architecture/advanced/batch/index' },
               items: [
                 'architecture/advanced/batch/batch-gateway',
                 'architecture/advanced/batch/async-processor',
@@ -100,12 +100,11 @@ const sidebars: SidebarsConfig = {
         },
       ],
     },
-    // ==================== Well-Lit Paths ====================
     {
       type: 'category',
       label: 'Well-Lit Paths',
-      collapsed: false,
-      link: {type: 'doc', id: 'guides/index'},
+      collapsed: true,
+      link: { type: 'doc', id: 'guides/index' },
       items: [
         'guides/optimized-baseline',
         'guides/precise-prefix-cache-routing',
@@ -120,7 +119,6 @@ const sidebars: SidebarsConfig = {
         'guides/no-kubernetes-deployment',
       ],
     },
-    // ==================== Resources ====================
     {
       type: 'category',
       label: 'Resources',
@@ -130,7 +128,7 @@ const sidebars: SidebarsConfig = {
           type: 'category',
           label: 'Gateway',
           collapsed: false,
-          link: {type: 'doc', id: 'resources/gateway/index'},
+          link: { type: 'doc', id: 'resources/gateway/index' },
           items: [
             'resources/gateway/istio',
             'resources/gateway/gke',
@@ -141,7 +139,7 @@ const sidebars: SidebarsConfig = {
           type: 'category',
           label: 'Infrastructure Providers',
           collapsed: false,
-          link: {type: 'doc', id: 'resources/infra-providers/index'},
+          link: { type: 'doc', id: 'resources/infra-providers/index' },
           items: [
             'resources/infra-providers/aks',
             'resources/infra-providers/digitalocean',
@@ -155,7 +153,7 @@ const sidebars: SidebarsConfig = {
           type: 'category',
           label: 'Observability',
           collapsed: false,
-          link: {type: 'doc', id: 'resources/observability/index'},
+          link: { type: 'doc', id: 'resources/observability/index' },
           items: [
             'resources/observability/setup',
             'resources/observability/metrics',
@@ -166,15 +164,12 @@ const sidebars: SidebarsConfig = {
         'resources/rdma/rdma-configuration',
       ],
     },
-    // ==================== API Reference ====================
     {
       type: 'category',
       label: 'API Reference',
       collapsed: true,
-      link: {type: 'doc', id: 'api-reference/index'},
-      items: [
-        'api-reference/glossary',
-      ],
+      link: { type: 'doc', id: 'api-reference/index' },
+      items: ['api-reference/glossary'],
     },
   ],
 };

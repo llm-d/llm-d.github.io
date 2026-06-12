@@ -1,15 +1,18 @@
+import ThemedImage from '@theme/ThemedImage';
+
 export default function Welcome() {
   return (
     <div className="welcome welcome-viewport">
       <div className="welcome-info">
-        {/* <h1 className="header">llm-d </h1> */}
-        <img
+        <ThemedImage
           className="llm-d-logo"
           width="75%"
-          valign="middle"
           alt="llm-d"
-          src="img/llm-d-logotype-and-icon.png"
-        ></img>
+          sources={{
+            light: '/img/llm-d-logo-light.svg',
+            dark: '/img/llm-d-logo-dark.svg',
+          }}
+        />
 
         <h2 className="welcome-h2">
           llm-d: a high-performance and scalable distributed LLM inference framework
