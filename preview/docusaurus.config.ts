@@ -270,7 +270,20 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} llm-d project. Apache 2.0 License.`,
+      copyright: `Copyright © ${new Date().getFullYear()} llm-d project. Apache 2.0 License.<br />\
+        We are a Cloud Native Computing Foundation sandbox project.<br />\
+        For website terms of use, trademark policy and other project policies please see <a href="https://lfprojects.org/policies/" target="_blank" rel="noreferrer noopener">https://lfprojects.org/policies/</a>`,
+      logo: {
+        alt: "llm-d Logo",
+        src: "img/cncf-white.png",
+        href: "https://cncf.io",
+        target: "_blank",
+        width: 240,
+        className: "footer-logo",
+        style: {
+          marginRight: "10px",
+        },
+      },
     },
     prism: {
       theme: prismThemes.github,
