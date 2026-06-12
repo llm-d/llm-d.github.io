@@ -43,7 +43,7 @@ Batch Gateway is part of [llm-d](https://github.com/llm-d/llm-d), a CNCF Sandbox
 Batch Gateway is a Kubernetes-native system composed of several components:
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blog-images/batch-gateway-arch.webp" alt="Batch Gateway architecture diagram" style={{width: '90%', height: 'auto'}} />
+  <img src="/img/blog-images/batch-gateway-arch.webp" alt="Batch Gateway architecture diagram" style={{width: '100%', height: 'auto'}} />
 </div>
 
 ### API Server
