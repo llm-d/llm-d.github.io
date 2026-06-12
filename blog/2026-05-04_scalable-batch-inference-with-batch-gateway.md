@@ -1,8 +1,8 @@
 ---
 title: "Scalable Batch Inference with Batch Gateway"
-description: "Batch Gateway brings first-class batch inference capabilities to llm-d, providing an OpenAI-compatible API for submitting, tracking, and managing large-scale batch jobs while coexisting with interactive inference on shared infrastructure."
+description: "Batch Gateway brings first-class batch inference capabilities to llm-d, providing an OpenAI-compatible API for submitting, tracking, and managing large-scale batch jobs, running efficiently alongside interactive inference on shared infrastructure."
 slug: scalable-batch-inference-with-batch-gateway
-date: 2026-05-04T09:00
+date: 2026-06-12T09:00
 
 authors:
   - lioraronovich
@@ -17,30 +17,30 @@ tags: [blog, batch-inference, inference, llm-d]
 
 As organizations deploy AI applications in production, their inference infrastructure must serve two fundamentally different workloads simultaneously: interactive requests requiring immediate replies, and batch inference jobs that process thousands of requests with a time tolerance of hours for receiving results. Use cases for batch inference include autonomous background agents performing multi-step reasoning and deep research, as well as user-initiated workloads like offline evaluations, dataset processing, and embedding generation.
 
-In batch inference, instead of optimizing for low latency on individual requests, the goal is to maximize throughput across a large volume of requests while meeting defined completion time targets. Users can take advantage of differential billing between batch and interactive workloads by shifting non-urgent inference work to batch processing. The result is cost-optimized processing with minimal impact on interactive inference.
+In batch inference, the goal is to maximize throughput across a large volume of requests while meeting defined completion time targets, without interfering with interactive traffic. Non-urgent inference can fill GPU capacity during periods of lower interactive traffic, increasing infrastructure utilization. Users can also take advantage of differential billing between batch and interactive workloads for cost-optimized processing.
 
-[**Batch Gateway**](https://github.com/llm-d/llm-d-batch-gateway) brings first-class batch inference capabilities to llm-d. It provides an OpenAI-compatible API for submitting, tracking, and managing large-scale batch jobs, while coexisting with interactive inference workloads on shared infrastructure. With OpenAI API compatibility, users can migrate existing OpenAI batch scripts with minimal changes.
+[**Batch Gateway**](https://github.com/llm-d/llm-d-batch-gateway) brings first-class batch inference capabilities to llm-d. It provides an OpenAI-compatible API for submitting, tracking, and managing large-scale batch jobs, running efficiently alongside interactive inference workloads on shared infrastructure. With OpenAI API compatibility, users can migrate existing OpenAI batch scripts with minimal changes.
 
 <!-- truncate -->
 
 ## The challenge: batch and interactive workloads on shared infrastructure
 
-Running batch and interactive inference workloads side by side creates a tension that most inference platforms don't address well. Interactive traffic requires low latency and predictable response times. Batch workloads need sustained throughput over extended periods.
-
-When both compete for the same GPU resources without purpose-built tools, the outcomes are typically poor:
+When batch and interactive inference workloads compete for the same GPU resources without purpose-built tools, the outcomes are typically poor:
 
 - **Letting batch workloads degrade interactive performance** is unacceptable for production services.
 - **Batch requests evict KV-cache entries** needed by interactive workloads, forcing costly prefill reconstruction.
 - **Dedicating separate GPU pools for batch workloads** is expensive and wasteful.
 - **Manually throttling batch workloads** is operationally burdensome.
 
-Batch Gateway is designed to solve this with intelligent flow control between batch and interactive workloads, using downstream system metrics to dynamically adjust the rate of batch requests. Batch Gateway also prioritizes jobs based on their Service Level Objective (SLO) targets, and processes requests within each job concurrently. When submitting a batch job, users specify a requested completion window, and the system prioritizes work to meet these targets. The result is that batch jobs make steady progress toward their SLO without interfering with interactive traffic.
+Batch Gateway is designed to solve this by dynamically adjusting batch flow based on available infrastructure capacity. Batch Gateway also prioritizes jobs based on their Service Level Objective (SLO) targets, and processes requests within each job concurrently. The result is that batch jobs make steady progress toward their completion targets without interfering with interactive traffic.
 
 ## How Batch Gateway works
 
 Batch Gateway is a Kubernetes-native system composed of several components:
 
-<!-- TODO: add architecture diagram -->
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blog-images/batch-gateway-arch.webp" alt="Batch Gateway architecture diagram" style={{width: '90%', height: 'auto'}} />
+</div>
 
 ### API Server
 
