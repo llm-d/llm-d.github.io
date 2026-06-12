@@ -13,7 +13,8 @@ import remoteContentPlugins from "./remote-content/remote-content.js";
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: "llm-d",
-  tagline: "Open source, high-performance and scalable LLM inference - Achieve state-of-the-art inference performance on any accelerator with intelligent scheduling, KV-cache optimization, and seamless scaling.",
+  tagline:
+    "Open source, high-performance and scalable LLM inference - Achieve state-of-the-art inference performance on any accelerator with intelligent scheduling, KV-cache optimization, and seamless scaling.",
   favicon: "img/llm-d-favicon.png",
 
   url: "https://llm-d.ai/",
@@ -41,23 +42,24 @@ const config = {
   // SEO: Organization structured data for rich search results
   headTags: [
     {
-      tagName: 'script',
+      tagName: "script",
       attributes: {
-        type: 'application/ld+json',
+        type: "application/ld+json",
       },
       innerHTML: JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'Organization',
-        name: 'llm-d',
-        url: 'https://llm-d.ai',
-        logo: 'https://llm-d.ai/img/llm-d-icon.png',
-        description: 'Open source, Kubernetes-native LLM inference - Achieve state-of-the-art inference performance on any accelerator with intelligent scheduling, KV-cache optimization, and seamless scaling.',
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        name: "llm-d",
+        url: "https://llm-d.ai",
+        logo: "https://llm-d.ai/img/llm-d-icon.png",
+        description:
+          "Open source, Kubernetes-native LLM inference - Achieve state-of-the-art inference performance on any accelerator with intelligent scheduling, KV-cache optimization, and seamless scaling.",
         sameAs: [
-          'https://github.com/llm-d',
-          'https://linkedin.com/company/llm-d',
-          'https://x.com/_llm_d_',
-          'https://bsky.app/profile/llm-d.ai',
-          'https://www.reddit.com/r/llm_d/',
+          "https://github.com/llm-d",
+          "https://linkedin.com/company/llm-d",
+          "https://x.com/_llm_d_",
+          "https://bsky.app/profile/llm-d.ai",
+          "https://www.reddit.com/r/llm_d/",
         ],
       }),
     },
@@ -66,11 +68,11 @@ const config = {
   // Add kapa.ai AI assistant widget
   scripts: [
     {
-      src: 'https://widget.kapa.ai/kapa-widget.bundle.js',
-      'data-website-id': '1eea1a6a-a57b-48d7-a4aa-c993481daad7',
-      'data-project-name': 'llm-d',
-      'data-project-color': '#9b4d9b',
-      'data-project-logo': 'https://llm-d.ai/img/llm-d-favicon.png',
+      src: "https://widget.kapa.ai/kapa-widget.bundle.js",
+      "data-website-id": "1eea1a6a-a57b-48d7-a4aa-c993481daad7",
+      "data-project-name": "llm-d",
+      "data-project-color": "#9b4d9b",
+      "data-project-logo": "https://llm-d.ai/img/llm-d-favicon.png",
       async: true,
     },
   ],
@@ -114,10 +116,8 @@ const config = {
   ],
 
   // Client modules - run on every page
-  clientModules: [
-    require.resolve('./src/clientModules/analytics.js'),
-  ],
-  
+  clientModules: [require.resolve("./src/clientModules/analytics.js")],
+
   // Plugins configuration
   plugins: [
     // Remote content plugins (managed independently)
@@ -125,12 +125,12 @@ const config = {
 
     // Community docs as separate plugin instance
     [
-      '@docusaurus/plugin-content-docs',
+      "@docusaurus/plugin-content-docs",
       {
-        id: 'community',
-        path: 'community',
-        routeBasePath: 'community',
-        sidebarPath: require.resolve('./sidebars.js'),
+        id: "community",
+        path: "community",
+        routeBasePath: "community",
+        sidebarPath: require.resolve("./sidebars.js"),
         sidebarCollapsible: false,
       },
     ],
@@ -148,12 +148,12 @@ const config = {
     // ['docusaurus-plugin-sass', {}],
     // Add any other plugins you need
   ],
-  
-  markdown: { 
+
+  markdown: {
     mermaid: true,
     hooks: {
-      onBrokenMarkdownLinks: "warn"
-    }
+      onBrokenMarkdownLinks: "warn",
+    },
   },
   themes: ["@docusaurus/theme-mermaid"],
 
@@ -161,26 +161,26 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       // Social card image for Open Graph and Twitter Cards
-      image: 'img/llm-d-social-card.jpg',
-      
+      image: "img/llm-d-social-card.jpg",
+
       // Additional meta tags for social media (Twitter/X, LinkedIn, Bluesky, etc.)
       metadata: [
         // Twitter/X specific
-        { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:site', content: '@_llm_d_' },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:site", content: "@_llm_d_" },
         // Open Graph (LinkedIn, Bluesky, Facebook, etc.)
-        { property: 'og:type', content: 'website' },
-        { property: 'og:site_name', content: 'llm-d' },
-        { property: 'og:locale', content: 'en_US' },
+        { property: "og:type", content: "website" },
+        { property: "og:site_name", content: "llm-d" },
+        { property: "og:locale", content: "en_US" },
       ],
 
       // Announcement banner for v0.7 release
       announcementBar: {
-        id: 'llm-d-v0-7-release',
+        id: "llm-d-v0-7-release",
         content:
           '🎉 <b>llm-d 0.7 is now available!</b> Explore our completely revamped documentation with comprehensive guides, architecture deep-dives, and production deployment patterns. <a target="_self" rel="noopener noreferrer" href="/docs/getting-started"><b>Browse the docs →</b></a>',
-        backgroundColor: '#7f317f',
-        textColor: '#fff',
+        backgroundColor: "#7f317f",
+        textColor: "#fff",
         isCloseable: true,
       },
 
@@ -192,9 +192,10 @@ const config = {
         },
         items: [
           {
-            type: 'html',
-            position: 'left',
-            value: '<a href="/docs/getting-started" class="navbar__item navbar__link">Documentation</a>',
+            type: "html",
+            position: "left",
+            value:
+              '<a href="/docs/getting-started" class="navbar__item navbar__link">Documentation</a>',
           },
           { to: "/blog", label: "Blog", position: "left" },
           {
@@ -206,16 +207,18 @@ const config = {
           },
           { to: "/videos", label: "Videos", position: "left" },
           {
-            type: 'html',
-            position: 'right',
-            className: 'navbar-github-stars',
-            value: '<iframe src="https://ghbtns.com/github-btn.html?user=llm-d&repo=llm-d&type=star&count=true&size=large" frameborder="0" scrolling="0" width="170" height="30" title="GitHub Star" style="vertical-align: middle;"></iframe>',
+            type: "html",
+            position: "right",
+            className: "navbar-github-stars",
+            value:
+              '<iframe src="https://ghbtns.com/github-btn.html?user=llm-d&repo=llm-d&type=star&count=true&size=large" frameborder="0" scrolling="0" width="170" height="30" title="GitHub Star" style="vertical-align: middle;"></iframe>',
           },
           {
-            type: 'html',
-            position: 'right',
-            className: 'navbar-slack-item',
-            value: '<a href="/slack" class="navbar-slack-button"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><title>Slack</title><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"></path></svg>Join Slack</a>',
+            type: "html",
+            position: "right",
+            className: "navbar-slack-item",
+            value:
+              '<a href="/slack" class="navbar-slack-button"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><title>Slack</title><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"></path></svg>Join Slack</a>',
           },
         ],
       },
@@ -223,6 +226,20 @@ const config = {
       // Config for footer here
       footer: {
         style: "dark",
+        copyright: `Copyright © ${new Date().getFullYear()} llm-d project. Apache 2.0 License.<br />\
+        We are a Cloud Native Computing Foundation sandbox project.<br />\
+        For website terms of use, trademark policy and other project policies please see <a href="https://lfprojects.org/policies/" target="_blank" rel="noreferrer noopener">https://lfprojects.org/policies/</a>`,
+        logo: {
+          alt: "llm-d Logo",
+          src: "img/cncf-white.png",
+          href: "https://cncf.io",
+          target: "_blank",
+          width: 240,
+          className: "footer-logo",
+          style: {
+            marginRight: "10px",
+          },
+        },
         links: [
           {
             title: "Documentation",
@@ -247,7 +264,7 @@ const config = {
               },
               {
                 label: "Contributing",
-                href: "/community/contribute"
+                href: "/community/contribute",
               },
               {
                 label: "Code of Conduct",
@@ -312,7 +329,7 @@ const config = {
       prism: {
         theme: prismThemes.github,
         darkTheme: prismThemes.dracula,
-        additionalLanguages: ['yaml'],
+        additionalLanguages: ["yaml"],
       },
     }),
 };
