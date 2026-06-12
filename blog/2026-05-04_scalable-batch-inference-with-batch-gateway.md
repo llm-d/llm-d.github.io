@@ -34,6 +34,10 @@ When batch and interactive inference workloads compete for the same GPU resource
 
 Batch Gateway is designed to solve this by dynamically adjusting batch flow based on available infrastructure capacity. Batch Gateway also prioritizes jobs based on their Service Level Objective (SLO) targets, and processes requests within each job concurrently. The result is that batch jobs make steady progress toward their completion targets without interfering with interactive traffic.
 
+Batch Gateway is production-grade, designed for shared multi-tenant environments where security, reliability, observability, and SLO compliance are essential.
+
+Batch Gateway is part of [llm-d](https://github.com/llm-d/llm-d), a CNCF Sandbox project and open source Kubernetes-native framework for high-performance distributed LLM inference. Batch Gateway integrates with llm-d's components, which means that batch workloads automatically benefit from llm-d's efficient inference capabilities, such as intelligent request routing, flow-control, and KV-cache reuse.
+
 ## How Batch Gateway works
 
 Batch Gateway is a Kubernetes-native system composed of several components:
@@ -52,52 +56,26 @@ Batch Gateway uses pluggable storage backends for different functions. Each func
 
 | Function | Available plug-ins |
 |----------|-------------------|
-| Jobs and files metadata storage | PostgreSQL, Redis |
-| Priority queue for jobs | Redis |
-| Event channels | Redis |
-| Jobs status updates | Redis |
+| Jobs and files metadata storage | PostgreSQL (for production), Redis, Valkey |
+| Priority queue for jobs | Redis, Valkey |
+| Event channels | Redis, Valkey |
+| Jobs status updates | Redis, Valkey |
 | File storage for input and output files | S3, Filesystem |
 
 Expired batch jobs and their associated files are periodically cleaned up.
 
 ### Batch Processor
 
-The batch processor pulls jobs from a priority queue, retrieves the input file, builds execution plans, and dispatches individual inference requests with concurrency control for downstream processing. The processor sorts requests by system-prompt hash to maximize prefix cache hits, reducing redundant prefill computation across requests that share the same system prompt. As inference results come back, the processor writes them to an output file and continuously updates the job's status. The processor also listens for job events such as cancellation, enabling real-time control over in-flight work. In addition, the processor handles recovery from crashes during processing.
-
-## Integration with llm-d inference components
-
-Batch Gateway is part of [llm-d](https://github.com/llm-d/llm-d), a CNCF Sandbox project and open source Kubernetes-native framework for high-performance distributed LLM inference. Batch Gateway integrates with llm-d's components, which means that batch workloads automatically benefit from llm-d's efficient inference capabilities, such as intelligent request routing and KV-cache reuse.
-
-Batch Gateway is designed to work with the [Flow Control](https://gateway-api-inference-extension.sigs.k8s.io/concepts/flow-control/) component in the [Gateway API Inference Extension](https://github.com/kubernetes-sigs/gateway-api-inference-extension) (GIE) to enable dynamic tuning of batch workload flows as well as SLO-based prioritization. This integration allows the system to:
-
-- **Classify batch requests as sheddable:** Batch requests are assigned a negative priority, so the inference layer can shed them under saturation while protecting interactive traffic.
-- **Order by SLO urgency:** Batch requests carry a deadline header (`x-slo-ttft-ms`) that GIE uses to prioritize jobs closest to their SLO deadline.
-- **Enable per-tenant fairness:** The processor sends a fairness header (`x-gateway-inference-fairness-id`) with the tenant identifier, enabling round-robin fairness within the batch priority band.
-
-In the future, Batch Gateway is planned to support extended integrations with relevant llm-d components, as well as with additional components in the LLM inference ecosystem.
-
-## Observability, security, and operations
-
-Batch Gateway is built for production operations out of the box:
-
-- **Prometheus metrics** enable monitoring of job processing and API handling.
-- **OpenTelemetry tracing** enables end-to-end request visibility across components.
-- **Health and readiness probes** for Kubernetes-native lifecycle management.
-- **Security hardened:**
-  - TLS / mTLS support for backend connections.
-  - Authentication and authorization integration.
-  - Multi-tenancy isolation.
-  - Security headers, HTTP server hardening, and input validation.
-  - Pod security: non-root execution, read-only filesystem, all capabilities dropped, seccomp, no privilege escalation.
+The batch processor pulls jobs from a priority queue, retrieves the input files, builds execution plans, and dispatches individual inference requests with concurrency control for downstream processing. The processor sorts requests by system-prompt hash to maximize prefix cache hits, reducing redundant prefill computation across requests that share the same system prompt. As inference results come back, the processor writes them to an output file, and continuously updates the job's status. The processor also listens for job events such as cancellation, enabling real-time control over in-flight work. In addition, the system handles recovery from crashes and failures during processing.
 
 ## Getting started
 
 To learn more about Batch Gateway, check out the following resources:
 
-- To run a local demo using a *kind* cluster, see the [demo resources](https://github.com/llm-d/llm-d-batch-gateway/tree/main/scripts/demo) and [prerequisites](https://github.com/llm-d/llm-d-batch-gateway/blob/main/docs/guides/development.md#prerequisites).
-- To deploy in a Kubernetes cluster using demo settings, see the [demo deployment resources](https://github.com/llm-d/llm-d-batch-gateway/blob/main/scripts/dev-deploy).
-- For detailed deployment and setup instructions, see the [Kubernetes deployment guide](https://github.com/llm-d/llm-d-batch-gateway/blob/main/docs/guides/deploy-k8s.md).
-- The project's [documentation](https://github.com/llm-d/llm-d-batch-gateway) includes the main readme, [guides](https://github.com/llm-d/llm-d-batch-gateway/tree/main/docs/guides), and [design documents](https://github.com/llm-d/llm-d-batch-gateway/tree/main/docs/design).
+- To run a local demo of Batch Gateway using a kind cluster, check out the [demo resources](https://github.com/llm-d/llm-d-batch-gateway/tree/main/examples/poc).
+- To deploy Batch Gateway in a Kubernetes cluster using demo settings, see the [demo deployment resources](https://github.com/llm-d/llm-d-batch-gateway/tree/main/examples/deploy-demo).
+- For detailed deployment and setup instructions, check out the [guide to deploy on Kubernetes](https://github.com/llm-d/llm-d-batch-gateway/blob/main/docs/guides/deploy-k8s.md).
+- The project's documentation includes the [main readme file](https://github.com/llm-d/llm-d-batch-gateway/blob/main/README.md), the [guides](https://github.com/llm-d/llm-d-batch-gateway/tree/main/docs/guides), and [design documents](https://github.com/llm-d/llm-d-batch-gateway/tree/main/docs/design).
 
 ## Get involved with llm-d
 
@@ -105,7 +83,7 @@ Batch Gateway is developed in the open as part of the llm-d ecosystem. If you're
 
 * **Explore the code** -- Browse the [Batch Gateway repo](https://github.com/llm-d/llm-d-batch-gateway) and the wider [llm-d organization](https://github.com/llm-d)
 * **Join our Slack** -- [Get your invite](/slack) and connect with maintainers and contributors
-* **Attend community calls** -- All meetings are open! Add our [public calendar](https://red.ht/llm-d-public-calendar) (Wednesdays 12:30pm ET) and join the conversation
+* **Attend community calls** -- All meetings are open! Add our [public calendar](https://red.ht/llm-d-public-calendar) and join the conversation
 * **Follow project updates** -- Stay current on [Twitter/X](https://twitter.com/_llm_d_), [Bluesky](https://bsky.app/profile/llm-d.ai), and [LinkedIn](https://www.linkedin.com/company/llm-d)
 * **Watch demos and recordings** -- Subscribe to the [llm-d YouTube channel](https://www.youtube.com/@llm-d-project) for community call recordings and feature walkthroughs
-* **Read the docs** -- Visit our [community page](/docs/community) to find SIGs, contribution guides, and upcoming events
+* **Read the docs** -- Visit our [community page](/community) to find SIGs, contribution guides, and upcoming events
