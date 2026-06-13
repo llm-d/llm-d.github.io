@@ -113,3 +113,8 @@ uccl:
   label: UCCL
   permalink: /uccl
   description: Unified Collective Communication Library (UCCL) backend
+
+hma:
+  label: HMA
+  permalink: /hma
+  description: Hybrid Memory Allocator and serving hybrid models

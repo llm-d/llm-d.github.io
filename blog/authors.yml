@@ -321,3 +321,13 @@ omrik:
   image_url: /img/blogs/omrik.webp
   socials:
     linkedin: omri-kahalon-b4a025a9
+
+itayetelis:
+  name: Itay Etelis
+  title: Research Staff Member, IBM
+  image_url: /img/blogs/itayetelis.webp
+
+rachelbrill:
+  name: Rachel Brill
+  title: Senior Technical Staff Member, IBM
+  image_url: /img/blogs/rachelbrill.webp
