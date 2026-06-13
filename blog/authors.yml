@@ -268,3 +268,13 @@ abhisyant:
   image_url: /img/blogs/abhisyant.webp
   socials:
     linkedin: abhisyant
+
+itayetelis:
+  name: Itay Etelis
+  title: Research Staff Member, IBM
+  image_url: /img/blogs/itayetelis.webp
+
+rachelbrill:
+  name: Rachel Brill
+  title: Senior Technical Staff Member, IBM
+  image_url: /img/blogs/rachelbrill.webp

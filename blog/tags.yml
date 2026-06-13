@@ -98,3 +98,8 @@ inference:
   label: Inference
   permalink: /inference
   description: LLM inference serving and optimization
+
+hma:
+  label: HMA
+  permalink: /hma
+  description: Hybrid Memory Allocator and serving hybrid models
