@@ -104,6 +104,7 @@ mkdir -p \
     "$DOCS_DIR/architecture/advanced/batch" \
     "$DOCS_DIR/architecture/advanced/kv-management" \
     "$DOCS_DIR/guides" \
+    "$DOCS_DIR/guides/agentic-serving" \
     "$DOCS_DIR/resources/gateway" \
     "$DOCS_DIR/resources/observability" \
     "$DOCS_DIR/resources/rdma" \
@@ -142,6 +143,13 @@ cp_doc "$WIP/architecture/core/router/epp/datalayer.md"         "$DOCS_DIR/archi
 cp_doc "$WIP/architecture/advanced/disaggregation/README.md"            "$DOCS_DIR/architecture/advanced/disaggregation/index.md"
 cp_doc "$WIP/architecture/advanced/disaggregation/operations-vllm.md"   "$DOCS_DIR/architecture/advanced/disaggregation/operations-vllm.md"
 
+# operations-sglang is not published on the site; point its link to the upstream source.
+if [[ -f "$DOCS_DIR/architecture/advanced/disaggregation/index.md" ]]; then
+    sed_inplace \
+        -e 's|\](operations-sglang\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/disaggregation/operations-sglang.md)|g' \
+        "$DOCS_DIR/architecture/advanced/disaggregation/index.md"
+fi
+
 # Architecture / Advanced
 cp_doc "$WIP/architecture/advanced/latency-predictor.md" "$DOCS_DIR/architecture/advanced/latency-predictor.md"
 
@@ -178,7 +186,9 @@ cp_doc "$WIP/well-lit-paths/wide-expert-parallelism.md"     "$DOCS_DIR/guides/wi
 cp_doc "$WIP/well-lit-paths/workload-autoscaling.md"        "$DOCS_DIR/guides/workload-autoscaling.md"
 cp_doc "$WIP/well-lit-paths/no-kubernetes-deployment.md"    "$DOCS_DIR/guides/no-kubernetes-deployment.md"
 cp_doc "$WIP/well-lit-paths/batch-gateway.md"               "$DOCS_DIR/guides/batch-gateway.md"
-cp_doc "$WIP/well-lit-paths/agentic-inference.md"          "$DOCS_DIR/guides/agentic-inference.md"
+# Agentic Serving lives at guides/agentic-serving/README.md upstream; sync as a
+# directory doc (index.md) so the editUrl directory branch resolves it correctly.
+cp_doc "$SRC/guides/agentic-serving/README.md"             "$DOCS_DIR/guides/agentic-serving/index.md"
 
 sed_inplace \
     -e 's|\](optimized-baseline\.md)|\](/guides/optimized-baseline)|g' \
@@ -193,9 +203,9 @@ sed_inplace \
     -e 's|\](asynchronous-processing\.md)|\](/guides/asynchronous-processing)|g' \
     -e 's|\](batch-gateway\.md)|\](/guides/batch-gateway)|g' \
     -e 's|\](experimental/batch-gateway\.md)|\](/guides/batch-gateway)|g' \
-    -e 's|\](agentic-inference\.md)|\](/guides/agentic-inference)|g' \
     -e 's|\](\./multimodal-serving/optimized-baseline/README\.md)|\](/guides/multimodal-serving)|g' \
     -e 's|\](no-kubernetes-deployment\.md)|\](/guides/no-kubernetes-deployment)|g' \
+    -e 's|\](../workloads/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/workloads/README.md)|g' \
     "$DOCS_DIR/guides/index.md"
 
 # Publish well-lit paths at /well-lit-paths/* while keeping source files and doc IDs
@@ -213,13 +223,18 @@ set_doc_slug "$DOCS_DIR/guides/wide-expert-parallelism.md" "/well-lit-paths/wide
 set_doc_slug "$DOCS_DIR/guides/workload-autoscaling.md" "/well-lit-paths/workload-autoscaling"
 set_doc_slug "$DOCS_DIR/guides/no-kubernetes-deployment.md" "/well-lit-paths/no-kubernetes-deployment"
 set_doc_slug "$DOCS_DIR/guides/batch-gateway.md" "/well-lit-paths/batch-gateway"
-set_doc_slug "$DOCS_DIR/guides/agentic-inference.md" "/well-lit-paths/agentic-inference"
+set_doc_slug "$DOCS_DIR/guides/agentic-serving/index.md" "/well-lit-paths/agentic-serving"
 
-# Patch agentic-inference internal links for Docusaurus slug resolution.
-if [[ -f "$DOCS_DIR/guides/agentic-inference.md" ]]; then
+# Patch agentic-serving internal links (sibling guides -> site URLs; workload page -> upstream).
+if [[ -f "$DOCS_DIR/guides/agentic-serving/index.md" ]]; then
     sed_inplace \
-        -e 's|\](../../guides/agentic-inference)|\](/guides/agentic-inference)|g' \
-        "$DOCS_DIR/guides/agentic-inference.md"
+        -e 's|\](../optimized-baseline/README\.md)|\](/guides/optimized-baseline)|g' \
+        -e 's|\](../tiered-prefix-cache/README\.md)|\](/guides/tiered-prefix-cache)|g' \
+        -e 's|\](../precise-prefix-cache-routing/README\.md)|\](/guides/precise-prefix-cache-routing)|g' \
+        -e 's|\](../pd-disaggregation/README\.md)|\](/guides/pd-disaggregation)|g' \
+        -e 's|\](../../docs/workloads/agentic-serving\.md|\](https://github.com/llm-d/llm-d/blob/main/docs/workloads/agentic-serving.md|g' \
+        -e 's|\](agentic-code-generation\.md)|\](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/agentic-code-generation.md)|g' \
+        "$DOCS_DIR/guides/agentic-serving/index.md"
 fi
 
 # Patch upstream multimodal markdown for Docusaurus MDX compatibility and local links.
@@ -615,6 +630,7 @@ sed_inplace \
     -e 's|\](endpointpickerconfig\.md)|\](/api-reference/endpointpickerconfig)|g' \
     -e 's|\](epp-http-headers\.md)|\](/api-reference/epp-http-headers)|g' \
     -e 's|\](epp-http-apis\.md)|\](/api-reference/epp-http-apis)|g' \
+    -e 's|\](epp-grpc-apis\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/api-reference/epp-grpc-apis.md)|g' \
     -e 's|\](glossary\.md)|\](/api-reference/glossary)|g' \
     "$DOCS_DIR/api-reference/index.md"
 
