@@ -100,6 +100,10 @@ const config: Config = {
             // Map index.md back to README.md (sync script renames these)
             const sourcePath = cleanPath.replace(/\/index\.md$/, '/README.md');
 
+            if (cleanPath === 'guides/multimodal-serving.md') {
+              return 'https://github.com/llm-d/llm-d/blob/main/docs/workloads/multimodal-serving.md';
+            }
+
             // Guide pages: flat .md files are overview pages from docs/well-lit-paths/;
             // directory-based guides (*/index.md at depth >2) come from guides/*/README.md
             if (cleanPath.startsWith('guides/')) {
