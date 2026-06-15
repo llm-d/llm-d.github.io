@@ -1,5 +1,5 @@
 ---
-title: "Scalable Batch Inference with Batch Gateway"
+title: "Efficient Batch and Interactive LLM Inference at Scale with llm-d"
 description: "Batch Gateway brings first-class batch inference capabilities to llm-d, providing an OpenAI-compatible API for submitting, tracking, and managing large-scale batch jobs, running efficiently alongside interactive inference on shared infrastructure."
 slug: scalable-batch-inference-with-batch-gateway
 date: 2026-06-12T09:00
@@ -13,7 +13,7 @@ authors:
 tags: [blog, batch-inference, inference, llm-d]
 ---
 
-# Scalable Batch Inference with Batch Gateway
+# Efficient Batch and Interactive LLM Inference at Scale with llm-d
 
 As organizations deploy AI applications in production, their inference infrastructure must serve two fundamentally different workloads simultaneously: interactive requests requiring immediate replies, and batch inference jobs that process thousands of requests with a time tolerance of hours for receiving results. Use cases for batch inference include autonomous background agents performing multi-step reasoning and deep research, as well as user-initiated workloads like offline evaluations, dataset processing, and embedding generation.
 
@@ -66,7 +66,11 @@ Expired batch jobs and their associated files are periodically cleaned up.
 
 ### Batch Processor
 
-The batch processor pulls jobs from a priority queue, retrieves the input files, builds execution plans, and dispatches individual inference requests with concurrency control for downstream processing. The processor sorts requests by system-prompt hash to maximize prefix cache hits, reducing redundant prefill computation across requests that share the same system prompt. As inference results come back, the processor writes them to an output file, and continuously updates the job's status. The processor also listens for job events such as cancellation, enabling real-time control over in-flight work. In addition, the system handles recovery from crashes and failures during processing.
+The batch processor pulls jobs from a priority queue, retrieves the input files, builds execution plans, and dispatches individual inference requests with concurrency control for downstream processing. As inference results come back, the processor writes them to an output file, and continuously updates the job's status.
+
+The processor sorts requests by system-prompt hash so that identical-prefix requests hit the inference engine contiguously, keeping cached prefix blocks hot and avoiding eviction-triggered prefill reconstruction. Combined with llm-d's prefix-cache-aware routing, cache reuse extends across the entire serving pool.
+
+The processor listens for job events such as cancellation, enabling real-time control over in-flight work. In addition, the system handles recovery from crashes and failures during processing.
 
 ## Getting started
 
