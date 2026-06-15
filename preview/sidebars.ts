@@ -117,7 +117,11 @@ const sidebars: SidebarsConfig = {
         'guides/wide-expert-parallelism',
         'guides/workload-autoscaling',
         'guides/agentic-serving/index',
-        'guides/multimodal-serving',
+        {
+          type: 'doc',
+          id: 'guides/multimodal-serving',
+          label: 'Multimodal Serving',
+        },
         'guides/batch-gateway',
         'guides/no-kubernetes-deployment',
       ],
