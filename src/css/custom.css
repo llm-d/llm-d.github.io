@@ -114,6 +114,34 @@ h3, h4, h5, h6 {
   line-height: 1.25rem;
 }
 
+/* Force consistent inter-item spacing across both Docusaurus builds (main + preview). */
+.navbar__item.navbar__link,
+.navbar__items--left > .navbar__link {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+/* Keep the version-dropdown trigger a fixed width regardless of its label
+   ("v0.7.0 (latest) ▾" on stable vs "dev ▾" on dev vs "v0.7.0 ▾" elsewhere)
+   so the rest of the navbar items don't shift between routes. */
+.navbar__items--left > .dropdown,
+.navbar__items--left > .navbar__item.dropdown {
+  min-width: 10rem;
+}
+
+.navbar__items--left > .dropdown > .navbar__link {
+  display: inline-block;
+  min-width: 9rem;
+  text-align: center;
+}
+
+/* Hide external-link icon on internal cross-app dropdown items
+   (e.g., v0.7.0 latest / Dev links that hop between main and preview). */
+.dropdown__link .iconExternalLink_nPIU,
+.dropdown__link svg[aria-label*="opens in new tab"] {
+  display: none !important;
+}
+
 .navbar__link--active,
 .navbar__link:active,
 .blog-wrapper aside .menu__link--sublist {

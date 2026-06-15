@@ -177,10 +177,13 @@ const config = {
       ],
 
       // Announcement banner for v0.7 release
+      colorMode: {
+        respectPrefersColorScheme: true,
+      },
       announcementBar: {
         id: 'llm-d-v0-7-release',
         content:
-          '🎉 <b>llm-d 0.7 is now available!</b> Explore our completely revamped documentation with comprehensive guides, architecture deep-dives, and production deployment patterns. <a target="_self" rel="noopener noreferrer" href="/docs/getting-started"><b>Browse the docs →</b></a>',
+          '🎉 <b>llm-d 0.7 is now available!</b> Explore our completely revamped documentation with comprehensive guides, architecture deep-dives, and production deployment patterns. <a target="_self" rel="noopener noreferrer" href="/docs/getting-started/quickstart"><b>Browse the docs →</b></a>',
         backgroundColor: '#7f317f',
         textColor: '#fff',
         isCloseable: true,
@@ -207,6 +210,15 @@ const config = {
             docsPluginId: "community",
             position: "left",
             label: "Community",
+          },
+          {
+            type: 'dropdown',
+            label: 'v0.7.0',
+            position: 'left',
+            items: [
+              { label: 'v0.7.0 (latest)', href: '/docs/getting-started', target: '_self' },
+              { label: 'Dev', href: '/docs/dev/getting-started', target: '_self' },
+            ],
           },
           {
             type: 'html',

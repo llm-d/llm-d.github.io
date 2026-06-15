@@ -114,7 +114,11 @@ mkdir -p \
 echo "    Copying content..."
 
 # === Getting Started ===
-cp_doc "$WIP/getting-started/README.md"       "$DOCS_DIR/getting-started/index.md"
+if [[ -f "$WIP/getting-started/README.mdx" ]]; then
+  cp_doc "$WIP/getting-started/README.mdx"    "$DOCS_DIR/getting-started/index.mdx"
+else
+  cp_doc "$WIP/getting-started/README.md"     "$DOCS_DIR/getting-started/index.md"
+fi
 cp_doc "$WIP/getting-started/quickstart.md"   "$DOCS_DIR/getting-started/quickstart.md"
 cp_doc "$WIP/getting-started/feature-matrix.md" "$DOCS_DIR/getting-started/feature-matrix.md"
 cp_doc "$WIP/getting-started/artifacts.md"    "$DOCS_DIR/getting-started/artifacts.md"

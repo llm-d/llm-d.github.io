@@ -3,12 +3,14 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 // Sidebar structure matching docs/wip-docs-new/outline.md exactly
 const sidebars: SidebarsConfig = {
   docsSidebar: [
+    // Standalone landing/intro — kept top-level so it doesn't auto-expand
+    // the Getting Started category when active.
+    {type: 'doc', id: 'getting-started/index', label: 'Intro to llm-d'},
     // ==================== Getting Started ====================
     {
       type: 'category',
       label: 'Getting Started',
-      collapsed: false,
-      link: {type: 'doc', id: 'getting-started/index'},
+      collapsed: true,
       items: [
         'getting-started/quickstart',
         'getting-started/artifacts',
@@ -104,7 +106,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Well-Lit Paths',
-      collapsed: false,
+      collapsed: true,
       link: {type: 'doc', id: 'guides/index'},
       items: [
         'guides/optimized-baseline',
@@ -116,7 +118,6 @@ const sidebars: SidebarsConfig = {
         'guides/predicted-latency',
         'guides/wide-expert-parallelism',
         'guides/workload-autoscaling',
-        'guides/asynchronous-processing',
         'guides/no-kubernetes-deployment',
       ],
     },

@@ -131,6 +131,14 @@ else
     rm -rf "${WORKTREE_PATH}/preview/src"
     cp -r "$PROJECT_DIR/preview/src" "${WORKTREE_PATH}/preview/src"
 
+    # Propagate brand/social assets referenced by main's CSS so versioned builds
+    # resolve them. Doc-specific images under static/img/docs/ are left alone.
+    for asset in CNCF-logo.svg llm-d-logo-light.svg llm-d-logo-dark.svg background.png; do
+      cp -f "$PROJECT_DIR/preview/static/img/$asset" "${WORKTREE_PATH}/preview/static/img/" 2>/dev/null || true
+    done
+    cp -rf "$PROJECT_DIR/preview/static/img/new-social" "${WORKTREE_PATH}/preview/static/img/" 2>/dev/null || true
+    cp -rf "$PROJECT_DIR/preview/static/img/logos" "${WORKTREE_PATH}/preview/static/img/" 2>/dev/null || true
+
     # Apply fixups for known stale GitHub links in committed release-branch content.
     # These patch specific link targets that changed in upstream after the branch was cut.
     echo "  Applying link fixups to release branch docs..."
