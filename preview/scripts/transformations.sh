@@ -129,7 +129,7 @@ apply_transformations() {
         -e 's|\](.*\/guides/prereq/gateways/istio\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/istio.md)|g' \
         -e 's|\](.*\/guides/prereq/gateways/gke\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/gke.md)|g' \
         -e 's|\](.*\/guides/prereq/gateways/agentgateway\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/agentgateway.md)|g' \
-        -e 's|\](.*\/guides/multimodal/optimized-baseline/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/multimodal/optimized-baseline/README.md)|g' \
+        -e 's|\](.*\/guides/multimodal/optimized-baseline/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/optimized-baseline/README.md)|g' \
         "$file"
 
     # Fix unclosed HTML tags for MDX (must be self-closing)
