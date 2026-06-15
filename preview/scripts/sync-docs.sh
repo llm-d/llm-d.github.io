@@ -71,6 +71,7 @@ UPSTREAM_REF="$BRANCH"
 
 echo "==> Syncing docs from llm-d/llm-d @ $BRANCH"
 
+# Use local clone if LLMD_REPO is set, otherwise clone from GitHub into a temp dir
 if [[ -n "${LLMD_REPO:-}" ]]; then
     echo "    Using local repo: $LLMD_REPO"
     SRC="$LLMD_REPO"
