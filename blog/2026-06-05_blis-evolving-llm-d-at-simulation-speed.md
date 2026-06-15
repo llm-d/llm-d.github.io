@@ -1,6 +1,6 @@
 ---
 title: "BLIS: Evolving llm-d at Simulation Speed"
-description: "BLIS is the llm-d simulator. It mirrors llm-d's control behavior — admission, routing, scheduling, KV cache, batching, and autoscaling — minus the GPUs. This post explains how BLIS helps llm-d evolve faster through AI-native experimentation and capacity planning."
+description: "BLIS is a calibrated discrete-event simulator for llm-d control-plane behavior. It helps developers evaluate routing, admission, KV cache, batching, prefill/decode placement, and capacity choices before spending time on cluster validation."
 slug: blis-evolving-llm-d-at-simulation-speed
 date: 2026-06-05T09:00
 
@@ -21,94 +21,155 @@ tags: [blog]
 
 # BLIS: Evolving llm-d at Simulation Speed
 
-llm-d is built for distributed LLM serving: routing, flow control, placement, auto-scaling, disaggregation decisions, engine configuration, all happening at once. That makes it powerful, but also hard to evolve. A small policy change in admission, routing, batching, or autoscaling can change latency, throughput, and inference cost in unexpected ways.
+Deploying llm-d is not just a question of choosing a model server and adding GPUs. In a production inference deployment, operators have to choose routing policies, admission behavior, batching settings, KV-cache reuse strategies, prefill/decode placement, and autoscaling rules under concrete TTFT, ITL, throughput, and cost constraints.
 
-Validating any change requires testing. But testing on real GPU clusters is slow and expensive.
+These choices are coupled. A routing change that improves cache locality can concentrate load. A prefill/decode threshold that helps one workload can hurt another. An admission policy that protects critical traffic can reduce total served volume. A change in any one policy can shift TTFT, inter-token latency, throughput, SLO compliance, and accelerator cost in ways that are difficult to predict analytically.
 
-BLIS solves this problem.
+The only reliable way to confirm those tradeoffs is to measure them in a GPU-backed llm-d cluster. But using cluster runs as the first step in every policy or capacity-planning experiment is too slow and expensive. BLIS provides a faster inner loop: a calibrated discrete-event simulator for distributed inference systems like llm-d. Developers can evaluate candidate policies and deployment configurations locally, then reserve cluster validation for the candidates most likely to matter.
+
+:::tip Blog key takeaways
+
+- **BLIS is a discrete-event simulator:** — it models admission, routing, scheduling, KV cache, batching, and prefill/decode placement without loading model weights or occupying GPUs.
+- **Calibrated fidelity:** Median 7–9% error on end-to-end and inter-token latency across 36 validation experiments spanning 8B–141B parameter models, H100/A100/L40S GPUs, and diverse workloads. Approximately 200× faster than equivalent cluster runs.
+- **Admission control case study:** An AI-native policy-search loop using BLIS discovered a probabilistic admission controller that reduced critical-tier TTFT p90 by up to 97% and end-to-end latency by up to 50%, validated on a real llm-d cluster.
+- **Capacity planning:** BLIS evaluates hundreds of deployment configurations in minutes, producing ranked Pareto-optimal candidates before any GPU time is spent.
+
+:::
 
 <!-- truncate -->
 
-## The problem in one chart
+## The cost of policy search
 
-llm-d's control plane spans admission, routing, scheduling, KV-cache management, batching, autoscaling, and prefill/decode placement. These decisions interact — a change in any one can shift latency, throughput, and cost in ways that are difficult to predict analytically. The standard approach is to test on a real cluster, but each experiment costs GPU-hours and wall-clock time:
+The case for simulation is strongest when deployment choices form a large search space. In llm-d, that search space includes parallelism strategy, replica topology, routing policy, admission behavior, batching configuration, KV-cache reuse, and prefill/decode placement. Each choice affects the others, so the best configuration is usually workload- and SLO-dependent rather than universal.
 
-![Cost vs wall-clock time — BLIS vs llm-d cluster](/img/blogs/blis-evolving-llm-d-at-simulation-speed/hero-cost-chart.png)
+The need is especially clear in production-style inference. A useful evaluation often requires realistic request distributions, multi-instance topologies, enough offered load to expose saturation behavior, and repeated runs across policy or configuration variants. These evaluations are subtle because prefill and decode stress the system differently, batching can improve throughput while shifting latency, and disaggregation only helps when transfer cost, queue state, and TTFT/ITL targets line up. BLIS changes the economics of this search:
 
-*Same question. Very different cost.*
+| | BLIS | GPU cluster |
+| :--- | :--- | :--- |
+| Wall-clock time per config | ~seconds | ~hours |
+| Hardware required | CPU (local) | Multi-GPU (e.g. 4–16× H100) |
+| Cost per config | Negligible | GPU-hours at cluster rates |
+| Configs evaluated per hour | Hundreds | Single digits |
+| Deterministic replay | Yes | No (system jitter, variance) |
+
+Running this search directly on GPU-backed clusters turns policy development into a scarce-resource scheduling problem. BLIS changes the order of operations: broad exploration happens through local simulation, and cluster validation is used later for the small set of policies or configurations that simulation identifies as worth the cluster time.
 
 ## What is BLIS?
 
-In essence, BLIS simulates llm-d. It mirrors llm-d's behavior: admission, routing, scheduling, KV cache, batching, and autoscaling — minus the GPUs.
+BLIS models the parts of distributed LLM serving that determine system-level behavior: request arrival, admission, routing, queueing, chunked prefill, continuous batching, decode scheduling, KV-cache allocation and reuse, prefill/decode transfer costs, and multi-instance placement. It does not load model weights or execute tensor kernels. Instead, it advances the request lifecycle through a discrete-event simulation driven by performance models fit to real measurements.
 
-![Real llm-d vs BLIS architecture](/img/blogs/blis-evolving-llm-d-at-simulation-speed/twin-diagram.png)
+<div style={{margin: '20px 0'}}>
+  <img src="/img/blogs/blis-evolving-llm-d-at-simulation-speed/twin-diagram.svg" alt="Real llm-d vs BLIS architecture" style={{width: '100%', height: 'auto'}} />
+</div>
 
-BLIS is not meant to replace real clusters. It offers an opportunity for fast and cheap experimentation to identify the most promising directions for targeted cluster runs.
+<small>*__FIGURE 1__: BLIS architecture. The simulator consumes the same inputs operators reason about when deploying llm-d — workload traces, model profiles, topology, policies, and vLLM configuration — and produces the metrics that decide whether a policy is viable. Internally, calibrated models replace GPU execution for each stage of the request lifecycle.*</small>
 
-*How can BLIS be useful without GPUs?* It is a discrete-event simulator with pluggable parts that mimic the physics of a single vLLM instance and the dynamics of llm-d's distributed serving. Each prefill and decode step is estimated by a performance model fit to real GPU measurements. That is enough to reproduce the queueing, batching, and latency a real cluster would see: no weights loaded, no tensors moved.
+<br/><br/>
 
-## What BLIS gives you
+BLIS models each stage of the request lifecycle — admission, routing, queueing, chunked prefill, continuous batching, decode scheduling, KV-cache allocation, and P/D transfer — using performance models fit to real GPU measurements. It produces TTFT, inter-token latency, end-to-end latency, throughput, queue depth, SLO violations, shed traffic, and policy rankings without occupying cluster accelerators.
 
-- **Fast and cheap.** Seconds per run. No GPUs.
-- **Deterministic.** Same input, same output, every time.
-- **Pluggable.** Drop in a new admission rule, scorer, or autoscaler. BLIS runs it as llm-d would.
-- **High-fidelity.** Median 7–9% error on end-to-end and inter-token latency relative to real clusters. Validated across 36 experiments spanning dense and MoE models (8B–141B parameters, Llama/Mixtral/Qwen families), workloads from chat to code generation and long-output reasoning, H100/A100/L40S GPUs, and sweeps over vLLM configuration knobs (tensor parallelism, chunk size). Approximately 200× faster than equivalent real-cluster experiments.
+That makes BLIS useful in two different workflows:
 
-## What BLIS unlocks
+- **Policy development:** compare routing, admission, batching, P/D placement, and autoscaling behavior before implementing or validating the best candidates in production code.
+- **Capacity planning:** sweep hardware budgets and vLLM/llm-d configuration choices to identify the smallest set of real deployments worth benchmarking.
 
-BLIS has two jobs: helping llm-d evolve faster, and helping users plan deployments before spending GPU time.
+## Fidelity and validation
 
-### AI-native evolution of llm-d
+BLIS is not intended to replace cluster validation. Its job is to make exploration cheap enough that developers can search a larger space before scheduling cluster runs. For that to work, BLIS must be accurate enough to identify promising candidates and preserve the relative ranking of alternatives.
 
-AI-native evolution means agents help propose, test, and improve policies (or new algorithms), with real clusters used to validate only the most promising ideas.
+In current validation, BLIS shows median 7–9% error on end-to-end and inter-token latency relative to cluster runs. Equivalent cluster experiments take roughly 200× longer to run.
 
-The idea is simple. **BLIS is the inner loop. Real llm-d is the outer loop.** Developers can connect BLIS to any policy-search workflow they choose, whether that is a human-driven sweep, a custom optimizer, or an AI-agent system.
+:::info Fidelity validation scope
 
-![The AI-native loop: BLIS inner loop, real cluster outer loop](/img/blogs/blis-evolving-llm-d-at-simulation-speed/ai-native-loop.png)
+The validation set spans **36 experiments** across:
+- **Models:** Dense and MoE architectures from 8B to 141B parameters (Llama, Mixtral, Qwen families)
+- **Workloads:** Chat, code generation, and long-output reasoning
+- **GPUs:** NVIDIA H100, A100, and L40S
+- **Configuration sweeps:** Tensor parallelism and chunk size variations
 
-In AI-native evolution, agents try many policies (or algorithms) in BLIS. The best ones go to a real cluster for validation. Lessons fold back into the next round of exploration. This loop is starting to deliver measurable improvements to llm-d.
+:::
 
-#### From latency cliffs to graceful admission control
+The most important fidelity question depends on the use case. For capacity planning, absolute latency error matters because SLO boundaries determine feasible configurations. For policy search, rank fidelity is often more important: if policy A beats policy B in BLIS across representative workloads, cluster validation should confirm the same ordering often enough to make simulation a reliable filter.
 
-Under overload, default llm-d admission control can behave like a cliff: latency remains stable until a threshold, then degrades sharply. Using the AI-native loop with agents exploring policies inside BLIS, we found a smooth, parameter-free shedder. Validated on Qwen3-14B served on 4×H100-SXM-80GB at near-saturation load across realistic workloads (such as chatbot and code completion), the new policy reduced critical-tier TTFT p90 by up to 97% and end-to-end latency by up to 50%. Sheddable traffic is shed early, preventing queue buildup.
+## AI-native evolution of llm-d
 
-![Admission evolution: how it was found and what it found](/img/blogs/blis-evolving-llm-d-at-simulation-speed/admission-evolution.png)
+AI-native evolution means using agents to propose, test, and refine policies or new algorithms, while reserving cluster validation for the most promising candidates. BLIS is the fast inner loop; a GPU-backed llm-d deployment is the validation outer loop. Developers can connect BLIS to any policy-search workflow — a human-driven sweep, a custom optimizer, or an agentic system — and explore routing, admission, batching, P/D placement, cache behavior, and capacity choices in simulation before validating the strongest candidates on a real cluster. Measurements from cluster runs feed back into calibration, making each round of simulation more accurate. The admission-control case study below shows this pipeline end to end.
 
-For the full experimental setup and detailed results, see [our earlier post on the admission controller loop](https://ai-native-systems-research.github.io/ai-native-systems-research/blog/2026/05/13/from-simulation-to-production-how-an-ai-native-pipeline-discovered-a-better-admission-controller-for-llm-d/).
+### Case study: from latency cliffs to graceful admission control
 
-#### When to disaggregate prefill and decode
+Admission control is a good example of why a simulator is useful. Under overload, default llm-d admission behavior can act like a cliff: requests are admitted until saturation is reached, then sheddable traffic is rejected hard. By the time the threshold fires, queues may already be deep enough to affect protected traffic.
+
+Figure 2 shows how the AI-native pipeline was applied to this problem. BLIS evaluated many candidate admission policies across workload traces, ranked them by SLO compliance, and passed the strongest candidates to cluster validation. Cluster measurements then fed back to calibrate the next round of simulation.
+
+<div style={{margin: '20px 0'}}>
+  <img src="/img/blogs/blis-evolving-llm-d-at-simulation-speed/ai-native-loop.svg" alt="AI-native pipeline: workload traces through BLIS evaluation, ranked candidates, cluster validation, to upstream contribution" style={{width: '90%', height: 'auto'}} />
+</div>
+
+<small>*__FIGURE 2__: The AI-native pipeline applied to admission control. Workload traces and policy candidates flow through BLIS batch evaluation, producing a ranked shortlist filtered by SLO. The strongest candidates are validated on a real llm-d cluster. Validated policies become upstream contributions. Cluster measurements feed back to calibrate BLIS for the next round.*</small>
+
+<br/><br/>
+
+The pipeline narrowed a large policy space to a single winner: a probabilistic admitter that sheds low-priority traffic gradually as saturation rises, protecting critical traffic before the system reaches the cliff. Cluster validation on Qwen3-14B served by vLLM on 4× NVIDIA H100-SXM-80GB GPUs, routed through llm-d, confirmed the improvement:
+
+| Metric (critical tier, overloaded) | Default hard-shed | Probabilistic admitter | Improvement |
+| :--- | :--- | :--- | :--- |
+| TTFT p90 | Latency cliff under overload | Smooth degradation | Up to 97% reduction |
+| End-to-end latency | Queues build before shed fires | Early shed prevents buildup | Up to 50% reduction |
+| Shed behavior | Abrupt rejection at threshold | Gradual shedding as saturation rises | Graceful |
+
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/blis-evolving-llm-d-at-simulation-speed/admission-before-after.svg" alt="Admission control before and after: latency cliff vs smooth degradation" style={{width: '100%', height: 'auto'}} />
+</div>
+
+<small>*__FIGURE 3__: Critical-tier TTFT p90 under increasing load. The default hard-shed policy (red) holds steady until saturation, then degrades sharply past the SLO. The probabilistic admitter (green) sheds low-priority traffic gradually, keeping critical-tier latency closer to the SLO target through overload.*</small>
+
+<br/><br/>
+
+The important point for llm-d is not only the specific admission algorithm. It is the workflow: simulation narrowed a large policy space, cluster validation confirmed the strongest candidate, and the result became a concrete llm-d-router contribution. For the full discovery process, algorithm details, and benchmark matrix, see the [admission-controller case study](https://ai-native-systems-research.github.io/ai-native-systems-research/blog/2026/05/13/from-simulation-to-production-how-an-ai-native-pipeline-discovered-a-better-admission-controller-for-llm-d/).
+
+### Policy space: when to disaggregate prefill and decode
 
 llm-d's current P/D decider uses a fixed prefix-cache threshold: disaggregate any request with more than N=16 uncached tokens. This is cache-aware but queue-blind — it disaggregates at the same rate regardless of whether the prefill pool is idle or saturated.
 
-BLIS lets us evaluate a wider policy space: always-local, always-disaggregate, stationary randomized, and a dynamic policy we call Empirical Drift-Plus-Penalty (EDPP), derived from Lyapunov optimization. EDPP routes each request using two signals: the relative queue depths of the decode and prefill pools at decision time, and a virtual TTFT queue that accumulates deficit whenever a disaggregated request misses an operator-specified TTFT SLO. When the decode pool is backlogged and the prefill pool has spare capacity, EDPP disaggregates. When past disaggregation decisions have already pushed TTFT past the SLO, the virtual queue grows and suppresses future disaggregation until TTFT recovers. No hardware constants are required; the operator specifies goals — an ITL target and a TTFT SLO — and the policy adapts.
+That threshold is simple and often useful, but it leaves performance on the table when queue state matters more than uncached-token count. A short uncached prompt may not justify KV-transfer overhead even if it crosses the threshold. A long uncached prompt may benefit from disaggregation only when the prefill pool has enough spare capacity to absorb it. The right decision depends on request shape, cache state, queue depth, transfer cost, and SLO pressure.
+
+BLIS lets us evaluate a wider policy space: always-local, always-disaggregate, stationary randomized, fixed threshold, and a dynamic policy we call Empirical Drift-Plus-Penalty (EDPP), derived from Lyapunov optimization. EDPP routes each request using two signals: the relative queue depths of the decode and prefill pools at decision time, and a virtual TTFT queue that accumulates deficit whenever a disaggregated request misses an operator-specified TTFT SLO. When the decode pool is backlogged and the prefill pool has spare capacity, EDPP disaggregates. When prior disaggregation decisions push TTFT past the SLO, the virtual queue grows and suppresses future disaggregation until TTFT recovers. No hardware constants are required; the operator specifies goals, including an ITL target and TTFT SLO, and the policy adapts.
 
 We evaluated on a 1P+3D topology (1 prefill + 3 decode instances) using BLIS's trained-physics latency model configured for Meta Llama 3.1-70B-Instruct on NVIDIA H100 (TP=4 per instance, 16 H100s total), with workloads from the inference-perf catalog:
 
-- **Interactive chat** (5K-token prefix, ~50 uncached tokens/turn, 4 turns/session): At N=16, the prefix-based threshold decider disaggregates nearly every turn. Because uncached inputs are short, the KV-transfer round-trip adds overhead with little throughput benefit. EDPP, which only disaggregates when the decode pool is backlogged, reduces mean TTFT by 2–3× at moderate-to-high load.
-- **Code generation** (30K-token prefix, ~1,500 uncached tokens/turn, 15 turns/session): At N=16, the threshold fires on 100% of requests unconditionally — every turn has thousands of uncached tokens. This saturates the prefill pool and inflates TTFT by up to 20× relative to always-local. EDPP's SLO-feedback loop suppresses disaggregation when TTFT exceeds the target, stabilizing the disaggregation fraction near 50%.
+- **Interactive chat:** 5K-token prefix, approximately 50 uncached tokens per turn, 4 turns per session. At N=16, the threshold decider disaggregates nearly every turn. Because uncached inputs are short, the KV-transfer round trip adds overhead with little throughput benefit. EDPP disaggregates only when decode backlog makes the transfer worthwhile, reducing mean TTFT by 2-3x at moderate-to-high load in BLIS.
+- **Code generation:** 30K-token prefix, approximately 1,500 uncached tokens per turn, 15 turns per session. At N=16, the threshold fires for 100% of requests. This can saturate the prefill pool and inflate TTFT by up to 20x relative to always-local. EDPP's SLO-feedback loop suppresses disaggregation when TTFT exceeds the target, stabilizing the disaggregation fraction near 50%.
 
-The figure below shows a subset of results obtained with BLIS.
+The plot below shows one slice of this policy comparison for the interactive-chat workload.
 
 ![PD Decider: Threshold=16 vs Empirical Drift Plus Penalty](/img/blogs/blis-evolving-llm-d-at-simulation-speed/pd-decider-ttft.png)
 
-These results are expensive to find on real GPUs but take seconds to produce in BLIS.
+<small>*__FIGURE 4__: TTFT comparison for interactive-chat workload on a 1P+3D topology (Llama 3.1-70B, 16× H100). The fixed threshold (N=16) disaggregates nearly every turn, adding KV-transfer overhead. EDPP disaggregates selectively based on queue state and SLO feedback.*</small>
+
+<br/><br/>
+
+The point is not that BLIS eliminates the need for cluster validation. It makes this kind of policy search practical enough that cluster runs can be reserved for the small number of policies that survive broad simulated evaluation.
 
 ### Capacity planning
 
-Before you deploy any LLMs for any purpose, you need answers:
+The same simulation loop applies to deployment planning. Before committing cluster time, operators need to know which configurations can plausibly meet a workload's SLO:
 
 - How many GPUs? Which GPU type?
 - What configurations meet the SLO?
 - Which router knobs — scorer weights, prefix-cache priority, load-balance settings?
 - Which vLLM knobs — tensor parallelism, chunk size, batch limits?
 
-Each of these used to mean a real-cluster experiment. With BLIS, it's a sweep that runs in seconds per config. BLIS can evaluate hundreds of configurations in minutes, producing a ranked set of viable options before any GPU time is spent.
+Without simulation, each candidate can become a cluster experiment. With BLIS, configuration search becomes a local CPU-based sweep that produces a ranked set of viable options before validation time is spent on the cluster.
 
 ![BLIS Config Search: Pareto Frontier for Llama-3.1-70B on H100](/img/blogs/blis-evolving-llm-d-at-simulation-speed/pareto-frontier.png)
 
-Every dot is a BLIS evaluated configuration. The best throughput you can achieve at any given GPU budget while meeting your latency target. Up-and-to-the-left is better (fast and high-throughput). The dashed vertical represents a TTFT SLO we need to meet, and only points to the left represent configurations meeting that SLO. The starred configs represent the best-performing configurations for each budget tier in terms of GPU count.
+<small>*__FIGURE 5__: Pareto frontier from a BLIS configuration sweep. Each dot is a candidate deployment (varying TP, replica count, batch limits, and cache settings). The dashed line marks a TTFT SLO boundary; starred points are the highest-throughput feasible configurations at each GPU budget tier.*</small>
 
-Using multi-objective search, we can discover throughput, latency, and cost tradeoffs easily with BLIS. This experience gives you the ability to deploy only what you feel most confident about.
+<br/><br/>
+
+In this kind of view, each dot is a BLIS-evaluated configuration. The x-axis captures latency, the y-axis captures sustainable throughput, and the SLO boundary separates feasible from infeasible candidates. The Pareto frontier identifies the highest-throughput configurations at each feasible latency/cost point, while annotations explain the concrete deployment choices behind selected budget tiers.
+
+This is the role BLIS can play in llm-d capacity planning: not to hand operators a single answer without validation, but to reduce an enormous search space to a short list of explainable candidates.
 
 [llm-d-planner](https://github.com/llm-d-incubation/llm-d-planner), the deployment-recommendation tool for llm-d, is planned to consume BLIS output to power exactly this kind of sizing and policy advice.
 
@@ -116,13 +177,11 @@ Using multi-objective search, we can discover throughput, latency, and cost trad
 
 ## Why this matters
 
-Without BLIS, llm-d evolves only as fast as people can run real-cluster experiments. Every new policy idea competes for scarce GPU time, and even routine development can become slow, expensive, and hard to iterate on.
+llm-d's mission is to make advanced inference optimizations practical for production Kubernetes deployments. That requires more than peak benchmark results. It requires a way to reason about policy interactions, workload sensitivity, and cost before users spend cluster time.
 
-With BLIS, llm-d developers get a fast, cheap inner loop before they touch a GPU. They can test routing changes, admission policies, batching behavior, prefill/decode decisions, and capacity assumptions in simulation, then reserve real clusters for the few ideas worth validating.
+BLIS gives llm-d a fast, deterministic inner loop for that work. Developers can test routing changes, admission policies, batching behavior, prefill/decode decisions, and capacity assumptions in simulation, then reserve cluster runs for the candidates worth validating.
 
-That matters whether the next idea comes from a human developer, an AI agent, or both. BLIS helps tame GPU scarcity for everyday llm-d development, while also enabling the AI-native loop: agents can explore many more policies than humans could test manually, and real clusters validate the best ones.
-
-That is the shift: llm-d can evolve as fast as developers and agents can think, simulate, and learn.
+That is the practical shift: cluster validation remains mandatory, but broad cluster exploration becomes targeted. For a project like llm-d, where the control plane is itself a source of performance advantage, that faster inner loop is infrastructure for continued evolution.
 
 ---
 
@@ -137,11 +196,31 @@ The following areas highlight current limitations of BLIS:
 
 ---
 
-## Where to next
+## What's next
 
-- **BLIS:** [inference-sim.github.io/inference-sim](https://inference-sim.github.io/inference-sim/latest/)
-- **Earlier reads:**
-  - [Why simulate before you scale](https://inference-sim.github.io/inference-sim/latest/blog/2026/03/05/why-simulate-before-you-scale/)
-  - [The physics of high-fidelity distributed inference platform simulation](https://medium.com/modeling-distributed-inference/the-physics-of-high-fidelity-distributed-inference-platform-simulation-28fe27b59da2)
-- **The admission controller story in full:** [From simulation to production](https://ai-native-systems-research.github.io/ai-native-systems-research/blog/2026/05/13/from-simulation-to-production-how-an-ai-native-pipeline-discovered-a-better-admission-controller-for-llm-d/)
-- **The upcoming BLIS proposal for llm-d**
+BLIS is under active development. Key directions include:
+
+- **Broader llm-d coverage:** Extending the simulator to track new llm-d control-plane features as they land — including autoscaling policies, multi-model routing, and evolving P/D placement strategies.
+- **Calibration and fidelity:** Expanding the validation set to cover new GPU families, larger topologies, and additional workload patterns. Improving performance-model accuracy in near-saturation regimes.
+- **Integration with llm-d-planner:** Connecting BLIS output to [llm-d-planner](https://github.com/llm-d-incubation/llm-d-planner) to provide deployment sizing and policy recommendations backed by simulation evidence.
+- **Community contribution:** The upcoming BLIS proposal for llm-d will outline the path for BLIS to become a community-maintained component of the llm-d ecosystem.
+
+### Further reading
+
+- **BLIS project:** [inference-sim.github.io/inference-sim](https://inference-sim.github.io/inference-sim/latest/)
+- [Why simulate before you scale](https://inference-sim.github.io/inference-sim/latest/blog/2026/03/05/why-simulate-before-you-scale/)
+- [The physics of high-fidelity distributed inference platform simulation](https://medium.com/modeling-distributed-inference/the-physics-of-high-fidelity-distributed-inference-platform-simulation-28fe27b59da2)
+- [From simulation to production: the admission controller case study](https://ai-native-systems-research.github.io/ai-native-systems-research/blog/2026/05/13/from-simulation-to-production-how-an-ai-native-pipeline-discovered-a-better-admission-controller-for-llm-d/)
+
+---
+
+## Get Involved with llm-d
+
+The llm-d project thrives on community contributions, and there are many ways to get involved:
+
+- **Explore the code** → Browse our [GitHub organization](https://github.com/llm-d) and dig into the projects powering this stack
+- **Join our Slack** → [Get your invite](/slack) and connect with maintainers and contributors
+- **Attend community calls** → All meetings are open! Add our [public calendar](https://red.ht/llm-d-public-calendar) and join the conversation
+- **Follow project updates** → Stay current on [Twitter/X](https://twitter.com/_llm_d_), [Bluesky](https://bsky.app/profile/llm-d.ai), and [LinkedIn](https://www.linkedin.com/company/llm-d)
+- **Watch demos and recordings** → Subscribe to the [llm-d YouTube channel](https://www.youtube.com/@llm-d-project) for community call recordings and feature walkthroughs
+- **Read the docs** → Visit our [community page](/community) to find SIGs, contribution guides, and upcoming events
