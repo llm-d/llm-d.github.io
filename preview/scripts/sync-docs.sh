@@ -299,6 +299,7 @@ cp_doc "$WIP/api-reference/inferencemodelrewrite.md" "$DOCS_DIR/api-reference/in
 cp_doc "$WIP/api-reference/endpointpickerconfig.md"  "$DOCS_DIR/api-reference/endpointpickerconfig.md"
 cp_doc "$WIP/api-reference/epp-http-headers.md"      "$DOCS_DIR/api-reference/epp-http-headers.md"
 cp_doc "$WIP/api-reference/epp-http-apis.md"         "$DOCS_DIR/api-reference/epp-http-apis.md"
+cp_doc "$WIP/api-reference/epp-grpc-apis.md"         "$DOCS_DIR/api-reference/epp-grpc-apis.md"
 
 # === Accelerators ===
 cp_doc "$WIP/accelerators/README.md"                 "$DOCS_DIR/accelerators/index.md"
@@ -645,7 +646,7 @@ sed_inplace \
     -e 's|\](endpointpickerconfig\.md)|\](/api-reference/endpointpickerconfig)|g' \
     -e 's|\](epp-http-headers\.md)|\](/api-reference/epp-http-headers)|g' \
     -e 's|\](epp-http-apis\.md)|\](/api-reference/epp-http-apis)|g' \
-    -e 's|\](epp-grpc-apis\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/api-reference/epp-grpc-apis.md)|g' \
+    -e 's|\](epp-grpc-apis\.md)|\](/api-reference/epp-grpc-apis)|g' \
     -e 's|\](glossary\.md)|\](/api-reference/glossary)|g' \
     "$DOCS_DIR/api-reference/index.md"
 
