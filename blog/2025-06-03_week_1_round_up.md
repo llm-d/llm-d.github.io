@@ -45,7 +45,7 @@ We use Google Groups to share architecture diagrams and other content. Please jo
     - All SIG meetings
     - Weekly Community Meeting, every Wednesday @ 12:30pm Eastern Time
 * Join the [llm-d Google group](http://red.ht/llm-d-google-group) - this is where all engineering drafts are shared. You must join the group to have access to project google docs.
-* Join <a href="/slack" target="_self">Slack</a>
+* Join <a href="https://llm-d.ai/slack" target="_self">Slack</a>
 * [llm-d Roadmap for Q2](https://github.com/llm-d/llm-d/issues/26)
 
 **Where to follow us on Social Media**

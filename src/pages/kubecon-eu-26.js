@@ -219,7 +219,7 @@ export default function KubeConEU26() {
               >
                 Star us on GitHub
               </a>
-              <a href="/slack" className={styles.btnSecondary}>
+              <a href="https://llm-d.ai/slack" className={styles.btnSecondary}>
                 Join Slack
               </a>
               <a href="/docs/guide" className={styles.btnSecondary}>

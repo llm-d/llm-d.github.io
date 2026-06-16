@@ -15,7 +15,7 @@ This page is your gateway to everything you need to know about participating in 
 
 **New to llm-d?** Here's how to get started:
 
-1. **Join our Slack** 💬 → <a href="/slack" target="_self">Get your invite</a> and visit [llm-d.slack.com](https://llm-d.slack.com)
+1. **Join our Slack** 💬 → <a href="https://llm-d.ai/slack" target="_self">Get your invite</a> and visit [llm-d.slack.com](https://llm-d.slack.com)
 2. **Explore our code** 📂 → [GitHub Organization](https://github.com/llm-d)
 3. **Join a meeting** 📅 → [Add calendar](https://red.ht/llm-d-public-calendar)
 4. **Pick your area** 🎯 → [Browse SIGs](#special-interest-groups-sigs) below

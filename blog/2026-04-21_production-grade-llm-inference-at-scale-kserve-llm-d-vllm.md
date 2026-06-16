@@ -73,7 +73,7 @@ We’d like to thank everyone from the community who has contributed to the succ
 The work described here is just one example of what becomes possible when a community of engineers tackles hard problems together in the open. If you're running LLMs at scale and wrestling with the same challenges — storage, routing, efficiency, day-2 operations — we'd love to have you involved.
 
 * **Explore the code** → Browse our [GitHub organization](https://github.com/llm-d) and dig into the projects powering this stack
-* **Join our Slack** → [Get your invite](/slack) and connect directly with maintainers and contributors from Red Hat, Tesla, and beyond
+* **Join our Slack** → [Get your invite](https://llm-d.ai/slack) and connect directly with maintainers and contributors from Red Hat, Tesla, and beyond
 * **Attend community calls** → All meetings are open! Add our [public calendar](https://red.ht/llm-d-public-calendar) (Wednesdays 12:30pm ET) and join the conversation
 * **Follow project updates** → Stay current on [Twitter/X](https://twitter.com/_llm_d_), [Bluesky](https://bsky.app/profile/llm-d.ai), and [LinkedIn](https://www.linkedin.com/company/llm-d)
 * **Watch demos and recordings** → Subscribe to the [llm-d YouTube channel](https://www.youtube.com/@llm-d-project) for community call recordings and feature walkthroughs

@@ -1,5 +1,5 @@
 ---
-title: "Turning mixed GPU fleets into one inference pool with llm-d"
+title: "Heterogeneous inference serving across three GPU vendors with llm-d"
 description: "Benchmarking llm-d's prefix-cache-aware routing across anonymized GPU pools on the NxtGen sovereign cloud, showing how one routing layer improves throughput and TTFT across single-vendor and heterogeneous fleets."
 slug: heterogeneous-inference-3-vendor-sovereign-cluster
 date: 2026-06-09T09:00
@@ -16,7 +16,7 @@ authors:
 
 tags: [blog, inference, scheduling, kv-cache, sig-benchmarking]
 ---
-# Turning mixed GPU fleets into one inference pool with llm-d
+# Heterogeneous inference serving across three GPU vendors with llm-d
 
 Most production inference clusters today are single-vendor because that is often the simplest way to configure and operate a cluster.
 
@@ -38,7 +38,7 @@ To evaluate llm-d on a heterogeneous environment, we ran experiments on the **Nx
 | Vendor B | 1 node with 8 GPUs | 8 |
 | Vendor C | 1 node with 8 GPUs | 8 |
 
-These anonymized labels describe the accelerator pools available in the test environment; they are not intended to imply hardware parity across generation, memory capacity, or expected per-GPU performance. The comparisons below should be read as routing-policy comparisons within each pool, and across the combined fleet, rather than as head-to-head accelerator benchmarks.
+We use anonymized labels to keep the focus on the serving-layer behavior: how llm-d routes the same workload across the accelerator pools available in this test environment. The pools differ in generation, memory capacity, runtime characteristics, and expected per-GPU performance, so the results should be read as routing-policy comparisons within each pool and across the combined fleet.
 
 All nodes are connected over a shared **100 G RoCE** network. We pinned each vLLM replica to a single accelerator card (TP = 1) to maximize the number of independent serving instances and exercise the routing layer.
 

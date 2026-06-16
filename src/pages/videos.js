@@ -88,7 +88,7 @@ export default function Videos() {
             <a href="/docs/guides" className={styles.ctaButtonPrimary}>
               Read the Docs
             </a>
-            <a href="/slack" className={styles.ctaButtonSecondary}>
+            <a href="https://llm-d.ai/slack" className={styles.ctaButtonSecondary}>
               Join Slack
             </a>
           </div>
@@ -98,4 +98,3 @@ export default function Videos() {
     </>
   );
 }
-
