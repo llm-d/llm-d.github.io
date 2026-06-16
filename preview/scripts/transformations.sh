@@ -123,10 +123,10 @@ apply_transformations() {
     # Fix deployment guide links to GitHub URLs
     # These guides live in llm-d/guides/ and should link to GitHub
     sed_inplace \
-        -e 's|\](.*\/guides/prereq/gateways/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/README.md)|g' \
-        -e 's|\](.*\/guides/prereq/gateways/istio\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/istio.md)|g' \
-        -e 's|\](.*\/guides/prereq/gateways/gke\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/gke.md)|g' \
-        -e 's|\](.*\/guides/prereq/gateways/agentgateway\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/agentgateway.md)|g' \
+        -e 's|\](.*\/guides/prereq/gateways/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/docs/resources/gateway/README.md)|g' \
+        -e 's|\](.*\/guides/prereq/gateways/istio\.md)|\](https://github.com/llm-d/llm-d/tree/main/docs/resources/gateway/istio.md)|g' \
+        -e 's|\](.*\/guides/prereq/gateways/gke\.md)|\](https://github.com/llm-d/llm-d/tree/main/docs/resources/gateway/gke.md)|g' \
+        -e 's|\](.*\/guides/prereq/gateways/agentgateway\.md)|\](https://github.com/llm-d/llm-d/tree/main/docs/resources/gateway/agentgateway.md)|g' \
         "$file"
 
     # Fix unclosed HTML tags for MDX (must be self-closing)

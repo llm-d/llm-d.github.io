@@ -139,10 +139,10 @@ const config: Config = {
               return `https://github.com/llm-d/llm-d/blob/main/${wellLitPath}`;
             }
 
-            // Gateway pages come from guides/prereq/gateways/ in the upstream repo
+            // Gateway pages come from docs/resources/gateway/ in the upstream repo
             if (cleanPath.startsWith('resources/gateway/')) {
               const gatewayFile = sourcePath.replace(/^resources\/gateway\//, '');
-              return `https://github.com/llm-d/llm-d/blob/main/guides/prereq/gateways/${gatewayFile}`;
+              return `https://github.com/llm-d/llm-d/blob/main/docs/resources/gateway/${gatewayFile}`;
             }
 
             // Infra-provider pages come from docs/infra-providers/ (not docs/resources/infra-providers/)

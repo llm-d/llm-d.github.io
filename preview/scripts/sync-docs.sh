@@ -224,11 +224,11 @@ else
     cp_doc "$WIP/guides/monitoring/tracing.md"                "$DOCS_DIR/resources/observability/tracing.md"
 fi
 
-# PR llm-d/llm-d#1259 moved gateway docs to guides/prereq/gateways/
-cp_doc "$SRC/guides/prereq/gateways/README.md"              "$DOCS_DIR/resources/gateway/index.md"
-cp_doc "$SRC/guides/prereq/gateways/istio.md"               "$DOCS_DIR/resources/gateway/istio.md"
-cp_doc "$SRC/guides/prereq/gateways/gke.md"                 "$DOCS_DIR/resources/gateway/gke.md"
-cp_doc "$SRC/guides/prereq/gateways/agentgateway.md"        "$DOCS_DIR/resources/gateway/agentgateway.md"
+# Gateway docs live under docs/resources/gateway/ in upstream llm-d.
+cp_doc "$WIP/resources/gateway/README.md"                  "$DOCS_DIR/resources/gateway/index.md"
+cp_doc "$WIP/resources/gateway/istio.md"                   "$DOCS_DIR/resources/gateway/istio.md"
+cp_doc "$WIP/resources/gateway/gke.md"                     "$DOCS_DIR/resources/gateway/gke.md"
+cp_doc "$WIP/resources/gateway/agentgateway.md"            "$DOCS_DIR/resources/gateway/agentgateway.md"
 
 cp_doc "$WIP/resources/rdma/README.md"                      "$DOCS_DIR/resources/rdma/rdma-configuration.md"
 
@@ -331,6 +331,7 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|advanced/autoscaling/README\.md|advanced/autoscaling/index.md|g' \
         -e 's|advanced/disaggregation/README\.md|advanced/disaggregation/index.md|g' \
         -e 's|resources/gateways/README\.md|../resources/gateway/index.md|g' \
+        -e 's|resources/gateway/README\.md|resources/gateway/index.md|g' \
         -e 's|guides/README\.md|guides/index.md|g' \
         -e 's|architecture/introduction\.md|architecture/index.md|g' \
         -e 's|architecture/README\.md|architecture/index.md|g' \
@@ -439,9 +440,9 @@ done
 echo "    Fixing prereq and helper file references..."
 find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace \
-        -e 's|\](../prereq/gateways)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways)|g' \
-        -e 's|\](../../prereq/gateways)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways)|g' \
-        -e 's|\](/docs/prereq/gateways)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways)|g' \
+        -e 's|\](../prereq/gateways)|\](https://github.com/llm-d/llm-d/tree/main/docs/resources/gateway)|g' \
+        -e 's|\](../../prereq/gateways)|\](https://github.com/llm-d/llm-d/tree/main/docs/resources/gateway)|g' \
+        -e 's|\](/docs/prereq/gateways)|\](https://github.com/llm-d/llm-d/tree/main/docs/resources/gateway)|g' \
         -e 's|\](/docs/guides/prereq/gateway-provider)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider)|g' \
         -e 's|\](../../prereq/gateway-provider/README\.md#supported-providers)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider#supported-providers)|g' \
         -e 's|\](../../prereq/gateway-provider/common-configurations)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider#common-configurations)|g' \
@@ -509,8 +510,8 @@ find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](./router/epp/config\.yaml)|\](https://github.com/llm-d/llm-d/blob/main/guides/no-kubernetes-deployment/router/epp/config.yaml)|g' \
         -e 's|\](./router/epp/endpoints\.yaml)|\](https://github.com/llm-d/llm-d/blob/main/guides/no-kubernetes-deployment/router/epp/endpoints.yaml)|g' \
         -e 's|\](./router/envoy/envoy\.yaml)|\](https://github.com/llm-d/llm-d/blob/main/guides/no-kubernetes-deployment/router/envoy/envoy.yaml)|g' \
-        -e 's|\](../../04_customizing_a_guide\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways)|g' \
-        -e 's|\](/docs/04_customizing_a_guide\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways)|g' \
+        -e 's|\](../../04_customizing_a_guide\.md)|\](https://github.com/llm-d/llm-d/tree/main/docs/resources/gateway)|g' \
+        -e 's|\](/docs/04_customizing_a_guide\.md)|\](https://github.com/llm-d/llm-d/tree/main/docs/resources/gateway)|g' \
         -e 's|\](../../02_verifying_a_guide\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
         -e 's|\](/docs/02_verifying_a_guide\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
         -e 's|\](../../02_verifying_a_guide\.md#following-logs-for-requests)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
@@ -540,7 +541,7 @@ find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
 done
 
 # === Fix gateway index.md links ===
-# gateway/index.md comes from guides/prereq/gateways/README.md — fix relative paths
+# gateway/index.md comes from docs/resources/gateway/README.md — fix relative paths
 if [[ -f "$DOCS_DIR/resources/gateway/index.md" ]]; then
     sed_inplace \
         -e 's|\](../../guides/README\.md)|\](/guides)|g' \
