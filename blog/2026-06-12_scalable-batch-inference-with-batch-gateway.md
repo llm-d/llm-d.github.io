@@ -32,7 +32,7 @@ When batch and interactive inference workloads compete for the same GPU resource
 - **Dedicating separate GPU pools for batch workloads** is expensive and wasteful.
 - **Manually throttling batch workloads** is operationally burdensome.
 
-Batch Gateway is designed to solve this by dynamically adjusting batch flow based on available infrastructure capacity. Batch Gateway also prioritizes jobs based on their Service Level Objective (SLO) targets, and processes requests within each job concurrently. The result is that batch jobs make steady progress toward their completion targets without interfering with interactive traffic.
+Batch Gateway is designed to solve this through built-in adaptive concurrency control and integration with llm-d's routing and scheduling components. Together, these mechanisms dynamically adjust batch flow based on available capacity, protect interactive traffic under load, and prioritize jobs based on SLO targets. The result is that batch jobs make steady progress toward their completion targets without interfering with interactive traffic.
 
 Batch Gateway is production-grade, designed for shared multi-tenant environments where security, reliability, observability, and SLO compliance are essential.
 
@@ -66,7 +66,7 @@ Expired batch jobs and their associated files are periodically cleaned up.
 
 ### Batch Processor
 
-The batch processor pulls jobs from a priority queue, retrieves the input files, builds execution plans, and dispatches individual inference requests with concurrency control for downstream processing. As inference results come back, the processor writes them to an output file, and continuously updates the job's status.
+The batch processor pulls jobs from a priority queue, retrieves the input files, builds execution plans, and dispatches individual inference requests concurrently for downstream processing. As inference results come back, the processor writes them to an output file, and continuously updates the job's status.
 
 The processor sorts requests by system-prompt hash so that identical-prefix requests hit the inference engine contiguously, keeping cached prefix blocks hot and avoiding eviction-triggered prefill reconstruction. Combined with llm-d's prefix-cache-aware routing, cache reuse extends across the entire serving pool.
 
