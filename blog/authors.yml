@@ -198,6 +198,72 @@ abdullahgharaibeh:
   url: https://github.com/ahg-g
   image_url: https://avatars.githubusercontent.com/u/40361897?v=4
 
+praveinkannan:
+  name: Pravein Govindan Kannan
+  title: Staff Research Scientist, IBM
+  email: pravein.govindan.kannan@ibm.com
+  image_url: https://avatars.githubusercontent.com/u/9940568?v=4
+  socials:
+    linkedin: praveingk
+    github: https://github.com/praveingk
+    twitter: praveingk
+
+praveenjayachandran:
+  name: Praveen Jayachandran
+  title: Senior Technical Staff Member, IBM
+  email: praveen.j@in.ibm.com
+  image_url: /img/blogs/praveenjayachandran.webp
+  socials:
+    linkedin: praveen-jayachandran-97831113a
+
+jaikhari:
+  name: Jaikrishnan Hari
+  title: Research Partnerships & BD Executive, IBM
+  email: jaikhari@in.ibm.com
+  image_url: /img/blogs/jaikhari.webp
+  socials:
+    linkedin: jaikrishnan-hari-a137972
+
+varunraste:
+  name: Varun Raste
+  title: Solution Architect, IBM
+  email: varun.raste@ibm.com
+  image_url: /img/blogs/varunraste.webp
+  socials:
+    linkedin: varun-raste-0783b3184
+
+prasadmukhedkar:
+  name: Prasad Mukhedkar
+  title: Associate Principal AI Architect, Red Hat
+  email: pmukhedk@redhat.com
+  image_url: /img/blogs/prasadmukhedkar.webp
+  socials:
+    linkedin: prasadmukhedkar1
+
+vinodpathangay:
+  name: Vinod Pathangay
+  title: Chief Architect, Field CTO Organization, Red Hat
+  email: vpathang@redhat.com
+  image_url: /img/blogs/vinodpathangay.webp
+  socials:
+    linkedin: vinod-pathangay
+
+jayanthreddy:
+  name: Jayanth Babu Reddy
+  title: Principal Architect, NxtGen Cloud Technologies
+  email: jayanth.reddy@nxtgen.ai
+  image_url: /img/blogs/jayanthreddy.webp
+  socials:
+    linkedin: jayanth-babu-reddy-498bb0207
+
+abhisyant:
+  name: Abhisyant Anasapurapu
+  title: VP, NxtGen Cloud Technologies
+  email: abhisyant@nxtgen.ai
+  image_url: /img/blogs/abhisyant.webp
+  socials:
+    linkedin: abhisyant
+
 llm-d-maintainers:
   name: llm-d maintainers
   url: https://github.com/llm-d/llm-d/blob/main/MAINTAINERS.md
