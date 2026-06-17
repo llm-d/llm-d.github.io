@@ -100,46 +100,51 @@ const config: Config = {
             // Map index.md back to README.md (sync script renames these)
             const sourcePath = cleanPath.replace(/\/index\.md$/, '/README.md');
 
-            if (cleanPath === 'guides/multimodal-serving.md') {
-              return 'https://github.com/llm-d/llm-d/blob/main/docs/workloads/multimodal-serving.md';
-            }
-
-            // Guide pages: flat .md files are overview pages from docs/well-lit-paths/;
-            // directory-based guides (*/index.md at depth >2) come from guides/*/README.md
+            // Guide pages: flat .md files are overview pages from docs/well-lit-paths/ subdirs;
+            // directory-based guides (*/index.md at depth >2) may also be from well-lit-paths/.
+            // Maps local guide filename → new well-lit-paths subdirectory path (without .md).
             if (cleanPath.startsWith('guides/')) {
               const parts = cleanPath.split('/');
-              const flatGuideToWellLitFile: Record<string, string> = {
-                'precise-prefix-cache-aware.md': 'precise-prefix-cache-routing',
-                'predicted-latency-routing.md': 'predicted-latency',
-                'wide-ep-lws.md': 'wide-expert-parallelism',
-                'batch-gateway.md': 'batch-gateway',
-                'experimental/batch-gateway.md': 'batch-gateway',
+              const flatGuideToWellLitPath: Record<string, string> = {
+                // capabilities/
+                'optimized-baseline.md':             'capabilities/optimized-baseline',
+                'precise-prefix-cache-routing.md':   'capabilities/precise-prefix-cache-routing',
+                'tiered-prefix-cache.md':            'capabilities/tiered-prefix-cache',
+                'pd-disaggregation.md':              'capabilities/pd-disaggregation',
+                'predicted-latency.md':              'capabilities/predicted-latency',
+                'wide-expert-parallelism.md':        'capabilities/wide-expert-parallelism',
+                // operations/
+                'flow-control.md':                   'operations/flow-control',
+                'workload-autoscaling.md':            'operations/workload-autoscaling',
+                'no-kubernetes-deployment.md':        'operations/no-kubernetes-deployment',
+                // workloads/
+                'multimodal-serving.md':             'workloads/multimodal-serving',
+                // workloads/batch-serving/
+                'asynchronous-processing.md':        'workloads/batch-serving/asynchronous-processing',
+                'batch-gateway.md':                  'workloads/batch-serving/batch-gateway',
+                // legacy filename aliases
+                'precise-prefix-cache-aware.md':     'capabilities/precise-prefix-cache-routing',
+                'predicted-latency-routing.md':      'capabilities/predicted-latency',
+                'wide-ep-lws.md':                    'capabilities/wide-expert-parallelism',
+                'experimental/batch-gateway.md':     'workloads/batch-serving/batch-gateway',
               };
-              const guideDirToWellLitFile: Record<string, string> = {
-                'optimized-baseline': 'optimized-baseline',
-                'precise-prefix-cache-routing': 'precise-prefix-cache-routing',
-                'tiered-prefix-cache': 'tiered-prefix-cache',
-                'asynchronous-processing': 'asynchronous-processing',
-                'flow-control': 'flow-control',
-                'pd-disaggregation': 'pd-disaggregation',
-                'predicted-latency-routing': 'predicted-latency',
-                'wide-ep-lws': 'wide-expert-parallelism',
-                'workload-autoscaling': 'workload-autoscaling',
-                'no-kubernetes-deployment': 'no-kubernetes-deployment',
+              const guideDirToWellLitPath: Record<string, string> = {
+                'agentic-serving': 'workloads/agentic-serving',
               };
               if (cleanPath.endsWith('/index.md') && parts.length > 2) {
-                const wellLitFile = guideDirToWellLitFile[parts[1]];
-                if (wellLitFile) {
-                  return `https://github.com/llm-d/llm-d/blob/main/docs/well-lit-paths/${wellLitFile}.md`;
+                const wellLitSubPath = guideDirToWellLitPath[parts[1]];
+                if (wellLitSubPath) {
+                  return `https://github.com/llm-d/llm-d/blob/main/docs/well-lit-paths/${wellLitSubPath}.md`;
                 }
                 // Non Well-Lit directory content (e.g. recipes) still lives under guides/
                 return `https://github.com/llm-d/llm-d/blob/main/${sourcePath}`;
               }
               const flatGuideName = parts.slice(1).join('/');
-              const flatWellLitFile = flatGuideToWellLitFile[flatGuideName];
-              if (flatWellLitFile) {
-                return `https://github.com/llm-d/llm-d/blob/main/docs/well-lit-paths/${flatWellLitFile}.md`;
+              const wellLitSubPath = flatGuideToWellLitPath[flatGuideName];
+              if (wellLitSubPath) {
+                return `https://github.com/llm-d/llm-d/blob/main/docs/well-lit-paths/${wellLitSubPath}.md`;
               }
+              // Fallback: derive path (for any unmapped guide files)
               const wellLitPath = sourcePath.replace(/^guides\//, 'docs/well-lit-paths/');
               return `https://github.com/llm-d/llm-d/blob/main/${wellLitPath}`;
             }

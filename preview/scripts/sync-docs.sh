@@ -206,6 +206,9 @@ sed_inplace \
     -e 's|\](\./multimodal-serving/optimized-baseline/README\.md)|\](/guides/multimodal-serving)|g' \
     -e 's|\](no-kubernetes-deployment\.md)|\](/guides/no-kubernetes-deployment)|g' \
     -e 's|\](../workloads/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/workloads/README.md)|g' \
+    -e 's|\](capabilities/README\.md)|\](/well-lit-paths)|g' \
+    -e 's|\](workloads/README\.md)|\](/well-lit-paths)|g' \
+    -e 's|\](operations/README\.md)|\](/well-lit-paths)|g' \
     "$DOCS_DIR/guides/index.md"
 
 # Publish well-lit paths at /well-lit-paths/* while keeping source files and doc IDs

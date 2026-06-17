@@ -138,6 +138,8 @@ else
       "${SED_INPLACE[@]}" \
         -e 's|github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware|github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing|g' \
         -e 's|github.com/llm-d/llm-d/tree/main/guides/predicted-latency-based-scheduling|github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing|g' \
+        -e 's|github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/README\.md|github.com/llm-d/llm-d/tree/main/docs/resources/gateway|g' \
+        -e 's|github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/\([^"]*\)\.md|github.com/llm-d/llm-d/tree/main/docs/resources/gateway/\1.md|g' \
         "$file"
     done < <(find "${WORKTREE_PATH}/preview/docs" -name "*.md" -print0)
 
