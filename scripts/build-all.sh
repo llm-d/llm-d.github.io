@@ -122,6 +122,9 @@ else
        "${WORKTREE_PATH}/preview/package-lock.json"
     rm -rf "${WORKTREE_PATH}/preview/src"
     cp -r "$PROJECT_DIR/preview/src" "${WORKTREE_PATH}/preview/src"
+    # Static assets (logos referenced by the synced footer/navbar, e.g. the CNCF
+    # logo) come from main too, so they exist for every version's build.
+    cp -r "$PROJECT_DIR/preview/static/." "${WORKTREE_PATH}/preview/static/"
 
     # Apply fixups for known stale GitHub links in committed release-branch content.
     # These patch specific link targets that changed in upstream after the branch was cut.
