@@ -7,7 +7,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Getting Started',
-      collapsed: false,
+      collapsed: true,
       link: {type: 'doc', id: 'getting-started/index'},
       items: [
         'getting-started/quickstart',
@@ -24,7 +24,7 @@ const sidebars: SidebarsConfig = {
         {
           type: 'category',
           label: 'Core',
-          collapsed: false,
+          collapsed: true,
           items: [
             'architecture/core/inferencepool',
             {
@@ -53,12 +53,12 @@ const sidebars: SidebarsConfig = {
         {
           type: 'category',
           label: 'Advanced',
-          collapsed: false,
+          collapsed: true,
           items: [
             {
               type: 'category',
               label: 'Disaggregation',
-              collapsed: false,
+              collapsed: true,
               link: {type: 'doc', id: 'architecture/advanced/disaggregation/index'},
               items: [
                 'architecture/advanced/disaggregation/operations-vllm',
@@ -68,7 +68,7 @@ const sidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'KV Cache Management',
-              collapsed: false,
+              collapsed: true,
               link: {type: 'doc', id: 'architecture/advanced/kv-management/index'},
               items: [
                 'architecture/advanced/kv-management/prefix-cache-aware-routing',
@@ -79,7 +79,7 @@ const sidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Autoscaling',
-              collapsed: false,
+              collapsed: true,
               link: {type: 'doc', id: 'architecture/advanced/autoscaling/index'},
               items: [
                 'architecture/advanced/autoscaling/workload-variant-autoscaling',
@@ -89,7 +89,7 @@ const sidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Batch Processing',
-              collapsed: false,
+              collapsed: true,
               link: {type: 'doc', id: 'architecture/advanced/batch/index'},
               items: [
                 'architecture/advanced/batch/batch-gateway',
@@ -104,7 +104,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Guides',
-      collapsed: false,
+      collapsed: true,
       link: {type: 'doc', id: 'guides/index'},
       items: [
         'guides/optimized-baseline',
@@ -127,7 +127,7 @@ const sidebars: SidebarsConfig = {
         {
           type: 'category',
           label: 'Gateway',
-          collapsed: false,
+          collapsed: true,
           link: {type: 'doc', id: 'resources/gateway/index'},
           items: [
             'resources/gateway/istio',
@@ -138,7 +138,7 @@ const sidebars: SidebarsConfig = {
         {
           type: 'category',
           label: 'Infrastructure Providers',
-          collapsed: false,
+          collapsed: true,
           link: {type: 'doc', id: 'resources/infra-providers/index'},
           items: [
             'resources/infra-providers/aks',
@@ -152,7 +152,7 @@ const sidebars: SidebarsConfig = {
         {
           type: 'category',
           label: 'Monitoring',
-          collapsed: false,
+          collapsed: true,
           items: [
             'resources/monitoring/metrics',
             'resources/monitoring/tracing',
