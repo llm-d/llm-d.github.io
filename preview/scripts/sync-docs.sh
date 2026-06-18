@@ -256,9 +256,14 @@ if [[ -f "$DOCS_DIR/guides/multimodal-serving.md" ]]; then
 fi
 
 # === Resources / Observability ===
-# llm-d/llm-d#1542: docs/resources/observability/ (setup, metrics, tracing, promql).
-# Fall back to legacy paths for release branches cut before that change.
-if [[ -f "$WIP/resources/observability/setup.md" ]]; then
+# Fall back through earlier paths for release branches cut before each change.
+if [[ -f "$WIP/operations/observability/setup.md" ]]; then
+    cp_doc "$WIP/operations/observability/README.md"          "$DOCS_DIR/resources/observability/index.md"
+    cp_doc "$WIP/operations/observability/setup.md"           "$DOCS_DIR/resources/observability/setup.md"
+    cp_doc "$WIP/operations/observability/metrics.md"         "$DOCS_DIR/resources/observability/metrics.md"
+    cp_doc "$WIP/operations/observability/tracing.md"         "$DOCS_DIR/resources/observability/tracing.md"
+    cp_doc "$WIP/operations/observability/promql.md"          "$DOCS_DIR/resources/observability/promql.md"
+elif [[ -f "$WIP/resources/observability/setup.md" ]]; then
     cp_doc "$WIP/resources/observability/README.md"           "$DOCS_DIR/resources/observability/index.md"
     cp_doc "$WIP/resources/observability/setup.md"            "$DOCS_DIR/resources/observability/setup.md"
     cp_doc "$WIP/resources/observability/metrics.md"          "$DOCS_DIR/resources/observability/metrics.md"
@@ -272,23 +277,22 @@ else
 fi
 
 # === Resources / Gateway ===
-# PR llm-d/llm-d#1778 consolidated gateway docs to docs/resources/gateway/
-cp_doc "$WIP/resources/gateway/README.md"              "$DOCS_DIR/resources/gateway/index.md"
-cp_doc "$WIP/resources/gateway/install-crds.md"        "$DOCS_DIR/resources/gateway/install-crds.md"
-cp_doc "$WIP/resources/gateway/istio.md"               "$DOCS_DIR/resources/gateway/istio.md"
-cp_doc "$WIP/resources/gateway/gke.md"                 "$DOCS_DIR/resources/gateway/gke.md"
-cp_doc "$WIP/resources/gateway/agentgateway.md"        "$DOCS_DIR/resources/gateway/agentgateway.md"
+cp_doc "$WIP/infrastructure/gateway/README.md"         "$DOCS_DIR/resources/gateway/index.md"
+cp_doc "$WIP/infrastructure/gateway/install-crds.md"   "$DOCS_DIR/resources/gateway/install-crds.md"
+cp_doc "$WIP/infrastructure/gateway/istio.md"          "$DOCS_DIR/resources/gateway/istio.md"
+cp_doc "$WIP/infrastructure/gateway/gke.md"            "$DOCS_DIR/resources/gateway/gke.md"
+cp_doc "$WIP/infrastructure/gateway/agentgateway.md"   "$DOCS_DIR/resources/gateway/agentgateway.md"
 
-cp_doc "$WIP/resources/rdma/README.md"                      "$DOCS_DIR/resources/rdma/rdma-configuration.md"
+cp_doc "$WIP/infrastructure/rdma/README.md"                  "$DOCS_DIR/resources/rdma/rdma-configuration.md"
 
 # === Infrastructure Providers ===
-cp_doc "$WIP/infra-providers/README.md"                  "$DOCS_DIR/resources/infra-providers/index.md"
-cp_doc "$WIP/infra-providers/aks/README.md"              "$DOCS_DIR/resources/infra-providers/aks.md"
-cp_doc "$WIP/infra-providers/digitalocean/README.md"     "$DOCS_DIR/resources/infra-providers/digitalocean.md"
-cp_doc "$WIP/infra-providers/gke/README.md"              "$DOCS_DIR/resources/infra-providers/gke.md"
-cp_doc "$WIP/infra-providers/minikube/README.md"         "$DOCS_DIR/resources/infra-providers/minikube.md"
-cp_doc "$WIP/infra-providers/openshift/README.md"        "$DOCS_DIR/resources/infra-providers/openshift.md"
-cp_doc "$WIP/infra-providers/openshift-aws/README.md"    "$DOCS_DIR/resources/infra-providers/openshift-aws.md"
+cp_doc "$WIP/infrastructure/providers/README.md"         "$DOCS_DIR/resources/infra-providers/index.md"
+cp_doc "$WIP/infrastructure/providers/aks/README.md"     "$DOCS_DIR/resources/infra-providers/aks.md"
+cp_doc "$WIP/infrastructure/providers/digitalocean/README.md" "$DOCS_DIR/resources/infra-providers/digitalocean.md"
+cp_doc "$WIP/infrastructure/providers/gke/README.md"     "$DOCS_DIR/resources/infra-providers/gke.md"
+cp_doc "$WIP/infrastructure/providers/minikube/README.md" "$DOCS_DIR/resources/infra-providers/minikube.md"
+cp_doc "$WIP/infrastructure/providers/openshift/README.md" "$DOCS_DIR/resources/infra-providers/openshift.md"
+cp_doc "$WIP/infrastructure/providers/openshift-aws/README.md" "$DOCS_DIR/resources/infra-providers/openshift-aws.md"
 
 # === API Reference ===
 cp_doc "$WIP/api-reference/README.md"         "$DOCS_DIR/api-reference/index.md"
@@ -301,10 +305,14 @@ cp_doc "$WIP/api-reference/epp-http-headers.md"      "$DOCS_DIR/api-reference/ep
 cp_doc "$WIP/api-reference/epp-http-apis.md"         "$DOCS_DIR/api-reference/epp-http-apis.md"
 
 # === Accelerators ===
-cp_doc "$WIP/accelerators/README.md"                 "$DOCS_DIR/accelerators/index.md"
+cp_doc "$WIP/getting-started/accelerators.md"        "$DOCS_DIR/accelerators/index.md"
+if [[ ! -f "$DOCS_DIR/accelerators/index.md" ]]; then
+    cp_doc "$WIP/accelerators/README.md"             "$DOCS_DIR/accelerators/index.md"
+fi
 if [[ -f "$DOCS_DIR/accelerators/index.md" ]]; then
     sed_inplace \
         -e 's|\.\./infra-providers/gke/README\.md|/resources/infra-providers/gke|g' \
+        -e 's|\.\./infrastructure/providers/gke/README\.md|/resources/infra-providers/gke|g' \
         "$DOCS_DIR/accelerators/index.md"
 fi
 
@@ -314,14 +322,14 @@ mkdir -p "$STATIC_DIR"
 cp "$ASSETS"/*.svg "$STATIC_DIR/" 2>/dev/null || true
 cp "$ASSETS"/images/*.svg "$STATIC_DIR/" 2>/dev/null || true
 cp "$ASSETS"/images/*.png "$STATIC_DIR/" 2>/dev/null || true
-cp_doc "$WIP/resources/rdma/networking-stack.svg" "$STATIC_DIR/" 2>/dev/null || true
+cp_doc "$WIP/infrastructure/rdma/networking-stack.svg" "$STATIC_DIR/" 2>/dev/null || true
 cp_doc "$WIP/architecture/core/images/flow_control_dashboard.png" "$STATIC_DIR/" 2>/dev/null || true
 cp_doc "$WIP/architecture/advanced/autoscaling/hpa-architecture.svg" "$STATIC_DIR/" 2>/dev/null || true
 cp_doc "$WIP/assets/no-kubernetes-deployment.svg" "$STATIC_DIR/" 2>/dev/null || true
 
 # Infrastructure Providers images
 echo "    Copying infrastructure provider images..."
-find "$WIP/infra-providers" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.svg" \) -exec cp {} "$STATIC_DIR/" \; 2>/dev/null || true
+find "$WIP/infrastructure/providers" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.svg" \) -exec cp {} "$STATIC_DIR/" \; 2>/dev/null || true
 
 echo "    Copying guide images..."
 mkdir -p "$STATIC_DIR/guides"
@@ -386,6 +394,10 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](.*guides/prereq/gateways/istio\.md)|\](/resources/gateway/istio)|g' \
         -e 's|\](.*guides/prereq/gateways/gke\.md)|\](/resources/gateway/gke)|g' \
         -e 's|\](.*guides/prereq/gateways/agentgateway\.md)|\](/resources/gateway/agentgateway)|g' \
+        -e 's|\](../../../infrastructure/gateway/README\.md)|\](/resources/gateway)|g' \
+        -e 's|\](../../../infrastructure/gateway/istio\.md)|\](/resources/gateway/istio)|g' \
+        -e 's|\](../../../infrastructure/gateway/gke\.md)|\](/resources/gateway/gke)|g' \
+        -e 's|\](../../../infrastructure/gateway/agentgateway\.md)|\](/resources/gateway/agentgateway)|g' \
         -e 's|guides/README\.md|guides/index.md|g' \
         -e 's|architecture/introduction\.md|architecture/index.md|g' \
         -e 's|architecture/README\.md|architecture/index.md|g' \
@@ -435,6 +447,7 @@ done
 echo "    Fixing guide internal cross-references..."
 find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace \
+        -e 's|\](traffic-control/README\.md)|\](/well-lit-paths)|g' \
         -e 's|\](README\.md)|\](index.md)|g' \
         -e 's|\](./README\.md)|\](./index.md)|g' \
         -e 's|\](../README\.md)|\](../index.md)|g' \
