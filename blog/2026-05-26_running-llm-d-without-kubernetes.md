@@ -101,13 +101,7 @@ endpoints:
       model: llama-3-8b
 ```
 
-| Field | Required | Notes |
-|---|---|---|
-| `name` | yes | Unique identifier; used as the endpoint key in the EPP datastore and in metrics labels. |
-| `address` | yes | Literal IPv4 address of the worker. The EPP uses `address:port` for routing and for scraping `/metrics`. Hostnames are not resolved by the plugin. |
-| `port` | yes | TCP port where vLLM is listening, written as a string. |
-| `namespace` | no | Logical grouping tag retained from the Kubernetes data model. Defaults to `"default"`; most non-Kubernetes deployments leave it unset. |
-| `labels` | no | Arbitrary key/value pairs surfaced to scheduler plugins, e.g. `llm-d.ai/role: prefill` for P/D, or `model: llama-3-8b` for model-aware filters. |
+Each entry needs a unique `name` and a literal `address:port` (hostnames are not resolved); optional `labels` are surfaced to scheduler plugins, e.g. `llm-d.ai/role: prefill` for P/D. The full field reference is in the [guide](https://github.com/llm-d/llm-d/tree/main/guides/no-kubernetes-deployment).
 
 ### 2. The one line that flips discovery
 
