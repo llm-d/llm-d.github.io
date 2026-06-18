@@ -1,6 +1,6 @@
 ---
 title: "No Kubernetes? No Problem: llm-d Now Runs Anywhere"
-description: "llm-d's new file-discovery plugin lets you run the full routing stack on bare metal, Slurm, Ray, or your laptop, with no Kubernetes required."
+description: "llm-d's routing intelligence was entangled with Kubernetes. A new endpoint-discovery abstraction separates the two, so KV-cache-aware scheduling, prefix affinity, and P/D run on Slurm, Ray, bare metal, or a laptop."
 slug: running-llm-d-without-kubernetes
 date: 2026-05-26T09:00
 
@@ -12,34 +12,41 @@ tags: [blog, scheduling, inference, llm-d]
 
 # No Kubernetes? No Problem: llm-d Now Runs Anywhere
 
-llm-d was designed as a Kubernetes-native inference stack, and its guides assume you have a cluster handy. However, a large class of inference workloads runs on infrastructure that isn't managed by Kubernetes, and until recently llm-d was not a fit for them.
+llm-d was born Kubernetes-native. Its workers are `Deployments`, its endpoints live in an `InferencePool`, and its guides assume a cluster is one `kubectl` away. That made sense: Kubernetes is where most production inference runs, and building on it gave llm-d a head start on networking, lifecycle, and scale.
 
-With the **llm-d router**'s new **file-discovery plugin**, that changes. llm-d can now run as a plain process or container in any environment, with no dependency on Kubernetes or any other cluster framework. A YAML file lists your endpoints; the router reads it and reconciles changes live. That's the whole interface.
+But the thing that makes llm-d *llm-d* - KV-cache-aware scoring, prefix-cache affinity, prefill/decode disaggregation, flow control - was never fundamentally about Kubernetes. It is routing intelligence. It reasons about the state of a fleet of model servers and decides where each request should go. Nothing about that logic needs an API server. The dependency on Kubernetes was incidental, inherited from how endpoints happened to be discovered, not essential to what the router actually does.
 
-That opens the door to deployments like:
-
-- **HPC clusters** running Slurm, where GPU nodes are allocated per-job and there is no cluster API
-- **Ray-based training loops** (VERL, OpenRLHF) where rollout workers are Ray actors, not pods
-- **Bare-metal inference farms** provisioned statically
-- **Local development** on a workstation with one or two GPUs
-
-This post introduces the new endpoint-discovery plugin mechanism in the llm-d router. It then shows how to use llm-d without a Kubernetes cluster by enabling the file-discovery plugin, which reads endpoints from a YAML file on disk. We illustrate this with two concrete examples that generate the endpoints file from a Ray cluster and a Slurm job.
+This post is about pulling those two things apart. We introduce the `EndpointDiscovery` abstraction in the llm-d router that separates *what endpoints exist* from *how to route across them*, and the first plugin built on it - file discovery - which lets the full routing stack run as a plain process or container with no Kubernetes anywhere in sight: on an HPC cluster, inside a Ray job, on a bare-metal rack, or on your laptop.
 
 <!-- truncate -->
 
+## The hard problem: routing intelligence trapped on one substrate
+
+It is tempting to file "run llm-d off Kubernetes" under simple engineering - drop the cluster dependency, ship a binary, done. The reason it matters is more fundamental than that, and it shows up most sharply in the places llm-d could not previously reach.
+
+**Reinforcement learning post-training.** Modern RL frameworks for LLMs - veRL, OpenRLHF, SkyRL, NeMo-RL - run on dedicated GPU clusters orchestrated by Ray, Slurm, or bare-metal coordination, where Kubernetes is usually absent and often unwelcome. And in the RL training loop, the rollout phase - running inference to generate the trajectories the policy learns from - is one of the dominant time costs, frequently *the* dominant one. Anything that speeds up that generation directly shortens the loop, which is why inference has become a first-class concern for these frameworks.
+
+It is not a simple problem. Inference is harder than it first looks because RL rollouts are not a single workload: multi-turn agentic trajectories, long reasoning chains, and short single-shot completions have very different compute and memory profiles, and each rewards a different routing and caching strategy. Many frameworks have responded by adding an inference router of their own, but the routing is still naive - typically round-robin or a simple load metric - which leaves most of the achievable speedup on the table.
+
+This is exactly the ground llm-d has spent its life on. Its routing intelligence - KV-cache-aware scoring, prefix-cache affinity, prefill/decode disaggregation, flow control - was built and hardened against precisely these complex workloads, including agentic and reasoning patterns. RL systems need that intelligence during rollout: load-aware routing across many engines, and KV-cache reuse for the repeated, multi-turn prompts that dominate RL trajectories. But getting it previously meant standing up a *second* orchestration system alongside the training stack - one substrate for training, Kubernetes for inference - with operational cost at every handoff. Faced with that, most teams do not adopt Kubernetes; they reimplement the same rollout primitives from scratch in every framework - weight synchronization, engine lifecycle, load-aware routing, KV-cache-aware placement - usually with far less inference sophistication than llm-d already provides. llm-d can consolidate all of it into one reusable layer, but only if Kubernetes is not the price of admission.
+
+**Research labs and HPC.** National labs and supercomputing centers - ORNL, NERSC, ALCF - standardize on Slurm, and not by accident. Security policies restrict privileged containers, and the whole stack is tuned around HPC storage like Lustre and GPFS. For these environments Kubernetes is not merely missing; it is actively undesirable. Slurm already handles scheduling, accounting, and fault tolerance. Adding a Kubernetes control plane buys operational overhead and little else, and so llm-d's routing intelligence was simply out of reach for a large research community.
+
+**Clean benchmarking.** Measuring what a router is worth requires isolating its contribution. Run llm-d on Kubernetes and the measurement is contaminated by kube-proxy, the CNI, and control-plane interference; a comparison against native vLLM ends up confounding routing intelligence with orchestration overhead. Benchmark efforts that want a clean, infrastructure-neutral baseline could not get one.
+
+The common thread is that llm-d's value was *coupled to its substrate*. The intelligence and the orchestration were welded together, so you could not take one without the other. The real problem is not "launch the binary somewhere else." It is factoring discovery cleanly out of the scheduler - so that the same routing logic, unchanged, runs on whatever substrate you already have. That is what the rest of this post describes.
+
 ## How llm-d normally discovers endpoints
 
-The Endpoint Picker (EPP), the routing engine inside the llm-d router, normally watches a Kubernetes `InferencePool` object and the pods it selects. As pods come and go, the llm-d EPP's internal datastore is updated automatically via the controller-runtime manager.
+To see what has to be abstracted, start with how discovery works today. The Endpoint Picker (EPP), the routing engine inside the llm-d router, watches a Kubernetes `InferencePool` object and the pods it selects. As pods come and go, the EPP's internal datastore is updated automatically through the controller-runtime manager.
 
-That machinery requires a live Kubernetes API server, an `InferencePool` CRD, and appropriate RBAC. On an HPC cluster or a Ray job, none of that exists.
+That machinery requires a live Kubernetes API server, an `InferencePool` CRD, and the RBAC to watch it. On a Slurm allocation or inside a Ray job, none of that exists - and crucially, none of it has anything to do with *how the router scores and picks endpoints*. It is purely about learning which endpoints are out there. That separation is the seam to cut along.
 
-## The llm-d Discovery plugin
+## The EndpointDiscovery abstraction
 
-To support alternative endpoint-discovery mechanisms, we recently introduced a general `EndpointDiscovery` plugin interface in the llm-d EPP framework. Anything that can enumerate endpoints and stream upsert/delete events can be plugged in: a file on disk, Consul, etcd, a custom registry, a cloud provider's service-discovery API, etc.
+So we cut there. The llm-d EPP now defines a general `EndpointDiscovery` plugin interface: anything that can enumerate endpoints and stream upsert/delete events satisfies it - a file on disk, Consul, etcd, a cloud provider's service-discovery API, or the Kubernetes watch itself.
 
-In the future, the existing Kubernetes watch-based discovery is also expected to move behind this interface, so all discovery paths share the same plugin model.
-
-The interface is small ([`pkg/epp/framework/interface/datalayer/discovery.go`](https://github.com/llm-d/llm-d-router/blob/main/pkg/epp/framework/interface/datalayer/discovery.go)):
+The interface is deliberately small ([`pkg/epp/framework/interface/datalayer/discovery.go`](https://github.com/llm-d/llm-d-router/blob/main/pkg/epp/framework/interface/datalayer/discovery.go)):
 
 ```go
 type EndpointDiscovery interface {
@@ -58,48 +65,32 @@ type DiscoveryNotifier interface {
 }
 ```
 
-A plugin tells the llm-d EPP about endpoints by calling `Upsert` and `Delete` on the notifier. `Start` runs the plugin's main loop, typically an initial enumeration of the source followed by a watch that emits further `Upsert`/`Delete` calls as endpoints come and go. `Ready()` returns a channel that closes once the initial enumeration has populated the llm-d EPP datastore, so request-serving can be gated on a non-empty endpoint pool.
+A plugin tells the EPP about endpoints by calling `Upsert` and `Delete` on the notifier. `Start` runs the plugin's main loop - typically an initial enumeration followed by a watch that emits further `Upsert`/`Delete` calls as endpoints change. `Ready()` returns a channel that closes once the datastore is populated, so request-serving can be gated on a non-empty pool.
+
+What matters here is the line the interface draws. On one side: *what endpoints exist*, which is inherently substrate-specific - a `kubectl` watch on a cluster, a node list on Slurm, a set of actors on Ray. On the other side: *how to route across them*, which is substrate-neutral and is the whole of llm-d's value. Everything above the interface - scoring, filtering, picking, flow control - never learns where the endpoints came from.
+
+This is why it is not a non-Kubernetes bolt-on. The existing Kubernetes watch is expected to move behind this same interface, so that `InferencePool` discovery becomes just another plugin alongside file, DNS, and service-registry discovery. The goal is one model for all discovery paths, with the scheduler agnostic to every one of them. Running without Kubernetes falls out of that design; it is not a special case grafted onto it.
 
 ## The file-discovery plugin
 
-The file-discovery plugin uses a plain YAML or JSON file on disk as its source of inference endpoints. The plugin reads the file at startup and optionally watches it (via `fsnotify`) for subsequent changes, emitting `Upsert`/`Delete` events as entries are added, modified, or removed.
+The first plugin built on the interface is the simplest possible source of truth: a plain YAML or JSON file on disk. The plugin reads the file at startup and optionally watches it (via `fsnotify`), emitting `Upsert`/`Delete` events as entries are added, modified, or removed.
 
-When this plugin is used, **the llm-d EPP has no dependency on any Kubernetes service or object**: no API server, no watchers, no controller manager, no `InferencePool` CRD, no RBAC, no `kubeconfig`. **It can run on a host without a Kubernetes cluster anywhere in sight.**
+When this plugin is in use, **the EPP has no dependency on any Kubernetes service or object** - no API server, no watchers, no controller manager, no `InferencePool` CRD, no RBAC, no `kubeconfig`. **It runs on a host with no cluster in sight.**
 
-The core llm-d EPP features are unchanged. KV-cache-utilization scoring, prefix-cache affinity, and Prometheus metrics all work identically.
-
-FlowControl (per-flow queueing, fairness, and admission) also works in file-discovery mode. The priority bands, fairness policies, ordering policies, and usage-limit policy are configured statically in `EndpointPickerConfig.flowControl` (the same block the Kubernetes deployment uses). Without `InferenceObjective` CRDs to consult, per-request priority falls back to a default value; static bands still apply, and a per-request `x-flow-fairness-id` header still drives fairness within a band. Model-name rewriting (driven by `InferenceModelRewrite`) is the one CRD-driven feature that is not yet available outside Kubernetes; a subset of these may move behind plugin interfaces in the future.
+And because the plugin sits below the interface seam, everything above it is unchanged. KV-cache-utilization scoring, prefix-cache affinity, saturation-based admission, FlowControl, and Prometheus metrics all behave exactly as they do on Kubernetes. The router does not know, and does not care, that its endpoints came from a file.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/running-llm-d-without-kubernetes/no-kubernetes-deployment.svg" alt="llm-d file-discovery architecture" style={{width: '75%', height: 'auto', border: '1px solid #888', padding: '4px'}} />
   <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 1: FileDiscovery plugin in llm-d</em></p>
 </div>
 
-## Try It: A Well-Lit Path
+## A minimal example
 
-**Prereqs**
-
-- A host with the GPUs your model requires, Docker (or Podman), and a Hugging Face token.
-- The canonical step-by-step deployment is the [No-Kubernetes Deployment well-lit path](https://github.com/llm-d/llm-d/blob/main/docs/well-lit-paths/no-kubernetes-deployment.md), with manifests in [`guides/no-kubernetes-deployment`](https://github.com/llm-d/llm-d/tree/main/guides/no-kubernetes-deployment). It includes ready-to-use llm-d EPP, endpoints, and Envoy configs (with the full optimized-baseline plugin set), Docker commands for vLLM/llm-d EPP/Envoy, verification, and a Prometheus scrape example.
-
-The walkthrough in [Setting it up](#setting-it-up) below is a smaller, learning-oriented version of the same path: a minimal llm-d EPP config and a trimmed Envoy config that make the moving parts visible. Use it to understand the design; use the upstream guide to deploy.
-
-## Setting it up
-
-The well-lit-path guide [`guides/no-kubernetes-deployment`](https://github.com/llm-d/llm-d/tree/main/guides/no-kubernetes-deployment) is the canonical, deploy-ready reference: ready-to-use llm-d EPP, endpoints, and Envoy configs (with the optimized-baseline plugin set), Docker commands for vLLM/llm-d EPP/Envoy, verification, and a Prometheus scrape example.
-
-This section is a learning-oriented tour of the same path - the goal is to make the moving parts and the file-discovery-specific surface visible in isolation, so the upstream configs read as concrete instances of an understood pattern rather than as opaque YAML. Four pieces:
-
-1. **Endpoints file** - a YAML list of vLLM workers (`address`, `port`, optional `labels`) that the file-discovery plugin reads, and optionally watches for live updates.
-2. **llm-d EPP config** - an `EndpointPickerConfig` with one `dataLayer.discovery.pluginRef: file-discovery` line that flips the llm-d EPP off the Kubernetes path. This is the central change; everything else (scoring, picker, metrics) is the same as in any llm-d EPP config.
-3. **llm-d EPP process** - runs the llm-d EPP binary or container with the config above. On startup it logs `EPP starting (file discovery mode)`, confirming the switch took effect.
-4. **Envoy proxy** - accepts client traffic, calls the llm-d EPP over `ext_proc`, and forwards each request to the address the llm-d EPP picks via the `x-gateway-destination-endpoint` response header.
-
-A final **Send a request** step at the end shows what a successful end-to-end response looks like.
+The full, deploy-ready path - EPP, Envoy, and vLLM commands, verification, and a Prometheus scrape example - lives in the upstream [No-Kubernetes Deployment guide](https://github.com/llm-d/llm-d/tree/main/guides/no-kubernetes-deployment) and its [well-lit path](https://github.com/llm-d/llm-d/blob/main/docs/well-lit-paths/no-kubernetes-deployment.md). Rather than reproduce it, this section isolates the two pieces that are specific to file discovery, so the guide reads as a concrete instance of an understood pattern.
 
 ### 1. The endpoints file
 
-The plugin reads a YAML file listing inference endpoints, e.g.:
+The plugin reads a YAML file listing inference endpoints:
 
 ```yaml
 endpoints:
@@ -110,21 +101,17 @@ endpoints:
       model: llama-3-8b
 ```
 
-Schema:
-
 | Field | Required | Notes |
 |---|---|---|
-| `name` | yes | Unique identifier; used as the endpoint key in the llm-d EPP datastore and in metrics labels. |
-| `address` | yes | IPv4 address of the inference worker. The llm-d EPP uses `address:port` for routing and for scraping the worker's `/metrics`. |
+| `name` | yes | Unique identifier; used as the endpoint key in the EPP datastore and in metrics labels. |
+| `address` | yes | Literal IPv4 address of the worker. The EPP uses `address:port` for routing and for scraping `/metrics`. Hostnames are not resolved by the plugin. |
 | `port` | yes | TCP port where vLLM is listening, written as a string. |
 | `namespace` | no | Logical grouping tag retained from the Kubernetes data model. Defaults to `"default"`; most non-Kubernetes deployments leave it unset. |
 | `labels` | no | Arbitrary key/value pairs surfaced to scheduler plugins, e.g. `llm-d.ai/role: prefill` for P/D, or `model: llama-3-8b` for model-aware filters. |
 
-> **Note:** `address` must be a literal IPv4 address. Hostnames are not resolved by the plugin. The Slurm and Ray examples later in this post resolve hostnames upstream of writing the file.
+### 2. The one line that flips discovery
 
-### 2. llm-d EPP config
-
-What turns the llm-d EPP into a no-Kubernetes llm-d EPP is a single block in the `EndpointPickerConfig`: `dataLayer.discovery` pointed at the file-discovery plugin.
+Turning a Kubernetes EPP into a no-Kubernetes EPP is a single block in the `EndpointPickerConfig`: register the plugin, then point `dataLayer.discovery` at it.
 
 ```yaml
 plugins:
@@ -139,346 +126,67 @@ dataLayer:
     pluginRef: file-discovery     # this line switches off the Kubernetes path
 ```
 
-Wire scoring, picker, and metrics plugins around this block as you would in any llm-d EPP config. The upstream [`router/epp/config.yaml`](https://github.com/llm-d/llm-d/blob/main/guides/no-kubernetes-deployment/router/epp/config.yaml) ships the optimized-baseline plugin mix (`prefix-cache-scorer`, `queue-scorer`, `kv-cache-utilization-scorer`, `no-hit-lru-scorer`) already wired to file-discovery and is the recommended starting point; the Kubernetes-side [`optimized-baseline` router values](https://github.com/llm-d/llm-d/blob/main/guides/optimized-baseline/router/optimized-baseline.values.yaml) are the corresponding reference for cluster deployments.
+Everything else in the config - scoring, picker, metrics - is identical to any other EPP config. The upstream [`router/epp/config.yaml`](https://github.com/llm-d/llm-d/blob/main/guides/no-kubernetes-deployment/router/epp/config.yaml) ships the optimized-baseline plugin mix already wired to file discovery and is the recommended starting point. `watchFile: true` is the key property for dynamic environments: the EPP upserts and deletes endpoints as the file changes, with no restart.
 
-`watchFile: true` enables live reload: the llm-d EPP upserts new endpoints and deletes removed ones whenever the file changes, without a restart. This is the key property that makes dynamic environments, where workers appear and disappear, work correctly.
+From here, the guide covers starting the EPP, wiring Envoy's `ext_proc` to it, and sending a request - none of which differs from llm-d's standalone deployment mode.
 
-### 3. Start the llm-d EPP
+## Prefill/decode disaggregation
 
-```bash
-epp \
-  --config-file /etc/epp/config.yaml \
-  --pool-name my-pool \
-  --grpc-port 9002 \
-  --grpc-health-port 9003 \
-  --metrics-port 9090
-```
+llm-d's prefill/decode disaggregation (P/D) - where the compute-bound prefill stage and the memory-bandwidth-bound decode stage run on separate workers and the KV cache is transferred between them - works in file-discovery mode with no special handling. The full deployment recipe (sidecar flags, vLLM `kv-transfer-config`, NIXL/RDMA, plugin wiring, scheduling profiles) is documented in the [pd-disaggregation guide](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation) and is identical outside Kubernetes.
 
-`--pool-name` and `--pool-namespace` are arbitrary labels for metrics and logs in file-discovery mode; they don't reference any Kubernetes object. On startup the llm-d EPP logs `EPP starting (file discovery mode)`, and `endpoints file changed, reloading` on each subsequent reload when `watchFile: true`. The upstream guide covers the container and build-from-source options.
+The only file-discovery-specific change is marking each endpoint's role in the YAML with the `llm-d.ai/role` label (`prefill` or `decode`); the router's prefill/decode filters select candidates by that label. The full set of role values is listed in [`bylabel/roles.go`](https://github.com/llm-d/llm-d-router/blob/main/pkg/epp/framework/plugins/scheduling/filter/bylabel/roles.go).
 
-### 4. Envoy config
+## Beyond a static file: dynamic substrates
 
-The llm-d EPP picks an endpoint but doesn't proxy traffic. Envoy (or any compatible proxy) accepts the client request, calls the llm-d EPP over `ext_proc`, reads the `x-gateway-destination-endpoint` header that the llm-d EPP sets on the response, and forwards the request to that address using its `ORIGINAL_DST` cluster type. The Envoy config is fully static; no Kubernetes service discovery involved.
+A hand-edited file is fine when the worker set is fixed. The interesting cases are dynamic, and they all reduce to the same shape: whatever already knows your worker set writes the endpoints file, and the EPP reconciles. There is a spectrum of how that file gets produced:
 
-This is the same shape as llm-d's **standalone deployment mode**. The upstream [`router/envoy/envoy.yaml`](https://github.com/llm-d/llm-d/blob/main/guides/no-kubernetes-deployment/router/envoy/envoy.yaml) is a host-friendly Envoy config wired exactly this way and works alongside the llm-d EPP config above. The standalone Helm chart [`llm-d-router-standalone/values.yaml`](https://github.com/llm-d/llm-d-router/blob/main/config/charts/llm-d-router-standalone/values.yaml) is the Kubernetes-side reference; it shows the `health_checks` and `transport_socket` (TLS) blocks worth adding when Envoy and the llm-d EPP run on separate hosts (e.g. Envoy on a Slurm head node and the llm-d EPP on a service node).
+1. **Static file** - hand-edited or templated once at deployment. Right for bare-metal racks, lab machines, a fixed pool of services. No live reload needed.
+2. **Generated once at startup** - a script asks the orchestrator for the current worker set and writes the file before the EPP starts. Works well when the set is fixed for the duration of a job (an HPC allocation, a single training run).
+3. **Regenerated on change** - a monitor or job hook rewrites the file via atomic rename whenever workers change: a node fails, a training round completes and rollouts respawn, an autoscaler adds capacity. With `watchFile: true` the EPP reconciles without a restart.
+4. **Orchestrator-native discovery plugin** (future work) - for the most dynamic case, a dedicated `SlurmDiscovery` or `RayDiscovery` plugin against the same `EndpointDiscovery` interface, talking to the orchestrator directly with no file in the loop.
 
-### 5. Start Envoy
+The two environments where this matters most today are Ray and Slurm:
 
-```bash
-envoy -c /etc/envoy/envoy.yaml
-```
+- **Ray.** vLLM workers run as remote processes on Ray nodes, and the Ray Python API exposes current cluster membership including node IPs. A short script queries `ray.nodes()`, keeps the GPU nodes, and writes the endpoints file - regenerated between RL training rounds as rollout workers are replaced.
+- **Slurm.** A batch job requests a fixed set of nodes; the first is designated the head (running EPP and Envoy) and the rest run vLLM. `scontrol show hostnames $SLURM_JOB_NODELIST` expands the allocation, and a few lines resolve those hostnames to IPs for the file.
 
-Requests to `http://localhost:8080/v1/completions` are now routed by the llm-d EPP to one of the vLLM instances.
-
-### 6. Send a request
-
-End-to-end completion through Envoy -> llm-d EPP -> vLLM:
-
-```bash
-curl -s http://localhost:8080/v1/completions \
-    -H 'Content-Type: application/json' \
-    -d '{
-        "model": "llama-3-8b",
-        "prompt": "Hello, world!",
-        "max_tokens": 32
-    }'
-```
-
-A successful response is a standard OpenAI-compatible completion:
-
-```json
-{
-  "id": "cmpl-...",
-  "object": "text_completion",
-  "model": "llama-3-8b",
-  "choices": [
-    { "index": 0, "text": " ...", "finish_reason": "length" }
-  ],
-  "usage": { "prompt_tokens": 5, "completion_tokens": 32, "total_tokens": 37 }
-}
-```
-
-You can also confirm the llm-d EPP datastore is populated and being scored via the metrics endpoint:
-
-```bash
-curl -s http://localhost:9090/metrics | grep inference_pool
-```
-
-A `503` with `no_healthy_upstream` typically means the llm-d EPP gRPC connection from Envoy is down; see [Troubleshooting](#troubleshooting) for the common failure modes.
-
-## P/D disaggregated setup
-
-llm-d also supports **prefill/decode disaggregation** (P/D), where the compute-bound prefill stage and the memory-bandwidth-bound decode stage run on separate workers and the KV cache is transferred between them. The deployment is two pools: prefill workers running vLLM directly, and decode workers running vLLM behind a `pd-sidecar` that orchestrates remote prefill and the KV transfer.
-
-The full deployment recipe (sidecar flags, vLLM `kv-transfer-config`, NIXL/RDMA setup, llm-d EPP plugin wiring with `disagg-profile-handler` and `prefix-based-pd-decider`, and the scheduling profiles) is documented upstream and is identical for non-Kubernetes deployments. Use those as the reference:
-
-- [`llm-d/guides/pd-disaggregation`](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation): end-to-end deployment guide.
-- [`llm-d-router/docs/disaggregation.md`](https://github.com/llm-d/llm-d-router/blob/main/docs/disaggregation.md): request-lifecycle and component reference.
-- [`llm-d/guides/pd-disaggregation/router/pd-disaggregation.values.yaml`](https://github.com/llm-d/llm-d/blob/main/guides/pd-disaggregation/router/pd-disaggregation.values.yaml): canonical P/D llm-d EPP config (full plugin set with prefill and decode profiles).
-
-**The only thing this post adds is how to swap Kubernetes-driven discovery for the YAML file.** Two changes:
-
-1. Add the file-discovery plugin and `dataLayer.discovery.pluginRef` to the upstream P/D llm-d EPP config (same as in the single-pool setup earlier in this post).
-2. Mark each endpoint's role in the YAML with the `llm-d.ai/role` label: `prefill` for prefill workers, `decode` for decode workers. For decode endpoints, the `port` is the pd-sidecar's port, not vLLM's. The router's prefill/decode filters select candidates by this label.
-
-```yaml
-endpoints:
-  - name: prefill-0
-    address: "10.0.0.10"
-    port: "8000"            # vLLM directly
-    labels:
-      llm-d.ai/role: prefill
-
-  - name: decode-0
-    address: "10.0.0.20"
-    port: "8000"            # the pd-sidecar's port
-    labels:
-      llm-d.ai/role: decode
-```
-
-The full set of role label values (including combined roles like `prefill-decode` and `encode-prefill-decode`) is listed in [`bylabel/roles.go`](https://github.com/llm-d/llm-d-router/blob/main/pkg/epp/framework/plugins/scheduling/filter/bylabel/roles.go).
-
-## Integrating with non-Kubernetes orchestrators
-
-Integrating llm-d in file-discovery mode with any non-Kubernetes environment comes down to two things:
-
-1. **Run llm-d** (llm-d EPP, Envoy, and the llm-d sidecar where applicable) on a node that can reach your vLLM workers, using the configs and commands from the [Setting it up](#setting-it-up) section above.
-2. **Produce the endpoints file** in the format shown above, using whatever source knows your worker set.
-
-The first step is the same everywhere; the second is where most of the integration work lives. The right approach depends on how dynamic the worker pool is. There are a few common patterns, all of which use the same llm-d EPP config:
-
-1. **Static file** - hand-edited or templated once at deployment time. Right when the worker set is known up-front and stable: bare-metal racks, lab machines, a fixed pool of long-lived services. No live reload needed; `watchFile` can stay at its default `false`.
-2. **Generated once at startup** - a script that asks the orchestrator for the current worker set and writes the file before the llm-d EPP starts. Simplest dynamic path; works well when the worker set is fixed for the duration of a job (an HPC allocation, a single training run).
-3. **Regenerated on change** - a small monitor process or job hook that rewrites the file via atomic rename whenever the worker set changes: a node failed, a training round completed and rollouts were respawned, an autoscaler added or removed capacity. With `watchFile: true` the llm-d EPP reconciles automatically without a restart.
-4. **Orchestrator-native discovery plugin** (future work) - for the most dynamic case, where workers come and go faster than is comfortable to track via a regenerated file. A dedicated `SlurmDiscovery`, `RayDiscovery`, or similar plugin against the same `EndpointDiscovery` interface would talk to the orchestrator's API directly and emit `Upsert`/`Delete` events without any file in the loop.
-
-The source of truth varies by environment - Ray's Python API, Slurm's `$SLURM_JOB_NODELIST`, a CMDB or inventory tool, a cloud provider's service-discovery API, or just a static configuration - but the output format is always the same YAML schema as the [endpoints file](#1-the-endpoints-file).
-
-The two examples below show patterns 2 and 3 end to end, for Ray and Slurm.
-
-### Ray
-
-In a Ray deployment, vLLM workers run as remote processes on Ray cluster nodes. The Ray Python API exposes the current cluster membership, including node IP addresses, so generating the endpoints file is straightforward.
+Both end-to-end examples - the Ray generator script and a complete Slurm SBATCH job - are in the [No-Kubernetes Deployment guide](https://github.com/llm-d/llm-d/tree/main/guides/no-kubernetes-deployment).
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/running-llm-d-without-kubernetes/ray-endpoint-generator.svg" alt="Endpoint generator script connected to the Ray head node, writing endpoints.yaml" style={{width: '75%', height: 'auto', border: '1px solid #888', padding: '4px'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 2: Endpoint generator queries the Ray head node and writes endpoints.yaml.</em></p>
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 2: An endpoint generator queries the Ray head node and writes endpoints.yaml.</em></p>
 </div>
 
-```python
-#!/usr/bin/env python3
-"""
-generate_epp_endpoints.py
-
-Usage: python generate_epp_endpoints.py [vllm_port] [output_path]
-
-Run this after Ray workers are started and before launching the llm-d EPP.
-"""
-import ray
-import yaml
-import socket
-import sys
-
-VLLM_PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
-OUTPUT    = sys.argv[2] if len(sys.argv) > 2 else "/etc/epp/endpoints.yaml"
-
-ray.init(address="auto")
-
-endpoints = []
-for i, node in enumerate(ray.nodes()):
-    if not node["Alive"]:
-        continue
-    # Skip nodes with no GPU resources - they are not running vLLM
-    if node.get("Resources", {}).get("GPU", 0) == 0:
-        continue
-
-    # NodeManagerAddress is the raylet's bind address - typically already an IP,
-    # but resolve defensively in case a Ray deployment exposes it as a hostname.
-    address = node["NodeManagerAddress"]
-    ip = socket.gethostbyname(address)
-
-    endpoints.append({
-        "name":    f"vllm-{i}",
-        "address": ip,
-        "port":    str(VLLM_PORT),
-        "labels":  {
-            "ray-node-id": node["NodeID"][:12],
-        },
-    })
-
-with open(OUTPUT, "w") as f:
-    yaml.dump({"endpoints": endpoints}, f, default_flow_style=False)
-
-print(f"Wrote {len(endpoints)} endpoints to {OUTPUT}")
-```
-
-This fits naturally into a startup sequence:
-
-```bash
-# 1. Start Ray workers and vLLM on GPU nodes (your existing orchestration)
-python launch_rollout_workers.py
-
-# 2. Generate the endpoints file
-python generate_epp_endpoints.py 8000 /etc/epp/endpoints.yaml
-
-# 3. Start llm-d EPP and Envoy
-epp \
-  --pool-name ray-pool \
-  --config-file /etc/epp/config.yaml \
-  --grpc-port 9002 --grpc-health-port 9003 --metrics-port 9090 &
-
-envoy -c /etc/envoy/envoy.yaml &
-```
-
-Because `watchFile: true` is set in the llm-d EPP config, the endpoints file can be regenerated whenever the worker pool changes, for example between RL training rounds when rollout workers are restarted with a new model checkpoint. The llm-d EPP reconciles the change without a restart:
-
-```python
-# Regenerate after workers are replaced for the next training round
-generate_endpoints(new_worker_ips, "/etc/epp/endpoints.yaml.tmp")
-os.rename("/etc/epp/endpoints.yaml.tmp", "/etc/epp/endpoints.yaml")
-# The atomic rename triggers fsnotify; the llm-d EPP updates its pool automatically
-```
-
-### Slurm
-
-In a Slurm environment, a batch job requests a fixed set of nodes via `#SBATCH --nodes`. The standard approach is to designate the first node as the "head" (running llm-d EPP and Envoy) and use the remaining nodes for vLLM.
-
-Slurm provides the allocated node list in `$SLURM_JOB_NODELIST` as a compact range expression like `node[01-05]`. The `scontrol show hostnames` command expands that into individual hostnames, and a short Python snippet resolves them to IPs for the endpoints file.
-
-```bash
-#!/bin/bash
-#SBATCH --job-name=llm-d-serve
-#SBATCH --nodes=5
-#SBATCH --gpus-per-node=8
-#SBATCH --time=04:00:00
-
-MODEL=meta-llama/Meta-Llama-3-8B
-MODEL_PORT=8000
-WORK_DIR=/scratch/$USER/$SLURM_JOB_ID
-
-mkdir -p $WORK_DIR/epp
-
-# --- Resolve node list -------------------------------------------------
-ALL_NODES=($(scontrol show hostnames $SLURM_JOB_NODELIST))
-HEAD_NODE=${ALL_NODES[0]}
-WORKER_NODES=("${ALL_NODES[@]:1}")
-
-# --- Generate endpoints.yaml -------------------------------------------
-python3 - <<EOF
-import socket, yaml
-
-worker_nodes = "${WORKER_NODES[*]}".split()
-port         = $MODEL_PORT
-endpoints    = []
-
-for i, host in enumerate(worker_nodes):
-    # llm-d EPP requires IPs; Slurm gives hostnames
-    ip = socket.gethostbyname(host)
-    endpoints.append({
-        "name":    f"vllm-{i}",
-        "address": ip,
-        "port":    str(port),
-        "labels":  {"slurm-host": host, "rank": str(i)},
-    })
-
-with open("$WORK_DIR/epp/endpoints.yaml", "w") as f:
-    yaml.dump({"endpoints": endpoints}, f, default_flow_style=False)
-
-print(f"Wrote {len(endpoints)} endpoints")
-EOF
-
-# --- Copy llm-d EPP and Envoy configs to work dir ----------------------------
-cp /path/to/epp-config.yaml $WORK_DIR/epp/config.yaml
-cp /path/to/envoy.yaml      $WORK_DIR/envoy.yaml
-
-# Patch the config to point at the correct endpoints file path
-sed -i "s|/etc/epp/endpoints.yaml|$WORK_DIR/epp/endpoints.yaml|g" \
-    $WORK_DIR/epp/config.yaml
-
-# --- Start vLLM on each worker node ------------------------------------
-# Each worker uses all 8 GPUs on its node via tensor parallelism. Adjust
-# --tensor-parallel-size to match --gpus-per-node, or split into smaller
-# replicas (e.g. 2x TP4) if the model fits.
-GPUS_PER_NODE=8
-for i in "${!WORKER_NODES[@]}"; do
-    srun --ntasks=1 --nodes=1 \
-         --nodelist="${WORKER_NODES[$i]}" \
-         --gpus-per-node=$GPUS_PER_NODE \
-         vllm serve $MODEL \
-              --port $MODEL_PORT \
-              --tensor-parallel-size $GPUS_PER_NODE &
-done
-
-# Wait for vLLM to finish loading weights before llm-d EPP starts polling.
-# Cap the wait so a stuck worker (OOM, weight download failure, etc.) fails
-# the job instead of holding the SBATCH allocation idle until --time expires.
-MAX_WAIT_SECS=1800   # 30 minutes
-echo "Waiting for vLLM workers to be ready..."
-for node in "${WORKER_NODES[@]}"; do
-    waited=0
-    until curl -sf "http://$node:$MODEL_PORT/health" > /dev/null 2>&1; do
-        if (( waited >= MAX_WAIT_SECS )); then
-            echo "ERROR: $node not ready after ${MAX_WAIT_SECS}s, aborting" >&2
-            exit 1
-        fi
-        sleep 5
-        waited=$(( waited + 5 ))
-    done
-    echo "  $node ready"
-done
-
-# --- Start llm-d EPP + Envoy on the head node --------------------------------
-srun --ntasks=1 --nodes=1 --nodelist="$HEAD_NODE" \
-    epp \
-        --pool-name slurm-$SLURM_JOB_ID \
-        --config-file $WORK_DIR/epp/config.yaml \
-        --grpc-port 9002 \
-        --grpc-health-port 9003 \
-        --metrics-port 9090 &
-
-srun --ntasks=1 --nodes=1 --nodelist="$HEAD_NODE" \
-    envoy -c $WORK_DIR/envoy.yaml &
-
-wait
-```
-
-For jobs where the serving pool may change during the allocation (a node fails and is replaced, or model weights are swapped), the endpoints file can be atomically replaced and the llm-d EPP will reconcile without downtime:
-
-```bash
-python3 regenerate_endpoints.py > $WORK_DIR/epp/endpoints.yaml.tmp
-mv $WORK_DIR/epp/endpoints.yaml.tmp $WORK_DIR/epp/endpoints.yaml
-```
-
-## Troubleshooting
-
-A few failure modes that trip up first-time deployments:
-
-- **`address` is a hostname, not an IP.** The llm-d EPP rejects entries where `address` doesn't parse as an IP. Slurm and Ray surface hostnames, so resolve them with `socket.gethostbyname` (or equivalent) before writing the file.
-- **llm-d EPP can't reach vLLM's metrics port.** The llm-d EPP scrapes `/metrics` on each endpoint at `address:port`. If a host firewall or a network policy blocks that port from the llm-d EPP node, scoring plugins silently degrade to default values: routing still works, but KV-cache scoring becomes meaningless. Check the llm-d EPP's pool-health metrics on `--metrics-port` to confirm endpoints are reporting.
-- **Envoy returns 503 with `no_healthy_upstream`.** Almost always means the llm-d EPP gRPC connection is down. Check that the llm-d EPP is running on `localhost:9002`, that `--grpc-port` matches Envoy's `authority`, and (if you added the `health_checks` block) that the llm-d EPP's gRPC health service is enabled.
-- **`watchFile: true` doesn't pick up an edit.** The watcher reacts to fsnotify events on rename/replace, which is what `mv tmp final` produces. Editors that truncate-then-write (some `vim` configurations, certain IDEs) may emit a different event sequence and either double-fire or miss. Always update the file via atomic rename, as both examples in this post do.
-- **vLLM hasn't finished loading weights when the llm-d EPP starts.** If the llm-d EPP scrapes a vLLM that isn't yet serving, the endpoint shows up as unhealthy and gets excluded until the next reconcile. The Slurm script avoids this by polling `/health` on each worker before starting the llm-d EPP; do the same in any orchestration that doesn't already gate on readiness.
+These patterns all keep a file in the loop. For the most dynamic pools we are exploring discovery plugins that remove it entirely, all against the same `EndpointDiscovery` interface: orchestrator-native plugins (the `RayDiscovery`/`SlurmDiscovery` of pattern 4) that talk to Ray's Python API or Slurm's controller directly and emit `Upsert`/`Delete` events as workers change; plugins backed by a service registry such as Consul, etcd, or a cloud provider's service-discovery API where one already runs; and, longer term, moving the existing Kubernetes watch behind the same interface so `InferencePool` discovery becomes just another plugin and the scheduler carries no special case for any substrate.
 
 ## Parity with the Kubernetes-native llm-d deployment
 
-The file-discovery plugin gives you most of the llm-d routing stack outside of Kubernetes:
+Because the seam is below the scheduler, file-discovery mode keeps the routing intelligence intact:
 
-- **KV-cache-utilization scoring**: routes requests away from instances with high cache pressure
-- **Prefix-cache affinity**: sends requests with shared prompt prefixes to the instance most likely to have them cached
-- **Saturation-based admission**: the saturation detector still gates request admission, so a saturated pool sheds load rather than overloading backends.
-- **FlowControl (per-flow queueing and fairness)**: works with priority bands, fairness, and ordering policies configured statically in `EndpointPickerConfig.flowControl`. Without `InferenceObjective` CRDs, per-request priority falls back to the configured default; the `x-flow-fairness-id` request header drives fairness within a band.
-- **Prometheus metrics**: llm-d EPP exports scheduling and pool health metrics on `--metrics-port`
+- **KV-cache-utilization scoring**: routes requests away from instances under high cache pressure.
+- **Prefix-cache affinity**: sends requests with shared prompt prefixes to the instance most likely to have them cached.
+- **Saturation-based admission**: the saturation detector still gates admission, so a saturated pool sheds load rather than overloading backends.
+- **FlowControl**: per-flow queueing, fairness, and ordering policies, configured statically in `EndpointPickerConfig.flowControl`. Without `InferenceObjective` CRDs, per-request priority falls back to the configured default; the `x-flow-fairness-id` header drives fairness within a band.
+- **Prometheus metrics**: scheduling and pool-health metrics on `--metrics-port`.
 
-What is no longer handled by llm-d outside Kubernetes is endpoint lifecycle: there is no automatic deregistration when a vLLM process dies. This responsibility shifts to the surrounding framework or orchestrator (Ray, Slurm, a custom controller, etc.) which needs to detect failed workers and rewrite the endpoints file accordingly. For production deployments, this typically means adding a health-monitoring agent that drops unavailable workers from the file.
+What changes is *ownership of endpoint lifecycle*. On Kubernetes, a dying pod is removed from the `InferencePool` automatically. With file discovery there is no such signal: detecting a failed worker and rewriting the endpoints file becomes the surrounding orchestrator's job (Ray, Slurm, a custom controller). For production this usually means a small health-monitoring agent that drops unavailable workers from the file. The one feature not yet available outside Kubernetes is `InferenceModelRewrite`-driven model-name rewriting, which a future plugin may address.
 
-## What's next
+## Troubleshooting
 
-The file-discovery plugin is the simplest non-Kubernetes integration point. It works well when the worker pool is relatively static and changes infrequently; regenerating the file at those transitions is enough. For environments where the worker set churns more frequently, a static file with periodic regeneration still works but requires external orchestration to keep it in sync.
+The full failure-mode list is in the guide; three trip up most first-time deployments:
 
-**Additional / future plugins.** The `EndpointDiscovery` interface is intentionally minimal so more plugins can be added as the need arises. A few directions we expect to see:
+- **`address` is a hostname, not an IP.** The EPP rejects entries where `address` does not parse as an IP. Slurm and Ray surface hostnames, so resolve them (`socket.gethostbyname` or equivalent) before writing the file.
+- **EPP cannot reach vLLM's metrics port.** The EPP scrapes `/metrics` at `address:port`. If a firewall or network policy blocks it, scoring plugins silently degrade to defaults: routing still works, but KV-cache scoring becomes meaningless. Check the EPP's pool-health metrics to confirm endpoints are reporting.
+- **Envoy returns 503 with `no_healthy_upstream`.** Almost always the EPP gRPC connection is down. Confirm the EPP is running, that `--grpc-port` matches Envoy's `authority`, and that its gRPC health service is enabled.
 
-- **Orchestrator-native plugins**: a `RayDiscovery` or `SlurmDiscovery` plugin that talks to Ray's Python API or Slurm's controller directly, emitting `Upsert`/`Delete` events as workers change without any file in the loop. Useful for highly dynamic worker pools.
-- **Service-registry plugins**: Consul, etcd, or a cloud provider's service-discovery API as the source of endpoints.
-- **Migrating Kubernetes discovery to a plugin**: the existing watch-based Kubernetes path is currently wired into the llm-d EPP directly. Moving it behind the same `EndpointDiscovery` interface would unify all discovery paths under a single model and remove a special case from the llm-d EPP.
+## Research directions we are pursuing
 
-**RL integration.** We are currently working on integrating the no-Kubernetes llm-d with RL frameworks that run on Ray and Slurm (VERL, OpenRLHF). Our next blog post will cover that integration and initial results. This will include a custom `EndpointDiscovery` plugin that registers and deregisters endpoints in real time as Ray actors come up and are torn down between training rounds. We will also show how llm-d's prefix-cache routing translates into a concrete throughput benefit for the repeated-prompt patterns typical of RLHF rollouts.
+Decoupling routing intelligence from the substrate is the enabling step, not the destination. Discovery gets llm-d's existing routing onto RL substrates; the larger opportunity we are pursuing is adapting the routing itself to what rollouts demand. As we work with RL frameworks we are mapping where current rollout pipelines fall short and where llm-d's inference expertise can close the gap:
+
+- **Workload-aware routing for heterogeneous rollouts.** Agentic trajectories, long reasoning chains, and short completions each reward a different routing and caching strategy. We are studying how the scheduler can recognize the workload type and adapt within a single rollout, rather than treating every request the same.
+- **Session affinity across multi-turn trajectories.** Routing each step of a trajectory back to the engine that already holds its KV cache, so the repeated-prompt structure of RL turns into real cache hits instead of recomputation.
+- **Engine lifecycle around the train/generate cycle.** Rollout engines need to pause, sleep, and wake as weights are updated between rounds. Coordinating that cleanly - and keeping the router's view consistent through it - is a primitive each framework rebuilds today.
+- **Weight synchronization.** Propagating updated policy weights to engines efficiently over NCCL/NIXL, keeping that data plane separate from the HTTP control plane that carries inference traffic.
+- **Async and partial rollouts.** Supporting interruptible and partial generation for algorithms that do not need every trajectory to run to completion, and routing that stays correct as engines are preempted mid-flight.
+
+The thread running through all of this is the one the post opened with: once routing intelligence is independent of the substrate, llm-d can serve as reusable rollout infrastructure, so RL teams spend their effort on algorithms rather than rebuilding weight sync, engine lifecycle, and load-aware routing for the fifth time. The direction we are pushing hardest on is RL itself - integrating no-Kubernetes llm-d with frameworks on Ray and Slurm (veRL, OpenRLHF), including a custom `EndpointDiscovery` plugin that registers and deregisters endpoints in real time as actors come and go between training rounds. A follow-up post will share that work and its early results, including how prefix-cache routing turns the repeated-prompt patterns of RLHF rollouts into a concrete throughput win.
