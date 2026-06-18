@@ -179,12 +179,12 @@ cp_doc "$WIP/well-lit-paths/workloads/multimodal-serving.md"             "$DOCS_
 cp_doc "$WIP/well-lit-paths/capabilities/precise-prefix-cache-routing.md" "$DOCS_DIR/guides/precise-prefix-cache-routing.md"
 cp_doc "$WIP/well-lit-paths/capabilities/tiered-prefix-cache.md"         "$DOCS_DIR/guides/tiered-prefix-cache.md"
 cp_doc "$WIP/well-lit-paths/workloads/batch-serving/asynchronous-processing.md" "$DOCS_DIR/guides/asynchronous-processing.md"
-cp_doc "$WIP/well-lit-paths/operations/flow-control.md"                  "$DOCS_DIR/guides/flow-control.md"
+cp_doc "$WIP/well-lit-paths/traffic-control/flow-control.md"             "$DOCS_DIR/guides/flow-control.md"
 cp_doc "$WIP/well-lit-paths/capabilities/pd-disaggregation.md"           "$DOCS_DIR/guides/pd-disaggregation.md"
 cp_doc "$WIP/well-lit-paths/capabilities/predicted-latency.md"           "$DOCS_DIR/guides/predicted-latency.md"
 cp_doc "$WIP/well-lit-paths/capabilities/wide-expert-parallelism.md"     "$DOCS_DIR/guides/wide-expert-parallelism.md"
-cp_doc "$WIP/well-lit-paths/operations/workload-autoscaling.md"          "$DOCS_DIR/guides/workload-autoscaling.md"
-cp_doc "$WIP/well-lit-paths/operations/no-kubernetes-deployment.md"      "$DOCS_DIR/guides/no-kubernetes-deployment.md"
+cp_doc "$WIP/well-lit-paths/traffic-control/workload-autoscaling.md"     "$DOCS_DIR/guides/workload-autoscaling.md"
+cp_doc "$WIP/infrastructure/no-kubernetes-deployment.md"                 "$DOCS_DIR/guides/no-kubernetes-deployment.md"
 cp_doc "$WIP/well-lit-paths/workloads/batch-serving/batch-gateway.md"    "$DOCS_DIR/guides/batch-gateway.md"
 # Agentic Serving overview lives at well-lit-paths/workloads/agentic-serving.md; synced
 # as a directory doc (index.md) so the editUrl branch resolves correctly.
