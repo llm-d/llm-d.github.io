@@ -138,6 +138,12 @@ else
     done
     cp -rf "$PROJECT_DIR/preview/static/img/new-social" "${WORKTREE_PATH}/preview/static/img/" 2>/dev/null || true
     cp -rf "$PROJECT_DIR/preview/static/img/logos" "${WORKTREE_PATH}/preview/static/img/" 2>/dev/null || true
+    # Propagate releases.json so the version dropdown on every versioned build
+    # has the same release list as main. Without this, Netlify's worktree
+    # build relies on a fresh GitHub API fetch which can silently fail
+    # (rate-limited, network), leaving the versioned build with no
+    # releases.json and the dropdown shows only "dev".
+    cp -f "$PROJECT_DIR/preview/static/releases.json" "${WORKTREE_PATH}/preview/static/releases.json" 2>/dev/null || true
 
     # Apply fixups for known stale GitHub links in committed release-branch content.
     # These patch specific link targets that changed in upstream after the branch was cut.

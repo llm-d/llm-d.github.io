@@ -187,11 +187,13 @@ cp_doc "$WIP/well-lit-paths/workload-autoscaling.md"        "$DOCS_DIR/guides/wo
 cp_doc "$WIP/well-lit-paths/no-kubernetes-deployment.md"    "$DOCS_DIR/guides/no-kubernetes-deployment.md"
 cp_doc "$WIP/well-lit-paths/experimental/batch-gateway.md"  "$DOCS_DIR/guides/batch-gateway.md"
 
-# Upstream main reorganized well-lit-paths into capabilities/, traffic-control/,
-# workloads/ subdirs. The flat paths above are kept as fallbacks for older
-# release branches; these lines map the current main layout back onto the flat
-# sidebar ids so the build stays independent regardless of upstream layout.
-# cp_doc is null-safe — only fires when the source file actually exists.
+# Upstream llm-d/llm-d@main reorganized well-lit-paths into capabilities/,
+# traffic-control/, and workloads/ subdirs after this site repo's sidebar was
+# written. These cp_doc lines map the current upstream layout onto the flat
+# guides/* sidebar ids so this branch builds independently against today's
+# main. cp_doc is null-safe — these only fire when the file exists upstream.
+# (Release branches are not affected; each release branch has its own frozen
+# preview/scripts/sync-docs.sh that is checked out in its own worktree.)
 cp_doc "$WIP/well-lit-paths/capabilities/optimized-baseline.md"          "$DOCS_DIR/guides/optimized-baseline.md"
 cp_doc "$WIP/well-lit-paths/capabilities/precise-prefix-cache-routing.md" "$DOCS_DIR/guides/precise-prefix-cache-routing.md"
 cp_doc "$WIP/well-lit-paths/capabilities/tiered-prefix-cache.md"         "$DOCS_DIR/guides/tiered-prefix-cache.md"
