@@ -110,63 +110,76 @@ const config: Config = {
             // Map index.md back to README.md (sync script renames these)
             const sourcePath = cleanPath.replace(/\/index\.md$/, '/README.md');
 
-            // Guide pages: flat .md files are overview pages from docs/well-lit-paths/;
-            // directory-based guides (*/index.md at depth >2) come from guides/*/README.md
+            // Guide pages: flat .md files are overview pages from docs/well-lit-paths/ subdirs;
+            // directory-based guides (*/index.md at depth >2) may also be from well-lit-paths/.
+            // Maps local guide filename → new well-lit-paths subdirectory path (without .md).
             if (cleanPath.startsWith('guides/')) {
               const parts = cleanPath.split('/');
-              const flatGuideToWellLitFile: Record<string, string> = {
-                'precise-prefix-cache-aware.md': 'precise-prefix-cache-routing',
-                'predicted-latency-routing.md': 'predicted-latency',
-                'wide-ep-lws.md': 'wide-expert-parallelism',
-                'batch-gateway.md': 'experimental/batch-gateway',
+              const flatGuideToWellLitPath: Record<string, string> = {
+                // capabilities/
+                'optimized-baseline.md':             'capabilities/optimized-baseline',
+                'precise-prefix-cache-routing.md':   'capabilities/precise-prefix-cache-routing',
+                'tiered-prefix-cache.md':            'capabilities/tiered-prefix-cache',
+                'pd-disaggregation.md':              'capabilities/pd-disaggregation',
+                'predicted-latency.md':              'capabilities/predicted-latency',
+                'wide-expert-parallelism.md':        'capabilities/wide-expert-parallelism',
+                // traffic-control/ (moved from operations/ in llm-d/llm-d#1836)
+                'flow-control.md':                   'traffic-control/flow-control',
+                'workload-autoscaling.md':            'traffic-control/workload-autoscaling',
+                // workloads/
+                'multimodal-serving.md':             'workloads/multimodal-serving',
+                // workloads/batch-serving/
+                'asynchronous-processing.md':        'workloads/batch-serving/asynchronous-processing',
+                'batch-gateway.md':                  'workloads/batch-serving/batch-gateway',
+                // legacy filename aliases
+                'precise-prefix-cache-aware.md':     'capabilities/precise-prefix-cache-routing',
+                'predicted-latency-routing.md':      'capabilities/predicted-latency',
+                'wide-ep-lws.md':                    'capabilities/wide-expert-parallelism',
+                'experimental/batch-gateway.md':     'workloads/batch-serving/batch-gateway',
               };
-              const guideDirToWellLitFile: Record<string, string> = {
-                'optimized-baseline': 'optimized-baseline',
-                'precise-prefix-cache-routing': 'precise-prefix-cache-routing',
-                'tiered-prefix-cache': 'tiered-prefix-cache',
-                'asynchronous-processing': 'asynchronous-processing',
-                'flow-control': 'flow-control',
-                'pd-disaggregation': 'pd-disaggregation',
-                'predicted-latency-routing': 'predicted-latency',
-                'wide-ep-lws': 'wide-expert-parallelism',
-                'workload-autoscaling': 'workload-autoscaling',
-                'no-kubernetes-deployment': 'no-kubernetes-deployment',
+              const guideDirToWellLitPath: Record<string, string> = {
+                'agentic-serving': 'workloads/agentic-serving',
               };
               if (cleanPath.endsWith('/index.md') && parts.length > 2) {
-                const wellLitFile = guideDirToWellLitFile[parts[1]];
-                if (wellLitFile) {
-                  return `https://github.com/llm-d/llm-d/blob/main/docs/well-lit-paths/${wellLitFile}.md`;
+                const wellLitSubPath = guideDirToWellLitPath[parts[1]];
+                if (wellLitSubPath) {
+                  return `https://github.com/llm-d/llm-d/blob/main/docs/well-lit-paths/${wellLitSubPath}.md`;
                 }
                 // Non Well-Lit directory content (e.g. recipes) still lives under guides/
                 return `https://github.com/llm-d/llm-d/blob/main/${sourcePath}`;
               }
-              const flatGuideName = parts[1];
-              const flatWellLitFile = flatGuideToWellLitFile[flatGuideName];
-              if (flatWellLitFile) {
-                return `https://github.com/llm-d/llm-d/blob/main/docs/well-lit-paths/${flatWellLitFile}.md`;
+              const flatGuideName = parts.slice(1).join('/');
+              // no-kubernetes-deployment moved out of well-lit-paths entirely in llm-d/llm-d#1836
+              if (flatGuideName === 'no-kubernetes-deployment.md') {
+                return 'https://github.com/llm-d/llm-d/blob/main/docs/infrastructure/no-kubernetes-deployment.md';
               }
+              const wellLitSubPath = flatGuideToWellLitPath[flatGuideName];
+              if (wellLitSubPath) {
+                return `https://github.com/llm-d/llm-d/blob/main/docs/well-lit-paths/${wellLitSubPath}.md`;
+              }
+              // Fallback: derive path (for any unmapped guide files)
               const wellLitPath = sourcePath.replace(/^guides\//, 'docs/well-lit-paths/');
               return `https://github.com/llm-d/llm-d/blob/main/${wellLitPath}`;
             }
 
-            // Gateway pages come from guides/prereq/gateways/ in the upstream repo
+            // Gateway pages come from docs/infrastructure/gateway/ (moved from docs/resources/gateway/ in llm-d/llm-d#1836)
             if (cleanPath.startsWith('resources/gateway/')) {
-              const gatewayFile = sourcePath.replace(/^resources\/gateway\//, '');
-              return `https://github.com/llm-d/llm-d/blob/main/guides/prereq/gateways/${gatewayFile}`;
+              return `https://github.com/llm-d/llm-d/blob/main/docs/infrastructure/gateway/${sourcePath.replace(/^resources\/gateway\//, '')}`;
             }
 
-            // Infra-provider pages come from docs/infra-providers/ (not docs/resources/infra-providers/)
+            // Infra-provider pages come from docs/infrastructure/providers/ (moved from docs/infra-providers/ in llm-d/llm-d#1836)
             if (cleanPath.startsWith('resources/infra-providers/')) {
               if (cleanPath === 'resources/infra-providers/index.md') {
-                return 'https://github.com/llm-d/llm-d/blob/main/docs/infra-providers/README.md';
+                return 'https://github.com/llm-d/llm-d/blob/main/docs/infrastructure/providers/README.md';
               }
               const providerName = cleanPath.replace(/^resources\/infra-providers\//, '').replace(/\.md$/, '');
-              return `https://github.com/llm-d/llm-d/blob/main/docs/infra-providers/${providerName}/README.md`;
+              return `https://github.com/llm-d/llm-d/blob/main/docs/infrastructure/providers/${providerName}/README.md`;
             }
 
             // Renamed files: source file names differ from local file names
+            // rdma moved from docs/resources/rdma/ to docs/infrastructure/rdma/ in llm-d/llm-d#1836
             if (cleanPath === 'resources/rdma/rdma-configuration.md') {
-              return 'https://github.com/llm-d/llm-d/blob/main/docs/resources/rdma/README.md';
+              return 'https://github.com/llm-d/llm-d/blob/main/docs/infrastructure/rdma/README.md';
             }
             if (cleanPath === 'architecture/advanced/autoscaling/workload-variant-autoscaling.md') {
               return 'https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/autoscaling/wva.md';
@@ -177,12 +190,13 @@ const config: Config = {
 
             // llm-d#1542: monitoring/ renamed to observability/ on main. Release doc
             // branches may still build legacy resources/monitoring/* paths.
+            // llm-d#1836: observability moved from docs/resources/observability/ to docs/operations/observability/.
             if (cleanPath.startsWith('resources/monitoring/')) {
               const observabilityFile = cleanPath.replace(
                 /^resources\/monitoring\//,
                 '',
               );
-              return `https://github.com/llm-d/llm-d/blob/main/docs/resources/observability/${observabilityFile}`;
+              return `https://github.com/llm-d/llm-d/blob/main/docs/operations/observability/${observabilityFile}`;
             }
             if (cleanPath.startsWith('resources/observability/')) {
               const observabilityFile = cleanPath.replace(
@@ -194,7 +208,7 @@ const config: Config = {
                 observabilityFile === 'index.md'
                   ? 'README.md'
                   : observabilityFile;
-              return `https://github.com/llm-d/llm-d/blob/main/docs/resources/observability/${sourceFile}`;
+              return `https://github.com/llm-d/llm-d/blob/main/docs/operations/observability/${sourceFile}`;
             }
 
             return `https://github.com/llm-d/llm-d/blob/main/docs/${sourcePath}`;
@@ -341,7 +355,20 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} llm-d project. Apache 2.0 License.`,
+      copyright: `Copyright © ${new Date().getFullYear()} llm-d project. Apache 2.0 License.<br />\
+        We are a Cloud Native Computing Foundation sandbox project.<br />\
+        For website terms of use, trademark policy and other project policies please see <a href="https://lfprojects.org/policies/" target="_blank" rel="noreferrer noopener">https://lfprojects.org/policies/</a>`,
+      logo: {
+        alt: "llm-d Logo",
+        src: "img/cncf-white.png",
+        href: "https://cncf.io",
+        target: "_blank",
+        width: 240,
+        className: "footer-logo",
+        style: {
+          marginRight: "10px",
+        },
+      },
     },
     prism: {
       theme: prismThemes.github,

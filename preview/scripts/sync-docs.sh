@@ -104,6 +104,7 @@ mkdir -p \
     "$DOCS_DIR/architecture/advanced/batch" \
     "$DOCS_DIR/architecture/advanced/kv-management" \
     "$DOCS_DIR/guides" \
+    "$DOCS_DIR/guides/agentic-serving" \
     "$DOCS_DIR/resources/gateway" \
     "$DOCS_DIR/resources/observability" \
     "$DOCS_DIR/resources/rdma" \
@@ -150,6 +151,13 @@ cp_doc "$WIP/architecture/core/router/epp/datalayer.md"         "$DOCS_DIR/archi
 cp_doc "$WIP/architecture/advanced/disaggregation/README.md"            "$DOCS_DIR/architecture/advanced/disaggregation/index.md"
 cp_doc "$WIP/architecture/advanced/disaggregation/operations-vllm.md"   "$DOCS_DIR/architecture/advanced/disaggregation/operations-vllm.md"
 
+# operations-sglang is not published on the site; point its link to the upstream source.
+if [[ -f "$DOCS_DIR/architecture/advanced/disaggregation/index.md" ]]; then
+    sed_inplace \
+        -e 's|\](operations-sglang\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/disaggregation/operations-sglang.md)|g' \
+        "$DOCS_DIR/architecture/advanced/disaggregation/index.md"
+fi
+
 # Architecture / Advanced
 cp_doc "$WIP/architecture/advanced/latency-predictor.md" "$DOCS_DIR/architecture/advanced/latency-predictor.md"
 
@@ -174,35 +182,21 @@ cp_doc "$WIP/architecture/advanced/batch/async-processor.md"  "$DOCS_DIR/archite
 echo "    Copying well-lit-paths overview pages..."
 
 cp_doc "$WIP/well-lit-paths/README.md"                      "$DOCS_DIR/guides/index.md"
-cp_doc "$WIP/well-lit-paths/optimized-baseline.md"          "$DOCS_DIR/guides/optimized-baseline.md"
-cp_doc "$WIP/well-lit-paths/precise-prefix-cache-aware.md"  "$DOCS_DIR/guides/precise-prefix-cache-routing.md"
-cp_doc "$WIP/well-lit-paths/precise-prefix-cache-routing.md" "$DOCS_DIR/guides/precise-prefix-cache-routing.md"
-cp_doc "$WIP/well-lit-paths/tiered-prefix-cache.md"         "$DOCS_DIR/guides/tiered-prefix-cache.md"
-cp_doc "$WIP/well-lit-paths/asynchronous-processing.md"     "$DOCS_DIR/guides/asynchronous-processing.md"
-cp_doc "$WIP/well-lit-paths/flow-control.md"                "$DOCS_DIR/guides/flow-control.md"
-cp_doc "$WIP/well-lit-paths/pd-disaggregation.md"           "$DOCS_DIR/guides/pd-disaggregation.md"
-cp_doc "$WIP/well-lit-paths/predicted-latency.md"           "$DOCS_DIR/guides/predicted-latency.md"
-cp_doc "$WIP/well-lit-paths/wide-expert-parallelism.md"     "$DOCS_DIR/guides/wide-expert-parallelism.md"
-cp_doc "$WIP/well-lit-paths/workload-autoscaling.md"        "$DOCS_DIR/guides/workload-autoscaling.md"
-cp_doc "$WIP/well-lit-paths/no-kubernetes-deployment.md"    "$DOCS_DIR/guides/no-kubernetes-deployment.md"
-cp_doc "$WIP/well-lit-paths/experimental/batch-gateway.md"  "$DOCS_DIR/guides/batch-gateway.md"
-
-# Upstream llm-d/llm-d@main reorganized well-lit-paths into capabilities/,
-# traffic-control/, and workloads/ subdirs after this site repo's sidebar was
-# written. These cp_doc lines map the current upstream layout onto the flat
-# guides/* sidebar ids so this branch builds independently against today's
-# main. cp_doc is null-safe — these only fire when the file exists upstream.
-# (Release branches are not affected; each release branch has its own frozen
-# preview/scripts/sync-docs.sh that is checked out in its own worktree.)
 cp_doc "$WIP/well-lit-paths/capabilities/optimized-baseline.md"          "$DOCS_DIR/guides/optimized-baseline.md"
+cp_doc "$WIP/well-lit-paths/workloads/multimodal-serving.md"             "$DOCS_DIR/guides/multimodal-serving.md"
 cp_doc "$WIP/well-lit-paths/capabilities/precise-prefix-cache-routing.md" "$DOCS_DIR/guides/precise-prefix-cache-routing.md"
 cp_doc "$WIP/well-lit-paths/capabilities/tiered-prefix-cache.md"         "$DOCS_DIR/guides/tiered-prefix-cache.md"
+cp_doc "$WIP/well-lit-paths/workloads/batch-serving/asynchronous-processing.md" "$DOCS_DIR/guides/asynchronous-processing.md"
+cp_doc "$WIP/well-lit-paths/traffic-control/flow-control.md"             "$DOCS_DIR/guides/flow-control.md"
 cp_doc "$WIP/well-lit-paths/capabilities/pd-disaggregation.md"           "$DOCS_DIR/guides/pd-disaggregation.md"
 cp_doc "$WIP/well-lit-paths/capabilities/predicted-latency.md"           "$DOCS_DIR/guides/predicted-latency.md"
 cp_doc "$WIP/well-lit-paths/capabilities/wide-expert-parallelism.md"     "$DOCS_DIR/guides/wide-expert-parallelism.md"
-cp_doc "$WIP/well-lit-paths/traffic-control/flow-control.md"             "$DOCS_DIR/guides/flow-control.md"
 cp_doc "$WIP/well-lit-paths/traffic-control/workload-autoscaling.md"     "$DOCS_DIR/guides/workload-autoscaling.md"
-cp_doc "$WIP/well-lit-paths/workloads/batch-serving/asynchronous-processing.md" "$DOCS_DIR/guides/asynchronous-processing.md"
+cp_doc "$WIP/infrastructure/no-kubernetes-deployment.md"                 "$DOCS_DIR/guides/no-kubernetes-deployment.md"
+cp_doc "$WIP/well-lit-paths/workloads/batch-serving/batch-gateway.md"    "$DOCS_DIR/guides/batch-gateway.md"
+# Agentic Serving overview lives at well-lit-paths/workloads/agentic-serving.md; synced
+# as a directory doc (index.md) so the editUrl branch resolves correctly.
+cp_doc "$WIP/well-lit-paths/workloads/agentic-serving.md"                "$DOCS_DIR/guides/agentic-serving/index.md"
 
 sed_inplace \
     -e 's|\](optimized-baseline\.md)|\](/guides/optimized-baseline)|g' \
@@ -215,14 +209,21 @@ sed_inplace \
     -e 's|\](flow-control\.md)|\](/guides/flow-control)|g' \
     -e 's|\](workload-autoscaling\.md)|\](/guides/workload-autoscaling)|g' \
     -e 's|\](asynchronous-processing\.md)|\](/guides/asynchronous-processing)|g' \
+    -e 's|\](batch-gateway\.md)|\](/guides/batch-gateway)|g' \
     -e 's|\](experimental/batch-gateway\.md)|\](/guides/batch-gateway)|g' \
+    -e 's|\](\./multimodal-serving/optimized-baseline/README\.md)|\](/guides/multimodal-serving)|g' \
     -e 's|\](no-kubernetes-deployment\.md)|\](/guides/no-kubernetes-deployment)|g' \
+    -e 's|\](../workloads/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/workloads/README.md)|g' \
+    -e 's|\](capabilities/README\.md)|\](/well-lit-paths)|g' \
+    -e 's|\](workloads/README\.md)|\](/well-lit-paths)|g' \
+    -e 's|\](operations/README\.md)|\](/well-lit-paths)|g' \
     "$DOCS_DIR/guides/index.md"
 
 # Publish well-lit paths at /well-lit-paths/* while keeping source files and doc IDs
 # under docs/guides/* for sync/edit compatibility.
 set_doc_slug "$DOCS_DIR/guides/index.md" "/well-lit-paths"
 set_doc_slug "$DOCS_DIR/guides/optimized-baseline.md" "/well-lit-paths/optimized-baseline"
+set_doc_slug "$DOCS_DIR/guides/multimodal-serving.md" "/well-lit-paths/multimodal-serving"
 set_doc_slug "$DOCS_DIR/guides/precise-prefix-cache-routing.md" "/well-lit-paths/precise-prefix-cache-routing"
 set_doc_slug "$DOCS_DIR/guides/tiered-prefix-cache.md" "/well-lit-paths/tiered-prefix-cache"
 set_doc_slug "$DOCS_DIR/guides/asynchronous-processing.md" "/well-lit-paths/asynchronous-processing"
@@ -233,11 +234,44 @@ set_doc_slug "$DOCS_DIR/guides/wide-expert-parallelism.md" "/well-lit-paths/wide
 set_doc_slug "$DOCS_DIR/guides/workload-autoscaling.md" "/well-lit-paths/workload-autoscaling"
 set_doc_slug "$DOCS_DIR/guides/no-kubernetes-deployment.md" "/well-lit-paths/no-kubernetes-deployment"
 set_doc_slug "$DOCS_DIR/guides/batch-gateway.md" "/well-lit-paths/batch-gateway"
+set_doc_slug "$DOCS_DIR/guides/agentic-serving/index.md" "/well-lit-paths/agentic-serving"
+
+# Patch agentic-serving internal links (sibling well-lit-paths -> site URLs; full guide -> upstream).
+if [[ -f "$DOCS_DIR/guides/agentic-serving/index.md" ]]; then
+    sed_inplace \
+        -e 's|\](../well-lit-paths/capabilities/optimized-baseline\.md)|\](/guides/optimized-baseline)|g' \
+        -e 's|\](../well-lit-paths/capabilities/tiered-prefix-cache\.md)|\](/guides/tiered-prefix-cache)|g' \
+        -e 's|\](../well-lit-paths/capabilities/precise-prefix-cache-routing\.md)|\](/guides/precise-prefix-cache-routing)|g' \
+        -e 's|\](../well-lit-paths/capabilities/pd-disaggregation\.md)|\](/guides/pd-disaggregation)|g' \
+        -e 's|\](../../guides/agentic-serving)|\](https://github.com/llm-d/llm-d/tree/main/guides/agentic-serving)|g' \
+        -e 's|\](agentic-code-generation\.md)|\](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/agentic-code-generation.md)|g' \
+        "$DOCS_DIR/guides/agentic-serving/index.md"
+fi
+
+# Patch upstream multimodal markdown for Docusaurus MDX compatibility and local links.
+if [[ -f "$DOCS_DIR/guides/multimodal-serving.md" ]]; then
+    sed_inplace \
+        -e 's|^\$\$\\text{Tokens} = \\frac{\\text{Image Width} \\times \\text{Image Height}}{\\text{Factor}}\$\$|`Tokens = (Image Width * Image Height) / Factor`|g' \
+        -e 's|\](../../guides/multimodal-serving/optimized-baseline)|\](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/optimized-baseline)|g' \
+        -e 's|\](../well-lit-paths/optimized-baseline\.md)|\](/guides/optimized-baseline)|g' \
+        -e 's|\](../well-lit-paths/optimized-baseline\.md#architecture)|\](/guides/optimized-baseline#architecture)|g' \
+        -e 's|\](../../guides/multimodal-serving/e-disaggregation)|\](/guides/pd-disaggregation)|g' \
+        -e 's|\](../advanced/kv-management/kv-indexer\.md)|\](/architecture/advanced/kv-management/kv-indexer)|g' \
+        -e 's|\](../well-lit-paths/capabilities/optimized-baseline\.md#\([^)]*\))|\](/guides/optimized-baseline#\1)|g' \
+        -e 's|\](../well-lit-paths/capabilities/optimized-baseline\.md)|\](/guides/optimized-baseline)|g' \
+        -e 's|\](../architecture/core/router/epp/README\.md)|\](/architecture/core/router/epp)|g' \
+        "$DOCS_DIR/guides/multimodal-serving.md"
+fi
 
 # === Resources / Observability ===
-# llm-d/llm-d#1542: docs/resources/observability/ (setup, metrics, tracing, promql).
-# Fall back to legacy paths for release branches cut before that change.
-if [[ -f "$WIP/resources/observability/setup.md" ]]; then
+# Fall back through earlier paths for release branches cut before each change.
+if [[ -f "$WIP/operations/observability/setup.md" ]]; then
+    cp_doc "$WIP/operations/observability/README.md"          "$DOCS_DIR/resources/observability/index.md"
+    cp_doc "$WIP/operations/observability/setup.md"           "$DOCS_DIR/resources/observability/setup.md"
+    cp_doc "$WIP/operations/observability/metrics.md"         "$DOCS_DIR/resources/observability/metrics.md"
+    cp_doc "$WIP/operations/observability/tracing.md"         "$DOCS_DIR/resources/observability/tracing.md"
+    cp_doc "$WIP/operations/observability/promql.md"          "$DOCS_DIR/resources/observability/promql.md"
+elif [[ -f "$WIP/resources/observability/setup.md" ]]; then
     cp_doc "$WIP/resources/observability/README.md"           "$DOCS_DIR/resources/observability/index.md"
     cp_doc "$WIP/resources/observability/setup.md"            "$DOCS_DIR/resources/observability/setup.md"
     cp_doc "$WIP/resources/observability/metrics.md"          "$DOCS_DIR/resources/observability/metrics.md"
@@ -250,22 +284,23 @@ else
     cp_doc "$WIP/guides/monitoring/tracing.md"                "$DOCS_DIR/resources/observability/tracing.md"
 fi
 
-# PR llm-d/llm-d#1259 moved gateway docs to guides/prereq/gateways/
-cp_doc "$SRC/guides/prereq/gateways/README.md"              "$DOCS_DIR/resources/gateway/index.md"
-cp_doc "$SRC/guides/prereq/gateways/istio.md"               "$DOCS_DIR/resources/gateway/istio.md"
-cp_doc "$SRC/guides/prereq/gateways/gke.md"                 "$DOCS_DIR/resources/gateway/gke.md"
-cp_doc "$SRC/guides/prereq/gateways/agentgateway.md"        "$DOCS_DIR/resources/gateway/agentgateway.md"
+# === Resources / Gateway ===
+cp_doc "$WIP/infrastructure/gateway/README.md"         "$DOCS_DIR/resources/gateway/index.md"
+cp_doc "$WIP/infrastructure/gateway/install-crds.md"   "$DOCS_DIR/resources/gateway/install-crds.md"
+cp_doc "$WIP/infrastructure/gateway/istio.md"          "$DOCS_DIR/resources/gateway/istio.md"
+cp_doc "$WIP/infrastructure/gateway/gke.md"            "$DOCS_DIR/resources/gateway/gke.md"
+cp_doc "$WIP/infrastructure/gateway/agentgateway.md"   "$DOCS_DIR/resources/gateway/agentgateway.md"
 
-cp_doc "$WIP/resources/rdma/README.md"                      "$DOCS_DIR/resources/rdma/rdma-configuration.md"
+cp_doc "$WIP/infrastructure/rdma/README.md"                  "$DOCS_DIR/resources/rdma/rdma-configuration.md"
 
 # === Infrastructure Providers ===
-cp_doc "$WIP/infra-providers/README.md"                  "$DOCS_DIR/resources/infra-providers/index.md"
-cp_doc "$WIP/infra-providers/aks/README.md"              "$DOCS_DIR/resources/infra-providers/aks.md"
-cp_doc "$WIP/infra-providers/digitalocean/README.md"     "$DOCS_DIR/resources/infra-providers/digitalocean.md"
-cp_doc "$WIP/infra-providers/gke/README.md"              "$DOCS_DIR/resources/infra-providers/gke.md"
-cp_doc "$WIP/infra-providers/minikube/README.md"         "$DOCS_DIR/resources/infra-providers/minikube.md"
-cp_doc "$WIP/infra-providers/openshift/README.md"        "$DOCS_DIR/resources/infra-providers/openshift.md"
-cp_doc "$WIP/infra-providers/openshift-aws/README.md"    "$DOCS_DIR/resources/infra-providers/openshift-aws.md"
+cp_doc "$WIP/infrastructure/providers/README.md"         "$DOCS_DIR/resources/infra-providers/index.md"
+cp_doc "$WIP/infrastructure/providers/aks/README.md"     "$DOCS_DIR/resources/infra-providers/aks.md"
+cp_doc "$WIP/infrastructure/providers/digitalocean/README.md" "$DOCS_DIR/resources/infra-providers/digitalocean.md"
+cp_doc "$WIP/infrastructure/providers/gke/README.md"     "$DOCS_DIR/resources/infra-providers/gke.md"
+cp_doc "$WIP/infrastructure/providers/minikube/README.md" "$DOCS_DIR/resources/infra-providers/minikube.md"
+cp_doc "$WIP/infrastructure/providers/openshift/README.md" "$DOCS_DIR/resources/infra-providers/openshift.md"
+cp_doc "$WIP/infrastructure/providers/openshift-aws/README.md" "$DOCS_DIR/resources/infra-providers/openshift-aws.md"
 
 # === API Reference ===
 cp_doc "$WIP/api-reference/README.md"         "$DOCS_DIR/api-reference/index.md"
@@ -275,12 +310,17 @@ cp_doc "$WIP/api-reference/inferenceobjective.md"    "$DOCS_DIR/api-reference/in
 cp_doc "$WIP/api-reference/inferencemodelrewrite.md" "$DOCS_DIR/api-reference/inferencemodelrewrite.md"
 cp_doc "$WIP/api-reference/endpointpickerconfig.md"  "$DOCS_DIR/api-reference/endpointpickerconfig.md"
 cp_doc "$WIP/api-reference/epp-http-headers.md"      "$DOCS_DIR/api-reference/epp-http-headers.md"
+cp_doc "$WIP/api-reference/epp-http-apis.md"         "$DOCS_DIR/api-reference/epp-http-apis.md"
 
 # === Accelerators ===
-cp_doc "$WIP/accelerators/README.md"                 "$DOCS_DIR/accelerators/index.md"
+cp_doc "$WIP/getting-started/accelerators.md"        "$DOCS_DIR/accelerators/index.md"
+if [[ ! -f "$DOCS_DIR/accelerators/index.md" ]]; then
+    cp_doc "$WIP/accelerators/README.md"             "$DOCS_DIR/accelerators/index.md"
+fi
 if [[ -f "$DOCS_DIR/accelerators/index.md" ]]; then
     sed_inplace \
         -e 's|\.\./infra-providers/gke/README\.md|/resources/infra-providers/gke|g' \
+        -e 's|\.\./infrastructure/providers/gke/README\.md|/resources/infra-providers/gke|g' \
         "$DOCS_DIR/accelerators/index.md"
 fi
 
@@ -290,14 +330,14 @@ mkdir -p "$STATIC_DIR"
 cp "$ASSETS"/*.svg "$STATIC_DIR/" 2>/dev/null || true
 cp "$ASSETS"/images/*.svg "$STATIC_DIR/" 2>/dev/null || true
 cp "$ASSETS"/images/*.png "$STATIC_DIR/" 2>/dev/null || true
-cp_doc "$WIP/resources/rdma/networking-stack.svg" "$STATIC_DIR/" 2>/dev/null || true
+cp_doc "$WIP/infrastructure/rdma/networking-stack.svg" "$STATIC_DIR/" 2>/dev/null || true
 cp_doc "$WIP/architecture/core/images/flow_control_dashboard.png" "$STATIC_DIR/" 2>/dev/null || true
 cp_doc "$WIP/architecture/advanced/autoscaling/hpa-architecture.svg" "$STATIC_DIR/" 2>/dev/null || true
-cp_doc "$WIP/well-lit-paths/no-kubernetes-deployment.svg" "$STATIC_DIR/" 2>/dev/null || true
+cp_doc "$WIP/assets/no-kubernetes-deployment.svg" "$STATIC_DIR/" 2>/dev/null || true
 
 # Infrastructure Providers images
 echo "    Copying infrastructure provider images..."
-find "$WIP/infra-providers" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.svg" \) -exec cp {} "$STATIC_DIR/" \; 2>/dev/null || true
+find "$WIP/infrastructure/providers" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.svg" \) -exec cp {} "$STATIC_DIR/" \; 2>/dev/null || true
 
 echo "    Copying guide images..."
 mkdir -p "$STATIC_DIR/guides"
@@ -356,7 +396,16 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|core/epp/README\.md|core/epp/index.md|g' \
         -e 's|advanced/autoscaling/README\.md|advanced/autoscaling/index.md|g' \
         -e 's|advanced/disaggregation/README\.md|advanced/disaggregation/index.md|g' \
+        -e 's|resources/gateway/README\.md|resources/gateway/index.md|g' \
         -e 's|resources/gateways/README\.md|../resources/gateway/index.md|g' \
+        -e 's|\](.*guides/prereq/gateways/README\.md)|\](/resources/gateway)|g' \
+        -e 's|\](.*guides/prereq/gateways/istio\.md)|\](/resources/gateway/istio)|g' \
+        -e 's|\](.*guides/prereq/gateways/gke\.md)|\](/resources/gateway/gke)|g' \
+        -e 's|\](.*guides/prereq/gateways/agentgateway\.md)|\](/resources/gateway/agentgateway)|g' \
+        -e 's|\](../../../infrastructure/gateway/README\.md)|\](/resources/gateway)|g' \
+        -e 's|\](../../../infrastructure/gateway/istio\.md)|\](/resources/gateway/istio)|g' \
+        -e 's|\](../../../infrastructure/gateway/gke\.md)|\](/resources/gateway/gke)|g' \
+        -e 's|\](../../../infrastructure/gateway/agentgateway\.md)|\](/resources/gateway/agentgateway)|g' \
         -e 's|guides/README\.md|guides/index.md|g' \
         -e 's|architecture/introduction\.md|architecture/index.md|g' \
         -e 's|architecture/README\.md|architecture/index.md|g' \
@@ -378,7 +427,9 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](../../architecture/advanced/batch/batch-gateway\.md)|\](/architecture/advanced/batch/batch-gateway)|g' \
         -e 's|llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/profile)|llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/profilehandler)|g' \
         -e 's|\](../../guides/optimized-baseline)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
+        -e 's|\](../../guides/multimodal/optimized-baseline/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/optimized-baseline)|g' \
         -e 's|\](../../guides/precise-prefix-cache-routing)|\](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing)|g' \
+        -e 's|\](../../../../../guides/precise-prefix-cache-routing/README\.md)|\](/guides/precise-prefix-cache-routing)|g' \
         -e 's|\](../../guides/tiered-prefix-cache)|\](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache)|g' \
         -e 's|\](../../guides/asynchronous-processing)|\](https://github.com/llm-d/llm-d/tree/main/guides/asynchronous-processing)|g' \
         -e 's|\](../../guides/flow-control)|\](https://github.com/llm-d/llm-d/tree/main/guides/flow-control)|g' \
@@ -404,6 +455,7 @@ done
 echo "    Fixing guide internal cross-references..."
 find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace \
+        -e 's|\](traffic-control/README\.md)|\](/well-lit-paths)|g' \
         -e 's|\](README\.md)|\](index.md)|g' \
         -e 's|\](./README\.md)|\](./index.md)|g' \
         -e 's|\](../README\.md)|\](../index.md)|g' \
@@ -465,9 +517,9 @@ done
 echo "    Fixing prereq and helper file references..."
 find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace \
-        -e 's|\](../prereq/gateways)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways)|g' \
-        -e 's|\](../../prereq/gateways)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways)|g' \
-        -e 's|\](/docs/prereq/gateways)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways)|g' \
+        -e 's|\](../prereq/gateways)|\](/resources/gateway)|g' \
+        -e 's|\](../../prereq/gateways)|\](/resources/gateway)|g' \
+        -e 's|\](/docs/prereq/gateways)|\](/resources/gateway)|g' \
         -e 's|\](/docs/guides/prereq/gateway-provider)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider)|g' \
         -e 's|\](../../prereq/gateway-provider/README\.md#supported-providers)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider#supported-providers)|g' \
         -e 's|\](../../prereq/gateway-provider/common-configurations)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider#common-configurations)|g' \
@@ -535,8 +587,8 @@ find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](./router/epp/config\.yaml)|\](https://github.com/llm-d/llm-d/blob/main/guides/no-kubernetes-deployment/router/epp/config.yaml)|g' \
         -e 's|\](./router/epp/endpoints\.yaml)|\](https://github.com/llm-d/llm-d/blob/main/guides/no-kubernetes-deployment/router/epp/endpoints.yaml)|g' \
         -e 's|\](./router/envoy/envoy\.yaml)|\](https://github.com/llm-d/llm-d/blob/main/guides/no-kubernetes-deployment/router/envoy/envoy.yaml)|g' \
-        -e 's|\](../../04_customizing_a_guide\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways)|g' \
-        -e 's|\](/docs/04_customizing_a_guide\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways)|g' \
+        -e 's|\](../../04_customizing_a_guide\.md)|\](/resources/gateway)|g' \
+        -e 's|\](/docs/04_customizing_a_guide\.md)|\](/resources/gateway)|g' \
         -e 's|\](../../02_verifying_a_guide\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
         -e 's|\](/docs/02_verifying_a_guide\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
         -e 's|\](../../02_verifying_a_guide\.md#following-logs-for-requests)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
@@ -566,7 +618,7 @@ find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
 done
 
 # === Fix gateway index.md links ===
-# gateway/index.md comes from guides/prereq/gateways/README.md — fix relative paths
+# gateway/index.md comes from docs/resources/gateway/README.md — fix relative paths
 if [[ -f "$DOCS_DIR/resources/gateway/index.md" ]]; then
     sed_inplace \
         -e 's|\](../../guides/README\.md)|\](/guides)|g' \
@@ -581,8 +633,8 @@ fi
 # rdma/rdma-configuration.md comes from resources-new/rdma/README.md
 if [[ -f "$DOCS_DIR/resources/rdma/rdma-configuration.md" ]]; then
     sed_inplace \
-        -e 's|\](../../well-lit-paths/pd-disaggregation\.md)|\](/guides/pd-disaggregation)|g' \
-        -e 's|\](../../well-lit-paths/wide-expert-parallelism\.md)|\](/guides/wide-expert-parallelism)|g' \
+        -e 's|\](../../well-lit-paths/capabilities/pd-disaggregation\.md)|\](/guides/pd-disaggregation)|g' \
+        -e 's|\](../../well-lit-paths/capabilities/wide-expert-parallelism\.md)|\](/guides/wide-expert-parallelism)|g' \
         -e 's|\](../../architecture/core/model-servers\.md)|\](/architecture/core/model-servers)|g' \
         "$DOCS_DIR/resources/rdma/rdma-configuration.md"
 fi
@@ -613,6 +665,8 @@ sed_inplace \
     -e 's|\](inferencemodelrewrite\.md)|\](/api-reference/inferencemodelrewrite)|g' \
     -e 's|\](endpointpickerconfig\.md)|\](/api-reference/endpointpickerconfig)|g' \
     -e 's|\](epp-http-headers\.md)|\](/api-reference/epp-http-headers)|g' \
+    -e 's|\](epp-http-apis\.md)|\](/api-reference/epp-http-apis)|g' \
+    -e 's|\](epp-grpc-apis\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/api-reference/epp-grpc-apis.md)|g' \
     -e 's|\](glossary\.md)|\](/api-reference/glossary)|g' \
     "$DOCS_DIR/api-reference/index.md"
 
@@ -740,9 +794,11 @@ generate_stub "$DOCS_DIR/guides/no-kubernetes-deployment.md" "Non-K8s & Bare-Met
 
 # Resources stubs
 generate_stub "$DOCS_DIR/resources/gateway/index.md" "Gateway" "Gateway deployment and configuration guides"
+generate_stub "$DOCS_DIR/resources/gateway/install-crds.md" "Gateway CRD Installation" "Installing Gateway API and Inference Extension CRDs"
 generate_stub "$DOCS_DIR/resources/gateway/istio.md" "Istio" "Deploying llm-d with Istio gateway"
 generate_stub "$DOCS_DIR/resources/gateway/gke.md" "GKE" "Deploying llm-d with GKE gateway"
 generate_stub "$DOCS_DIR/resources/gateway/agentgateway.md" "Agent Gateway" "Deploying llm-d with Agent Gateway"
+generate_stub "$DOCS_DIR/resources/gateway/install-crds.md" "Install CRDs" "Installing Gateway API CRDs"
 generate_stub "$DOCS_DIR/architecture/advanced/batch/index.md" "Batch Processing" "Asynchronous batch inference architecture"
 generate_stub "$DOCS_DIR/architecture/advanced/batch/batch-gateway.md" "Batch Gateway" "Gateway for batch inference requests"
 generate_stub "$DOCS_DIR/architecture/advanced/batch/async-processor.md" "Async Processor" "Asynchronous request processing component"
@@ -775,6 +831,10 @@ generate_stub "$DOCS_DIR/resources/infra-providers/gke.md" "Google Kubernetes En
 generate_stub "$DOCS_DIR/resources/infra-providers/minikube.md" "Minikube" "Deploy llm-d on Minikube"
 generate_stub "$DOCS_DIR/resources/infra-providers/openshift.md" "OpenShift" "Deploy llm-d on OpenShift"
 generate_stub "$DOCS_DIR/resources/infra-providers/openshift-aws.md" "OpenShift on AWS" "Deploy llm-d on OpenShift on AWS"
+
+# Guides stubs
+generate_stub "$DOCS_DIR/guides/multimodal-serving.md" "Multimodal Serving" "Multimodal serving guide"
+set_doc_slug "$DOCS_DIR/guides/multimodal-serving.md" "/well-lit-paths/multimodal-serving"
 
 TOTAL=$(find "$DOCS_DIR" -name "*.md" | wc -l | tr -d ' ')
 echo "==> Done. $TOTAL docs synced from llm-d/llm-d @ $BRANCH"

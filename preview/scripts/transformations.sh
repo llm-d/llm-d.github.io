@@ -76,6 +76,18 @@ apply_transformations() {
     # Fix well-lit-paths links (convert to /guides for Docusaurus)
     # Source files use ../well-lit-paths/*.md for GitHub compatibility
     # Convert to /guides/* for Docusaurus (baseUrl will be prepended)
+    #
+    # Step 1: strip subdirectory prefixes introduced by the upstream reorganization
+    # (well-lit-paths/capabilities/, operations/, workloads/, workloads/batch-serving/)
+    # so that subsequent rules see the flat well-lit-paths/X.md form.
+    sed_inplace \
+        -e 's|well-lit-paths/capabilities/|well-lit-paths/|g' \
+        -e 's|well-lit-paths/operations/|well-lit-paths/|g' \
+        -e 's|well-lit-paths/workloads/batch-serving/|well-lit-paths/|g' \
+        -e 's|well-lit-paths/workloads/|well-lit-paths/|g' \
+        "$file"
+
+    # Step 2: convert ../well-lit-paths/X.md → (/guides/X)
     sed_inplace \
         -E 's|\(\.\./well-lit-paths/([^)]+)\.md\)|(/guides/\1)|g' \
         "$file"
@@ -91,6 +103,8 @@ apply_transformations() {
         -e 's|\](.*\/accelerators/README\.md)|\](/accelerators)|g' \
         -e 's|\](.*\/architecture/core/router/epp/README\.md)|\](/architecture/core/router/epp)|g' \
         -e 's|\](.*\/architecture/advanced/kv-management/README\.md)|\](/architecture/advanced/kv-management)|g' \
+        -e 's|\](.*\/guides/precise-prefix-cache-routing/README\.md)|\](/guides/precise-prefix-cache-routing)|g' \
+        -e 's|\](.*\/guides/precise-prefix-cache-aware/README\.md)|\](/guides/precise-prefix-cache-routing)|g' \
         "$file"
 
     # Fix /guides/README (without .md extension)
@@ -127,6 +141,7 @@ apply_transformations() {
         -e 's|\](.*\/guides/prereq/gateways/istio\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/istio.md)|g' \
         -e 's|\](.*\/guides/prereq/gateways/gke\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/gke.md)|g' \
         -e 's|\](.*\/guides/prereq/gateways/agentgateway\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/agentgateway.md)|g' \
+        -e 's|\](.*\/guides/multimodal/optimized-baseline/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/optimized-baseline/README.md)|g' \
         "$file"
 
     # Fix unclosed HTML tags for MDX (must be self-closing)

@@ -231,6 +231,18 @@ Index/README:
 With any number of parent directories:
 [Guide Link](/guides/flow-control)
 
+New subdirectory layout (capabilities/):
+[Tiered Cache](/guides/tiered-prefix-cache)
+
+New subdirectory layout (operations/):
+[Flow Control](/guides/flow-control)
+
+New subdirectory layout (workloads/batch-serving/):
+[Batch Gateway](/guides/batch-gateway)
+
+New subdirectory layout (workloads/):
+[Agentic Serving](/guides/agentic-serving)
+
 ## 11. README.md Link Transformations
 
 Test that README links are transformed correctly:
@@ -243,3 +255,13 @@ Link to architecture router epp README:
 
 Link to KV management README:
 [KV Management](/architecture/advanced/kv-management)
+
+Synced upstream guide (precise-prefix-cache-routing):
+[Precise Routing](/guides/precise-prefix-cache-routing)
+
+Synced upstream guide under old name (precise-prefix-cache-aware → routing):
+[Precise Routing Aware](/guides/precise-prefix-cache-routing)
+
+Non-synced upstream guide (multimodal → GitHub):
+[Multimodal Guide](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/optimized-baseline/README.md)
+

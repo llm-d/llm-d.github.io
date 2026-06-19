@@ -130,6 +130,9 @@ else
        "${WORKTREE_PATH}/preview/package-lock.json"
     rm -rf "${WORKTREE_PATH}/preview/src"
     cp -r "$PROJECT_DIR/preview/src" "${WORKTREE_PATH}/preview/src"
+    # Static assets (logos referenced by the synced footer/navbar, e.g. the CNCF
+    # logo) come from main too, so they exist for every version's build.
+    cp -r "$PROJECT_DIR/preview/static/." "${WORKTREE_PATH}/preview/static/"
 
     # Propagate brand/social assets referenced by main's CSS so versioned builds
     # resolve them. Doc-specific images under static/img/docs/ are left alone.
@@ -157,6 +160,9 @@ else
       "${SED_INPLACE[@]}" \
         -e 's|github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware|github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing|g' \
         -e 's|github.com/llm-d/llm-d/tree/main/guides/predicted-latency-based-scheduling|github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing|g' \
+        -e 's|github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/README\.md|github.com/llm-d/llm-d/tree/main/docs/infrastructure/gateway|g' \
+        -e 's|github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/\([^"]*\)\.md|github.com/llm-d/llm-d/tree/main/docs/infrastructure/gateway/\1.md|g' \
+        -e 's|github.com/llm-d/llm-d/tree/main/docs/resources/gateway|github.com/llm-d/llm-d/tree/main/docs/infrastructure/gateway|g' \
         "$file"
     done < <(find "${WORKTREE_PATH}/preview/docs" -name "*.md" -print0)
 
