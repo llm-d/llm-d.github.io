@@ -346,3 +346,47 @@ table th {
 .theme-doc-version-banner {
   border-radius: 6px;
 }
+
+/* ============================================
+   Sidebar visual hierarchy
+   ============================================ */
+
+/* All sidebar items: 14px */
+.menu__link {
+  font-size: 0.875rem;
+}
+
+/* Top-level categories AND standalone top-level doc links (the main sections): semi-bold */
+.theme-doc-sidebar-item-category-level-1 > .menu__list-item-collapsible > .menu__link,
+.theme-doc-sidebar-item-link-level-1 > .menu__link {
+  font-weight: 600;
+}
+
+/* Sub-categories (pages with sub-pages) and nested leaf doc links: normal weight */
+.theme-doc-sidebar-item-category-level-2 > .menu__list-item-collapsible > .menu__link,
+.theme-doc-sidebar-item-category-level-3 > .menu__list-item-collapsible > .menu__link,
+.theme-doc-sidebar-item-category-level-4 > .menu__list-item-collapsible > .menu__link,
+.theme-doc-sidebar-item-link-level-2 > .menu__link,
+.theme-doc-sidebar-item-link-level-3 > .menu__link,
+.theme-doc-sidebar-item-link-level-4 > .menu__link,
+.theme-doc-sidebar-item-link-level-5 > .menu__link {
+  font-weight: 400;
+}
+
+/* +4px extra spacing between items inside the sidebar */
+.theme-doc-sidebar-menu .menu__list-item {
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+/* 24px breathing room between top-level sidebar sections (overrides the +4px above) */
+.theme-doc-sidebar-menu > .menu__list-item:not(:last-child) {
+  margin-bottom: 1.5rem;
+}
+
+/* +8px extra space above sub-category headers (not the first sibling) so
+   adjacent expanded sub-sections aren't visually crammed together. */
+.theme-doc-sidebar-item-category-level-2:not(:first-child),
+.theme-doc-sidebar-item-category-level-3:not(:first-child) {
+  margin-top: 8px;
+}

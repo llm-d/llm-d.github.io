@@ -7,17 +7,35 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Getting Started',
-      collapsed: true,
+      collapsed: false,
       link: {type: 'doc', id: 'getting-started/index'},
       items: [
         'getting-started/quickstart',
         'getting-started/artifacts',
       ],
     },
-    // ==================== Architecture ====================
+    // ==================== Well-Lit Paths ====================
     {
       type: 'category',
-      label: 'Architecture',
+      label: 'Well-Lit Paths',
+      collapsed: false,
+      link: {type: 'doc', id: 'guides/index'},
+      items: [
+        'guides/optimized-baseline',
+        'guides/precise-prefix-cache-aware',
+        'guides/tiered-prefix-cache',
+        'guides/asynchronous-processing',
+        'guides/flow-control',
+        'guides/pd-disaggregation',
+        'guides/predicted-latency',
+        'guides/wide-expert-parallelism',
+        'guides/workload-autoscaling',
+      ],
+    },
+    // ==================== Concepts (Architecture) ====================
+    {
+      type: 'category',
+      label: 'Concepts (Architecture)',
       collapsed: true,
       link: {type: 'doc', id: 'architecture/index'},
       items: [
@@ -98,24 +116,6 @@ const sidebars: SidebarsConfig = {
             },
           ],
         },
-      ],
-    },
-    // ==================== Guides ====================
-    {
-      type: 'category',
-      label: 'Guides',
-      collapsed: true,
-      link: {type: 'doc', id: 'guides/index'},
-      items: [
-        'guides/optimized-baseline',
-        'guides/precise-prefix-cache-aware',
-        'guides/tiered-prefix-cache',
-        'guides/asynchronous-processing',
-        'guides/flow-control',
-        'guides/pd-disaggregation',
-        'guides/predicted-latency',
-        'guides/wide-expert-parallelism',
-        'guides/workload-autoscaling',
       ],
     },
     // ==================== Resources ====================
