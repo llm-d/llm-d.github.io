@@ -787,6 +787,11 @@ generate_stub "$DOCS_DIR/architecture/advanced/kv-management/index.md" "KV Cache
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/prefix-cache-aware-routing.md" "Prefix Cache Aware Routing" "Routing requests to maximize KV cache hits"
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/kv-indexer.md" "KV-Cache Indexer" "Globally consistent KV cache block tracking"
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/kv-offloader.md" "KV Offloader" "Tiered KV cache storage hierarchy"
+# Autoscaling sub-pages — upstream main currently ships only the README; stub
+# the sub-pages referenced by the sidebar until wva.md / hpa-keda.md land in
+# llm-d/llm-d. Self-heals once the cp_doc lines above produce real content.
+generate_stub "$DOCS_DIR/architecture/advanced/autoscaling/workload-variant-autoscaling.md" "Workload-Variant Autoscaling" "Signal-aware autoscaler that scales inference workloads on real-time inference metrics rather than generic infra signals."
+generate_stub "$DOCS_DIR/architecture/advanced/autoscaling/igw-hpa.md" "Inference Gateway HPA" "HorizontalPodAutoscaler integration for the Inference Gateway."
 generate_stub "$DOCS_DIR/api-reference/index.md" "API Reference" "API specification and reference documentation"
 generate_stub "$DOCS_DIR/api-reference/glossary.md" "Glossary" "Terminology and definitions for llm-d"
 generate_stub "$DOCS_DIR/resources/observability/index.md" "Observability" "Metrics, dashboards, and distributed tracing for llm-d"
