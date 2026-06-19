@@ -154,6 +154,17 @@ else
         "$file"
     done < <(find "${WORKTREE_PATH}/preview/docs" -name "*.md" -print0)
 
+    # === Local-preview overlay: PR #1820 combined-landing README.mdx ===
+    # The release-0.7.0 worktree ships only README.md for getting-started. Overlay
+    # the .mdx so the canonical /docs/getting-started shows the landing-style intro
+    # PR #362 was designed against. No-op if PR1820_REPO doesn't exist.
+    PR1820_REPO="${PR1820_REPO:-/tmp/llm-d-pr1820}"
+    if [[ -f "$PR1820_REPO/docs/getting-started/README.mdx" ]]; then
+      echo "  Overlaying docs home from PR #1820 ($PR1820_REPO)..."
+      cp "$PR1820_REPO/docs/getting-started/README.mdx" "${WORKTREE_PATH}/preview/docs/getting-started/index.mdx"
+      rm -f "${WORKTREE_PATH}/preview/docs/getting-started/index.md"
+    fi
+
     cd "${WORKTREE_PATH}/preview"
     npm install --silent
 

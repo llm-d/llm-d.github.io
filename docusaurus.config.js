@@ -40,6 +40,16 @@ const config = {
 
   // SEO: Organization structured data for rich search results
   headTags: [
+    // Cross-app theme sync: the main site and each docs build use distinct
+    // localStorage keys for the color-mode preference — Docusaurus appends a
+    // hash of baseUrl to "theme" ("theme", "theme-23d", "theme-1a2",
+    // "theme-2af", …). Mirror across every theme* key so dark/light persists
+    // when the user navigates from one Docusaurus instance to another.
+    {
+      tagName: 'script',
+      attributes: {},
+      innerHTML: `(function(){try{var keys=[],v=null;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k==='theme'||/^theme-[a-z0-9]+$/.test(k)){keys.push(k);var x=localStorage.getItem(k);if(x)v=x;}}['theme','theme-23d','theme-1a2','theme-2af'].forEach(function(k){if(keys.indexOf(k)===-1)keys.push(k);});if(v)keys.forEach(function(k){localStorage.setItem(k,v);});}catch(e){}})();`,
+    },
     {
       tagName: 'script',
       attributes: {
@@ -80,11 +90,7 @@ const config = {
       "classic",
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
-        docs: {
-          path: 'preview/docs',
-          routeBasePath: 'docs',
-          sidebarPath: require.resolve('./sidebars-docs.js'),
-        },
+        docs: false,
         blog: {
           showReadingTime: true,
           feedOptions: {
@@ -118,6 +124,7 @@ const config = {
   // Client modules - run on every page
   clientModules: [
     require.resolve('./src/clientModules/analytics.js'),
+    require.resolve('./src/clientModules/hide-kapa-widget.js'),
   ],
   
   // Plugins configuration
@@ -184,7 +191,7 @@ const config = {
         id: 'llm-d-v0-7-release',
         content:
           '🎉 <b>llm-d 0.7 is now available!</b> Explore our completely revamped documentation with comprehensive guides, architecture deep-dives, and production deployment patterns. <a target="_self" rel="noopener noreferrer" href="/docs/getting-started/quickstart"><b>Browse the docs →</b></a>',
-        backgroundColor: '#7f317f',
+        backgroundColor: '#000000',
         textColor: '#fff',
         isCloseable: true,
       },
@@ -197,11 +204,13 @@ const config = {
           srcDark: "img/llm-d-logo-dark.svg",
         },
         items: [
+          // docs plugin disabled locally; landing-preview uses preview/ build mounted at /docs.
+          // Use raw <a> (type: 'html') so the SPA <Link> wrapper can't intercept and
+          // cross-app navigation from /blog or /community → /docs forces a real page load.
           {
-            type: 'docSidebar',
-            sidebarId: 'docsSidebar',
+            type: 'html',
             position: 'left',
-            label: 'Documentation',
+            value: '<a href="/docs/getting-started" class="navbar__item navbar__link">Documentation</a>',
           },
           { to: "/blog", label: "Blog", position: "left" },
           {
@@ -211,14 +220,19 @@ const config = {
             position: "left",
             label: "Community",
           },
+          // Version dropdown — use a raw-HTML dropdown so the links inside cannot be
+          // intercepted by the SPA router. (A `type: 'dropdown'` with href items still
+          // gets wrapped by NavbarNavLink and SPA-navigates to a non-existent /docs/* route.)
           {
-            type: 'dropdown',
-            label: 'v0.7.0',
+            type: 'html',
             position: 'left',
-            items: [
-              { label: 'v0.7.0 (latest)', href: '/docs/getting-started', target: '_self' },
-              { label: 'Dev', href: '/docs/dev/getting-started', target: '_self' },
-            ],
+            value: `<div class="navbar__item dropdown dropdown--hoverable">
+              <a class="navbar__link" href="#" aria-haspopup="true" onclick="return false">v0.7.0 (latest)</a>
+              <ul class="dropdown__menu">
+                <li><a class="dropdown__link" href="/docs/getting-started">v0.7.0 (latest)</a></li>
+                <li><a class="dropdown__link" href="/docs/dev/getting-started">Dev</a></li>
+              </ul>
+            </div>`,
           },
           {
             type: 'html',
@@ -312,6 +326,10 @@ const config = {
                       <img src="/img/new-social/youtube-mark-white.svg" alt="YouTube" />
                     </a>
                   </div>
+                  <div class="footer-cncf">
+                    <img class="footer-cncf-logo" src="/img/CNCF-logo.svg" alt="CNCF" />
+                    <span>llm-d is a CNCF Sandbox project</span>
+                  </div>
                   <div class="footer-socials-cta">
                     <a href="/slack" target="_self" rel="noreferrer noopener" aria-label="Join our Slack">
                       <span class="button-link">Join our Slack</span>
@@ -323,6 +341,7 @@ const config = {
             ],
           },
         ],
+        copyright: `Copyright © ${new Date().getFullYear()} llm-d project. Apache 2.0 License.`,
       },
       prism: {
         theme: prismThemes.vsLight,

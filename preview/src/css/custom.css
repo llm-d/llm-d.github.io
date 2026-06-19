@@ -104,8 +104,12 @@ h3, h4, h5, h6 {
 
 /* ===== NAVBAR ===== */
 .navbar {
-  border-bottom: none;
+  border-bottom: 1px solid #000000;
   box-shadow: none;
+}
+
+[data-theme='dark'] .navbar {
+  border-bottom: 1px solid #FFFFFF;
 }
 
 .navbar__link {
@@ -119,6 +123,17 @@ h3, h4, h5, h6 {
 .navbar__items--left > .navbar__link {
   padding-left: 0.75rem;
   padding-right: 0.75rem;
+}
+
+/* Active navbar items render flat (<a>) but inactive ones get wrapped in a
+   <div class="navbar__item"> by Docusaurus. The wrapper inherits the default
+   --ifm-navbar-item-padding-horizontal, so wrapped items end up wider than
+   flat ones and the row shifts as you change pages. Zero the wrapper's
+   horizontal padding for plain-link wrappers (not dropdowns) so wrapped
+   and flat items match width. */
+.navbar__items > .navbar__item:not(.navbar__link):not(.dropdown) {
+  padding-left: 0;
+  padding-right: 0;
 }
 
 /* Keep the version-dropdown trigger a fixed width regardless of its label
@@ -160,13 +175,52 @@ h3, h4, h5, h6 {
 }
 
 .menu__link {
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-weight: 400;
   line-height: 1.5rem;
 }
 
 .menu__link--active {
   font-weight: 600;
+}
+
+/* ============================================
+   Sidebar visual hierarchy (mirrors PR #375)
+   ============================================ */
+
+/* Top-level categories AND standalone top-level doc links: semi-bold */
+.theme-doc-sidebar-item-category-level-1 > .menu__list-item-collapsible > .menu__link,
+.theme-doc-sidebar-item-link-level-1 > .menu__link {
+  font-weight: 600;
+}
+
+/* Sub-categories (pages with sub-pages) and nested leaf doc links: normal weight */
+.theme-doc-sidebar-item-category-level-2 > .menu__list-item-collapsible > .menu__link,
+.theme-doc-sidebar-item-category-level-3 > .menu__list-item-collapsible > .menu__link,
+.theme-doc-sidebar-item-category-level-4 > .menu__list-item-collapsible > .menu__link,
+.theme-doc-sidebar-item-link-level-2 > .menu__link,
+.theme-doc-sidebar-item-link-level-3 > .menu__link,
+.theme-doc-sidebar-item-link-level-4 > .menu__link,
+.theme-doc-sidebar-item-link-level-5 > .menu__link {
+  font-weight: 400;
+}
+
+/* +4px extra spacing between items inside the sidebar */
+.theme-doc-sidebar-menu .menu__list-item {
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+/* 24px breathing room between top-level sidebar sections (overrides the +4px above) */
+.theme-doc-sidebar-menu > .menu__list-item:not(:last-child) {
+  margin-bottom: 1.5rem;
+}
+
+/* +8px extra space above sub-category headers (not the first sibling) so
+   adjacent expanded sub-sections aren't visually crammed together. */
+.theme-doc-sidebar-item-category-level-2:not(:first-child),
+.theme-doc-sidebar-item-category-level-3:not(:first-child) {
+  margin-top: 8px;
 }
 
 /* ===== ICONS: Carbon Design System ===== */
@@ -413,6 +467,11 @@ html:not([data-theme='dark']) .prism-code {
   padding: 8px 16px;
 }
 
+/* Dark-mode separator between the (black) announcement banner and the navbar */
+[data-theme='dark'] .theme-announcement-bar {
+  border-bottom: 1px solid #FFFFFF;
+}
+
 [class*='announcementBarContent'] {
   white-space: normal !important;
 }
@@ -461,6 +520,26 @@ html:not([data-theme='dark']) .prism-code {
 
 .footer-socials-cta {
   margin-top: 4px;
+}
+
+/* CNCF Sandbox mention shown in the Social footer column */
+.footer-cncf {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 12px;
+  font-size: 0.875rem;
+}
+
+.footer-cncf-logo {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  filter: brightness(0);
+}
+
+[data-theme='dark'] .footer-cncf-logo {
+  filter: brightness(0) invert(1);
 }
 
 .footer-socials a {
@@ -961,6 +1040,19 @@ img.llm-d-logo {
   --ifm-footer-link-color: #000000 !important;
   --ifm-footer-title-color: #000000 !important;
   border-top: 1px solid #000000;
+}
+
+/* All footer text at 14px (0.875rem) — column titles, link items, copyright,
+   CNCF mention, Slack CTA label. */
+.footer,
+.footer__title,
+.footer__link-item,
+.footer__items,
+.footer__copyright,
+.footer-socials,
+.footer-cncf,
+.footer-socials-cta {
+  font-size: 0.875rem;
 }
 
 [data-theme='dark'] .footer--dark {

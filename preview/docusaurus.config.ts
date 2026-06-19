@@ -33,6 +33,16 @@ const config: Config = {
   },
 
   headTags: [
+    // Cross-app theme sync: the main site and each docs build use distinct
+    // localStorage keys for the color-mode preference — Docusaurus appends a
+    // hash of baseUrl to "theme" ("theme", "theme-23d", "theme-1a2",
+    // "theme-2af", …). Mirror across every theme* key so dark/light persists
+    // when the user navigates from one Docusaurus instance to another.
+    {
+      tagName: 'script',
+      attributes: {},
+      innerHTML: `(function(){try{var keys=[],v=null;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k==='theme'||/^theme-[a-z0-9]+$/.test(k)){keys.push(k);var x=localStorage.getItem(k);if(x)v=x;}}['theme','theme-23d','theme-1a2','theme-2af'].forEach(function(k){if(keys.indexOf(k)===-1)keys.push(k);});if(v)keys.forEach(function(k){localStorage.setItem(k,v);});}catch(e){}})();`,
+    },
     {
       tagName: 'meta',
       attributes: {name: 'robots', content: 'noindex, nofollow'},
@@ -213,7 +223,7 @@ const config: Config = {
       id: 'llm-d-v0-7-release',
       content:
         '🎉 <b>llm-d 0.7 is now available!</b> Explore our completely revamped documentation with comprehensive guides, architecture deep-dives, and production deployment patterns. <a target="_self" rel="noopener noreferrer" href="/docs/getting-started/quickstart"><b>Browse the docs →</b></a>',
-      backgroundColor: '#7f317f',
+      backgroundColor: '#000000',
       textColor: '#fff',
       isCloseable: true,
     },
@@ -259,30 +269,75 @@ const config: Config = {
     },
     footer: {
       style: 'dark',
+      // Mirror of the main app's footer (docusaurus.config.js) so the same
+      // columns + Social/CNCF block appear on every page in every Docusaurus
+      // instance. Asset paths are absolute (/img/...) so they resolve from
+      // the root deploy regardless of which baseUrl this build runs at.
       links: [
         {
           title: 'Documentation',
           items: [
-            {label: 'Getting Started', to: '/getting-started'},
-            {label: 'Architecture', to: '/architecture'},
-            {label: 'Well-Lit Paths', to: '/well-lit-paths'},
-            {label: 'Resources', to: '/resources/gateway'},
+            {html: '<a href="/docs/getting-started" class="footer__link-item">Getting Started</a>'},
+            {html: '<a href="/docs/architecture" class="footer__link-item">Architecture</a>'},
+            {html: '<a href="/docs/guides" class="footer__link-item">Guides</a>'},
           ],
         },
         {
           title: 'Community',
           items: [
-            {label: 'Slack', href: 'https://llm-d.slack.com'},
-            {label: 'GitHub', href: 'https://github.com/llm-d'},
-            {label: 'Current Site', href: 'https://llm-d.ai'},
+            {label: 'Contact us', href: '/community'},
+            {label: 'Contributing', href: '/community/contribute'},
+            {label: 'Code of Conduct', href: '/community/code-of-conduct'},
           ],
         },
         {
-          title: 'Repositories',
+          title: 'More',
           items: [
-            {label: 'llm-d', href: 'https://github.com/llm-d/llm-d'},
-            {label: 'Router', href: 'https://github.com/llm-d/llm-d-router'},
-            {label: 'KV Cache', href: 'https://github.com/llm-d/llm-d-kv-cache'},
+            {label: 'Blog', href: '/blog'},
+            {label: 'Privacy Policy', href: 'https://www.redhat.com/en/about/privacy-policy'},
+          ],
+        },
+        {
+          title: 'Social',
+          items: [
+            {
+              html: `
+              <div class="footer-socials" role="navigation" aria-label="Social links">
+                <div class="footer-socials-row">
+                  <a href="https://github.com/llm-d/" target="_blank" rel="noreferrer noopener" aria-label="GitHub">
+                    <img src="/img/new-social/github-mark-white.png" alt="GitHub" />
+                  </a>
+                  <a href="https://linkedin.com/company/llm-d" target="_blank" rel="noreferrer noopener" aria-label="LinkedIn">
+                    <img src="/img/new-social/linkedin-mark-white.png" alt="LinkedIn" />
+                  </a>
+                  <a href="https://llm-d.slack.com" target="_blank" rel="noreferrer noopener" aria-label="Slack">
+                    <img src="/img/new-social/slack-mark-white.png" alt="Slack" />
+                  </a>
+                  <a href="https://www.reddit.com/r/llm_d/" target="_blank" rel="noreferrer noopener" aria-label="Reddit">
+                    <img src="/img/new-social/reddit-mark-white.png" alt="Reddit" />
+                  </a>
+                  <a href="https://bsky.app/profile/llm-d.ai" target="_blank" rel="noreferrer noopener" aria-label="Bluesky">
+                    <img src="/img/new-social/bluesky-mark-white.svg" alt="Bluesky" />
+                  </a>
+                  <a href="https://x.com/_llm_d_" target="_blank" rel="noreferrer noopener" aria-label="X / Twitter">
+                    <img src="/img/new-social/x-mark-white.png" alt="X / Twitter" />
+                  </a>
+                  <a href="https://www.youtube.com/@llm-d-project" target="_blank" rel="noreferrer noopener" aria-label="YouTube">
+                    <img src="/img/new-social/youtube-mark-white.svg" alt="YouTube" />
+                  </a>
+                </div>
+                <div class="footer-cncf">
+                  <img class="footer-cncf-logo" src="/img/CNCF-logo.svg" alt="CNCF" />
+                  <span>llm-d is a CNCF Sandbox project</span>
+                </div>
+                <div class="footer-socials-cta">
+                  <a href="/slack" target="_self" rel="noreferrer noopener" aria-label="Join our Slack">
+                    <span class="button-link">Join our Slack</span>
+                  </a>
+                </div>
+              </div>
+              `,
+            },
           ],
         },
       ],

@@ -171,6 +171,7 @@ echo "    Copying well-lit-paths overview pages..."
 
 cp_doc "$WIP/well-lit-paths/README.md"                      "$DOCS_DIR/guides/index.md"
 cp_doc "$WIP/well-lit-paths/optimized-baseline.md"          "$DOCS_DIR/guides/optimized-baseline.md"
+cp_doc "$WIP/well-lit-paths/precise-prefix-cache-aware.md"  "$DOCS_DIR/guides/precise-prefix-cache-routing.md"
 cp_doc "$WIP/well-lit-paths/precise-prefix-cache-routing.md" "$DOCS_DIR/guides/precise-prefix-cache-routing.md"
 cp_doc "$WIP/well-lit-paths/tiered-prefix-cache.md"         "$DOCS_DIR/guides/tiered-prefix-cache.md"
 cp_doc "$WIP/well-lit-paths/asynchronous-processing.md"     "$DOCS_DIR/guides/asynchronous-processing.md"
@@ -666,6 +667,28 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         "$file"
 done
 
+# === MDX hygiene: void tags + bare email/URL autolinks ===
+echo "    Normalizing bare HTML void tags + autolinks for MDX..."
+find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace \
+        -e 's|<br>|<br/>|g' \
+        -e 's|<hr>|<hr/>|g' \
+        -e 's|<\([A-Za-z0-9._%+-]\{1,\}@[A-Za-z0-9.-]\{1,\}\.[A-Za-z]\{2,\}\)>|\1|g' \
+        -e 's|<\(https\{0,1\}://[^ >]*\)>|\1|g' \
+        "$file"
+done
+
+# === Local-preview overlay: pull PR #1820 README.mdx for the docs landing ===
+# llm-d/llm-d#1820 has the combined-landing MDX (hero/founders/CTAs). Release-0.7
+# upstream ships only README.md (boring intro). Overlay the .mdx so /docs/getting-started
+# renders the landing-style intro that PR #362 was designed against.
+PR1820_REPO="${PR1820_REPO:-/tmp/llm-d-pr1820}"
+if [[ -f "$PR1820_REPO/docs/getting-started/README.mdx" ]]; then
+    echo "    Overlaying docs home from PR #1820 ($PR1820_REPO)..."
+    cp "$PR1820_REPO/docs/getting-started/README.mdx" "$DOCS_DIR/getting-started/index.mdx"
+    rm -f "$DOCS_DIR/getting-started/index.md"
+fi
+
 # === Generate stubs for pages in outline that don't have source content yet ===
 echo "    Generating stubs for missing pages..."
 
@@ -690,6 +713,9 @@ This page is under active development. Content coming soon.
 STUBEOF
     fi
 }
+
+# Guides stubs (release-0.7 doesn't ship this page)
+generate_stub "$DOCS_DIR/guides/no-kubernetes-deployment.md" "Non-K8s & Bare-Metal Deployments" "Running llm-d outside Kubernetes."
 
 # Resources stubs
 generate_stub "$DOCS_DIR/resources/gateway/index.md" "Gateway" "Gateway deployment and configuration guides"

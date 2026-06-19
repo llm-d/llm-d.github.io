@@ -10,10 +10,29 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Getting Started',
-      collapsed: true,
+      collapsed: false,
       items: [
         'getting-started/quickstart',
         'getting-started/artifacts',
+      ],
+    },
+    // ==================== Well-Lit Paths ====================
+    {
+      type: 'category',
+      label: 'Well-Lit Paths',
+      collapsed: false,
+      link: {type: 'doc', id: 'guides/index'},
+      items: [
+        'guides/optimized-baseline',
+        'guides/precise-prefix-cache-routing',
+        'guides/tiered-prefix-cache',
+        'guides/asynchronous-processing',
+        'guides/flow-control',
+        'guides/pd-disaggregation',
+        'guides/predicted-latency',
+        'guides/wide-expert-parallelism',
+        'guides/workload-autoscaling',
+        'guides/no-kubernetes-deployment',
       ],
     },
     // ==================== Architecture ====================
@@ -100,25 +119,6 @@ const sidebars: SidebarsConfig = {
             },
           ],
         },
-      ],
-    },
-    // ==================== Well-Lit Paths ====================
-    {
-      type: 'category',
-      label: 'Well-Lit Paths',
-      collapsed: true,
-      link: {type: 'doc', id: 'guides/index'},
-      items: [
-        'guides/optimized-baseline',
-        'guides/precise-prefix-cache-routing',
-        'guides/tiered-prefix-cache',
-        'guides/asynchronous-processing',
-        'guides/flow-control',
-        'guides/pd-disaggregation',
-        'guides/predicted-latency',
-        'guides/wide-expert-parallelism',
-        'guides/workload-autoscaling',
-        'guides/no-kubernetes-deployment',
       ],
     },
     // ==================== Resources ====================
