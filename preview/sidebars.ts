@@ -134,7 +134,7 @@ const sidebars: SidebarsConfig = {
               link: {type: 'doc', id: 'architecture/advanced/autoscaling/index'},
               items: [
                 'architecture/advanced/autoscaling/workload-variant-autoscaling',
-                'architecture/advanced/autoscaling/igw-hpa',
+                {type: 'doc', id: 'architecture/advanced/autoscaling/igw-hpa', label: 'EndPoint Picker HPA/KEDA Integration'},
               ],
             },
             {
@@ -170,9 +170,10 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Infrastructure & Environments',
       collapsed: true,
+      // Render the Infrastructure Reference content on the section page itself
+      // instead of as a separate child entry.
+      link: {type: 'doc', id: 'resources/infrastructure/index'},
       items: [
-        {type: 'doc', id: 'resources/infrastructure/index', label: 'Infrastructure Reference'},
-        {type: 'doc', id: 'resources/infrastructure/multi-node', label: 'Multi-Node Serving Orchestration'},
         {
           type: 'category',
           label: 'Kubernetes Infrastructure Providers',
@@ -187,11 +188,9 @@ const sidebars: SidebarsConfig = {
             'resources/infra-providers/openshift-aws',
           ],
         },
-        {type: 'doc', id: 'resources/infrastructure/no-kubernetes-deployment', label: 'Non-K8s & Bare-Metal Deployments'},
-        {type: 'doc', id: 'resources/rdma/rdma-configuration', label: 'RDMA & Networking Configuration'},
         {
           type: 'category',
-          label: 'Gateway & Ingress Resources',
+          label: 'Kubernetes Gateways',
           collapsed: true,
           link: {type: 'doc', id: 'resources/gateway/index'},
           items: [
@@ -200,6 +199,9 @@ const sidebars: SidebarsConfig = {
             'resources/gateway/agentgateway',
           ],
         },
+        {type: 'doc', id: 'resources/infrastructure/multi-node', label: 'Kubernetes Multi-Node Orchestration'},
+        {type: 'doc', id: 'resources/infrastructure/no-kubernetes-deployment', label: 'Non-K8s & Bare-Metal Deployments'},
+        {type: 'doc', id: 'resources/rdma/rdma-configuration', label: 'RDMA & Networking Configuration'},
       ],
     },
     // ==================== References ====================

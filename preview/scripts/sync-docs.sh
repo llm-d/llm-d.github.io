@@ -158,8 +158,8 @@ cp_doc "$WIP/architecture/advanced/kv-management/prefix-cache-aware-routing.md" 
 
 # Architecture / Advanced / Autoscaling
 cp_doc "$WIP/architecture/advanced/autoscaling/README.md"                       "$DOCS_DIR/architecture/advanced/autoscaling/index.md"
-cp_doc "$WIP/architecture/advanced/autoscaling/wva.md"                         "$DOCS_DIR/architecture/advanced/autoscaling/workload-variant-autoscaling.md"
-cp_doc "$WIP/architecture/advanced/autoscaling/hpa-keda.md"                    "$DOCS_DIR/architecture/advanced/autoscaling/igw-hpa.md"
+cp_doc "$WIP/architecture/advanced/autoscaling/hpa-wva.md"                     "$DOCS_DIR/architecture/advanced/autoscaling/workload-variant-autoscaling.md"
+cp_doc "$WIP/architecture/advanced/autoscaling/hpa-epp.md"                     "$DOCS_DIR/architecture/advanced/autoscaling/igw-hpa.md"
 cp "$WIP/architecture/advanced/autoscaling/"*.svg "$DOCS_DIR/architecture/advanced/autoscaling/" 2>/dev/null || true
 
 # Architecture / Advanced / Batch
@@ -272,6 +272,14 @@ else
     cp_doc "$WIP/guides/monitoring/metrics.md"                "$DOCS_DIR/resources/observability/metrics.md"
     cp_doc "$WIP/guides/monitoring/tracing.md"                "$DOCS_DIR/resources/observability/tracing.md"
 fi
+# Upstream moved observability docs from docs/resources/observability/ to
+# docs/operations/observability/. Pulls from the current location; the
+# block above stays as a no-op fallback if the legacy paths re-appear.
+cp_doc "$WIP/operations/observability/README.md"  "$DOCS_DIR/resources/observability/index.md"
+cp_doc "$WIP/operations/observability/setup.md"   "$DOCS_DIR/resources/observability/setup.md"
+cp_doc "$WIP/operations/observability/metrics.md" "$DOCS_DIR/resources/observability/metrics.md"
+cp_doc "$WIP/operations/observability/tracing.md" "$DOCS_DIR/resources/observability/tracing.md"
+cp_doc "$WIP/operations/observability/promql.md"  "$DOCS_DIR/resources/observability/promql.md"
 
 # === Resources / Gateway ===
 cp_doc "$WIP/infrastructure/gateway/README.md"         "$DOCS_DIR/resources/gateway/index.md"
@@ -787,11 +795,12 @@ generate_stub "$DOCS_DIR/architecture/advanced/kv-management/index.md" "KV Cache
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/prefix-cache-aware-routing.md" "Prefix Cache Aware Routing" "Routing requests to maximize KV cache hits"
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/kv-indexer.md" "KV-Cache Indexer" "Globally consistent KV cache block tracking"
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/kv-offloader.md" "KV Offloader" "Tiered KV cache storage hierarchy"
-# Autoscaling sub-pages — upstream main currently ships only the README; stub
-# the sub-pages referenced by the sidebar until wva.md / hpa-keda.md land in
-# llm-d/llm-d. Self-heals once the cp_doc lines above produce real content.
+# Autoscaling sub-pages — kept as defensive stubs so the sidebar resolves
+# even when the cp_doc lines above silently no-op (e.g. against a snapshot
+# of upstream that doesn't have hpa-wva.md / hpa-epp.md). generate_stub is
+# null-safe, so it skips when the cp_doc lines produced real content.
 generate_stub "$DOCS_DIR/architecture/advanced/autoscaling/workload-variant-autoscaling.md" "Workload-Variant Autoscaling" "Signal-aware autoscaler that scales inference workloads on real-time inference metrics rather than generic infra signals."
-generate_stub "$DOCS_DIR/architecture/advanced/autoscaling/igw-hpa.md" "Inference Gateway HPA" "HorizontalPodAutoscaler integration for the Inference Gateway."
+generate_stub "$DOCS_DIR/architecture/advanced/autoscaling/igw-hpa.md" "EndPoint Picker HPA/KEDA Integration" "EndPoint Picker integration with HorizontalPodAutoscaler and KEDA."
 generate_stub "$DOCS_DIR/api-reference/index.md" "API Reference" "API specification and reference documentation"
 generate_stub "$DOCS_DIR/api-reference/glossary.md" "Glossary" "Terminology and definitions for llm-d"
 generate_stub "$DOCS_DIR/resources/observability/index.md" "Observability" "Metrics, dashboards, and distributed tracing for llm-d"
