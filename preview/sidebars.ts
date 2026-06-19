@@ -3,21 +3,71 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 // Sidebar structure matching docs/wip-docs-new/outline.md exactly
 const sidebars: SidebarsConfig = {
   docsSidebar: [
+    // ==================== Introduction (standalone) ====================
+    {type: 'doc', id: 'getting-started/index', label: 'Introduction to llm-d'},
     // ==================== Getting Started ====================
     {
       type: 'category',
       label: 'Getting Started',
-      collapsed: true,
-      link: {type: 'doc', id: 'getting-started/index'},
+      collapsed: false,
       items: [
         'getting-started/quickstart',
-        'getting-started/artifacts',
+        {type: 'doc', id: 'getting-started/accelerators', label: 'Supported Accelerators'},
       ],
     },
-    // ==================== Architecture ====================
+    // ==================== Well-Lit Paths ====================
     {
       type: 'category',
-      label: 'Architecture',
+      label: 'Well-Lit Paths',
+      collapsed: false,
+      link: {type: 'doc', id: 'guides/index'},
+      items: [
+        {
+          type: 'category',
+          label: 'Foundations',
+          collapsed: false,
+          items: [
+            {type: 'doc', id: 'guides/optimized-baseline', label: 'Deploy an Optimized Baseline'},
+            {type: 'doc', id: 'guides/predicted-latency', label: 'Route Requests by Predicted Latency'},
+            {type: 'doc', id: 'guides/precise-prefix-cache-routing', label: 'Enable Precise Prefix-Cache Aware Routing'},
+            {type: 'doc', id: 'guides/tiered-prefix-cache', label: 'Configure a Tiered Prefix Cache'},
+            {type: 'doc', id: 'guides/pd-disaggregation', label: 'Deploy Prefill/Decode Disaggregation'},
+            {type: 'doc', id: 'guides/wide-expert-parallelism', label: 'Scale MoE Models with Wide Expert Parallelism'},
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Workloads',
+          collapsed: false,
+          items: [
+            {type: 'doc', id: 'guides/agentic-serving/index', label: 'Serve Agentic Workloads'},
+            {type: 'doc', id: 'guides/multimodal-serving', label: 'Serve Multimodal Workloads'},
+            {
+              type: 'category',
+              label: 'Serve Batch Workloads',
+              collapsed: true,
+              items: [
+                {type: 'doc', id: 'guides/asynchronous-processing', label: 'Asynchronous Processing'},
+                {type: 'doc', id: 'guides/batch-gateway', label: 'Batch Gateway'},
+              ],
+            },
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Traffic Control & Autoscaling',
+          collapsed: false,
+          items: [
+            {type: 'doc', id: 'guides/flow-control', label: 'Apply Flow Control and Fairness'},
+            {type: 'doc', id: 'guides/workload-autoscaling', label: 'Autoscale your Inference Pool'},
+          ],
+        },
+      ],
+    },
+    // ==================== Concepts (Architecture) ====================
+    {
+      type: 'category',
+      label: 'Concepts (Architecture)',
       collapsed: true,
       link: {type: 'doc', id: 'architecture/index'},
       items: [
@@ -52,7 +102,7 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
-          label: 'Advanced',
+          label: 'Capabilities',
           collapsed: true,
           items: [
             {
@@ -62,6 +112,7 @@ const sidebars: SidebarsConfig = {
               link: {type: 'doc', id: 'architecture/advanced/disaggregation/index'},
               items: [
                 'architecture/advanced/disaggregation/operations-vllm',
+                'architecture/advanced/disaggregation/operations-sglang',
               ],
             },
             'architecture/advanced/latency-predictor',
@@ -100,52 +151,31 @@ const sidebars: SidebarsConfig = {
         },
       ],
     },
-    // ==================== Well-Lit Paths ====================
+    // ==================== Operations ====================
     {
       type: 'category',
-      label: 'Well-Lit Paths',
+      label: 'Operations & Monitoring',
       collapsed: true,
-      link: {type: 'doc', id: 'guides/index'},
       items: [
-        'guides/optimized-baseline',
-        'guides/precise-prefix-cache-routing',
-        'guides/tiered-prefix-cache',
-        'guides/asynchronous-processing',
-        'guides/flow-control',
-        'guides/pd-disaggregation',
-        'guides/predicted-latency',
-        'guides/wide-expert-parallelism',
-        'guides/workload-autoscaling',
-        'guides/agentic-serving/index',
-        {
-          type: 'doc',
-          id: 'guides/multimodal-serving',
-          label: 'Multimodal Serving',
-        },
-        'guides/batch-gateway',
-        'guides/no-kubernetes-deployment',
+        {type: 'doc', id: 'resources/observability/metrics', label: 'Monitoring & Metrics'},
+        {type: 'doc', id: 'resources/observability/tracing', label: 'Tracing'},
+        {type: 'doc', id: 'resources/observability/promql', label: 'PromQL'},
+        {type: 'doc', id: 'resources/operations/readiness-probes', label: 'Readiness Probes'},
+        {type: 'doc', id: 'resources/operations/rollouts/index', label: 'Rollouts'},
+        {type: 'doc', id: 'resources/operations/router', label: 'Router Operations Guide'},
       ],
     },
-    // ==================== Resources ====================
+    // ==================== Infrastructure & Environments ====================
     {
       type: 'category',
-      label: 'Resources',
+      label: 'Infrastructure & Environments',
       collapsed: true,
       items: [
+        {type: 'doc', id: 'resources/infrastructure/index', label: 'Infrastructure Reference'},
+        {type: 'doc', id: 'resources/infrastructure/multi-node', label: 'Multi-Node Serving Orchestration'},
         {
           type: 'category',
-          label: 'Gateway',
-          collapsed: true,
-          link: {type: 'doc', id: 'resources/gateway/index'},
-          items: [
-            'resources/gateway/istio',
-            'resources/gateway/gke',
-            'resources/gateway/agentgateway',
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Infrastructure Providers',
+          label: 'Kubernetes Infrastructure Providers',
           collapsed: true,
           link: {type: 'doc', id: 'resources/infra-providers/index'},
           items: [
@@ -157,29 +187,44 @@ const sidebars: SidebarsConfig = {
             'resources/infra-providers/openshift-aws',
           ],
         },
+        {type: 'doc', id: 'resources/infrastructure/no-kubernetes-deployment', label: 'Non-K8s & Bare-Metal Deployments'},
+        {type: 'doc', id: 'resources/rdma/rdma-configuration', label: 'RDMA & Networking Configuration'},
         {
           type: 'category',
-          label: 'Observability',
+          label: 'Gateway & Ingress Resources',
           collapsed: true,
-          link: {type: 'doc', id: 'resources/observability/index'},
+          link: {type: 'doc', id: 'resources/gateway/index'},
           items: [
-            'resources/observability/setup',
-            'resources/observability/metrics',
-            'resources/observability/tracing',
-            'resources/observability/promql',
+            'resources/gateway/istio',
+            'resources/gateway/gke',
+            'resources/gateway/agentgateway',
           ],
         },
-        'resources/rdma/rdma-configuration',
       ],
     },
-    // ==================== API Reference ====================
+    // ==================== References ====================
     {
       type: 'category',
-      label: 'API Reference',
+      label: 'References',
       collapsed: true,
       link: {type: 'doc', id: 'api-reference/index'},
       items: [
-        'api-reference/glossary',
+        {
+          type: 'category',
+          label: 'Kubernetes APIs',
+          collapsed: true,
+          items: [
+            {type: 'doc', id: 'api-reference/inferencepool', label: 'InferencePool'},
+            {type: 'doc', id: 'api-reference/inferenceobjective', label: 'InferenceObjective'},
+            {type: 'doc', id: 'api-reference/inferencemodelrewrite', label: 'InferenceModelRewrite'},
+          ],
+        },
+        {type: 'doc', id: 'api-reference/endpointpickerconfig', label: 'Component Config: EndpointPickerConfig'},
+        {type: 'doc', id: 'api-reference/epp-http-apis', label: 'HTTP APIs'},
+        {type: 'doc', id: 'api-reference/epp-grpc-apis', label: 'RPC APIs'},
+        {type: 'doc', id: 'api-reference/epp-http-headers', label: 'HTTP Headers'},
+        {type: 'doc', id: 'api-reference/glossary', label: 'Glossary'},
+        {type: 'doc', id: 'api-reference/artifacts', label: 'Artifacts'},
       ],
     },
   ],

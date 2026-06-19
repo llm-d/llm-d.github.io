@@ -107,6 +107,9 @@ mkdir -p \
     "$DOCS_DIR/guides/agentic-serving" \
     "$DOCS_DIR/resources/gateway" \
     "$DOCS_DIR/resources/observability" \
+    "$DOCS_DIR/resources/operations" \
+    "$DOCS_DIR/resources/operations/rollouts" \
+    "$DOCS_DIR/resources/infrastructure" \
     "$DOCS_DIR/resources/rdma" \
     "$DOCS_DIR/resources/infra-providers" \
     "$DOCS_DIR/api-reference" \
@@ -118,7 +121,7 @@ echo "    Copying content..."
 cp_doc "$WIP/getting-started/README.md"       "$DOCS_DIR/getting-started/index.md"
 cp_doc "$WIP/getting-started/quickstart.md"   "$DOCS_DIR/getting-started/quickstart.md"
 cp_doc "$WIP/getting-started/feature-matrix.md" "$DOCS_DIR/getting-started/feature-matrix.md"
-cp_doc "$WIP/getting-started/artifacts.md"    "$DOCS_DIR/getting-started/artifacts.md"
+cp_doc "$WIP/getting-started/accelerators.md" "$DOCS_DIR/getting-started/accelerators.md"
 
 # === Architecture ===
 cp_doc "$WIP/architecture/README.md"          "$DOCS_DIR/architecture/index.md"
@@ -140,15 +143,9 @@ cp_doc "$WIP/architecture/core/router/epp/configuration.md"     "$DOCS_DIR/archi
 cp_doc "$WIP/architecture/core/router/epp/datalayer.md"         "$DOCS_DIR/architecture/core/router/epp/datalayer.md"
 
 # Architecture / Advanced / Disaggregation
-cp_doc "$WIP/architecture/advanced/disaggregation/README.md"            "$DOCS_DIR/architecture/advanced/disaggregation/index.md"
-cp_doc "$WIP/architecture/advanced/disaggregation/operations-vllm.md"   "$DOCS_DIR/architecture/advanced/disaggregation/operations-vllm.md"
-
-# operations-sglang is not published on the site; point its link to the upstream source.
-if [[ -f "$DOCS_DIR/architecture/advanced/disaggregation/index.md" ]]; then
-    sed_inplace \
-        -e 's|\](operations-sglang\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/disaggregation/operations-sglang.md)|g' \
-        "$DOCS_DIR/architecture/advanced/disaggregation/index.md"
-fi
+cp_doc "$WIP/architecture/advanced/disaggregation/README.md"               "$DOCS_DIR/architecture/advanced/disaggregation/index.md"
+cp_doc "$WIP/architecture/advanced/disaggregation/operations-vllm.md"      "$DOCS_DIR/architecture/advanced/disaggregation/operations-vllm.md"
+cp_doc "$WIP/architecture/advanced/disaggregation/operations-sglang.md"    "$DOCS_DIR/architecture/advanced/disaggregation/operations-sglang.md"
 
 # Architecture / Advanced
 cp_doc "$WIP/architecture/advanced/latency-predictor.md" "$DOCS_DIR/architecture/advanced/latency-predictor.md"
@@ -285,6 +282,18 @@ cp_doc "$WIP/infrastructure/gateway/agentgateway.md"   "$DOCS_DIR/resources/gate
 
 cp_doc "$WIP/infrastructure/rdma/README.md"                  "$DOCS_DIR/resources/rdma/rdma-configuration.md"
 
+# === Operations (new pages) ===
+cp_doc "$WIP/operations/router.md"                          "$DOCS_DIR/resources/operations/router.md"
+cp_doc "$WIP/operations/readiness-probes.md"                "$DOCS_DIR/resources/operations/readiness-probes.md"
+cp_doc "$WIP/operations/rollouts/README.md"                 "$DOCS_DIR/resources/operations/rollouts/index.md"
+cp_doc "$WIP/operations/rollouts/adapter-rollout.md"        "$DOCS_DIR/resources/operations/rollouts/adapter-rollout.md"
+cp_doc "$WIP/operations/rollouts/blue-green-update.md"      "$DOCS_DIR/resources/operations/rollouts/blue-green-update.md"
+
+# === Infrastructure (new pages) ===
+cp_doc "$WIP/infrastructure/README.md"                      "$DOCS_DIR/resources/infrastructure/index.md"
+cp_doc "$WIP/infrastructure/multi-node.md"                  "$DOCS_DIR/resources/infrastructure/multi-node.md"
+cp_doc "$WIP/infrastructure/no-kubernetes-deployment.md"    "$DOCS_DIR/resources/infrastructure/no-kubernetes-deployment.md"
+
 # === Infrastructure Providers ===
 cp_doc "$WIP/infrastructure/providers/README.md"         "$DOCS_DIR/resources/infra-providers/index.md"
 cp_doc "$WIP/infrastructure/providers/aks/README.md"     "$DOCS_DIR/resources/infra-providers/aks.md"
@@ -303,6 +312,8 @@ cp_doc "$WIP/api-reference/inferencemodelrewrite.md" "$DOCS_DIR/api-reference/in
 cp_doc "$WIP/api-reference/endpointpickerconfig.md"  "$DOCS_DIR/api-reference/endpointpickerconfig.md"
 cp_doc "$WIP/api-reference/epp-http-headers.md"      "$DOCS_DIR/api-reference/epp-http-headers.md"
 cp_doc "$WIP/api-reference/epp-http-apis.md"         "$DOCS_DIR/api-reference/epp-http-apis.md"
+cp_doc "$WIP/api-reference/epp-grpc-apis.md"         "$DOCS_DIR/api-reference/epp-grpc-apis.md"
+cp_doc "$WIP/api-reference/artifacts.md"             "$DOCS_DIR/api-reference/artifacts.md"
 
 # === Accelerators ===
 cp_doc "$WIP/getting-started/accelerators.md"        "$DOCS_DIR/accelerators/index.md"
