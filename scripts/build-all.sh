@@ -120,6 +120,8 @@ else
        "${WORKTREE_PATH}/preview/package.json"
     cp "$PROJECT_DIR/preview/package-lock.json" \
        "${WORKTREE_PATH}/preview/package-lock.json"
+    cp "$PROJECT_DIR/preview/sidebars.ts" \
+       "${WORKTREE_PATH}/preview/sidebars.ts"
     rm -rf "${WORKTREE_PATH}/preview/src"
     cp -r "$PROJECT_DIR/preview/src" "${WORKTREE_PATH}/preview/src"
 
