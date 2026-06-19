@@ -122,6 +122,10 @@ fi
 cp_doc "$WIP/getting-started/quickstart.md"   "$DOCS_DIR/getting-started/quickstart.md"
 cp_doc "$WIP/getting-started/feature-matrix.md" "$DOCS_DIR/getting-started/feature-matrix.md"
 cp_doc "$WIP/getting-started/artifacts.md"    "$DOCS_DIR/getting-started/artifacts.md"
+# llm-d/llm-d#1874 moved artifacts.md from docs/getting-started/ to docs/api-reference/.
+# Read from the new upstream location and keep writing to the old sidebar id so
+# this branch builds independently regardless of which side of #1874 we're on.
+cp_doc "$WIP/api-reference/artifacts.md"      "$DOCS_DIR/getting-started/artifacts.md"
 
 # === Architecture ===
 cp_doc "$WIP/architecture/README.md"          "$DOCS_DIR/architecture/index.md"
@@ -182,6 +186,21 @@ cp_doc "$WIP/well-lit-paths/wide-expert-parallelism.md"     "$DOCS_DIR/guides/wi
 cp_doc "$WIP/well-lit-paths/workload-autoscaling.md"        "$DOCS_DIR/guides/workload-autoscaling.md"
 cp_doc "$WIP/well-lit-paths/no-kubernetes-deployment.md"    "$DOCS_DIR/guides/no-kubernetes-deployment.md"
 cp_doc "$WIP/well-lit-paths/experimental/batch-gateway.md"  "$DOCS_DIR/guides/batch-gateway.md"
+
+# Upstream main reorganized well-lit-paths into capabilities/, traffic-control/,
+# workloads/ subdirs. The flat paths above are kept as fallbacks for older
+# release branches; these lines map the current main layout back onto the flat
+# sidebar ids so the build stays independent regardless of upstream layout.
+# cp_doc is null-safe — only fires when the source file actually exists.
+cp_doc "$WIP/well-lit-paths/capabilities/optimized-baseline.md"          "$DOCS_DIR/guides/optimized-baseline.md"
+cp_doc "$WIP/well-lit-paths/capabilities/precise-prefix-cache-routing.md" "$DOCS_DIR/guides/precise-prefix-cache-routing.md"
+cp_doc "$WIP/well-lit-paths/capabilities/tiered-prefix-cache.md"         "$DOCS_DIR/guides/tiered-prefix-cache.md"
+cp_doc "$WIP/well-lit-paths/capabilities/pd-disaggregation.md"           "$DOCS_DIR/guides/pd-disaggregation.md"
+cp_doc "$WIP/well-lit-paths/capabilities/predicted-latency.md"           "$DOCS_DIR/guides/predicted-latency.md"
+cp_doc "$WIP/well-lit-paths/capabilities/wide-expert-parallelism.md"     "$DOCS_DIR/guides/wide-expert-parallelism.md"
+cp_doc "$WIP/well-lit-paths/traffic-control/flow-control.md"             "$DOCS_DIR/guides/flow-control.md"
+cp_doc "$WIP/well-lit-paths/traffic-control/workload-autoscaling.md"     "$DOCS_DIR/guides/workload-autoscaling.md"
+cp_doc "$WIP/well-lit-paths/workloads/batch-serving/asynchronous-processing.md" "$DOCS_DIR/guides/asynchronous-processing.md"
 
 sed_inplace \
     -e 's|\](optimized-baseline\.md)|\](/guides/optimized-baseline)|g' \
@@ -732,6 +751,11 @@ generate_stub "$DOCS_DIR/architecture/advanced/kv-management/index.md" "KV Cache
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/prefix-cache-aware-routing.md" "Prefix Cache Aware Routing" "Routing requests to maximize KV cache hits"
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/kv-indexer.md" "KV-Cache Indexer" "Globally consistent KV cache block tracking"
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/kv-offloader.md" "KV Offloader" "Tiered KV cache storage hierarchy"
+# Autoscaling sub-pages — upstream main currently ships only the README; stub
+# the sub-pages referenced by the sidebar until wva.md / hpa-keda.md land in
+# llm-d/llm-d. Self-heals once the cp_doc lines above produce real content.
+generate_stub "$DOCS_DIR/architecture/advanced/autoscaling/workload-variant-autoscaling.md" "Workload-Variant Autoscaling" "Signal-aware autoscaler that scales inference workloads on real-time inference metrics rather than generic infra signals."
+generate_stub "$DOCS_DIR/architecture/advanced/autoscaling/igw-hpa.md" "Inference Gateway HPA" "HorizontalPodAutoscaler integration for the Inference Gateway."
 generate_stub "$DOCS_DIR/api-reference/index.md" "API Reference" "API specification and reference documentation"
 generate_stub "$DOCS_DIR/api-reference/glossary.md" "Glossary" "Terminology and definitions for llm-d"
 generate_stub "$DOCS_DIR/resources/observability/index.md" "Observability" "Metrics, dashboards, and distributed tracing for llm-d"
