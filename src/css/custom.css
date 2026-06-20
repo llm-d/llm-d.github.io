@@ -1190,15 +1190,33 @@ html[data-theme='dark'] .intro-cncf-logo {
     padding-left: 8px !important;
   }
 
-  /* Main: same width formula as docs docItemCol (75% of container, capped at 75% of --ifm-container-width) */
+  /* Main: mirror docs/community exactly. Their content area (docMainContainer)
+     fills 100% - sidebar; flex-basis 0 + the max-width cap make this column do
+     the same without ever wrapping below the sidebar. Vertical padding lives
+     here (applied once) so the blog LIST doesn't get extra spacing per post. */
   .blog-wrapper main.col--7 {
     flex: 1 1 0 !important;
-    max-width: min(
-      calc(0.75 * (100vw - var(--doc-sidebar-width))),
-      calc(var(--ifm-container-width) * 0.75)
-    ) !important;
-    padding-top: var(--ifm-spacing-vertical) !important;
-    padding-bottom: calc(var(--ifm-spacing-vertical) * 2) !important;
+    max-width: calc(100% - var(--doc-sidebar-width)) !important;
+    margin: 0 !important;
+    padding: var(--ifm-spacing-vertical) 0 calc(var(--ifm-spacing-vertical) * 2) !important;
+  }
+
+  /* Inner content = docs/community's centered .container: capped at the XL
+     container width with a 1rem inset. This reproduces their exact left edge at
+     every width — flush at sidebar+16px on narrow screens, and centered once the
+     content area grows past the container width (as docs/community do). */
+  .blog-wrapper main.col--7 > article {
+    max-width: var(--ifm-container-width-xl) !important;
+    /* Left offset = the centering gap docs/community get from their margin:auto
+       1320px container: zero until the content area (viewport - sidebar) exceeds
+       the container width, then half the overflow. Computed from the viewport so
+       it is correct for BOTH the blog list (main fills the row) and the blog post
+       (a right-hand TOC column narrows main, so article auto-centering would not
+       reach the same position). */
+    margin-left: max(0px, calc((100vw - var(--doc-sidebar-width) - var(--ifm-container-width-xl)) / 2)) !important;
+    margin-right: auto !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
   }
 }
 

@@ -175,6 +175,10 @@ else
       echo "  Overlaying docs home from PR #1820 ($PR1820_REPO)..."
       cp "$PR1820_REPO/docs/getting-started/README.mdx" "${WORKTREE_PATH}/preview/docs/getting-started/index.mdx"
       rm -f "${WORKTREE_PATH}/preview/docs/getting-started/index.md"
+      # The combined-landing MDX hardcodes absolute https://llm-d.ai/img/ asset URLs
+      # (founder + CNCF logos). Rewrite to root-relative so they resolve in local
+      # builds too; on production /img/ is the same origin, so prod is unaffected.
+      "${SED_INPLACE[@]}" -e 's|https://llm-d.ai/img/|/img/|g' "${WORKTREE_PATH}/preview/docs/getting-started/index.mdx"
     fi
 
     cd "${WORKTREE_PATH}/preview"

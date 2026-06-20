@@ -107,6 +107,9 @@ mkdir -p \
     "$DOCS_DIR/guides/agentic-serving" \
     "$DOCS_DIR/resources/gateway" \
     "$DOCS_DIR/resources/observability" \
+    "$DOCS_DIR/resources/operations" \
+    "$DOCS_DIR/resources/operations/rollouts" \
+    "$DOCS_DIR/resources/infrastructure" \
     "$DOCS_DIR/resources/rdma" \
     "$DOCS_DIR/resources/infra-providers" \
     "$DOCS_DIR/api-reference" \
@@ -115,6 +118,8 @@ mkdir -p \
 echo "    Copying content..."
 
 # === Getting Started ===
+# Prefer the combined-landing MDX (llm-d/llm-d#1820) when upstream ships it;
+# fall back to the plain README.md intro otherwise.
 if [[ -f "$WIP/getting-started/README.mdx" ]]; then
   cp_doc "$WIP/getting-started/README.mdx"    "$DOCS_DIR/getting-started/index.mdx"
 else
@@ -122,11 +127,7 @@ else
 fi
 cp_doc "$WIP/getting-started/quickstart.md"   "$DOCS_DIR/getting-started/quickstart.md"
 cp_doc "$WIP/getting-started/feature-matrix.md" "$DOCS_DIR/getting-started/feature-matrix.md"
-cp_doc "$WIP/getting-started/artifacts.md"    "$DOCS_DIR/getting-started/artifacts.md"
-# llm-d/llm-d#1874 moved artifacts.md from docs/getting-started/ to docs/api-reference/.
-# Read from the new upstream location and keep writing to the old sidebar id so
-# this branch builds independently regardless of which side of #1874 we're on.
-cp_doc "$WIP/api-reference/artifacts.md"      "$DOCS_DIR/getting-started/artifacts.md"
+cp_doc "$WIP/getting-started/accelerators.md" "$DOCS_DIR/getting-started/accelerators.md"
 
 # === Architecture ===
 cp_doc "$WIP/architecture/README.md"          "$DOCS_DIR/architecture/index.md"
@@ -148,15 +149,9 @@ cp_doc "$WIP/architecture/core/router/epp/configuration.md"     "$DOCS_DIR/archi
 cp_doc "$WIP/architecture/core/router/epp/datalayer.md"         "$DOCS_DIR/architecture/core/router/epp/datalayer.md"
 
 # Architecture / Advanced / Disaggregation
-cp_doc "$WIP/architecture/advanced/disaggregation/README.md"            "$DOCS_DIR/architecture/advanced/disaggregation/index.md"
-cp_doc "$WIP/architecture/advanced/disaggregation/operations-vllm.md"   "$DOCS_DIR/architecture/advanced/disaggregation/operations-vllm.md"
-
-# operations-sglang is not published on the site; point its link to the upstream source.
-if [[ -f "$DOCS_DIR/architecture/advanced/disaggregation/index.md" ]]; then
-    sed_inplace \
-        -e 's|\](operations-sglang\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/disaggregation/operations-sglang.md)|g' \
-        "$DOCS_DIR/architecture/advanced/disaggregation/index.md"
-fi
+cp_doc "$WIP/architecture/advanced/disaggregation/README.md"               "$DOCS_DIR/architecture/advanced/disaggregation/index.md"
+cp_doc "$WIP/architecture/advanced/disaggregation/operations-vllm.md"      "$DOCS_DIR/architecture/advanced/disaggregation/operations-vllm.md"
+cp_doc "$WIP/architecture/advanced/disaggregation/operations-sglang.md"    "$DOCS_DIR/architecture/advanced/disaggregation/operations-sglang.md"
 
 # Architecture / Advanced
 cp_doc "$WIP/architecture/advanced/latency-predictor.md" "$DOCS_DIR/architecture/advanced/latency-predictor.md"
@@ -169,8 +164,8 @@ cp_doc "$WIP/architecture/advanced/kv-management/prefix-cache-aware-routing.md" 
 
 # Architecture / Advanced / Autoscaling
 cp_doc "$WIP/architecture/advanced/autoscaling/README.md"                       "$DOCS_DIR/architecture/advanced/autoscaling/index.md"
-cp_doc "$WIP/architecture/advanced/autoscaling/wva.md"                         "$DOCS_DIR/architecture/advanced/autoscaling/workload-variant-autoscaling.md"
-cp_doc "$WIP/architecture/advanced/autoscaling/hpa-keda.md"                    "$DOCS_DIR/architecture/advanced/autoscaling/igw-hpa.md"
+cp_doc "$WIP/architecture/advanced/autoscaling/hpa-wva.md"                     "$DOCS_DIR/architecture/advanced/autoscaling/workload-variant-autoscaling.md"
+cp_doc "$WIP/architecture/advanced/autoscaling/hpa-epp.md"                     "$DOCS_DIR/architecture/advanced/autoscaling/igw-hpa.md"
 cp "$WIP/architecture/advanced/autoscaling/"*.svg "$DOCS_DIR/architecture/advanced/autoscaling/" 2>/dev/null || true
 
 # Architecture / Advanced / Batch
@@ -283,6 +278,14 @@ else
     cp_doc "$WIP/guides/monitoring/metrics.md"                "$DOCS_DIR/resources/observability/metrics.md"
     cp_doc "$WIP/guides/monitoring/tracing.md"                "$DOCS_DIR/resources/observability/tracing.md"
 fi
+# Upstream moved observability docs from docs/resources/observability/ to
+# docs/operations/observability/. Pulls from the current location; the
+# block above stays as a no-op fallback if the legacy paths re-appear.
+cp_doc "$WIP/operations/observability/README.md"  "$DOCS_DIR/resources/observability/index.md"
+cp_doc "$WIP/operations/observability/setup.md"   "$DOCS_DIR/resources/observability/setup.md"
+cp_doc "$WIP/operations/observability/metrics.md" "$DOCS_DIR/resources/observability/metrics.md"
+cp_doc "$WIP/operations/observability/tracing.md" "$DOCS_DIR/resources/observability/tracing.md"
+cp_doc "$WIP/operations/observability/promql.md"  "$DOCS_DIR/resources/observability/promql.md"
 
 # === Resources / Gateway ===
 cp_doc "$WIP/infrastructure/gateway/README.md"         "$DOCS_DIR/resources/gateway/index.md"
@@ -293,6 +296,18 @@ cp_doc "$WIP/infrastructure/gateway/agentgateway.md"   "$DOCS_DIR/resources/gate
 
 cp_doc "$WIP/infrastructure/rdma/README.md"                  "$DOCS_DIR/resources/rdma/rdma-configuration.md"
 
+# === Operations (new pages) ===
+cp_doc "$WIP/operations/router.md"                          "$DOCS_DIR/resources/operations/router.md"
+cp_doc "$WIP/operations/readiness-probes.md"                "$DOCS_DIR/resources/operations/readiness-probes.md"
+cp_doc "$WIP/operations/rollouts/README.md"                 "$DOCS_DIR/resources/operations/rollouts/index.md"
+cp_doc "$WIP/operations/rollouts/adapter-rollout.md"        "$DOCS_DIR/resources/operations/rollouts/adapter-rollout.md"
+cp_doc "$WIP/operations/rollouts/blue-green-update.md"      "$DOCS_DIR/resources/operations/rollouts/blue-green-update.md"
+
+# === Infrastructure (new pages) ===
+cp_doc "$WIP/infrastructure/README.md"                      "$DOCS_DIR/resources/infrastructure/index.md"
+cp_doc "$WIP/infrastructure/multi-node.md"                  "$DOCS_DIR/resources/infrastructure/multi-node.md"
+cp_doc "$WIP/infrastructure/no-kubernetes-deployment.md"    "$DOCS_DIR/resources/infrastructure/no-kubernetes-deployment.md"
+
 # === Infrastructure Providers ===
 cp_doc "$WIP/infrastructure/providers/README.md"         "$DOCS_DIR/resources/infra-providers/index.md"
 cp_doc "$WIP/infrastructure/providers/aks/README.md"     "$DOCS_DIR/resources/infra-providers/aks.md"
@@ -301,6 +316,19 @@ cp_doc "$WIP/infrastructure/providers/gke/README.md"     "$DOCS_DIR/resources/in
 cp_doc "$WIP/infrastructure/providers/minikube/README.md" "$DOCS_DIR/resources/infra-providers/minikube.md"
 cp_doc "$WIP/infrastructure/providers/openshift/README.md" "$DOCS_DIR/resources/infra-providers/openshift.md"
 cp_doc "$WIP/infrastructure/providers/openshift-aws/README.md" "$DOCS_DIR/resources/infra-providers/openshift-aws.md"
+
+# Fix Infrastructure index cross-references. Upstream docs/infrastructure/README.md
+# links to sibling dirs (providers/, rdma/, gateway/) with upstream-relative paths
+# that don't exist in the flattened site layout, so they 404. Repoint them to the
+# synced locations (relative .md links, resolved to proper URLs by Docusaurus).
+if [[ -f "$DOCS_DIR/resources/infrastructure/index.md" ]]; then
+    sed_inplace \
+        -e 's|](providers/README\.md)|](../infra-providers/index.md)|g' \
+        -e 's|](providers/\([^/)]*\)/README\.md)|](../infra-providers/\1.md)|g' \
+        -e 's|](rdma/README\.md)|](../rdma/rdma-configuration.md)|g' \
+        -e 's|](gateway/README\.md)|](../gateway/index.md)|g' \
+        "$DOCS_DIR/resources/infrastructure/index.md"
+fi
 
 # === API Reference ===
 cp_doc "$WIP/api-reference/README.md"         "$DOCS_DIR/api-reference/index.md"
@@ -311,6 +339,8 @@ cp_doc "$WIP/api-reference/inferencemodelrewrite.md" "$DOCS_DIR/api-reference/in
 cp_doc "$WIP/api-reference/endpointpickerconfig.md"  "$DOCS_DIR/api-reference/endpointpickerconfig.md"
 cp_doc "$WIP/api-reference/epp-http-headers.md"      "$DOCS_DIR/api-reference/epp-http-headers.md"
 cp_doc "$WIP/api-reference/epp-http-apis.md"         "$DOCS_DIR/api-reference/epp-http-apis.md"
+cp_doc "$WIP/api-reference/epp-grpc-apis.md"         "$DOCS_DIR/api-reference/epp-grpc-apis.md"
+cp_doc "$WIP/api-reference/artifacts.md"             "$DOCS_DIR/api-reference/artifacts.md"
 
 # === Accelerators ===
 cp_doc "$WIP/getting-started/accelerators.md"        "$DOCS_DIR/accelerators/index.md"
@@ -762,6 +792,10 @@ if [[ -f "$PR1820_REPO/docs/getting-started/README.mdx" ]]; then
     echo "    Overlaying docs home from PR #1820 ($PR1820_REPO)..."
     cp "$PR1820_REPO/docs/getting-started/README.mdx" "$DOCS_DIR/getting-started/index.mdx"
     rm -f "$DOCS_DIR/getting-started/index.md"
+    # The combined-landing MDX hardcodes absolute https://llm-d.ai/img/ asset URLs
+    # (founder + CNCF logos). Rewrite to root-relative so they resolve in local
+    # builds too; on production /img/ is the same origin, so prod is unaffected.
+    sed_inplace -e 's|https://llm-d.ai/img/|/img/|g' "$DOCS_DIR/getting-started/index.mdx"
 fi
 
 # === Generate stubs for pages in outline that don't have source content yet ===
@@ -789,9 +823,6 @@ STUBEOF
     fi
 }
 
-# Guides stubs (release-0.7 doesn't ship this page)
-generate_stub "$DOCS_DIR/guides/no-kubernetes-deployment.md" "Non-K8s & Bare-Metal Deployments" "Running llm-d outside Kubernetes."
-
 # Resources stubs
 generate_stub "$DOCS_DIR/resources/gateway/index.md" "Gateway" "Gateway deployment and configuration guides"
 generate_stub "$DOCS_DIR/resources/gateway/install-crds.md" "Gateway CRD Installation" "Installing Gateway API and Inference Extension CRDs"
@@ -809,11 +840,12 @@ generate_stub "$DOCS_DIR/architecture/advanced/kv-management/index.md" "KV Cache
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/prefix-cache-aware-routing.md" "Prefix Cache Aware Routing" "Routing requests to maximize KV cache hits"
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/kv-indexer.md" "KV-Cache Indexer" "Globally consistent KV cache block tracking"
 generate_stub "$DOCS_DIR/architecture/advanced/kv-management/kv-offloader.md" "KV Offloader" "Tiered KV cache storage hierarchy"
-# Autoscaling sub-pages — upstream main currently ships only the README; stub
-# the sub-pages referenced by the sidebar until wva.md / hpa-keda.md land in
-# llm-d/llm-d. Self-heals once the cp_doc lines above produce real content.
+# Autoscaling sub-pages — kept as defensive stubs so the sidebar resolves
+# even when the cp_doc lines above silently no-op (e.g. against a snapshot
+# of upstream that doesn't have hpa-wva.md / hpa-epp.md). generate_stub is
+# null-safe, so it skips when the cp_doc lines produced real content.
 generate_stub "$DOCS_DIR/architecture/advanced/autoscaling/workload-variant-autoscaling.md" "Workload-Variant Autoscaling" "Signal-aware autoscaler that scales inference workloads on real-time inference metrics rather than generic infra signals."
-generate_stub "$DOCS_DIR/architecture/advanced/autoscaling/igw-hpa.md" "Inference Gateway HPA" "HorizontalPodAutoscaler integration for the Inference Gateway."
+generate_stub "$DOCS_DIR/architecture/advanced/autoscaling/igw-hpa.md" "EndPoint Picker HPA/KEDA Integration" "EndPoint Picker integration with HorizontalPodAutoscaler and KEDA."
 generate_stub "$DOCS_DIR/api-reference/index.md" "API Reference" "API specification and reference documentation"
 generate_stub "$DOCS_DIR/api-reference/glossary.md" "Glossary" "Terminology and definitions for llm-d"
 generate_stub "$DOCS_DIR/resources/observability/index.md" "Observability" "Metrics, dashboards, and distributed tracing for llm-d"
