@@ -19,7 +19,7 @@ tags: [blog, kv-cache, storage, hma, inference, scheduling]
 
 For most of the transformer era, the KV cache rested on a quiet assumption: **one model, one uniform cache**. Every layer attended the same way, every block was the same size, and everything built on top of the cache (allocators, offload connectors, schedulers) could treat it as a single pool.
 
-Hybrid models broke this assumption. Most of today's new cutting-edge models opt for mixing attention types within a single model (full attention next to sliding-window, linear, or Mamba layers), making the cache heterogeneous: different layers now hold different amounts of state, in different shapes, with different reuse rules. A cache block that used to be allocated as one uniform unit is now constituted of several distinct parts.
+Hybrid models broke this assumption. Many recent frontier and open-weight models increasingly mix attention types within a single model (full attention next to sliding-window, linear, or Mamba layers), making the cache heterogeneous: different layers now hold different amounts of state, in different shapes, with different reuse rules. A cache block that used to be allocated as one uniform unit is now constituted of several distinct parts.
 
 To serve a hybrid model efficiently, an AI inference platform has to handle that heterogeneity in at least **three aspects of the stack**:
 
@@ -27,17 +27,17 @@ To serve a hybrid model efficiently, an AI inference platform has to handle that
 * **KV Offloading**: Extending the KV cache to CPU and storage. Without HMA awareness, an offloading connector turns the HMA off and therefore discards the GPU memory improvements or potential data movement savings.
 * **KV-Aware Routing**: Sending each request to the right model-server replica. Ignoring hybrid memory structure may erroneously list nodes as having or not having the required KV data based on information stemming from just part of the layers.
 
-This post describes how we extended the vLLM solution for GPU memory handling also to KV offloading and routing. By doing so, **llm-d's tiered KV cache management** significantly improves throughput and latency at high rates.
+vLLM's HMA solved hybrid GPU memory allocation inside a single instance. This post shows how llm-d extends that into **tiered KV cache management** - offloading to CPU and storage, and routing each request to the replica that already holds its prefix - significantly improving throughput and latency at scale.
 
 <!-- truncate -->
 
 ## KV Cache Offloading for Hybrid Models
 
-The KV cache grows linearly with sequence length, and the workloads people actually run now (agentic loops, multi-turn conversations, long reasoning traces) push context lengths into the thousands of tokens. At those sizes, the KV cache is one of the largest consumers of GPU memory. KV offloading extends this cache by using CPU DRAM and even storage, to keep more KV data available for **reuse across requests**. Our KV offloading path builds on the [vLLM native offloading connector](https://blog.vllm.ai/2026/01/08/kv-offloading-connector.html) and [llm-d storage offloading](/blog/native-kv-cache-offloading-to-any-file-system-with-llm-d).
+In full-attention layers, the KV cache grows linearly with sequence length, and the workloads people actually run now (agentic loops, multi-turn conversations, long reasoning traces) push context lengths into the thousands of tokens. At those sizes, the KV cache is one of the largest consumers of GPU memory. Hybrid models complicate this: sliding-window layers keep only a fixed-size window of KV state, while Mamba/SSM-style and linear-attention layers keep recurrent or fixed-size state rather than a standard per-token KV stream. Each layer type has a different memory footprint and different offloading behavior. KV offloading extends the cache by spilling to CPU DRAM and even storage, keeping more KV data available for **reuse across requests** - but doing so correctly for hybrid models requires offloading logic aware of these per-layer differences. Our KV offloading path builds on the [vLLM native offloading connector](https://blog.vllm.ai/2026/01/08/kv-offloading-connector.html) and [llm-d storage offloading](/blog/native-kv-cache-offloading-to-any-file-system-with-llm-d).
 
 ### Handling KV Data for Hybrid Models
 
-Hybrid models interleave different attention types across layers, and each type stores state differently. Take for example gpt-oss-120b which we use throughout this blog as a concrete example (though the connector handles any hybrid model): This model interleaves between Full Attention layers (FA) and Sliding Window layers (SWA). Its full-attention layers cache every token, so a 100K-token request holds all 100K tokens of KV in these layers, while its sliding-window layers keep only the last 128 tokens, no matter how long the request runs. Two layer types in one model, with cache footprints that can differ by **orders of magnitude**.
+Hybrid models interleave different attention types across layers, and each type stores state differently. Take, for example, gpt-oss-120b, which we use throughout this blog as a concrete example, though the connector handles any hybrid model. This model interleaves Full Attention layers (FA) and Sliding Window layers (SWA). Its full-attention layers cache every token, so a 100K-token request holds all 100K tokens of KV in these layers, while its sliding-window layers keep only the last 128 tokens, no matter how long the request runs. Two layer types in one model, with cache footprints that can differ by **orders of magnitude**.
 
 Frontier models keep diverging from uniform full attention models. Mamba and linear-attention layers (Jamba, Qwen3.5) hold a single fixed-size state instead of per-token KV. In such models, rather than keeping a KV stream, checkpoints of intermediate states are maintained and offloaded. New models like Google's Gemma 4 interleave two types of attention, local sliding-window and full global. [DeepSeek V4](https://vllm.ai/blog/2026-04-24-deepseek-v4) goes furthest, mixing compressed attention at two ratios with a short sliding window inside a single model built for million-token context, a five-way cache stack that vLLM folds into a handful of shared page-size buckets just to serve it.
 
@@ -62,18 +62,18 @@ We built these changes into the vLLM native offloading connector and llm-d FS co
 
 ## Performance Benefits: Nearly Double the Load Speed
 
-When a request prefix already lives in the offload tier, how fast can we pull it back? We ran a small microbenchmark: run ten distinct 128k-token prompts concurrently. On an initial "cold" pass their KV is written to the offload tier. Then we repeat this on a "hot" pass (with GPU cache disabled) in which the KV data is read back from the offload tier. We measure how long the hot batch takes to complete its KV loads and decode one token for all ten requests (similar to TTFT, but for the whole batch).
+When a request prefix already lives in the offload tier, how fast can we pull it back? We ran a small microbenchmark: run ten distinct 128k-token prompts concurrently. On an initial "cold" pass their KV is written to the offload tier. Then we repeat this on a "hot" pass (with GPU cache disabled) in which the KV data is read back from the offload tier. We measure how long the hot batch takes to complete its KV loads and decode one token for all ten requests (similar to TTFT, but for the whole batch). The storage tier is backed by IBM Storage Scale.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/hybrid-models/hma-blog-image2.webp" alt="Batch KV load latency across tiers" style={{width: '85%', height: 'auto'}} />
   <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 2. Batch KV load latency across CPU and storage tiers with HMA and without it. Models are gpt-oss-20b (TP=2) and gpt-oss-120b (TP=4) on NVIDIA H100 GPUs. Block size is 16 tokens for the CPU tier and 256 tokens for the storage tier.</em></p>
 </div>
 
-The results (in Figure 2) show that HMA-aware reads are **1.8x to 1.9x faster** on both tiers and both model sizes. The source of these benefits is in the sliding window layers that only need to load the last 128 tokens worth of KV cache instead of the full attention for the entire 128K tokens. On the offload side (after initial prefill) we did not see this benefit as we still chose to offload all the KV data. This direction is done asynchronously and thus is less critical.
+The results (in Figure 2) show that HMA-aware reads are **1.8x to 1.9x faster** on both tiers and both model sizes. The source of these benefits is in the sliding window layers that only need to load the last 128 tokens worth of KV cache instead of the full attention for the entire 128K tokens. On the offload side (after initial prefill) we did not see this benefit, nor any penalty, as we still chose to offload all the KV data. This direction is done asynchronously and thus is less critical.
 
 ## Scaling Benefits of HMA-Aware Offloading
 
-HMA pays off irrespective of offloading, because sizing each group to its real need frees a lot of HBM. For example, for a gpt-oss-120b model, vLLM predicts an increase of **1.77x more KV cache capacity** when turning the HMA configuration flag on (as seen in vLLM's log messages). This is again due to the lower capacity that the sliding window layers take. When testing this with offload tiers underneath, this effect compounds: the GPU can cater to more requests, and similarly, the CPU tier can serve more requests by evicting more non-critical KV data from the sliding-window layers.
+HMA pays off irrespective of offloading, because sizing each group to its real need frees a lot of HBM. For example, for a gpt-oss-120b model, vLLM predicts an increase of **1.77x more KV cache capacity** when turning the HMA configuration flag on (as seen in vLLM's log messages). This is again due to the smaller KV footprint of the sliding-window layers. When testing this with offload tiers underneath, this effect compounds: the GPU can serve more requests, and similarly, the CPU tier can serve more by evicting more non-critical KV data from the sliding-window layers.
 
 To show the scalability of using offloading, we follow the scalability test from our previous post, [Native KV Cache Offloading to Any Filesystem with llm-d](/blog/native-kv-cache-offloading-to-any-file-system-with-llm-d). This test sweeps a growing number of users each sending its own (previously seen) prompt of 16K-token with single-token decode. The test runs at maximum query-per-second rate of 80 and max-concurrency of 80 and measures throughput in tokens per second. As the number of users grows, each configuration eventually saturates its memory capacity and drops to prefill level throughput.
 
@@ -82,7 +82,7 @@ To show the scalability of using offloading, we follow the scalability test from
   <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 3. User scalability test across tiers with gpt-oss-120b (TP=4) on NVIDIA H100 GPUs, with HMA and without it.</em></p>
 </div>
 
-HMA-awareness produces two positive effects in this experiment, shown in Figure 3. First, it shifts each saturation cliff to the right: the GPU holds more users with HMA before it saturates, and the CPU tier does the same once it takes over. The storage capacity is large enough, so we never hit this cliff. Second, it raises the sustained throughput of the slower tiers: with storage added, the GPU + CPU + storage stack settles onto a much higher plateau than without HMA, and manages to sustain this high throughput to the largest user counts tested.
+HMA-awareness produces two positive effects in this experiment, shown in Figure 3. First, it shifts each saturation cliff to the right: the GPU holds more users with HMA before it saturates, and the CPU tier does the same once it takes over. The storage capacity is large enough that we do not see a collapse to prefill-level throughput in the tested range. Second, it raises the sustained throughput of the slower tiers: with storage added, the GPU + CPU + storage stack settles onto a much higher plateau than without HMA, and manages to sustain this high throughput to the largest user counts tested.
 
 ## KV-Aware Request Routing
 
@@ -109,7 +109,7 @@ The full setup, the per-QPS results, and step-by-step instructions to run it you
 
 ## What's Next
 
-The experiments in this post used the standalone llm-d FS connector. Yet the same HMA-aware offloading was also fully implemented in the new multi-tier connector that has been upstreamed into vLLM and will replace the standalone connector going forward. See the [vLLM KV offloading guide](https://docs.vllm.ai/en/latest/features/kv_offloading_usage/). The multi-tier design is more than just packaging. With CPU and storage managed as tiers of one connector, CPU serves as a hub for hot data and a staging area for slower storage.
+The experiments in this post used the standalone llm-d FS connector. The same HMA-aware offloading path has also been implemented in the new multi-tier connector upstreamed to vLLM, which is intended to replace the standalone connector going forward. See the [vLLM KV offloading guide](https://docs.vllm.ai/en/latest/features/kv_offloading_usage/). The multi-tier design is more than just packaging. With CPU and storage managed as tiers of one connector, CPU serves as a hub for hot data and a staging area for slower storage.
 
 The HMA results here rely on canonical KV-cache allocation for HMA models in vLLM ([PR #37885](https://github.com/vllm-project/vllm/pull/37885)), so reproducing them needs a vLLM build that includes it.
 
