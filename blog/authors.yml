@@ -273,8 +273,12 @@ itayetelis:
   name: Itay Etelis
   title: Research Staff Member, IBM
   image_url: /img/blogs/itayetelis.webp
+  socials:
+    linkedin: itay-etelis-1692ba157
 
 rachelbrill:
   name: Rachel Brill
   title: Senior Technical Staff Member, IBM
   image_url: /img/blogs/rachelbrill.webp
+  socials:
+    linkedin: rachel-tzoref-brill-6645a11
