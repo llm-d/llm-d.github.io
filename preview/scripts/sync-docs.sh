@@ -761,6 +761,19 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         "$file"
 done
 
+# === Canonicalize /guides in MDX (JSX <Link to=...> + markdown links) ===
+# The combined-landing intro (getting-started/index.mdx) uses JSX
+# <Link to="/guides">See all Well-Lit Paths</Link>. The .md-only pass above
+# misses both .mdx files and JSX to="" attributes, so /guides 404s. This site
+# serves that section at /well-lit-paths (the guides/index.md slug).
+echo "    Canonicalizing /guides -> /well-lit-paths in MDX..."
+find "$DOCS_DIR" -name "*.mdx" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace -E \
+        -e 's@(to=")/guides(/[^"]*)?"@\1/well-lit-paths\2"@g' \
+        -e 's@\]\(/guides(/[^)]*)?\)@](/well-lit-paths\1)@g' \
+        "$file"
+done
+
 # === Fix flattened-guide -> architecture cross-references ===
 # Well-Lit Paths overview pages are flattened from docs/well-lit-paths/<subdir>/
 # into a single guides/ level, so their relative ../../ or ../../../ links to
