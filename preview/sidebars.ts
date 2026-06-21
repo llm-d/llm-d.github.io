@@ -26,6 +26,7 @@ const sidebars: SidebarsConfig = {
           type: 'category',
           label: 'Foundations',
           collapsed: false,
+          link: {type: 'doc', id: 'guides/capabilities'},
           items: [
             {type: 'doc', id: 'guides/optimized-baseline', label: 'Deploy an Optimized Baseline'},
             {type: 'doc', id: 'guides/predicted-latency', label: 'Route Requests by Predicted Latency'},
@@ -39,6 +40,7 @@ const sidebars: SidebarsConfig = {
           type: 'category',
           label: 'Workloads',
           collapsed: false,
+          link: {type: 'doc', id: 'guides/workloads'},
           items: [
             {type: 'doc', id: 'guides/agentic-serving/index', label: 'Serve Agentic Workloads'},
             {type: 'doc', id: 'guides/multimodal-serving', label: 'Serve Multimodal Workloads'},
@@ -57,6 +59,7 @@ const sidebars: SidebarsConfig = {
           type: 'category',
           label: 'Traffic Control & Autoscaling',
           collapsed: false,
+          link: {type: 'doc', id: 'guides/traffic-control'},
           items: [
             {type: 'doc', id: 'guides/flow-control', label: 'Apply Flow Control and Fairness'},
             {type: 'doc', id: 'guides/workload-autoscaling', label: 'Autoscale your Inference Pool'},

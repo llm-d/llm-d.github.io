@@ -193,6 +193,36 @@ cp_doc "$WIP/well-lit-paths/workloads/batch-serving/batch-gateway.md"    "$DOCS_
 # as a directory doc (index.md) so the editUrl branch resolves correctly.
 cp_doc "$WIP/well-lit-paths/workloads/agentic-serving.md"                "$DOCS_DIR/guides/agentic-serving/index.md"
 
+# Section overview pages — the upstream well-lit-paths/{capabilities,workloads,
+# traffic-control}/README.md files. These are the landing pages for the
+# Foundations / Workloads / Traffic Control nav sections. Synced flat into guides/
+# and slugged under /well-lit-paths/<section>; their internal links point at the
+# flattened guide pages.
+cp_doc "$WIP/well-lit-paths/capabilities/README.md"     "$DOCS_DIR/guides/capabilities.md"
+cp_doc "$WIP/well-lit-paths/workloads/README.md"        "$DOCS_DIR/guides/workloads.md"
+cp_doc "$WIP/well-lit-paths/traffic-control/README.md"  "$DOCS_DIR/guides/traffic-control.md"
+for _sec in capabilities workloads traffic-control; do
+    _secfile="$DOCS_DIR/guides/$_sec.md"
+    [[ -f "$_secfile" ]] || continue
+    sed_inplace \
+        -e 's|\](optimized-baseline\.md)|\](/well-lit-paths/optimized-baseline)|g' \
+        -e 's|\](predicted-latency\.md)|\](/well-lit-paths/predicted-latency)|g' \
+        -e 's|\](precise-prefix-cache-routing\.md)|\](/well-lit-paths/precise-prefix-cache-routing)|g' \
+        -e 's|\](tiered-prefix-cache\.md)|\](/well-lit-paths/tiered-prefix-cache)|g' \
+        -e 's|\](pd-disaggregation\.md)|\](/well-lit-paths/pd-disaggregation)|g' \
+        -e 's|\](wide-expert-parallelism\.md)|\](/well-lit-paths/wide-expert-parallelism)|g' \
+        -e 's|\](flow-control\.md)|\](/well-lit-paths/flow-control)|g' \
+        -e 's|\](workload-autoscaling\.md)|\](/well-lit-paths/workload-autoscaling)|g' \
+        -e 's|\](multimodal-serving\.md)|\](/well-lit-paths/multimodal-serving)|g' \
+        -e 's|\](agentic-serving\.md)|\](/well-lit-paths/agentic-serving)|g' \
+        -e 's|\](batch-serving/README\.md)|\](/well-lit-paths/asynchronous-processing)|g' \
+        -e 's|\](\.\./capabilities/README\.md)|\](/well-lit-paths/capabilities)|g' \
+        "$_secfile"
+done
+set_doc_slug "$DOCS_DIR/guides/capabilities.md"    "/well-lit-paths/capabilities"
+set_doc_slug "$DOCS_DIR/guides/workloads.md"       "/well-lit-paths/workloads"
+set_doc_slug "$DOCS_DIR/guides/traffic-control.md" "/well-lit-paths/traffic-control"
+
 sed_inplace \
     -e 's|\](optimized-baseline\.md)|\](/guides/optimized-baseline)|g' \
     -e 's|\](predicted-latency\.md)|\](/guides/predicted-latency)|g' \
@@ -209,8 +239,9 @@ sed_inplace \
     -e 's|\](\./multimodal-serving/optimized-baseline/README\.md)|\](/guides/multimodal-serving)|g' \
     -e 's|\](no-kubernetes-deployment\.md)|\](/guides/no-kubernetes-deployment)|g' \
     -e 's|\](../workloads/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/workloads/README.md)|g' \
-    -e 's|\](capabilities/README\.md)|\](/well-lit-paths)|g' \
-    -e 's|\](workloads/README\.md)|\](/well-lit-paths)|g' \
+    -e 's|\](capabilities/README\.md)|\](/well-lit-paths/capabilities)|g' \
+    -e 's|\](workloads/README\.md)|\](/well-lit-paths/workloads)|g' \
+    -e 's|\](traffic-control/README\.md)|\](/well-lit-paths/traffic-control)|g' \
     -e 's|\](operations/README\.md)|\](/well-lit-paths)|g' \
     "$DOCS_DIR/guides/index.md"
 

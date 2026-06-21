@@ -116,6 +116,10 @@ const config: Config = {
             if (cleanPath.startsWith('guides/')) {
               const parts = cleanPath.split('/');
               const flatGuideToWellLitPath: Record<string, string> = {
+                // section overview pages (Foundations / Workloads / Traffic Control)
+                'capabilities.md':                   'capabilities/README',
+                'workloads.md':                      'workloads/README',
+                'traffic-control.md':                'traffic-control/README',
                 // capabilities/
                 'optimized-baseline.md':             'capabilities/optimized-baseline',
                 'precise-prefix-cache-routing.md':   'capabilities/precise-prefix-cache-routing',
