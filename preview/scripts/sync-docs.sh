@@ -761,6 +761,18 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         "$file"
 done
 
+# === Fix flattened-guide -> architecture cross-references ===
+# Well-Lit Paths overview pages are flattened from docs/well-lit-paths/<subdir>/
+# into a single guides/ level, so their relative ../../ or ../../../ links to
+# architecture/ pages over-shoot and 404 (e.g. the "Further reading" links on
+# asynchronous-processing and flow-control). From a flat guides/<page>.md the
+# correct relative path is ../architecture/. Collapse the extra ../ segments.
+# Scoped to top-level guides/*.md so deeper guide dirs keep their own depth.
+echo "    Fixing flattened-guide architecture cross-references..."
+find "$DOCS_DIR/guides" -maxdepth 1 -name "*.md" -print0 2>/dev/null | while IFS= read -r -d '' file; do
+    sed_inplace -E -e "s@\]\((\.\./){2,}architecture/@](../architecture/@g" "$file"
+done
+
 # === Repoint repo-root guides/ deep-links to GitHub (Well-Lit Paths "Deploy" links) ===
 # Well-Lit Paths overview pages link to deployment recipes that live in the
 # llm-d/llm-d *repo-root* guides/ dir, which is NOT published to this docs site,
