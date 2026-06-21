@@ -761,6 +761,21 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         "$file"
 done
 
+# === Repoint repo-root guides/ deep-links to GitHub (Well-Lit Paths "Deploy" links) ===
+# Well-Lit Paths overview pages link to deployment recipes that live in the
+# llm-d/llm-d *repo-root* guides/ dir, which is NOT published to this docs site,
+# e.g. [optimized baseline guide](../../../guides/optimized-baseline). Those
+# relative paths resolve to nonexistent in-site routes (page-not-found). Repoint
+# them at GitHub on the synced branch: directory targets -> tree/, .md -> blob/.
+echo "    Repointing repo-root guides/ deep-links to GitHub..."
+find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace -E \
+        -e "s@\]\((\.\./)+guides/index\.md(#[^)]*)?\)@](https://github.com/llm-d/llm-d/blob/$UPSTREAM_REF/guides/README.md\2)@g" \
+        -e "s@\]\((\.\./)+guides/([^)#]*\.md)(#[^)]*)?\)@](https://github.com/llm-d/llm-d/blob/$UPSTREAM_REF/guides/\2\3)@g" \
+        -e "s@\]\((\.\./)+guides/([^)]*)\)@](https://github.com/llm-d/llm-d/tree/$UPSTREAM_REF/guides/\2)@g" \
+        "$file"
+done
+
 # === Rewrite upstream repo links to the synced branch ===
 # Keeps dev docs pointing to main while making release docs point to their
 # matching upstream release branch.
