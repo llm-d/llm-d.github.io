@@ -27,7 +27,7 @@ To serve a hybrid model efficiently, an AI inference platform has to handle that
 * **KV Offloading**: Extending the KV cache to CPU and storage. Without HMA awareness, an offloading connector turns the HMA off and therefore discards the GPU memory improvements or potential data movement savings.
 * **KV-Aware Routing**: Sending each request to the right model-server replica. Ignoring hybrid memory structure may erroneously list nodes as having or not having the required KV data based on information stemming from just part of the layers.
 
-vLLM's HMA solved hybrid GPU memory allocation inside a single instance. This post shows how llm-d extends that into **tiered KV cache management** - offloading to CPU and storage, and routing each request to the replica that already holds its prefix - significantly improving throughput and latency at scale.
+vLLM's HMA solved hybrid GPU memory allocation when handling a single vLLM instance. This post shows how llm-d extends that to **tiered KV cache management** - including KV offloading to CPU and storage, and KV-aware request routing - significantly improving throughput and latency at scale for hybrid models.
 
 <!-- truncate -->
 
@@ -58,15 +58,15 @@ Making the connector genuinely HMA-aware came down to the following changes:
 * **Per-group offloads.** Rather than offloading a single KV block for a chunk of tokens, each group of layers offloads its separate KV data. In storage, this amounts to a separate file per group. For example, in gpt-oss this means two files per chunk instead of one, which the I/O pool can move in parallel.
 * **Partial transfers.** Some groups only require partial loading of KV data. Sliding-window layers need only the KV of the last tokens in a prompt, so the connector transfers only the in-window blocks. In the case of storage, this often starts from an offset partway into a file rather than the beginning of the file.
 
-We built these changes into the vLLM native offloading connector and llm-d FS connector, handling both the CPU and storage tiers. This allows vLLM to use HMA along with the connector and, as shown below, leads to significant performance improvements.
+We built these changes into the vLLM native offloading connector and the llm-d FS connector, handling both the CPU and storage tiers. This allows vLLM to use HMA along with the connector and, as shown below, leads to significant performance improvements.
 
 ## Performance Benefits: Nearly Double the Load Speed
 
-When a request prefix already lives in the offload tier, how fast can we pull it back? We ran a small microbenchmark: run ten distinct 128k-token prompts concurrently. On an initial "cold" pass their KV is written to the offload tier. Then we repeat this on a "hot" pass (with GPU cache disabled) in which the KV data is read back from the offload tier. We measure how long the hot batch takes to complete its KV loads and decode one token for all ten requests (similar to TTFT, but for the whole batch). The storage tier is backed by IBM Storage Scale.
+When a request prefix already lives in the offload tier, how fast can we pull it back? We ran a small microbenchmark: run ten distinct 128k-token prompts concurrently. On an initial "cold" pass their KV is written to the offload tier. Then we repeat this on a "hot" pass (with GPU cache disabled) in which the KV data is read back from the offload tier. We measure how long the hot batch takes to complete its KV loads and decode one token for all ten requests (similar to TTFT, but for the whole batch).
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/hybrid-models/hma-blog-image2.webp" alt="Batch KV load latency across tiers" style={{width: '85%', height: 'auto'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 2. Batch KV load latency across CPU and storage tiers with HMA and without it. Models are gpt-oss-20b (TP=2) and gpt-oss-120b (TP=4) on NVIDIA H100 GPUs. Block size is 16 tokens for the CPU tier and 256 tokens for the storage tier.</em></p>
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 2. Batch KV load latency across CPU and storage tiers with HMA and without it. Models are gpt-oss-20b (TP=2) and gpt-oss-120b (TP=4) on NVIDIA H100 GPUs, with IBM Storage Scale as the storage backend. Block size is 16 tokens for the CPU tier and 256 tokens for the storage tier.</em></p>
 </div>
 
 The results (in Figure 2) show that HMA-aware reads are **1.8x to 1.9x faster** on both tiers and both model sizes. The source of these benefits is in the sliding window layers that only need to load the last 128 tokens worth of KV cache instead of the full attention for the entire 128K tokens. On the offload side (after initial prefill) we did not see this benefit, nor any penalty, as we still chose to offload all the KV data. This direction is done asynchronously and thus is less critical.
