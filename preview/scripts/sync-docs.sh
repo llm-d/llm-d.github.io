@@ -798,20 +798,17 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         "$file"
 done
 
-# === Local-preview overlay: pull PR #1820 README.mdx for the docs landing ===
-# llm-d/llm-d#1820 has the combined-landing MDX (hero/founders/CTAs). Release-0.7
-# upstream ships only README.md (boring intro). Overlay the .mdx so /docs/getting-started
-# renders the landing-style intro that PR #362 was designed against.
-PR1820_REPO="${PR1820_REPO:-/tmp/llm-d-pr1820}"
-if [[ -f "$PR1820_REPO/docs/getting-started/README.mdx" ]]; then
-    echo "    Overlaying docs home from PR #1820 ($PR1820_REPO)..."
-    cp "$PR1820_REPO/docs/getting-started/README.mdx" "$DOCS_DIR/getting-started/index.mdx"
-    rm -f "$DOCS_DIR/getting-started/index.md"
-    # The combined-landing MDX hardcodes absolute https://llm-d.ai/img/ asset URLs
-    # (founder + CNCF logos). Rewrite to root-relative so they resolve in local
-    # builds too; on production /img/ is the same origin, so prod is unaffected.
-    sed_inplace -e 's|https://llm-d.ai/img/|/img/|g' "$DOCS_DIR/getting-started/index.mdx"
-fi
+# === Absolute asset URLs -> root-relative ===
+# The combined-landing intro (llm-d/llm-d#1820, now merged upstream) hardcodes
+# absolute https://llm-d.ai/img/ URLs for the founder + CNCF logos. Those 404 on
+# deploy previews, where the assets ship in THIS repo rather than on the live
+# origin. Rewrite to root-relative so they resolve on every deploy; on production
+# /img/ is the same origin, so prod is unaffected. Covers .md and .mdx — the
+# landing page is getting-started/index.mdx.
+echo "    Rewriting absolute llm-d.ai/img asset URLs to root-relative..."
+find "$DOCS_DIR" \( -name "*.md" -o -name "*.mdx" \) -print0 | while IFS= read -r -d '' file; do
+    sed_inplace -e 's|https://llm-d.ai/img/|/img/|g' "$file"
+done
 
 # === Generate stubs for pages in outline that don't have source content yet ===
 echo "    Generating stubs for missing pages..."
