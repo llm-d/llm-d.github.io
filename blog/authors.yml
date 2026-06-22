@@ -74,6 +74,13 @@ maroonayoub:
   socials:
     linkedin: v-maroon
 
+maroonayoub-redhat:
+  name: Maroon Ayoub
+  title: Senior Principal Machine Learning Engineer, Red Hat
+  image_url: /img/blogs/maroonayoub.webp
+  socials:
+    linkedin: v-maroon
+
 dannyharnik:
   name: Danny Harnik
   title: Senior Technical Staff Member, IBM

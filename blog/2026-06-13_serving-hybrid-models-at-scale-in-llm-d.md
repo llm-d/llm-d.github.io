@@ -10,7 +10,7 @@ authors:
   - dannyharnik
   - itayetelis
   - rachelbrill
-  - maroonayoub
+  - maroonayoub-redhat
 
 tags: [blog, kv-cache, storage, hma, inference, scheduling]
 ---
