@@ -248,8 +248,8 @@ const config: Config = {
     navbar: {
       logo: {
         alt: 'llm-d',
-        src: 'img/llm-d-logo-light.svg',
-        srcDark: 'img/llm-d-logo-dark.svg',
+        src: 'img/llm-d-logotype-and-icon.svg',
+        srcDark: 'img/llm-d-logotype-and-icon.svg',
       },
       items: [
         {

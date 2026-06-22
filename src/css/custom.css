@@ -32,6 +32,9 @@
   --ifm-line-height-base: 1.5;
   --ifm-code-font-size: 95%;
 
+  /* Grid gutter base (Infima .row/.col use this; total gutter = 2x). */
+  --ifm-spacing-horizontal: 3rem;
+
   /* Links */
   --ifm-link-color: #7F317F;
   --ifm-link-hover-color: #7F317F;
@@ -86,13 +89,13 @@ html[data-theme='dark'] {
 /* ===== TYPOGRAPHY SCALE ===== */
 h1 {
   font-size: 3rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 h2 {
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 2.25rem;
 }
 
@@ -100,6 +103,13 @@ h3, h4, h5, h6 {
   font-size: 1.5rem;
   font-weight: 600;
   line-height: 1.75rem;
+}
+
+/* Body text in .md/.mdx content (blog, community, pages) is 14px. Scoped to the
+   markdown wrapper so navbar/sidebar chrome and rem-based headings are
+   unaffected. */
+.markdown {
+  font-size: 0.875rem;
 }
 
 /* ===== NAVBAR ===== */
@@ -254,6 +264,9 @@ html[data-theme='dark'] .navbar__search-input {
 /* ===== TABLE OF CONTENTS ===== */
 .table-of-contents {
   border-left: none;
+  /* Drop the list's 8px top padding so the space above the TOC is the content
+     area's 16px top padding (consistent scrolled and unscrolled). */
+  padding-top: 0;
 }
 
 .table-of-contents__link {
