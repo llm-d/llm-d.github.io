@@ -607,6 +607,49 @@ function detectVersionedPaths(buildDir) {
     .map(version => `/docs/${version}/`);
 }
 
+// Parse all non-versioned sitemaps in the build directory and return URL paths to
+// seed the crawl queue. Versioned doc paths (e.g. /docs/0.7.0/) are filtered out
+// using the same ignorePatterns already populated by detectVersionedPaths().
+function parseSitemapsForSeeds(buildDir, ignorePatterns) {
+  const seeds = new Set(['/']);
+
+  function findAndParse(dir, relPath) {
+    const sitemapPath = path.join(dir, 'sitemap.xml');
+    if (fs.existsSync(sitemapPath)) {
+      // Skip sitemaps whose directory is under an ignored path
+      const normalizedDir = '/' + relPath.replace(/\\/g, '/') + '/';
+      const isIgnored = ignorePatterns.some(p => normalizedDir.startsWith(p) || normalizedDir.includes(p));
+      if (!isIgnored) {
+        try {
+          const xml = fs.readFileSync(sitemapPath, 'utf-8');
+          const locPattern = /<loc>([^<]+)<\/loc>/g;
+          let match;
+          while ((match = locPattern.exec(xml)) !== null) {
+            try {
+              const urlPath = new URL(match[1]).pathname;
+              if (!ignorePatterns.some(p => urlPath.includes(p))) {
+                seeds.add(urlPath || '/');
+              }
+            } catch { /* skip malformed URLs */ }
+          }
+        } catch { /* skip unreadable sitemaps */ }
+      }
+    }
+
+    try {
+      for (const entry of fs.readdirSync(dir)) {
+        const entryPath = path.join(dir, entry);
+        if (fs.statSync(entryPath).isDirectory()) {
+          findAndParse(entryPath, relPath ? `${relPath}/${entry}` : entry);
+        }
+      }
+    } catch { /* skip unreadable directories */ }
+  }
+
+  findAndParse(buildDir, '');
+  return Array.from(seeds);
+}
+
 // Main link checking logic
 async function checkLinks() {
   console.log('🔍 Link Checker Starting...\n');
@@ -638,10 +681,15 @@ async function checkLinks() {
     const sourceMap = buildSourceMap();
     console.log(`   Found ${sourceMap.size} source mappings\n`);
 
-    // Crawl the site starting from homepage
+    // Crawl the site seeded from all non-versioned sitemaps in the build directory.
+    // This is necessary because the homepage is a client-side React shell with no
+    // <a href> links — it uses a meta-refresh redirect and renders navigation via JS.
+    // Sitemaps are the authoritative list of all pages Docusaurus knows about.
     console.log('🕷️  Crawling site...');
     const baseUrl = `http://${config.serverHost}:${config.serverPort}`;
-    const toVisit = ['/'];
+    const seeds = parseSitemapsForSeeds(buildDir, config.ignorePatterns);
+    console.log(`   Seeded crawl with ${seeds.length} URLs from sitemaps\n`);
+    const toVisit = seeds;
     const visited = new Set();
     const brokenLinks = [];
     const allLinks = new Map(); // URL -> { sourcePages: Set, ... }
