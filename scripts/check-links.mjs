@@ -690,6 +690,7 @@ async function checkLinks() {
     const seeds = parseSitemapsForSeeds(buildDir, config.ignorePatterns);
     console.log(`   Seeded crawl with ${seeds.length} URLs from sitemaps\n`);
     const toVisit = seeds;
+    const inQueue = new Set(seeds);
     const visited = new Set();
     const brokenLinks = [];
     const allLinks = new Map(); // URL -> { sourcePages: Set, ... }
@@ -765,8 +766,9 @@ async function checkLinks() {
 
         // Add to crawl queue if not visited and not ignored
         const isIgnored = config.ignorePatterns.some(pattern => normalizedUrl.includes(pattern));
-        if (!isIgnored && !visited.has(normalizedUrl) && !toVisit.includes(normalizedUrl)) {
+        if (!isIgnored && !visited.has(normalizedUrl) && !inQueue.has(normalizedUrl)) {
           toVisit.push(normalizedUrl);
+          inQueue.add(normalizedUrl);
         }
       }
     }
