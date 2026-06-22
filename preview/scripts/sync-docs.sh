@@ -265,10 +265,14 @@ set_doc_slug "$DOCS_DIR/guides/agentic-serving/index.md" "/well-lit-paths/agenti
 # Patch agentic-serving internal links (sibling well-lit-paths -> site URLs; full guide -> upstream).
 if [[ -f "$DOCS_DIR/guides/agentic-serving/index.md" ]]; then
     sed_inplace \
-        -e 's|\](../well-lit-paths/capabilities/optimized-baseline\.md)|\](/guides/optimized-baseline)|g' \
-        -e 's|\](../well-lit-paths/capabilities/tiered-prefix-cache\.md)|\](/guides/tiered-prefix-cache)|g' \
-        -e 's|\](../well-lit-paths/capabilities/precise-prefix-cache-routing\.md)|\](/guides/precise-prefix-cache-routing)|g' \
-        -e 's|\](../well-lit-paths/capabilities/pd-disaggregation\.md)|\](/guides/pd-disaggregation)|g' \
+        -e 's|\](../capabilities/optimized-baseline\.md)|\](/well-lit-paths/optimized-baseline)|g' \
+        -e 's|\](../well-lit-paths/capabilities/optimized-baseline\.md)|\](/well-lit-paths/optimized-baseline)|g' \
+        -e 's|\](../capabilities/tiered-prefix-cache\.md)|\](/well-lit-paths/tiered-prefix-cache)|g' \
+        -e 's|\](../well-lit-paths/capabilities/tiered-prefix-cache\.md)|\](/well-lit-paths/tiered-prefix-cache)|g' \
+        -e 's|\](../capabilities/precise-prefix-cache-routing\.md)|\](/well-lit-paths/precise-prefix-cache-routing)|g' \
+        -e 's|\](../well-lit-paths/capabilities/precise-prefix-cache-routing\.md)|\](/well-lit-paths/precise-prefix-cache-routing)|g' \
+        -e 's|\](../capabilities/pd-disaggregation\.md)|\](/well-lit-paths/pd-disaggregation)|g' \
+        -e 's|\](../well-lit-paths/capabilities/pd-disaggregation\.md)|\](/well-lit-paths/pd-disaggregation)|g' \
         -e 's|\](../../guides/agentic-serving)|\](https://github.com/llm-d/llm-d/tree/main/guides/agentic-serving)|g' \
         -e 's|\](agentic-code-generation\.md)|\](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/agentic-code-generation.md)|g' \
         "$DOCS_DIR/guides/agentic-serving/index.md"
@@ -285,6 +289,8 @@ if [[ -f "$DOCS_DIR/guides/multimodal-serving.md" ]]; then
         -e 's|\](../advanced/kv-management/kv-indexer\.md)|\](/architecture/advanced/kv-management/kv-indexer)|g' \
         -e 's|\](../well-lit-paths/capabilities/optimized-baseline\.md#\([^)]*\))|\](/guides/optimized-baseline#\1)|g' \
         -e 's|\](../well-lit-paths/capabilities/optimized-baseline\.md)|\](/guides/optimized-baseline)|g' \
+        -e 's|\](../capabilities/optimized-baseline\.md#\([^)]*\))|\](/well-lit-paths/optimized-baseline#\1)|g' \
+        -e 's|\](../capabilities/optimized-baseline\.md)|\](/well-lit-paths/optimized-baseline)|g' \
         -e 's|\](../architecture/core/router/epp/README\.md)|\](/architecture/core/router/epp)|g' \
         "$DOCS_DIR/guides/multimodal-serving.md"
 fi
@@ -334,6 +340,32 @@ cp_doc "$WIP/operations/rollouts/README.md"                 "$DOCS_DIR/resources
 cp_doc "$WIP/operations/rollouts/adapter-rollout.md"        "$DOCS_DIR/resources/operations/rollouts/adapter-rollout.md"
 cp_doc "$WIP/operations/rollouts/blue-green-update.md"      "$DOCS_DIR/resources/operations/rollouts/blue-green-update.md"
 
+# Fix cross-references in operations/rollouts pages. These files are synced from
+# docs/operations/rollouts/ but placed at resources/operations/rollouts/, so all
+# ../../ relative links now point one directory too deep (into resources/ instead
+# of the docs root). Convert to absolute site URLs.
+for _opfile in \
+    "$DOCS_DIR/resources/operations/rollouts/adapter-rollout.md" \
+    "$DOCS_DIR/resources/operations/rollouts/blue-green-update.md" \
+    "$DOCS_DIR/resources/operations/rollouts/index.md" \
+    "$DOCS_DIR/resources/operations/readiness-probes.md" \
+    "$DOCS_DIR/resources/operations/router.md"; do
+    [[ -f "$_opfile" ]] || continue
+    sed_inplace \
+        -e 's|\](../../api-reference/\([^)]*\)\.md)|\](/api-reference/\1)|g' \
+        -e 's|\](../../getting-started/README\.md)|\](/getting-started)|g' \
+        -e 's|\](../../getting-started/README\.mdx)|\](/getting-started)|g' \
+        -e 's|\](../../getting-started/quickstart\.md)|\](/getting-started/quickstart)|g' \
+        -e 's|\](../../infrastructure/gateway)|\](/resources/gateway)|g' \
+        -e 's|\](../../well-lit-paths/capabilities/optimized-baseline\.md[^)#]*)|\](/well-lit-paths/optimized-baseline)|g' \
+        -e 's|\](../../well-lit-paths/capabilities/optimized-baseline\.md#\([^)]*\))|\](/well-lit-paths/optimized-baseline#\1)|g' \
+        -e 's|\](observability/README\.md)|\](/resources/observability)|g' \
+        -e 's|\](../../README\.md)|](https://github.com/llm-d/llm-d/blob/main/README.md)|g' \
+        -e 's|\](adapter-rollout-example/kustomization\.yaml)|](https://github.com/llm-d/llm-d/blob/main/docs/operations/rollouts/adapter-rollout-example/kustomization.yaml)|g' \
+        -e 's|\](adapter-rollout-example/patch-lora-config\.yaml)|](https://github.com/llm-d/llm-d/blob/main/docs/operations/rollouts/adapter-rollout-example/patch-lora-config.yaml)|g' \
+        "$_opfile"
+done
+
 # === Infrastructure (new pages) ===
 cp_doc "$WIP/infrastructure/README.md"                      "$DOCS_DIR/resources/infrastructure/index.md"
 cp_doc "$WIP/infrastructure/multi-node.md"                  "$DOCS_DIR/resources/infrastructure/multi-node.md"
@@ -378,12 +410,14 @@ cp_doc "$WIP/getting-started/accelerators.md"        "$DOCS_DIR/accelerators/ind
 if [[ ! -f "$DOCS_DIR/accelerators/index.md" ]]; then
     cp_doc "$WIP/accelerators/README.md"             "$DOCS_DIR/accelerators/index.md"
 fi
-if [[ -f "$DOCS_DIR/accelerators/index.md" ]]; then
+for _accfile in "$DOCS_DIR/accelerators/index.md" "$DOCS_DIR/getting-started/accelerators.md"; do
+    [[ -f "$_accfile" ]] || continue
     sed_inplace \
         -e 's|\.\./infra-providers/gke/README\.md|/resources/infra-providers/gke|g' \
         -e 's|\.\./infrastructure/providers/gke/README\.md|/resources/infra-providers/gke|g' \
-        "$DOCS_DIR/accelerators/index.md"
-fi
+        -e 's|\.\./infrastructure/providers/gke/README\.md#[^)]*|/resources/infra-providers/gke|g' \
+        "$_accfile"
+done
 
 # === Assets ===
 echo "    Copying image assets..."
@@ -451,12 +485,16 @@ done
 echo "    Fixing internal cross-references..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace \
-        -e 's|epp\.md|epp/index.md|g' \
+        -e 's|\./hpa-epp\.md|./igw-hpa.md|g' \
+        -e 's|\./hpa-epp/index\.md|./igw-hpa.md|g' \
         -e 's|\./hpa-keda\.md|./igw-hpa.md|g' \
+        -e 's|\./hpa-wva\.md|./workload-variant-autoscaling.md|g' \
         -e 's|\./wva\.md|./workload-variant-autoscaling.md|g' \
+        -e 's|epp\.md|epp/index.md|g' \
         -e 's|core/epp/README\.md|core/epp/index.md|g' \
         -e 's|advanced/autoscaling/README\.md|advanced/autoscaling/index.md|g' \
         -e 's|advanced/disaggregation/README\.md|advanced/disaggregation/index.md|g' \
+        -e 's|\](README\.md)|\](index.md)|g' \
         -e 's|resources/gateway/README\.md|resources/gateway/index.md|g' \
         -e 's|resources/gateways/README\.md|../resources/gateway/index.md|g' \
         -e 's|\](.*guides/prereq/gateways/README\.md)|\](/resources/gateway)|g' \
@@ -470,6 +508,9 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|guides/README\.md|guides/index.md|g' \
         -e 's|architecture/introduction\.md|architecture/index.md|g' \
         -e 's|architecture/README\.md|architecture/index.md|g' \
+        -e 's|\](\.\.\/getting-started/README\.md)|\](/getting-started)|g' \
+        -e 's|\](\.\.\/\.\.\/getting-started/README\.md)|\](/getting-started)|g' \
+        -e 's|\](\.\.\/\.\.\/\.\.\/getting-started/README\.md)|\](/getting-started)|g' \
         -e 's|getting-started/README\.md|getting-started/index.md|g' \
         -e 's|api-reference/README\.md|api-reference/index.md|g' \
         -e 's|resources/rdma/README\.md|resources/rdma/rdma-configuration.md|g' \
@@ -484,6 +525,7 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](/docs/infra-providers)|\](/docs/resources/infra-providers)|g' \
         -e 's|\](infra-providers/\([^)]*\))|\](/resources/infra-providers/\1)|g' \
         -e 's|\](/docs/\([^)]*\)/README\.md)|\](/docs/\1)|g' \
+        -e 's|\](../../../getting-started/quickstart\.md)|\](/getting-started/quickstart)|g' \
         -e 's|\](../../getting-started/quickstart\.md)|\](/getting-started/quickstart)|g' \
         -e 's|\](../../architecture/advanced/batch/batch-gateway\.md)|\](/architecture/advanced/batch/batch-gateway)|g' \
         -e 's|llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/profile)|llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/profilehandler)|g' \

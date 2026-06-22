@@ -202,15 +202,25 @@ const config: Config = {
             // Operations files were reorganized: site uses resources/operations/ but upstream uses operations/
             if (cleanPath.startsWith('resources/operations/')) {
               const opPath = cleanPath.replace(/^resources\/operations\//, '');
-              const sourceFile = opPath.replace(/\/index\.md$/, '/README.md');
+              const sourceFile = opPath === 'index.md' ? 'README.md' : opPath.replace(/\/index\.md$/, '/README.md');
               return `https://github.com/llm-d/llm-d/blob/main/docs/operations/${sourceFile}`;
             }
 
             // Infrastructure files: site uses resources/infrastructure/ but upstream uses infrastructure/
             if (cleanPath.startsWith('resources/infrastructure/')) {
               const infraPath = cleanPath.replace(/^resources\/infrastructure\//, '');
-              const sourceFile = infraPath.replace(/\/index\.md$/, '/README.md');
+              const sourceFile = infraPath === 'index.md' ? 'README.md' : infraPath.replace(/\/index\.md$/, '/README.md');
               return `https://github.com/llm-d/llm-d/blob/main/docs/infrastructure/${sourceFile}`;
+            }
+
+            // getting-started/README was renamed to README.mdx on main
+            if (cleanPath === 'getting-started/index.md') {
+              return 'https://github.com/llm-d/llm-d/blob/main/docs/getting-started/README.mdx';
+            }
+
+            // getting-started/artifacts.md was moved to api-reference/artifacts.md on main
+            if (cleanPath === 'getting-started/artifacts.md') {
+              return 'https://github.com/llm-d/llm-d/blob/main/docs/api-reference/artifacts.md';
             }
 
             // llm-d#1542: monitoring/ renamed to observability/ on main. Release doc
