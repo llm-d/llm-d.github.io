@@ -34,6 +34,8 @@ const sidebars: SidebarsConfig = {
             {type: 'doc', id: 'guides/tiered-prefix-cache', label: 'Configure a Tiered Prefix Cache'},
             {type: 'doc', id: 'guides/pd-disaggregation', label: 'Deploy Prefill/Decode Disaggregation'},
             {type: 'doc', id: 'guides/wide-expert-parallelism', label: 'Scale MoE Models with Wide Expert Parallelism'},
+            {type: 'doc', id: 'guides/flow-control', label: 'Apply Flow Control and Fairness'},
+            {type: 'doc', id: 'guides/workload-autoscaling', label: 'Autoscale your Inference Pool'},
           ],
         },
         {
@@ -53,16 +55,6 @@ const sidebars: SidebarsConfig = {
                 {type: 'doc', id: 'guides/batch-gateway', label: 'Batch Gateway'},
               ],
             },
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Traffic Control & Autoscaling',
-          collapsed: false,
-          link: {type: 'doc', id: 'guides/traffic-control'},
-          items: [
-            {type: 'doc', id: 'guides/flow-control', label: 'Apply Flow Control and Fairness'},
-            {type: 'doc', id: 'guides/workload-autoscaling', label: 'Autoscale your Inference Pool'},
           ],
         },
       ],

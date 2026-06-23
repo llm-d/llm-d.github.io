@@ -176,32 +176,46 @@ cp_doc "$WIP/architecture/advanced/batch/async-processor.md"  "$DOCS_DIR/archite
 # === Well-Lit Paths ===
 echo "    Copying well-lit-paths overview pages..."
 
+# well-lit-paths/capabilities/ was renamed to foundations/ upstream, and
+# flow-control + workload-autoscaling were folded in from traffic-control/.
+# Resolve whichever layout the synced ref ships so the dev build (post-rename
+# main) AND pre-rename refs (release branches, or main before the content PR
+# merges) both produce the same flat guides/ pages.
+if [[ -d "$WIP/well-lit-paths/foundations" ]]; then
+  WLP="$WIP/well-lit-paths/foundations"
+  FC_SRC="$WLP/flow-control.md"
+  WA_SRC="$WLP/workload-autoscaling.md"
+else
+  WLP="$WIP/well-lit-paths/capabilities"
+  FC_SRC="$WIP/well-lit-paths/traffic-control/flow-control.md"
+  WA_SRC="$WIP/well-lit-paths/traffic-control/workload-autoscaling.md"
+fi
+
 cp_doc "$WIP/well-lit-paths/README.md"                      "$DOCS_DIR/guides/index.md"
-cp_doc "$WIP/well-lit-paths/capabilities/optimized-baseline.md"          "$DOCS_DIR/guides/optimized-baseline.md"
+cp_doc "$WLP/optimized-baseline.md"                         "$DOCS_DIR/guides/optimized-baseline.md"
 cp_doc "$WIP/well-lit-paths/workloads/multimodal-serving.md"             "$DOCS_DIR/guides/multimodal-serving.md"
-cp_doc "$WIP/well-lit-paths/capabilities/precise-prefix-cache-routing.md" "$DOCS_DIR/guides/precise-prefix-cache-routing.md"
-cp_doc "$WIP/well-lit-paths/capabilities/tiered-prefix-cache.md"         "$DOCS_DIR/guides/tiered-prefix-cache.md"
+cp_doc "$WLP/precise-prefix-cache-routing.md"               "$DOCS_DIR/guides/precise-prefix-cache-routing.md"
+cp_doc "$WLP/tiered-prefix-cache.md"                        "$DOCS_DIR/guides/tiered-prefix-cache.md"
 cp_doc "$WIP/well-lit-paths/workloads/batch-serving/asynchronous-processing.md" "$DOCS_DIR/guides/asynchronous-processing.md"
-cp_doc "$WIP/well-lit-paths/traffic-control/flow-control.md"             "$DOCS_DIR/guides/flow-control.md"
-cp_doc "$WIP/well-lit-paths/capabilities/pd-disaggregation.md"           "$DOCS_DIR/guides/pd-disaggregation.md"
-cp_doc "$WIP/well-lit-paths/capabilities/predicted-latency.md"           "$DOCS_DIR/guides/predicted-latency.md"
-cp_doc "$WIP/well-lit-paths/capabilities/wide-expert-parallelism.md"     "$DOCS_DIR/guides/wide-expert-parallelism.md"
-cp_doc "$WIP/well-lit-paths/traffic-control/workload-autoscaling.md"     "$DOCS_DIR/guides/workload-autoscaling.md"
+cp_doc "$FC_SRC"                                            "$DOCS_DIR/guides/flow-control.md"
+cp_doc "$WLP/pd-disaggregation.md"                          "$DOCS_DIR/guides/pd-disaggregation.md"
+cp_doc "$WLP/predicted-latency.md"                          "$DOCS_DIR/guides/predicted-latency.md"
+cp_doc "$WLP/wide-expert-parallelism.md"                    "$DOCS_DIR/guides/wide-expert-parallelism.md"
+cp_doc "$WA_SRC"                                            "$DOCS_DIR/guides/workload-autoscaling.md"
 cp_doc "$WIP/infrastructure/no-kubernetes-deployment.md"                 "$DOCS_DIR/guides/no-kubernetes-deployment.md"
 cp_doc "$WIP/well-lit-paths/workloads/batch-serving/batch-gateway.md"    "$DOCS_DIR/guides/batch-gateway.md"
 # Agentic Serving overview lives at well-lit-paths/workloads/agentic-serving.md; synced
 # as a directory doc (index.md) so the editUrl branch resolves correctly.
 cp_doc "$WIP/well-lit-paths/workloads/agentic-serving.md"                "$DOCS_DIR/guides/agentic-serving/index.md"
 
-# Section overview pages — the upstream well-lit-paths/{capabilities,workloads,
-# traffic-control}/README.md files. These are the landing pages for the
-# Foundations / Workloads / Traffic Control nav sections. Synced flat into guides/
-# and slugged under /well-lit-paths/<section>; their internal links point at the
-# flattened guide pages.
-cp_doc "$WIP/well-lit-paths/capabilities/README.md"     "$DOCS_DIR/guides/capabilities.md"
+# Section overview pages — the upstream well-lit-paths/{foundations,workloads}/README.md
+# files. These are the landing pages for the Foundations / Workloads nav sections.
+# Synced flat into guides/ (the foundations README keeps the historical guides/capabilities.md
+# filename so its /well-lit-paths/capabilities URL is unchanged) and slugged under
+# /well-lit-paths/<section>; their internal links point at the flattened guide pages.
+cp_doc "$WLP/README.md"                                 "$DOCS_DIR/guides/capabilities.md"
 cp_doc "$WIP/well-lit-paths/workloads/README.md"        "$DOCS_DIR/guides/workloads.md"
-cp_doc "$WIP/well-lit-paths/traffic-control/README.md"  "$DOCS_DIR/guides/traffic-control.md"
-for _sec in capabilities workloads traffic-control; do
+for _sec in capabilities workloads; do
     _secfile="$DOCS_DIR/guides/$_sec.md"
     [[ -f "$_secfile" ]] || continue
     sed_inplace \
@@ -216,12 +230,12 @@ for _sec in capabilities workloads traffic-control; do
         -e 's|\](multimodal-serving\.md)|\](/well-lit-paths/multimodal-serving)|g' \
         -e 's|\](agentic-serving\.md)|\](/well-lit-paths/agentic-serving)|g' \
         -e 's|\](batch-serving/README\.md)|\](/well-lit-paths/asynchronous-processing)|g' \
+        -e 's|\](\.\./foundations/README\.md)|\](/well-lit-paths/capabilities)|g' \
         -e 's|\](\.\./capabilities/README\.md)|\](/well-lit-paths/capabilities)|g' \
         "$_secfile"
 done
 set_doc_slug "$DOCS_DIR/guides/capabilities.md"    "/well-lit-paths/capabilities"
 set_doc_slug "$DOCS_DIR/guides/workloads.md"       "/well-lit-paths/workloads"
-set_doc_slug "$DOCS_DIR/guides/traffic-control.md" "/well-lit-paths/traffic-control"
 
 sed_inplace \
     -e 's|\](optimized-baseline\.md)|\](/guides/optimized-baseline)|g' \
@@ -239,9 +253,10 @@ sed_inplace \
     -e 's|\](\./multimodal-serving/optimized-baseline/README\.md)|\](/guides/multimodal-serving)|g' \
     -e 's|\](no-kubernetes-deployment\.md)|\](/guides/no-kubernetes-deployment)|g' \
     -e 's|\](../workloads/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/workloads/README.md)|g' \
+    -e 's|\](foundations/README\.md)|\](/well-lit-paths/capabilities)|g' \
     -e 's|\](capabilities/README\.md)|\](/well-lit-paths/capabilities)|g' \
+    -e 's|\](traffic-control/README\.md)|\](/well-lit-paths/capabilities)|g' \
     -e 's|\](workloads/README\.md)|\](/well-lit-paths/workloads)|g' \
-    -e 's|\](traffic-control/README\.md)|\](/well-lit-paths/traffic-control)|g' \
     -e 's|\](operations/README\.md)|\](/well-lit-paths)|g' \
     "$DOCS_DIR/guides/index.md"
 
@@ -273,6 +288,10 @@ if [[ -f "$DOCS_DIR/guides/agentic-serving/index.md" ]]; then
         -e 's|\](../well-lit-paths/capabilities/precise-prefix-cache-routing\.md)|\](/well-lit-paths/precise-prefix-cache-routing)|g' \
         -e 's|\](../capabilities/pd-disaggregation\.md)|\](/well-lit-paths/pd-disaggregation)|g' \
         -e 's|\](../well-lit-paths/capabilities/pd-disaggregation\.md)|\](/well-lit-paths/pd-disaggregation)|g' \
+        -e 's|\](../foundations/optimized-baseline\.md)|\](/well-lit-paths/optimized-baseline)|g' \
+        -e 's|\](../foundations/tiered-prefix-cache\.md)|\](/well-lit-paths/tiered-prefix-cache)|g' \
+        -e 's|\](../foundations/precise-prefix-cache-routing\.md)|\](/well-lit-paths/precise-prefix-cache-routing)|g' \
+        -e 's|\](../foundations/pd-disaggregation\.md)|\](/well-lit-paths/pd-disaggregation)|g' \
         -e 's|\](../../guides/agentic-serving)|\](https://github.com/llm-d/llm-d/tree/main/guides/agentic-serving)|g' \
         -e 's|\](agentic-code-generation\.md)|\](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/agentic-code-generation.md)|g' \
         "$DOCS_DIR/guides/agentic-serving/index.md"
@@ -291,6 +310,8 @@ if [[ -f "$DOCS_DIR/guides/multimodal-serving.md" ]]; then
         -e 's|\](../well-lit-paths/capabilities/optimized-baseline\.md)|\](/guides/optimized-baseline)|g' \
         -e 's|\](../capabilities/optimized-baseline\.md#\([^)]*\))|\](/well-lit-paths/optimized-baseline#\1)|g' \
         -e 's|\](../capabilities/optimized-baseline\.md)|\](/well-lit-paths/optimized-baseline)|g' \
+        -e 's|\](../foundations/optimized-baseline\.md#\([^)]*\))|\](/well-lit-paths/optimized-baseline#\1)|g' \
+        -e 's|\](../foundations/optimized-baseline\.md)|\](/well-lit-paths/optimized-baseline)|g' \
         -e 's|\](../architecture/core/router/epp/README\.md)|\](/architecture/core/router/epp)|g' \
         "$DOCS_DIR/guides/multimodal-serving.md"
 fi
@@ -359,6 +380,8 @@ for _opfile in \
         -e 's|\](../../infrastructure/gateway)|\](/resources/gateway)|g' \
         -e 's|\](../../well-lit-paths/capabilities/optimized-baseline\.md[^)#]*)|\](/well-lit-paths/optimized-baseline)|g' \
         -e 's|\](../../well-lit-paths/capabilities/optimized-baseline\.md#\([^)]*\))|\](/well-lit-paths/optimized-baseline#\1)|g' \
+        -e 's|\](../../well-lit-paths/foundations/optimized-baseline\.md[^)#]*)|\](/well-lit-paths/optimized-baseline)|g' \
+        -e 's|\](../../well-lit-paths/foundations/optimized-baseline\.md#\([^)]*\))|\](/well-lit-paths/optimized-baseline#\1)|g' \
         -e 's|\](observability/README\.md)|\](/resources/observability)|g' \
         -e 's|\](../../README\.md)|](https://github.com/llm-d/llm-d/blob/main/README.md)|g' \
         -e 's|\](adapter-rollout-example/kustomization\.yaml)|](https://github.com/llm-d/llm-d/blob/main/docs/operations/rollouts/adapter-rollout-example/kustomization.yaml)|g' \
@@ -558,7 +581,6 @@ done
 echo "    Fixing guide internal cross-references..."
 find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace \
-        -e 's|\](traffic-control/README\.md)|\](/well-lit-paths)|g' \
         -e 's|\](README\.md)|\](index.md)|g' \
         -e 's|\](./README\.md)|\](./index.md)|g' \
         -e 's|\](../README\.md)|\](../index.md)|g' \
@@ -738,6 +760,8 @@ if [[ -f "$DOCS_DIR/resources/rdma/rdma-configuration.md" ]]; then
     sed_inplace \
         -e 's|\](../../well-lit-paths/capabilities/pd-disaggregation\.md)|\](/guides/pd-disaggregation)|g' \
         -e 's|\](../../well-lit-paths/capabilities/wide-expert-parallelism\.md)|\](/guides/wide-expert-parallelism)|g' \
+        -e 's|\](../../well-lit-paths/foundations/pd-disaggregation\.md)|\](/guides/pd-disaggregation)|g' \
+        -e 's|\](../../well-lit-paths/foundations/wide-expert-parallelism\.md)|\](/guides/wide-expert-parallelism)|g' \
         -e 's|\](../../architecture/core/model-servers\.md)|\](/architecture/core/model-servers)|g' \
         "$DOCS_DIR/resources/rdma/rdma-configuration.md"
 fi

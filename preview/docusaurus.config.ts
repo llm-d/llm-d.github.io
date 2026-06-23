@@ -118,29 +118,28 @@ const config: Config = {
             if (cleanPath.startsWith('guides/')) {
               const parts = cleanPath.split('/');
               const flatGuideToWellLitPath: Record<string, string> = {
-                // section overview pages (Foundations / Workloads / Traffic Control)
-                'capabilities.md':                   'capabilities/README',
+                // section overview pages (Foundations / Workloads)
+                'capabilities.md':                   'foundations/README',
                 'workloads.md':                      'workloads/README',
-                'traffic-control.md':                'traffic-control/README',
-                // capabilities/
-                'optimized-baseline.md':             'capabilities/optimized-baseline',
-                'precise-prefix-cache-routing.md':   'capabilities/precise-prefix-cache-routing',
-                'tiered-prefix-cache.md':            'capabilities/tiered-prefix-cache',
-                'pd-disaggregation.md':              'capabilities/pd-disaggregation',
-                'predicted-latency.md':              'capabilities/predicted-latency',
-                'wide-expert-parallelism.md':        'capabilities/wide-expert-parallelism',
-                // traffic-control/ (moved from operations/ in llm-d/llm-d#1836)
-                'flow-control.md':                   'traffic-control/flow-control',
-                'workload-autoscaling.md':            'traffic-control/workload-autoscaling',
+                // foundations/
+                'optimized-baseline.md':             'foundations/optimized-baseline',
+                'precise-prefix-cache-routing.md':   'foundations/precise-prefix-cache-routing',
+                'tiered-prefix-cache.md':            'foundations/tiered-prefix-cache',
+                'pd-disaggregation.md':              'foundations/pd-disaggregation',
+                'predicted-latency.md':              'foundations/predicted-latency',
+                'wide-expert-parallelism.md':        'foundations/wide-expert-parallelism',
+                // flow-control + workload-autoscaling now live in foundations/ (folded in from traffic-control/)
+                'flow-control.md':                   'foundations/flow-control',
+                'workload-autoscaling.md':            'foundations/workload-autoscaling',
                 // workloads/
                 'multimodal-serving.md':             'workloads/multimodal-serving',
                 // workloads/batch-serving/
                 'asynchronous-processing.md':        'workloads/batch-serving/asynchronous-processing',
                 'batch-gateway.md':                  'workloads/batch-serving/batch-gateway',
                 // legacy filename aliases
-                'precise-prefix-cache-aware.md':     'capabilities/precise-prefix-cache-routing',
-                'predicted-latency-routing.md':      'capabilities/predicted-latency',
-                'wide-ep-lws.md':                    'capabilities/wide-expert-parallelism',
+                'precise-prefix-cache-aware.md':     'foundations/precise-prefix-cache-routing',
+                'predicted-latency-routing.md':      'foundations/predicted-latency',
+                'wide-ep-lws.md':                    'foundations/wide-expert-parallelism',
                 'experimental/batch-gateway.md':     'workloads/batch-serving/batch-gateway',
               };
               const guideDirToWellLitPath: Record<string, string> = {
