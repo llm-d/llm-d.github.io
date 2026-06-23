@@ -2,7 +2,7 @@
 title: "Networking for Distributed Inference in llm-d"
 description: "How llm-d transfers the KV Cache between prefill and decode workers — NIXL's pluggable backend architecture, the new UCCL backend, head-to-head benchmarks of UCCL/UCX/Mooncake over RDMA and TCP, and preflight tooling for catching networking misconfigurations before serving traffic."
 slug: networking-for-distributed-inference-llm-d
-date: 2026-06-08T09:00
+date: 2026-06-23T09:00
 
 authors:
   - praveinkannan
