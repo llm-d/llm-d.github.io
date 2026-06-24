@@ -59,6 +59,40 @@ const sidebars: SidebarsConfig = {
         },
       ],
     },
+    // ==================== Guides ====================
+    // Tested, benchmarked deployment recipes synced from the llm-d/llm-d
+    // repo-root guides/ dir (see preview/scripts/sync-docs.sh, "How-To Guides").
+    // Authored under doc IDs how-to/* but published at /guides/* (the guides/*
+    // doc-id space belongs to the Well-Lit Paths overviews).
+    {
+      type: 'category',
+      label: 'Guides',
+      collapsed: true,
+      link: {type: 'doc', id: 'how-to/index'},
+      items: [
+        {type: 'doc', id: 'how-to/optimized-baseline', label: 'Optimized Baseline'},
+        {type: 'doc', id: 'how-to/predicted-latency-routing', label: 'Predicted Latency-Based Routing'},
+        {type: 'doc', id: 'how-to/precise-prefix-cache-routing', label: 'Precise Prefix Cache Routing'},
+        {type: 'doc', id: 'how-to/tiered-prefix-cache', label: 'Tiered Prefix Cache'},
+        {type: 'doc', id: 'how-to/pd-disaggregation', label: 'Prefill/Decode Disaggregation'},
+        {type: 'doc', id: 'how-to/wide-ep-lws', label: 'Wide Expert Parallelism'},
+        {type: 'doc', id: 'how-to/flow-control', label: 'Flow Control'},
+        {type: 'doc', id: 'how-to/workload-autoscaling', label: 'Workload Autoscaling'},
+        {type: 'doc', id: 'how-to/agentic-serving', label: 'Agentic Serving'},
+        {
+          type: 'category',
+          label: 'Multimodal Serving',
+          collapsed: true,
+          link: {type: 'doc', id: 'how-to/multimodal-serving'},
+          items: [
+            {type: 'doc', id: 'how-to/multimodal-serving/aggregation', label: 'Multimodal Aggregation'},
+            {type: 'doc', id: 'how-to/multimodal-serving/e-disaggregation', label: 'Multimodal Disaggregation'},
+          ],
+        },
+        {type: 'doc', id: 'how-to/asynchronous-processing', label: 'Asynchronous Processing'},
+        {type: 'doc', id: 'how-to/batch-gateway', label: 'Batch Gateway'},
+      ],
+    },
     // ==================== Concepts (Architecture) ====================
     {
       type: 'category',
