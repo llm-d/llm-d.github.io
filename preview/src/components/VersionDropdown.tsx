@@ -115,8 +115,8 @@ export default function VersionDropdown(): React.JSX.Element {
 
   // Dev docs live under /docs/dev/ once a stable release exists; before the
   // first release they remain at /docs/ (matches build-all.sh fallback).
-  const getDevUrl = () =>
-    latestTag ? '/docs/dev/getting-started' : '/docs/getting-started';
+  // Dev's intro now lives at the docs root (slug: /), not under getting-started.
+  const getDevUrl = () => (latestTag ? '/docs/dev/' : '/docs/');
 
   const isExternalLink = (tag: string) => {
     const version = tag.replace(/^v/, '');

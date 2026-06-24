@@ -77,13 +77,76 @@ const config: Config = {
       require.resolve('@docusaurus/plugin-client-redirects'),
       {
         createRedirects(existingPath: string) {
-          if (existingPath.startsWith('/well-lit-paths')) {
-            return [existingPath.replace('/well-lit-paths', '/guides')];
+          // Map the pre-autosync URLs (flattened well-lit-paths, resources/*,
+          // api-reference CRDs, /getting-started intro) to their new
+          // folder-mirrored locations. Only NEW-structure paths match, so frozen
+          // release builds (old structure) generate nothing here.
+          const r: string[] = [];
+          const add = (p: string) => {
+            if (!r.includes(p)) r.push(p);
+          };
+          let m: RegExpMatchArray | null;
+
+          // Well-Lit Paths: the old site flattened every guide to /well-lit-paths/<leaf>
+          if ((m = existingPath.match(/^\/well-lit-paths\/foundations\/([^/]+)$/))) {
+            add(`/well-lit-paths/${m[1]}`);
+            add(`/guides/${m[1]}`);
           }
-          if (existingPath.startsWith('/guides')) {
-            return [existingPath.replace('/guides', '/well-lit-paths')];
+          if (existingPath === '/well-lit-paths/foundations') {
+            add('/well-lit-paths/capabilities');
+            add('/well-lit-paths/traffic-control');
+            add('/guides/capabilities');
           }
-          return undefined;
+          if (
+            (m = existingPath.match(
+              /^\/well-lit-paths\/workloads\/(?:batch-serving\/)?([^/]+)$/,
+            )) &&
+            m[1] !== 'batch-serving'
+          ) {
+            add(`/well-lit-paths/${m[1]}`);
+            add(`/guides/${m[1]}`);
+          }
+          if (existingPath === '/well-lit-paths/workloads') {
+            add('/guides/workloads');
+          }
+
+          // resources/* split into operations/ and infrastructure/
+          if ((m = existingPath.match(/^\/operations\/observability\/(.+)$/))) {
+            add(`/resources/observability/${m[1]}`);
+          }
+          if ((m = existingPath.match(/^\/operations\/(readiness-probes|router)$/))) {
+            add(`/resources/operations/${m[1]}`);
+          }
+          if ((m = existingPath.match(/^\/operations\/rollouts(\/.*)?$/))) {
+            add(`/resources/operations/rollouts${m[1] ?? ''}`);
+          }
+          if ((m = existingPath.match(/^\/infrastructure\/providers(\/.*)?$/))) {
+            add(`/resources/infra-providers${m[1] ?? ''}`);
+          }
+          if ((m = existingPath.match(/^\/infrastructure\/gateway(\/.*)?$/))) {
+            add(`/resources/gateway${m[1] ?? ''}`);
+          }
+          if (existingPath === '/infrastructure/multi-node') {
+            add('/resources/infrastructure/multi-node');
+          }
+          if (existingPath === '/infrastructure/no-kubernetes-deployment') {
+            add('/resources/infrastructure/no-kubernetes-deployment');
+            add('/well-lit-paths/no-kubernetes-deployment');
+            add('/guides/no-kubernetes-deployment');
+          }
+          if (existingPath === '/infrastructure') {
+            add('/resources/infrastructure');
+          }
+          if (existingPath === '/infrastructure/rdma') {
+            add('/resources/rdma/rdma-configuration');
+          }
+
+          // api-reference: InferencePool/Objective/ModelRewrite moved into core-kubernetes/
+          if ((m = existingPath.match(/^\/api-reference\/core-kubernetes\/(.+)$/))) {
+            add(`/api-reference/${m[1]}`);
+          }
+
+          return r.length ? r : undefined;
         },
       },
     ],
@@ -105,12 +168,19 @@ const config: Config = {
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
           editUrl: ({docPath}) => {
+            // Frozen release branches (release-X.Y.Z) are built with THIS config
+            // (build-all.sh propagates main's config to every version), but their
+            // docs still use the pre-autosync layout (guides/, resources/, ...).
+            // Keep the legacy path mapping so their "Edit this page" links resolve;
+            // dev docs (new mirror layout) fall through to the 1:1 fallback below.
             // Remove the extra 'docs/' prefix that Docusaurus adds
             const cleanPath = docPath.replace(/^docs\//, '');
             // Map index.md/index.mdx back to README.md/README.mdx (sync script renames these)
             const sourcePath = cleanPath
               .replace(/\/index\.mdx$/, '/README.mdx')
-              .replace(/\/index\.md$/, '/README.md');
+              .replace(/\/index\.md$/, '/README.md')
+              .replace(/^index\.mdx$/, 'README.mdx')
+              .replace(/^index\.md$/, 'README.md');
 
             // Guide pages: flat .md files are overview pages from docs/well-lit-paths/ subdirs;
             // directory-based guides (*/index.md at depth >2) may also be from well-lit-paths/.
@@ -283,7 +353,9 @@ const config: Config = {
       },
       items: [
         {
-          to: '/getting-started',
+          // Docs root: the dev build's intro lives at the root (slug: /), while
+          // frozen release builds redirect '/' -> '/getting-started'.
+          to: '/',
           position: 'left',
           label: 'Documentation',
         },
