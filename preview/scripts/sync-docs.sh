@@ -347,6 +347,7 @@ cp_doc "$WIP/operations/observability/promql.md"  "$DOCS_DIR/resources/observabi
 
 # === Resources / Gateway ===
 cp_doc "$WIP/infrastructure/gateway/README.md"         "$DOCS_DIR/resources/gateway/index.md"
+cp_doc "$WIP/infrastructure/gateway/envoy-ai-gateway.md" "$DOCS_DIR/resources/gateway/envoy-ai-gateway.md"
 cp_doc "$WIP/infrastructure/gateway/install-crds.md"   "$DOCS_DIR/resources/gateway/install-crds.md"
 cp_doc "$WIP/infrastructure/gateway/istio.md"          "$DOCS_DIR/resources/gateway/istio.md"
 cp_doc "$WIP/infrastructure/gateway/gke.md"            "$DOCS_DIR/resources/gateway/gke.md"
@@ -525,6 +526,7 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](.*guides/prereq/gateways/gke\.md)|\](/resources/gateway/gke)|g' \
         -e 's|\](.*guides/prereq/gateways/agentgateway\.md)|\](/resources/gateway/agentgateway)|g' \
         -e 's|\](../../../infrastructure/gateway/README\.md)|\](/resources/gateway)|g' \
+        -e 's|\](../../../infrastructure/gateway/envoy-ai-gateway\.md)|\](/resources/gateway/envoy-ai-gateway)|g' \
         -e 's|\](../../../infrastructure/gateway/istio\.md)|\](/resources/gateway/istio)|g' \
         -e 's|\](../../../infrastructure/gateway/gke\.md)|\](/resources/gateway/gke)|g' \
         -e 's|\](../../../infrastructure/gateway/agentgateway\.md)|\](/resources/gateway/agentgateway)|g' \
@@ -678,6 +680,14 @@ find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         "$file"
 done
 
+# getting-started pages also reference repo-root helpers/ files that aren't
+# published to this site (the rewrites above are scoped to guides/ only).
+find "$DOCS_DIR/getting-started" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace \
+        -e 's|\](../../helpers/hf-token\.md)|\](https://github.com/llm-d/llm-d/tree/main/helpers/hf-token.md)|g' \
+        "$file"
+done
+
 # === Fix placeholder and missing file references ===
 echo "    Fixing placeholder and missing file references..."
 find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
@@ -797,6 +807,12 @@ sed_inplace \
     -e 's|\](glossary\.md)|\](/api-reference/glossary)|g' \
     "$DOCS_DIR/api-reference/index.md"
 
+# epp-http-apis.md links to a multimodal guide path that doesn't exist in the
+# repo; point it at the multimodal-serving doc that does.
+sed_inplace \
+    -e 's|guides/multimodal-serving/optimized-baseline/README\.md|docs/well-lit-paths/workloads/multimodal-serving.md|g' \
+    "$DOCS_DIR/api-reference/epp-http-apis.md"
+
 # === Fix architecture index.md relative paths ===
 echo "    Fixing architecture index.md relative paths..."
 sed_inplace \
@@ -855,6 +871,8 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](/docs/guides)|\](/docs/well-lit-paths)|g' \
         -e 's|\](/guides/\([^)]*\))|\](/well-lit-paths/\1)|g' \
         -e 's|\](/guides)|\](/well-lit-paths)|g' \
+        -e 's|\](/docs/well-lit-paths/foundations/\([^)]*\))|\](/docs/well-lit-paths/\1)|g' \
+        -e 's|\](/well-lit-paths/foundations/\([^)]*\))|\](/well-lit-paths/\1)|g' \
         "$file"
 done
 
