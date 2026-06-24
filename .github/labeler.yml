@@ -5,7 +5,7 @@
 # Blog posts
 Blog Post:
   - changed-files:
-    - any-glob-to-any-file: 'blogs/*.md'
+    - any-glob-to-any-file: 'blog/**/*.md'
 action:
   - changed-files:
     - any-glob-to-any-file: '.github/workflows/*.yml'
