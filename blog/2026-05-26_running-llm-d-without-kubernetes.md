@@ -90,37 +90,13 @@ The full, deploy-ready path - EPP, Envoy, and vLLM commands, verification, and a
 
 ### 1. The endpoints file
 
-The plugin reads a YAML file listing inference endpoints:
-
-```yaml
-endpoints:
-  - name: vllm-0
-    address: "10.0.0.1"
-    port: "8000"
-    labels:
-      model: llama-3-8b
-```
-
-Each entry needs a unique `name` and a literal `address:port` (hostnames are not resolved); optional `labels` are surfaced to scheduler plugins, e.g. `llm-d.ai/role: prefill` for P/D. The full field reference is in the [guide](https://github.com/llm-d/llm-d/tree/main/guides/no-kubernetes-deployment).
+The plugin reads a YAML file listing inference endpoints. Each entry needs a unique `name` and a literal `address:port` (hostnames are not resolved); optional `labels` are surfaced to scheduler plugins, e.g. `llm-d.ai/role: prefill` for P/D. The full field reference is in the [guide](https://github.com/llm-d/llm-d/tree/main/guides/no-kubernetes-deployment).
 
 ### 2. The one line that flips discovery
 
-Turning a Kubernetes EPP into a no-Kubernetes EPP is a single block in the `EndpointPickerConfig`: register the plugin, then point `dataLayer.discovery` at it.
+Turning a Kubernetes EPP into a no-Kubernetes EPP comes down to a single line in the `EndpointPickerConfig`: after registering the file-discovery plugin, point discovery at it with `dataLayer.discovery.pluginRef: file-discovery`. That one line switches off the Kubernetes watch path.
 
-```yaml
-plugins:
-  - name: file-discovery
-    type: file-discovery
-    parameters:
-      path: /etc/epp/endpoints.yaml
-      watchFile: true        # reconcile the datastore whenever the file changes
-
-dataLayer:
-  discovery:
-    pluginRef: file-discovery     # this line switches off the Kubernetes path
-```
-
-Everything else in the config - scoring, picker, metrics - is identical to any other EPP config. The upstream [`router/epp/config.yaml`](https://github.com/llm-d/llm-d/blob/main/guides/no-kubernetes-deployment/router/epp/config.yaml) ships the optimized-baseline plugin mix already wired to file discovery and is the recommended starting point. `watchFile: true` is the key property for dynamic environments: the EPP upserts and deletes endpoints as the file changes, with no restart.
+Everything else in the config - scoring, picker, metrics - is identical to any other EPP config. The upstream [`router/epp/config.yaml`](https://github.com/llm-d/llm-d/blob/main/guides/no-kubernetes-deployment/router/epp/config.yaml) ships the optimized-baseline plugin mix already wired to file discovery and is the recommended starting point. The plugin's `watchFile: true` parameter is the key property for dynamic environments: the EPP upserts and deletes endpoints as the file changes, with no restart.
 
 From here, the guide covers starting the EPP, wiring Envoy's `ext_proc` to it, and sending a request - none of which differs from llm-d's standalone deployment mode.
 
@@ -183,4 +159,4 @@ Decoupling routing intelligence from the substrate is the enabling step, not the
 - **Weight synchronization.** Propagating updated policy weights to engines efficiently over NCCL/NIXL, keeping that data plane separate from the HTTP control plane that carries inference traffic.
 - **Async and partial rollouts.** Supporting interruptible and partial generation for algorithms that do not need every trajectory to run to completion, and routing that stays correct as engines are preempted mid-flight.
 
-The thread running through all of this is the one the post opened with: once routing intelligence is independent of the substrate, llm-d can serve as reusable rollout infrastructure, so RL teams spend their effort on algorithms rather than rebuilding weight sync, engine lifecycle, and load-aware routing for the fifth time. The direction we are pushing hardest on is RL itself - integrating no-Kubernetes llm-d with frameworks on Ray and Slurm (veRL, OpenRLHF), including a custom `EndpointDiscovery` plugin that registers and deregisters endpoints in real time as actors come and go between training rounds. A follow-up post will share that work and its early results, including how prefix-cache routing turns the repeated-prompt patterns of RLHF rollouts into a concrete throughput win.
+The thread running through all of this is the one the post opened with: once routing intelligence is independent of the substrate, llm-d can serve as reusable rollout infrastructure, so RL teams spend their effort on algorithms rather than rebuilding engine lifecycle and load-aware routing yet again. The direction we are pushing hardest on is RL itself - integrating no-Kubernetes llm-d with frameworks on Ray and Slurm (veRL, OpenRLHF), including a custom `EndpointDiscovery` plugin that registers and deregisters endpoints in real time as actors come and go between training rounds. A follow-up post will share that work and its early results, including how prefix-cache routing turns the repeated-prompt patterns of RLHF rollouts into a concrete throughput win.
