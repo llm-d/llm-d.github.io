@@ -268,3 +268,56 @@ abhisyant:
   image_url: /img/blogs/abhisyant.webp
   socials:
     linkedin: abhisyant
+
+liranschour:
+  name: Liran Schour
+  title: Senior Research Scientist, IBM Research
+  email: liran.schour@gmail.com
+  image_url: https://ca.slack-edge.com/E27SFGS2W-W53PQF1QW-17929f20fdfc-512
+  socials:
+    linkedin: liran-schour-9a8a1027
+    github: liranschour
+
+aslom:
+  name: Aleksander Slominski
+  title: Senior Research Scientist, IBM Research
+  email: aslom@us.ibm.com
+  image_url: https://ca.slack-edge.com/E27SFGS2W-W49HTNVGR-1b0885c27e95-512
+  socials:
+    linkedin: aslom
+    github: aslom
+
+rajjoshi:
+  name: Raj Joshi
+  title: Senior Machine Learning Engineer, Red Hat
+  email: rajjoshi@redhat.com
+  image_url: https://ca.slack-edge.com/E030G10V24F-U09NVNF8JP7-cfbc57010dc3-512
+  socials: 
+    linkedin: rajkiranjoshi
+    github: rajkiranjoshi
+
+nicklucche:
+  name: Nicolò Lucchesi
+  title: Senior Machine Learning Engineer, Red Hat
+  email: nicklucche@redhat.com
+  image_url: /img/blogs/nicklucche.webp
+  socials:
+    linkedin: nicklucche
+    github: nicklucche
+
+moeinkh:
+  name: Moein Khazraee
+  title: Senior Architect, NVIDIA
+  email: moein@nvidia.com
+  image_url: /img/blogs/moeinkh.webp
+  socials:
+    linkedin: mkhazraee
+    github: mkhazraee
+
+omrik:
+  name: Omri Kahalon
+  title: Senior Manager, NVIDIA
+  email: omrik@nvidia.com
+  image_url: /img/blogs/omrik.webp
+  socials:
+    linkedin: omri-kahalon-b4a025a9
