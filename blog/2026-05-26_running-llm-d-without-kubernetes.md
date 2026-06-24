@@ -129,17 +129,11 @@ Both end-to-end examples - the Ray generator script and a complete Slurm SBATCH 
 
 These patterns all keep a file in the loop. For the most dynamic pools we are exploring discovery plugins that remove it entirely, all against the same `EndpointDiscovery` interface: orchestrator-native plugins (the `RayDiscovery`/`SlurmDiscovery` of pattern 4) that talk to Ray's Python API or Slurm's controller directly and emit `Upsert`/`Delete` events as workers change; plugins backed by a service registry such as Consul, etcd, or a cloud provider's service-discovery API where one already runs; and, longer term, moving the existing Kubernetes watch behind the same interface so `InferencePool` discovery becomes just another plugin and the scheduler carries no special case for any substrate.
 
-## Parity with the Kubernetes-native llm-d deployment
+## One routing stack, every substrate
 
-Because the seam is below the scheduler, file-discovery mode keeps the routing intelligence intact:
+Because the discovery seam sits below the scheduler, file-discovery mode does not get a *subset* of llm-d - it gets the whole router, unchanged. KV-cache-utilization scoring, prefix-cache affinity, saturation-based admission, FlowControl, and the Prometheus metrics surface all behave exactly as they do on Kubernetes, because none of them ever learn where the endpoints came from. Crucially, this holds for capabilities that do not exist yet: any scoring, filtering, or flow-control logic added above the seam lands once and runs everywhere. There is no "Kubernetes llm-d" and "non-Kubernetes llm-d" to keep in sync - there is one routing stack, and it is substrate-invariant by construction.
 
-- **KV-cache-utilization scoring**: routes requests away from instances under high cache pressure.
-- **Prefix-cache affinity**: sends requests with shared prompt prefixes to the instance most likely to have them cached.
-- **Saturation-based admission**: the saturation detector still gates admission, so a saturated pool sheds load rather than overloading backends.
-- **FlowControl**: per-flow queueing, fairness, and ordering policies, configured statically in `EndpointPickerConfig.flowControl`. Without `InferenceObjective` CRDs, per-request priority falls back to the configured default; the `x-flow-fairness-id` header drives fairness within a band.
-- **Prometheus metrics**: scheduling and pool-health metrics on `--metrics-port`.
-
-What changes is *ownership of endpoint lifecycle*. On Kubernetes, a dying pod is removed from the `InferencePool` automatically. With file discovery there is no such signal: detecting a failed worker and rewriting the endpoints file becomes the surrounding orchestrator's job (Ray, Slurm, a custom controller). For production this usually means a small health-monitoring agent that drops unavailable workers from the file. The one feature not yet available outside Kubernetes is `InferenceModelRewrite`-driven model-name rewriting, which a future plugin may address.
+Two things still differ, and both are about *inputs* rather than routing logic. A few features are still configured through Kubernetes CRDs - per-request priority from `InferenceObjective`, and `InferenceModelRewrite`-driven model-name rewriting - so outside Kubernetes they fall back to static configuration or are not yet available; the plan is to move them behind the same plugin pattern as discovery. And *ownership of endpoint lifecycle* changes: on Kubernetes a dying pod leaves the `InferencePool` automatically, while with file discovery detecting a failed worker and rewriting the file is the surrounding orchestrator's job (Ray, Slurm, a custom controller) - in production usually a small health-monitoring agent that drops unavailable workers from the file.
 
 ## Research directions we are pursuing
 
