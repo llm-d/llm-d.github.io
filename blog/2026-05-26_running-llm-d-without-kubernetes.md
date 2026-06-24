@@ -141,14 +141,6 @@ Because the seam is below the scheduler, file-discovery mode keeps the routing i
 
 What changes is *ownership of endpoint lifecycle*. On Kubernetes, a dying pod is removed from the `InferencePool` automatically. With file discovery there is no such signal: detecting a failed worker and rewriting the endpoints file becomes the surrounding orchestrator's job (Ray, Slurm, a custom controller). For production this usually means a small health-monitoring agent that drops unavailable workers from the file. The one feature not yet available outside Kubernetes is `InferenceModelRewrite`-driven model-name rewriting, which a future plugin may address.
 
-## Troubleshooting
-
-The full failure-mode list is in the guide; three trip up most first-time deployments:
-
-- **`address` is a hostname, not an IP.** The EPP rejects entries where `address` does not parse as an IP. Slurm and Ray surface hostnames, so resolve them (`socket.gethostbyname` or equivalent) before writing the file.
-- **EPP cannot reach vLLM's metrics port.** The EPP scrapes `/metrics` at `address:port`. If a firewall or network policy blocks it, scoring plugins silently degrade to defaults: routing still works, but KV-cache scoring becomes meaningless. Check the EPP's pool-health metrics to confirm endpoints are reporting.
-- **Envoy returns 503 with `no_healthy_upstream`.** Almost always the EPP gRPC connection is down. Confirm the EPP is running, that `--grpc-port` matches Envoy's `authority`, and that its gRPC health service is enabled.
-
 ## Research directions we are pursuing
 
 Decoupling routing intelligence from the substrate is the enabling step, not the destination. Discovery gets llm-d's existing routing onto RL substrates; the larger opportunity we are pursuing is adapting the routing itself to what rollouts demand. As we work with RL frameworks we are mapping where current rollout pipelines fall short and where llm-d's inference expertise can close the gap:
