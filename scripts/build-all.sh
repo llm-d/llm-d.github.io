@@ -77,7 +77,19 @@ echo "        Output: build/$DEV_OUTPUT_SUBDIR/ (baseUrl: $DEV_BASE_URL)"
 cd "$PROJECT_DIR/preview"
 bash scripts/sync-docs.sh "$DEV_DOCS_BRANCH"
 npm install
+# Dev docs put the intro at the docs root (slug: /), so the legacy root-redirect
+# page (src/pages/index.tsx -> /getting-started) would create a duplicate route.
+# Frozen release builds still need it (their intro lives under getting-started),
+# so move it aside for the dev build only and restore it before step 4.
+_DEV_REDIRECT="$PROJECT_DIR/preview/src/pages/index.tsx"
+if [ -f "$_DEV_REDIRECT" ]; then
+  _DEV_REDIRECT_BAK="$(mktemp)"
+  mv "$_DEV_REDIRECT" "$_DEV_REDIRECT_BAK"
+fi
 DOCS_BASE_URL="$DEV_BASE_URL" npm run build
+if [ -n "${_DEV_REDIRECT_BAK:-}" ] && [ -f "$_DEV_REDIRECT_BAK" ]; then
+  mv "$_DEV_REDIRECT_BAK" "$_DEV_REDIRECT"
+fi
 cd "$PROJECT_DIR"
 mkdir -p "build/$DEV_OUTPUT_SUBDIR"
 cp -r preview/build/* "build/$DEV_OUTPUT_SUBDIR/"

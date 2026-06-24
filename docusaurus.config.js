@@ -236,7 +236,7 @@ const config = {
               <a class="navbar__link" href="#" aria-haspopup="true" onclick="return false">v0.7.0 (latest)</a>
               <ul class="dropdown__menu">
                 <li><a class="dropdown__link" href="/docs/getting-started">v0.7.0 (latest)</a></li>
-                <li><a class="dropdown__link" href="/docs/dev/getting-started">Dev</a></li>
+                <li><a class="dropdown__link" href="/docs/dev/">Dev</a></li>
               </ul>
             </div>`,
           },
