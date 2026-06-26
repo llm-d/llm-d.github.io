@@ -18,6 +18,11 @@ But the thing that makes llm-d *llm-d* - KV-cache-aware scoring, prefix-cache af
 
 This post is about pulling those two things apart. We introduce the `EndpointDiscovery` abstraction in the llm-d router that separates *what endpoints exist* from *how to route across them*, and the first plugin built on it - file discovery - which lets the full routing stack run as a plain process or container with no Kubernetes anywhere in sight: on an HPC cluster, inside a Ray job, on a bare-metal rack, or on your laptop.
 
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/running-llm-d-without-kubernetes/llm-d-platform.drawio.svg" alt="llm-d's EndpointDiscovery module with Kube and File discovery plugins feeding the same router across Kubernetes, Slurm, Ray, and bare metal" style={{width: '85%', height: 'auto', border: '1px solid #888', padding: '4px'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 1: The big picture - one routing stack under every platform. llm-d discovers endpoints through its EndpointDiscovery module (Kube Discovery against an InferencePool, File Discovery against everything else) and serves requests the same way on Kubernetes, Slurm, Ray, or bare metal (inference, HPC, and RL rollout workloads: veRL, SkyRL, prime-rl). The rest of this post explains how.</em></p>
+</div>
+
 <!-- truncate -->
 
 ## The hard problem: routing intelligence trapped on one platform
@@ -81,7 +86,7 @@ And because the plugin sits below the interface seam, everything above it is unc
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/running-llm-d-without-kubernetes/no-kubernetes-deployment.svg" alt="llm-d file-discovery architecture" style={{width: '75%', height: 'auto', border: '1px solid #888', padding: '4px'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 1: FileDiscovery plugin in llm-d</em></p>
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 2: FileDiscovery plugin in llm-d</em></p>
 </div>
 
 ## A minimal example
@@ -124,19 +129,14 @@ Both end-to-end examples - the Ray generator script and a complete Slurm SBATCH 
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/running-llm-d-without-kubernetes/ray-endpoint-generator.svg" alt="Endpoint generator script connected to the Ray head node, writing endpoints.yaml" style={{width: '75%', height: 'auto', border: '1px solid #888', padding: '4px'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 2: An endpoint generator queries the Ray head node and writes endpoints.yaml.</em></p>
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 3: An endpoint generator queries the Ray head node and writes endpoints.yaml.</em></p>
 </div>
 
 These patterns all keep a file in the loop. For the most dynamic pools we are exploring discovery plugins that remove it entirely, all against the same `EndpointDiscovery` interface: orchestrator-native plugins (the `RayDiscovery`/`SlurmDiscovery` of pattern 4) that talk to Ray's Python API or Slurm's controller directly and emit `Upsert`/`Delete` events as workers change; plugins backed by a service registry such as Consul, etcd, or a cloud provider's service-discovery API where one already runs; and, longer term, moving the existing Kubernetes watch behind the same interface so `InferencePool` discovery becomes just another plugin and the scheduler carries no special case for any platform.
 
 ## One routing stack, every platform
 
-Because the discovery seam sits below the scheduler, file-discovery mode does not get a *subset* of llm-d - it gets the whole router, unchanged. KV-cache-utilization scoring, prefix-cache affinity, saturation-based admission, FlowControl, and the Prometheus metrics surface all behave exactly as they do on Kubernetes, because none of them ever learn where the endpoints came from. Crucially, this holds for capabilities that do not exist yet: any scoring, filtering, or flow-control logic added above the seam lands once and runs everywhere. There is no "Kubernetes llm-d" and "non-Kubernetes llm-d" to keep in sync - there is one routing stack, and it is platform-invariant by construction.
-
-<div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/running-llm-d-without-kubernetes/llm-d-platform.drawio.svg" alt="llm-d's EndpointDiscovery module with Kube and File discovery plugins feeding the same router across Kubernetes, Slurm, Ray, and bare metal" style={{width: '85%', height: 'auto', border: '1px solid #888', padding: '4px'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 3: One routing stack, every platform. llm-d's EndpointDiscovery module discovers endpoints on each platform - Kube Discovery against an InferencePool, File Discovery against everything else - and the same router serves their requests, unchanged across Kubernetes, Slurm, Ray, and bare metal (inference, HPC, and RL rollout workloads: veRL, SkyRL, prime-rl).</em></p>
-</div>
+Because the discovery seam sits below the scheduler, file-discovery mode does not get a *subset* of llm-d - it gets the whole router, unchanged. KV-cache-utilization scoring, prefix-cache affinity, saturation-based admission, FlowControl, and the Prometheus metrics surface all behave exactly as they do on Kubernetes, because none of them ever learn where the endpoints came from. Crucially, this holds for capabilities that do not exist yet: any scoring, filtering, or flow-control logic added above the seam lands once and runs everywhere. There is no "Kubernetes llm-d" and "non-Kubernetes llm-d" to keep in sync - there is one routing stack, and it is platform-invariant by construction. That is the shape Figure 1 sketched at the top: one router underneath, every platform above.
 
 Two things still differ, and both are about *inputs* rather than routing logic. A few features are still configured through Kubernetes CRDs - per-request priority from `InferenceObjective`, and `InferenceModelRewrite`-driven model-name rewriting - so outside Kubernetes they fall back to static configuration or are not yet available; the plan is to move them behind the same plugin pattern as discovery. And *ownership of endpoint lifecycle* changes: on Kubernetes a dying pod leaves the `InferencePool` automatically, while with file discovery detecting a failed worker and rewriting the file is the surrounding orchestrator's job (Ray, Slurm, a custom controller) - in production usually a small health-monitoring agent that drops unavailable workers from the file.
 
