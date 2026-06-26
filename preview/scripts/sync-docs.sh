@@ -866,6 +866,20 @@ find "$DOCS_DIR/getting-started" -name "*.md" -print0 | while IFS= read -r -d ''
         "$file"
 done
 
+# Repo-root helpers/ is never published to this site, so ANY remaining relative
+# link into helpers/ must point to GitHub. The guides/ and getting-started/
+# passes above only cover those trees; this catches the rest (e.g. mooncake-*
+# links from architecture/advanced/kv-management/kv-offloader). Files with an
+# extension -> blob, directories -> tree.
+echo "    Repointing remaining helpers/ links to GitHub..."
+find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace -E \
+        -e 's@\]\((\.\./)+helpers/([^)#]+\.[A-Za-z0-9]+)(#[^)]*)?\)@](https://github.com/llm-d/llm-d/blob/main/helpers/\2\3)@g' \
+        -e 's@\]\((\.\./)+helpers/([^)#]+)/\)@](https://github.com/llm-d/llm-d/tree/main/helpers/\2)@g' \
+        -e 's@\]\((\.\./)+helpers/([^)#]+)\)@](https://github.com/llm-d/llm-d/tree/main/helpers/\2)@g' \
+        "$file"
+done
+
 # === Fix placeholder and missing file references ===
 echo "    Fixing placeholder and missing file references..."
 find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
