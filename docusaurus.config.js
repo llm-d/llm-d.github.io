@@ -193,9 +193,9 @@ const config = {
         respectPrefersColorScheme: true,
       },
       announcementBar: {
-        id: "llm-d-v0-7-release",
+        id: "llm-d-v0-8-release",
         content:
-          '🎉 <b>llm-d 0.7 is now available!</b> Explore our completely revamped documentation with comprehensive guides, architecture deep-dives, and production deployment patterns. <a target="_self" rel="noopener noreferrer" href="/docs/getting-started/quickstart"><b>Browse the docs →</b></a>',
+          '🎉 <b>llm-d 0.8 is here!</b> Multimodal, batch &amp; flow-control graduate to production, with broader accelerator support and initial RL. <a target="_self" rel="noopener noreferrer" href="/docs/getting-started/quickstart"><b>See what\'s new →</b></a>',
         backgroundColor: '#000000',
         textColor: '#fff',
         isCloseable: true,
