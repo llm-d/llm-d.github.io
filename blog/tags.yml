@@ -98,3 +98,8 @@ inference:
   label: Inference
   permalink: /inference
   description: LLM inference serving and optimization
+
+batch-inference:
+  label: Batch Inference
+  permalink: /batch-inference
+  description: Batch inference processing for LLM workloads
