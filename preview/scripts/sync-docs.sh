@@ -570,7 +570,7 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](../../../guides/asynchronous-processing)|\](https://github.com/llm-d/llm-d/tree/main/guides/asynchronous-processing)|g' \
         -e 's|\](../../../../guides/tiered-prefix-cache)|\](/guides/tiered-prefix-cache)|g' \
         -e 's|\](/guides/tiered-prefix-cache)|\](/guides/tiered-prefix-cache)|g' \
-        -e 's|\](../../../../guides/batch-gateway)|\](/guides/batch-gateway)|g' \
+        -e 's|\](../../../../guides/batch-gateway)|\](https://github.com/llm-d/llm-d/tree/main/guides/batch-gateway)|g' \
         -e 's|\](/guides/batch-gateway)|\](/guides/batch-gateway)|g' \
         -e 's|\](../../../guides/batch-gateway)|\](/guides/batch-gateway)|g' \
         -e 's|\](../../../guides/asynchronous-processing)|\](/guides/asynchronous-processing)|g' \
