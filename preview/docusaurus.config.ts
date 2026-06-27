@@ -23,6 +23,35 @@ function getBaseUrl(): string {
   return normalized;
 }
 
+// The "Guides" section (deployment recipes) is published at /guides/* but only
+// exists in builds where the how-to docs were synced (dev/main). Detect it so we
+// repurpose the /guides namespace only there, leaving frozen release builds
+// (which have no Guides section) on the legacy /guides <-> /well-lit-paths aliases.
+function guidesSectionPresent(): boolean {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const candidates = [
+      path.join(process.cwd(), 'docs', 'how-to', 'index.md'),
+      path.join(__dirname, 'docs', 'how-to', 'index.md'),
+    ];
+    return candidates.some((p) => {
+      try { return fs.existsSync(p); } catch { return false; }
+    });
+  } catch {
+    return false;
+  }
+}
+const HAS_GUIDES_SECTION = guidesSectionPresent();
+// URL slugs served under /guides/* by the Guides section. Keep in sync with
+// preview/scripts/sync-docs.sh (HOWTO_GUIDES) and preview/sidebars.ts.
+const GUIDE_SLUGS = new Set([
+  'optimized-baseline', 'predicted-latency-routing', 'precise-prefix-cache-routing',
+  'tiered-prefix-cache', 'pd-disaggregation', 'wide-ep-lws', 'flow-control',
+  'workload-autoscaling', 'agentic-serving', 'multimodal-serving',
+  'asynchronous-processing', 'batch-gateway',
+]);
+
 const config: Config = {
   title: 'llm-d',
   tagline: 'Kubernetes-native distributed inference serving for LLMs',
@@ -77,12 +106,29 @@ const config: Config = {
       require.resolve('@docusaurus/plugin-client-redirects'),
       {
         createRedirects(existingPath: string) {
-          if (existingPath.startsWith('/well-lit-paths')) {
-            return [existingPath.replace('/well-lit-paths', '/guides')];
+          if (!HAS_GUIDES_SECTION) {
+            // Legacy back-compat aliasing (e.g. frozen release builds with no
+            // Guides section): /guides <-> /well-lit-paths in both directions.
+            if (existingPath.startsWith('/well-lit-paths')) {
+              return [existingPath.replace('/well-lit-paths', '/guides')];
+            }
+            if (existingPath.startsWith('/guides')) {
+              return [existingPath.replace('/guides', '/well-lit-paths')];
+            }
+            return undefined;
           }
-          if (existingPath.startsWith('/guides')) {
-            return [existingPath.replace('/guides', '/well-lit-paths')];
+          // Guides section present: /guides/* hosts the deployment guides, so
+          // those real pages must NOT be aliased back to /well-lit-paths.
+          if (existingPath === '/guides' || existingPath.startsWith('/guides/')) {
+            return undefined;
           }
+          // Keep the legacy /guides/<name> -> /well-lit-paths/<name> alias only
+          // for overview names that don't collide with a published Guides page.
+          if (existingPath.startsWith('/well-lit-paths/')) {
+            const name = existingPath.slice('/well-lit-paths/'.length);
+            return GUIDE_SLUGS.has(name) ? undefined : [`/guides/${name}`];
+          }
+          // /well-lit-paths index: /guides is the Guides landing page now.
           return undefined;
         },
       },
@@ -111,6 +157,17 @@ const config: Config = {
             const sourcePath = cleanPath
               .replace(/\/index\.mdx$/, '/README.mdx')
               .replace(/\/index\.md$/, '/README.md');
+
+            // How-To Guides are synced from the llm-d/llm-d repo-root guides/ dir
+            // (see preview/scripts/sync-docs.sh). how-to/index.md <- guides/README.md,
+            // how-to/<name>.md <- guides/<name>/README.md.
+            if (cleanPath.startsWith('how-to/')) {
+              if (cleanPath === 'how-to/index.md') {
+                return 'https://github.com/llm-d/llm-d/blob/main/guides/README.md';
+              }
+              const guideName = cleanPath.replace(/^how-to\//, '').replace(/\.md$/, '');
+              return `https://github.com/llm-d/llm-d/blob/main/guides/${guideName}/README.md`;
+            }
 
             // Guide pages: flat .md files are overview pages from docs/well-lit-paths/ subdirs;
             // directory-based guides (*/index.md at depth >2) may also be from well-lit-paths/.

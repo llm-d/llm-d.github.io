@@ -316,6 +316,181 @@ if [[ -f "$DOCS_DIR/guides/multimodal-serving.md" ]]; then
         "$DOCS_DIR/guides/multimodal-serving.md"
 fi
 
+# ============================================================================
+# === How-To Guides (deployment recipes from repo-root guides/) ==============
+# ============================================================================
+# Bring the well-lit-path *deployment guides* — the top-level READMEs under the
+# llm-d/llm-d repo-root guides/ dir — into the docs site as first-class pages at
+# /how-to/*. Only the top-level README of each guide is published; deeper
+# manifests and sub-guides stay linked to GitHub. The Well-Lit Paths overview
+# pages' "Deploy" links (and other in-doc references to these guides) are
+# repointed from GitHub to these new in-site pages at the end of this section.
+echo "    Copying How-To Guides..."
+mkdir -p "$DOCS_DIR/how-to"
+
+# Top-level guides that get an in-site page. Keep in sync with preview/sidebars.ts
+# (the "How-to Guides" section) and the editUrl resolver in docusaurus.config.ts.
+HOWTO_GUIDES="optimized-baseline predicted-latency-routing precise-prefix-cache-routing tiered-prefix-cache pd-disaggregation wide-ep-lws flow-control workload-autoscaling agentic-serving multimodal-serving asynchronous-processing batch-gateway"
+# Same list as an ERE alternation for sed -E patterns.
+HOWTO_ALT="optimized-baseline|predicted-latency-routing|precise-prefix-cache-routing|tiered-prefix-cache|pd-disaggregation|wide-ep-lws|flow-control|workload-autoscaling|agentic-serving|multimodal-serving|asynchronous-processing|batch-gateway"
+
+cp_doc "$SRC/guides/README.md" "$DOCS_DIR/how-to/index.md"
+for _g in $HOWTO_GUIDES; do
+    cp_doc "$SRC/guides/$_g/README.md" "$DOCS_DIR/how-to/$_g.md"
+done
+
+# Multimodal sub-guides published as nested pages under the Multimodal Serving
+# guide (/guides/multimodal-serving/{aggregation,e-disaggregation}).
+mkdir -p "$DOCS_DIR/how-to/multimodal-serving"
+cp_doc "$SRC/guides/multimodal-serving/aggregation/README.md"      "$DOCS_DIR/how-to/multimodal-serving/aggregation.md"
+cp_doc "$SRC/guides/multimodal-serving/e-disaggregation/README.md" "$DOCS_DIR/how-to/multimodal-serving/e-disaggregation.md"
+
+# --- Rewrite links inside each imported guide page --------------------------
+for _g in $HOWTO_GUIDES; do
+    _file="$DOCS_DIR/how-to/$_g.md"
+    [[ -f "$_file" ]] || continue
+
+    # (a) Links into docs/ content -> in-site absolute URLs. Order matters:
+    #     anchored/longer patterns first.
+    sed_inplace \
+        -e 's|](../../docs/architecture/core/router/proxy.md)|](/architecture/core/router/proxy)|g' \
+        -e 's|](../../docs/architecture/core/epp/flow-control.md)|](/architecture/core/router/epp/flow-control)|g' \
+        -e 's|](../../docs/architecture/core/router/epp/flow-control.md)|](/architecture/core/router/epp/flow-control)|g' \
+        -e 's|](../../docs/architecture/advanced/latency-predictor.md#observability)|](/architecture/advanced/latency-predictor#observability)|g' \
+        -e 's|](../../docs/architecture/advanced/latency-predictor.md)|](/architecture/advanced/latency-predictor)|g' \
+        -e 's|](../../docs/architecture/advanced/disaggregation/operations-sglang.md)|](/architecture/advanced/disaggregation/operations-sglang)|g' \
+        -e 's|](../../docs/api-reference/epp-http-headers.md)|](/api-reference/epp-http-headers)|g' \
+        -e 's|](../../docs/operations/observability/setup.md)|](/resources/observability/setup)|g' \
+        -e 's|](../../docs/infrastructure/gateway/README.md)|](/resources/gateway)|g' \
+        -e 's|](../../docs/infrastructure/gateway)|](/resources/gateway)|g' \
+        -e 's|](../../docs/infra-providers/gke/README.md#gpu-dynamic-resource-allocation-dra-and-dranet-roce-on-gke)|](/resources/infra-providers/gke)|g' \
+        -e 's|](../../docs/well-lit-paths/capabilities/tiered-prefix-cache.md)|](/well-lit-paths/tiered-prefix-cache)|g' \
+        -e 's|](../../docs/well-lit-paths/workloads/agentic-serving.md#direction)|](/well-lit-paths/agentic-serving#direction)|g' \
+        -e 's|](../../docs/well-lit-paths/workloads/agentic-serving.md)|](/well-lit-paths/agentic-serving)|g' \
+        "$_file"
+
+    # (b) Links into repo-root helpers/ -> GitHub (not published to this site).
+    sed_inplace \
+        -e 's|](../../helpers/benchmark.md#available-workload-profiles)|](https://github.com/llm-d/llm-d/blob/main/helpers/benchmark.md#available-workload-profiles)|g' \
+        -e 's|](../../helpers/benchmark.md)|](https://github.com/llm-d/llm-d/blob/main/helpers/benchmark.md)|g' \
+        -e 's|](../../helpers/client-setup/README.md)|](https://github.com/llm-d/llm-d/tree/main/helpers/client-setup)|g' \
+        -e 's|](../../helpers/hf-token.md)|](https://github.com/llm-d/llm-d/blob/main/helpers/hf-token.md)|g' \
+        -e 's|](../../helpers/mooncake-client/)|](https://github.com/llm-d/llm-d/tree/main/helpers/mooncake-client)|g' \
+        -e 's|](../../helpers/mooncake-master-store/)|](https://github.com/llm-d/llm-d/tree/main/helpers/mooncake-master-store)|g' \
+        "$_file"
+
+    # (c) Links to sibling top-level guides -> their new in-site /how-to pages.
+    sed_inplace -E \
+        -e "s@\]\((\.\./)+($HOWTO_ALT)(/README\.md|/)?(#[^)]*)?\)@](/how-to/\2\4)@g" \
+        "$_file"
+
+    # Known upstream dead-links: source READMEs reference files that don't exist
+    # in guides/. Repoint to a valid in-site page / existing GitHub file so the
+    # imported page passes the link checker.
+    sed_inplace \
+        -e 's|](../agentic-serving/agentic-code-generation.md#benchmarking)|](/how-to/agentic-serving)|g' \
+        -e 's|](../agentic-serving/agentic-code-generation.md)|](/how-to/agentic-serving)|g' \
+        -e 's|](benchmark-results-gpt-oss-120b.md)|](https://github.com/llm-d/llm-d/blob/main/guides/tiered-prefix-cache/benchmark-results/vllm-gpt-oss-120b-h100.md)|g' \
+        "$_file"
+
+    # Multimodal Serving guide -> its nested aggregation / e-disaggregation pages
+    # (published in-site; see the multimodal sub-guide block below).
+    sed_inplace \
+        -e 's|](./aggregation/README.md)|](/how-to/multimodal-serving/aggregation)|g' \
+        -e 's|](./e-disaggregation/README.md)|](/how-to/multimodal-serving/e-disaggregation)|g' \
+        "$_file"
+
+    # (images) benchmark-result and inline images -> /img/docs/guides/<g>/...
+    # (sync copies these assets to static/img/docs/guides/<g>/ further below).
+    sed_inplace -E \
+        -e "s@src=\"\.?/?benchmark-results/([^\"]*)\"@src=\"/img/docs/guides/$_g/benchmark-results/\1\"@g" \
+        -e "s@!\[([^]]*)\]\(\.?/?benchmark-results/([^)]*)\)@![\1](/img/docs/guides/$_g/benchmark-results/\2)@g" \
+        -e "s@!\[([^]]*)\]\(\.?/?images/([^)]*)\)@![\1](/img/docs/guides/$_g/\2)@g" \
+        "$_file"
+
+    # (d) Everything else still relative -> GitHub (deeper sub-pages, manifests,
+    #     YAML, scripts not published to this site). ../ resolves to guides/,
+    #     ./ and bare filenames resolve to guides/<g>/.
+    sed_inplace -E \
+        -e "s@\]\(\.\./([^)]+\.(md|ya?ml|sh|py|json|txt))(#[^)]*)?\)@](https://github.com/llm-d/llm-d/blob/main/guides/\1\3)@g" \
+        -e "s@\]\(\.\./([^)#]+)\)@](https://github.com/llm-d/llm-d/tree/main/guides/\1)@g" \
+        -e "s@\]\(\./([^)]+\.(md|ya?ml|sh|py|json|txt))(#[^)]*)?\)@](https://github.com/llm-d/llm-d/blob/main/guides/$_g/\1\3)@g" \
+        -e "s@\]\(\./([^)#]+)\)@](https://github.com/llm-d/llm-d/tree/main/guides/$_g/\1)@g" \
+        -e "s@\]\(([A-Za-z0-9][^):#]*\.(md|ya?ml|sh|py|json|txt))(#[^)]*)?\)@](https://github.com/llm-d/llm-d/blob/main/guides/$_g/\1\3)@g" \
+        "$_file"
+done
+
+# --- Rewrite links inside the Multimodal sub-guide pages (one level deeper, so
+#     ../../../ reaches the repo root and ../../ reaches guides/). ------------
+for _sub in aggregation e-disaggregation; do
+    _file="$DOCS_DIR/how-to/multimodal-serving/$_sub.md"
+    [[ -f "$_file" ]] || continue
+
+    # docs/ -> in-site (anchored first); helpers/ -> GitHub; sibling top-level
+    # guide -> /how-to (renamed to /guides at the end of the sync).
+    sed_inplace \
+        -e 's|](../../../docs/infrastructure/gateway/gke.md#cleanup)|](/resources/gateway/gke#cleanup)|g' \
+        -e 's|](../../../docs/infrastructure/gateway)|](/resources/gateway)|g' \
+        -e 's|](../../../docs/operations/observability)|](/resources/observability)|g' \
+        -e 's|](../../../helpers/client-setup/README.md)|](https://github.com/llm-d/llm-d/tree/main/helpers/client-setup)|g' \
+        -e 's|](../../../helpers/hf-token.md)|](https://github.com/llm-d/llm-d/blob/main/helpers/hf-token.md)|g' \
+        -e 's|](../../pd-disaggregation/README.md#pd-best-practices)|](/how-to/pd-disaggregation#pd-best-practices)|g' \
+        -e 's|](../../pd-disaggregation/README.md)|](/how-to/pd-disaggregation)|g' \
+        "$_file"
+
+    # images (e.g. aggregation benchmark-results) -> /img/docs/guides/multimodal-serving/<sub>/...
+    sed_inplace -E \
+        -e "s@src=\"\.?/?benchmark-results/([^\"]*)\"@src=\"/img/docs/guides/multimodal-serving/$_sub/benchmark-results/\1\"@g" \
+        -e "s@!\[([^]]*)\]\(\.?/?benchmark-results/([^)]*)\)@![\1](/img/docs/guides/multimodal-serving/$_sub/benchmark-results/\2)@g" \
+        "$_file"
+
+    # Defensive catch-all: any remaining relative link -> GitHub, resolved against
+    # this sub-guide's dir (deepest-prefix first).
+    sed_inplace -E \
+        -e "s@\]\(\.\./\.\./\.\./([^)]+\.(md|ya?ml|sh|py|json|txt))(#[^)]*)?\)@](https://github.com/llm-d/llm-d/blob/main/\1\3)@g" \
+        -e "s@\]\(\.\./\.\./\.\./([^)#]+)\)@](https://github.com/llm-d/llm-d/tree/main/\1)@g" \
+        -e "s@\]\(\.\./\.\./([^)]+\.(md|ya?ml|sh|py|json|txt))(#[^)]*)?\)@](https://github.com/llm-d/llm-d/blob/main/guides/\1\3)@g" \
+        -e "s@\]\(\.\./\.\./([^)#]+)\)@](https://github.com/llm-d/llm-d/tree/main/guides/\1)@g" \
+        -e "s@\]\(\.\./([^)]+\.(md|ya?ml|sh|py|json|txt))(#[^)]*)?\)@](https://github.com/llm-d/llm-d/blob/main/guides/multimodal-serving/\1\3)@g" \
+        -e "s@\]\(\.\./([^)#]+)\)@](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/\1)@g" \
+        -e "s@\]\(\./([^)]+\.(md|ya?ml|sh|py|json|txt))(#[^)]*)?\)@](https://github.com/llm-d/llm-d/blob/main/guides/multimodal-serving/$_sub/\1\3)@g" \
+        -e "s@\]\(\./([^)#]+)\)@](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/$_sub/\1)@g" \
+        "$_file"
+done
+
+# --- Index page (guides/README.md): its links are relative to guides/ root ---
+if [[ -f "$DOCS_DIR/how-to/index.md" ]]; then
+    sed_inplace -E \
+        -e "s@\]\(\./($HOWTO_ALT)/README\.md(#[^)]*)?\)@](/how-to/\1\2)@g" \
+        "$DOCS_DIR/how-to/index.md"
+    sed_inplace \
+        -e 's|](./rollouts/README.md)|](/resources/operations/rollouts)|g' \
+        -e 's|](./multimodal-serving/e-disaggregation/README.md)|](/how-to/multimodal-serving/e-disaggregation)|g' \
+        -e 's|](../docs/well-lit-paths/workloads/README.md)|](/well-lit-paths/workloads)|g' \
+        "$DOCS_DIR/how-to/index.md"
+    # Remaining relative links in the index -> GitHub (env.sh, recipes/, helpers/).
+    sed_inplace -E \
+        -e "s@\]\(\./([^)]+\.(md|ya?ml|sh|py|json|txt))(#[^)]*)?\)@](https://github.com/llm-d/llm-d/blob/main/guides/\1\3)@g" \
+        -e "s@\]\(\./([^)#]+)\)@](https://github.com/llm-d/llm-d/tree/main/guides/\1)@g" \
+        -e "s@\]\(\.\./([^)]+\.(md|ya?ml|sh|py|json|txt))(#[^)]*)?\)@](https://github.com/llm-d/llm-d/blob/main/\1\3)@g" \
+        -e "s@\]\(\.\./([^)#]+)\)@](https://github.com/llm-d/llm-d/tree/main/\1)@g" \
+        "$DOCS_DIR/how-to/index.md"
+fi
+
+# --- Repoint Well-Lit Paths "Deploy" links (and any other in-doc references)
+#     for the published top-level guides to their new in-site How-To pages.
+#     This runs before the generic "repoint repo-root guides/ deep-links to
+#     GitHub" pass below, so only deeper/unpublished guides/ links fall through
+#     to GitHub. multimodal aggregation/e-disaggregation deep-links resolve to
+#     their dedicated in-site sub-pages.
+echo "    Repointing Well-Lit Paths Deploy links to in-site How-To pages..."
+find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace -E \
+        -e "s@\]\((\.\./)+guides/multimodal-serving/(aggregation|e-disaggregation)(/README\.md)?(#[^)]*)?\)@](/how-to/multimodal-serving/\2\4)@g" \
+        -e "s@\]\((\.\./)+guides/($HOWTO_ALT)(/README\.md|/)?(#[^)]*)?\)@](/how-to/\2\4)@g" \
+        "$file"
+done
+
 # === Resources / Observability ===
 # Fall back through earlier paths for release branches cut before each change.
 if [[ -f "$WIP/operations/observability/setup.md" ]]; then
@@ -505,9 +680,12 @@ find "$DOCS_DIR/resources/infra-providers" -name "*.md" -print0 | while IFS= rea
 done
 
 # === Fix internal cross-references ===
-# Upstream files reference filenames that get renamed during copy
+# Upstream files reference filenames that get renamed during copy.
+# how-to/ pages are excluded: their links are already finalized (in-site or
+# GitHub) by the How-To Guides section above, and some unanchored rules here
+# (e.g. epp.md -> epp/index.md) would corrupt those final URLs.
 echo "    Fixing internal cross-references..."
-find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+find "$DOCS_DIR" -name "*.md" -not -path "*/how-to/*" -print0 | while IFS= read -r -d '' file; do
     sed_inplace \
         -e 's|\./hpa-epp\.md|./igw-hpa.md|g' \
         -e 's|\./hpa-epp/index\.md|./igw-hpa.md|g' \
@@ -685,6 +863,20 @@ done
 find "$DOCS_DIR/getting-started" -name "*.md" -print0 | while IFS= read -r -d '' file; do
     sed_inplace \
         -e 's|\](../../helpers/hf-token\.md)|\](https://github.com/llm-d/llm-d/tree/main/helpers/hf-token.md)|g' \
+        "$file"
+done
+
+# Repo-root helpers/ is never published to this site, so ANY remaining relative
+# link into helpers/ must point to GitHub. The guides/ and getting-started/
+# passes above only cover those trees; this catches the rest (e.g. mooncake-*
+# links from architecture/advanced/kv-management/kv-offloader). Files with an
+# extension -> blob, directories -> tree.
+echo "    Repointing remaining helpers/ links to GitHub..."
+find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
+    sed_inplace -E \
+        -e 's@\]\((\.\./)+helpers/([^)#]+\.[A-Za-z0-9]+)(#[^)]*)?\)@](https://github.com/llm-d/llm-d/blob/main/helpers/\2\3)@g' \
+        -e 's@\]\((\.\./)+helpers/([^)#]+)/\)@](https://github.com/llm-d/llm-d/tree/main/helpers/\2)@g' \
+        -e 's@\]\((\.\./)+helpers/([^)#]+)\)@](https://github.com/llm-d/llm-d/tree/main/helpers/\2)@g' \
         "$file"
 done
 
@@ -949,6 +1141,32 @@ echo "    Rewriting absolute llm-d.ai/img asset URLs to root-relative..."
 find "$DOCS_DIR" \( -name "*.md" -o -name "*.mdx" \) -print0 | while IFS= read -r -d '' file; do
     sed_inplace -e 's|https://llm-d.ai/img/|/img/|g' "$file"
 done
+
+# === Publish the How-To Guides at /guides/* (final namespace rename) ===
+# The How-To Guides section is authored under doc IDs how-to/* because the
+# guides/* doc-id namespace is already taken by the Well-Lit Paths overview
+# pages. Throughout the sync we emit /how-to/* links so the /guides ->
+# /well-lit-paths canonicalization above never rewrites them; here, after ALL
+# link canonicalization has run, we flip /how-to/* -> /guides/* and set the page
+# slugs to /guides/*. (See createRedirects in docusaurus.config.ts, which frees
+# /guides for these pages only when the how-to docs are present, keeping frozen
+# release builds unaffected.)
+if [[ -d "$DOCS_DIR/how-to" ]]; then
+    echo "    Publishing How-To Guides at /guides/* ..."
+    find "$DOCS_DIR" \( -name "*.md" -o -name "*.mdx" \) -print0 | while IFS= read -r -d '' file; do
+        sed_inplace \
+            -e 's|](/how-to/|](/guides/|g' \
+            -e 's|](/docs/how-to/|](/docs/guides/|g' \
+            "$file"
+    done
+    set_doc_slug "$DOCS_DIR/how-to/index.md" "/guides"
+    for _g in $HOWTO_GUIDES; do
+        set_doc_slug "$DOCS_DIR/how-to/$_g.md" "/guides/$_g"
+    done
+    # Nested Multimodal sub-guides.
+    set_doc_slug "$DOCS_DIR/how-to/multimodal-serving/aggregation.md"      "/guides/multimodal-serving/aggregation"
+    set_doc_slug "$DOCS_DIR/how-to/multimodal-serving/e-disaggregation.md" "/guides/multimodal-serving/e-disaggregation"
+fi
 
 # === Generate stubs for pages in outline that don't have source content yet ===
 echo "    Generating stubs for missing pages..."
