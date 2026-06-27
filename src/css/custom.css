@@ -654,6 +654,11 @@ html:not([data-theme='dark']) .footer-socials img {
   .navbar__inner .navbar-github-stars {
     display: none !important;
   }
+  /* Hide the Slack icon in the header on mobile to avoid overlapping the
+     logo; it remains available in the collapsed (hamburger) menu. */
+  .navbar__inner .navbar-slack-item {
+    display: none !important;
+  }
 }
 
 @media screen and (max-width: 996px) {
