@@ -272,27 +272,22 @@ abhisyant:
 bogdan:
   name: Bogdan Berce
   title: Software Engineer , Google
-  image_url: https://github.com/bogdanghit.png
-  socials:
-    github: bogdanghit
 
 aishu:
   name: Aishu Kamal
   title: Software Engineer, Google
   image_url: https://github.com/aishukamal.png
   socials:
-    github: 
     linkedin: https://www.linkedin.com/in/aishwaryakamal
 
 dolev:
   name: Dolev Ish Am
   title: Software Engineering Manager, Google
-  image_url: 
   socials:
     linkedin: https://www.linkedin.com/in/dolev-ish-am-b41a8917/
     
-poonaml:
-  name: poonaml
+poonamlamba:
+  name: Poonam Lamba
   title: Senior Product Manager, Google
   email: poonaml@google.com
   image_url: https://avatars.githubusercontent.com/u/5097648?v=4
