@@ -1,6 +1,6 @@
 ---
 title: "Serving Hybrid Models at Scale in llm-d"
-description: "llm-d extends vLLM's Hybrid Memory Allocator across KV offloading to CPU and storage and KV-aware routing, making the offload connector HMA-aware - for 1.8–2.0x faster KV loads and about 115% higher throughput at high request rates with stable latency."
+description: "llm-d extends vLLM's Hybrid Memory Allocator across KV offloading to CPU and storage and KV-aware routing, making the offload connector HMA-aware - for 1.8–1.9x faster KV loads and about 115% higher throughput at high request rates with stable latency."
 slug: serving-hybrid-models-at-scale-in-llm-d
 date: 2026-06-13T09:00
 
@@ -79,7 +79,7 @@ To show the scalability of using offloading, we follow the scalability test from
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/hybrid-models/hma-blog-image3.webp" alt="User scalability test across tiers" style={{width: '85%', height: 'auto'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 3. User scalability test across tiers with gpt-oss-120b (TP=4) on NVIDIA H100 GPUs, with HMA and without it.</em></p>
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 3. User scalability test across tiers with gpt-oss-120b (TP=4) on NVIDIA H100 GPUs and IBM Storage Scale as the storage backend, with HMA and without it.</em></p>
 </div>
 
 HMA-awareness produces two positive effects in this experiment, shown in Figure 3. First, it shifts each saturation cliff to the right: the GPU holds more users with HMA before it saturates, and the CPU tier does the same once it takes over. The storage capacity is large enough that we do not see a collapse to prefill-level throughput in the tested range. Second, it raises the sustained throughput of the slower tiers: with storage added, the GPU + CPU + storage stack settles onto a much higher plateau than without HMA, and manages to sustain this high throughput to the largest user counts tested.
@@ -111,7 +111,7 @@ The full setup, the per-QPS results, and step-by-step instructions to run it you
 
 The experiments in this post used the standalone llm-d FS connector. The same HMA-aware offloading path has also been implemented in the new multi-tier connector upstreamed to vLLM, which is intended to replace the standalone connector going forward. See the [vLLM KV offloading guide](https://docs.vllm.ai/en/latest/features/kv_offloading_usage/). The multi-tier design is more than just packaging. With CPU and storage managed as tiers of one connector, CPU serves as a hub for hot data and a staging area for slower storage.
 
-The HMA results here rely on canonical KV-cache allocation for HMA models in vLLM ([PR #37885](https://github.com/vllm-project/vllm/pull/37885)), so reproducing them needs a vLLM build that includes it.
+The HMA results here rely on canonical KV-cache allocation for HMA models in vLLM ([PR #37885](https://github.com/vllm-project/vllm/pull/37885)), which has not yet merged, so reproducing them requires a build from that branch.
 
 HMA itself is not a solved problem. Every new model brings new attention layers, and each one is another cache group the connector has to handle correctly. As context lengths and model counts keep growing, getting that offloading right is no longer a nice-to-have; it is what keeps serving affordable.
 
