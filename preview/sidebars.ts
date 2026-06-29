@@ -192,6 +192,8 @@ const sidebars: SidebarsConfig = {
             'resources/gateway/istio',
             'resources/gateway/gke',
             'resources/gateway/agentgateway',
+            'resources/gateway/envoy-ai-gateway',
+            'resources/gateway/install-crds',
           ],
         },
         {type: 'doc', id: 'resources/infrastructure/multi-node', label: 'Kubernetes Multi-Node Orchestration'},
