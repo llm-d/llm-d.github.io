@@ -127,6 +127,10 @@ async function stopServer() {
         try {
           await killProcessOnPort(config.serverPort);
         } catch (e) {
+          console.error(
+            "🚨 Error killing process on port [killProcessOnPort]:",
+            e,
+          );
           // Ignore errors
         }
 
@@ -135,10 +139,15 @@ async function stopServer() {
           try {
             process.kill(-serverProcess.pid, 'SIGKILL');
           } catch (e) {
+            console.error(
+              "🚨 Error killing process [killProcessOnPort.pid]:",
+              e,
+            );
             // Fallback to killing just the main process
             try {
               serverProcess.kill('SIGKILL');
             } catch (e2) {
+              console.error('🚨 Error killing process [killProcessOnPort.SIGKILL]:', e2);
               // Process already dead
             }
           }
@@ -158,10 +167,18 @@ async function stopServer() {
         // Negative PID kills the process group
         process.kill(-serverProcess.pid, 'SIGTERM');
       } catch (e) {
+        console.error(
+          "🚨 Error killing process group [killProcessOnPort.pid-SIGTERM]:",
+          e,
+        );
         // Fallback to killing just the main process if process group fails
         try {
           serverProcess.kill('SIGTERM');
         } catch (e2) {
+          console.error(
+            "🚨 Error killing process [killProcessOnPort.SIGTERM]:",
+            e2,
+          );
           // Process might already be dead, that's fine
           clearTimeout(timeout);
           serverProcess = null;
@@ -188,6 +205,10 @@ async function killProcessOnPort(port) {
         try {
           process.kill(parseInt(pid), 'SIGKILL');
         } catch (e) {
+          console.error(
+            "🚨 Error killing process [killProcessOnPort.lsof.SIGKILL]:",
+            e,
+          );
           // Process might already be dead
         }
         resolve();
@@ -215,6 +236,7 @@ function tryFuser(port, resolve) {
   });
 
   fuser.on('error', () => {
+    console.error("🚨 Error killing process [tryFuser]:", e);
     // Neither lsof nor fuser available, just resolve
     // The process group kill should have worked anyway
     resolve();
@@ -231,6 +253,7 @@ process.on('exit', () => {
       try {
         serverProcess.kill('SIGKILL'); // Force kill on exit
       } catch (e2) {
+        console.error('Error killing process [process.on.exit.SIGKILL]:', e2);
         // Process already dead
       }
     }
