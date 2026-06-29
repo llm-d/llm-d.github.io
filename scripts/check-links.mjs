@@ -237,7 +237,7 @@ function tryFuser(port, resolve) {
     resolve();
   });
 
-  fuser.on('error', () => {
+  fuser.on('error', (e) => {
     console.error("🚨 Error killing process [tryFuser]:", e);
     // Neither lsof nor fuser available, just resolve
     // The process group kill should have worked anyway
