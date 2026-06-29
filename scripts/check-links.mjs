@@ -130,7 +130,7 @@ async function stopServer() {
           await killProcessOnPort(config.serverPort);
         } catch (e) {
           console.error(
-            "🚨 Error killing process on port [killProcessOnPort]:",
+            '🚨 Error killing process on port [killProcessOnPort]:',
             e,
           );
           // Ignore errors
@@ -142,14 +142,14 @@ async function stopServer() {
             process.kill(-serverProcess.pid, 'SIGKILL');
           } catch (e) {
             console.error(
-              "🚨 Error killing process [killProcessOnPort.pid]:",
+              '🚨 Error killing process group [process.kill(-serverProcess.pid, SIGKILL)]:',
               e,
             );
             // Fallback to killing just the main process
             try {
               serverProcess.kill('SIGKILL');
             } catch (e2) {
-              console.error('🚨 Error killing process [killProcessOnPort.SIGKILL]:', e2);
+              console.error('🚨 Error killing process [serverProcess.kill(SIGKILL)]:', e2);
               // Process already dead
             }
           }
@@ -170,7 +170,7 @@ async function stopServer() {
         process.kill(-serverProcess.pid, 'SIGTERM');
       } catch (e) {
         console.error(
-          "🚨 Error killing process group [killProcessOnPort.pid-SIGTERM]:",
+          '🚨 Error killing process group [process.kill(-serverProcess.pid, SIGTERM)]:',
           e,
         );
         // Fallback to killing just the main process if process group fails
@@ -178,7 +178,7 @@ async function stopServer() {
           serverProcess.kill('SIGTERM');
         } catch (e2) {
           console.error(
-            "🚨 Error killing process [killProcessOnPort.SIGTERM]:",
+            '🚨 Error killing process [serverProcess.kill(SIGTERM)]:',
             e2,
           );
           // Process might already be dead, that's fine
