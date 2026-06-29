@@ -2,7 +2,7 @@
 title: "RL Post-Training: Co-Operative Time-Slicing"
 description: "Introducing Co-operative Time-Slicing to eliminate idle accelerators in distributed RL post-training loops."
 slug: rl-post-training-co-operative-time-slicing
-date: 2025-06-28T16:41
+date: 2026-06-28T16:41
 authors:
   - poonamlamba
   - bogdan
@@ -53,9 +53,8 @@ To resolve these bottlenecks, llm-d have been investing in improving the ***effi
 Distributed RL post-training, is a highly fragmented "stop-and-wait" loop. The pipeline operates as a continuous cycle between Generation and Optimization. While generation is running optimization accelerators are idle and vice-versa.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/time-slicing/rl-time-slice_1.webp" alt="Figure1 : Stop-and-Wait RL loop" style={{width: '75%', height: 'auto'}} />
+  <img src="/img/blogs/time-slicing/rl_time-slice_1.webp" alt="Figure1 : Stop-and-Wait RL loop" style={{width: '75%', height: 'auto'}} />
 </div>
-
 Traditional cloud infrastructure is designed for continuous, steady-state workloads. This alternating architecture introduces a structural inefficiency on standard Kubernetes clusters:
 
 This structural cadence introduces two massive systemic inefficiencies at scale:
@@ -69,7 +68,7 @@ To eliminate idle accelerators during RL jobs, we are introducing Co-operative T
 When Job A pauses its training phase to run rewards evaluation on the CPU or distribute updated weights, the infrastructure time-slices the physical accelerators, swapping in the active sampling or training phase of Job B.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/time-slicing/rl-time-slice_2.webp" alt="Figure2 : RL steps scheduling before and after time-slicing" style={{width: '75%', height: 'auto'}} />
+  <img src="/img/blogs/time-slicing/rl_time-slice_2.webp" alt="Figure2 : RL steps scheduling before and after time-slicing" style={{width: '75%', height: 'auto'}} />
 </div>
 
 ## High Level Architecture Overview
@@ -77,7 +76,7 @@ When Job A pauses its training phase to run rewards evaluation on the CPU or dis
 The Accelerator Time-Slicing Platform architecture is divided into three distinct operational boundaries—**Workload-scoped**, **Cluster-scoped**, and **Node-scoped**—to isolate developer code, cluster coordination, and physical hardware management. This layout maps how user-space runtime requests are translated into cluster-level lock queues and executed as node-level process context swaps.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/time-slicing/rl-time-slice_3.webp" alt="Figure3 : High-level component diagram for time-slicing" style={{width: '75%', height: 'auto'}} />
+  <img src="/img/blogs/time-slicing/rl_time-slice_3.webp" alt="Figure3 : High-level component diagram for time-slicing" style={{width: '75%', height: 'auto'}} />
 </div>
 
 ### 1. Workload-Scoped Layer (Application Runtime)
@@ -118,11 +117,11 @@ To validate the infrastructure’s ability to reclaim stranded compute capacity 
 During the test, interleaving two independent sampler workloads on a single node elevated the actual hardware duty cycle from a baseline of 41% to 71%, with a theoretical peak of \~95% under idealized phase alignments. Because the active job has exclusive access to the GPU during its compute window, there is zero degradation to token generation or training step throughput.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/time-slicing/rl-time-slice_4.webp" alt="Figure4 : Baseline RL run without time-slicing" style={{width: '75%', height: 'auto'}} />
+  <img src="/img/blogs/time-slicing/rl_time-slice_4.webp" alt="Figure4 : Baseline RL run without time-slicing" style={{width: '75%', height: 'auto'}} />
 </div>
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/time-slicing/rl-time-slice_5.webp" alt="Figure5 : RL run with time-slicing" style={{width: '75%', height: 'auto'}} />
+  <img src="/img/blogs/time-slicing/rl_time-slice_5.webp" alt="Figure5 : RL run with time-slicing" style={{width: '75%', height: 'auto'}} />
 </div>
 
 ### Simple Developer Experience (client-side)
@@ -170,7 +169,7 @@ Here's what comes next.
 Building robust, highly optimized RL infrastructure requires tight collaboration with the engineers and researchers running these workloads at scale.
 
 If you are currently wrestling with low GPU utilization, synchronization stalls, or complex scheduling logic in your post-training pipelines, we want your feedback:
-  - Use Time-Slicing during your RL run.
+  - Use Time-Slicing for your RL jobs - [repo](https://github.com/llm-d-incubation/llm-d-rl-time-slicing/tree/main.
   - Explore the Code: Visit our repositories under the llm-d GitHub organization.
   - Join the Discussion: Join the #sig-rl channel in the [llm-d Slack](https://llm-d.slack.com).
   - Contribute: Share your reference implementations, benchmarks, and edge cases to help us refine this well-lit path.
