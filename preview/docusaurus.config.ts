@@ -133,7 +133,8 @@ const config: Config = {
                 'workload-autoscaling.md':            'foundations/workload-autoscaling',
                 // workloads/
                 'multimodal-serving.md':             'workloads/multimodal-serving',
-                // workloads/batch-serving/
+                // workloads/batch-serving/ (README = the "Serve Batch Workloads" section landing page)
+                'batch-serving.md':                  'workloads/batch-serving/README',
                 'asynchronous-processing.md':        'workloads/batch-serving/asynchronous-processing',
                 'batch-gateway.md':                  'workloads/batch-serving/batch-gateway',
                 // legacy filename aliases

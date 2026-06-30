@@ -204,6 +204,16 @@ cp_doc "$WLP/wide-expert-parallelism.md"                    "$DOCS_DIR/guides/wi
 cp_doc "$WA_SRC"                                            "$DOCS_DIR/guides/workload-autoscaling.md"
 cp_doc "$WIP/infrastructure/no-kubernetes-deployment.md"                 "$DOCS_DIR/guides/no-kubernetes-deployment.md"
 cp_doc "$WIP/well-lit-paths/workloads/batch-serving/batch-gateway.md"    "$DOCS_DIR/guides/batch-gateway.md"
+# "Serve Batch Workloads" section landing page (batch-serving/README.md ->
+# "Batch Serving"). Wired as the "Serve Batch Workloads" sidebar category link.
+# Its two relative links point at the sibling batch guides; repoint to site URLs.
+cp_doc "$WIP/well-lit-paths/workloads/batch-serving/README.md"           "$DOCS_DIR/guides/batch-serving.md"
+if [[ -f "$DOCS_DIR/guides/batch-serving.md" ]]; then
+    sed_inplace \
+        -e 's|\](batch-gateway\.md)|\](/well-lit-paths/batch-gateway)|g' \
+        -e 's|\](asynchronous-processing\.md)|\](/well-lit-paths/asynchronous-processing)|g' \
+        "$DOCS_DIR/guides/batch-serving.md"
+fi
 # Agentic Serving overview lives at well-lit-paths/workloads/agentic-serving.md; synced
 # as a directory doc (index.md) so the editUrl branch resolves correctly.
 cp_doc "$WIP/well-lit-paths/workloads/agentic-serving.md"                "$DOCS_DIR/guides/agentic-serving/index.md"
@@ -275,6 +285,7 @@ set_doc_slug "$DOCS_DIR/guides/wide-expert-parallelism.md" "/well-lit-paths/wide
 set_doc_slug "$DOCS_DIR/guides/workload-autoscaling.md" "/well-lit-paths/workload-autoscaling"
 set_doc_slug "$DOCS_DIR/guides/no-kubernetes-deployment.md" "/well-lit-paths/no-kubernetes-deployment"
 set_doc_slug "$DOCS_DIR/guides/batch-gateway.md" "/well-lit-paths/batch-gateway"
+set_doc_slug "$DOCS_DIR/guides/batch-serving.md" "/well-lit-paths/batch-serving"
 set_doc_slug "$DOCS_DIR/guides/agentic-serving/index.md" "/well-lit-paths/agentic-serving"
 
 # Patch agentic-serving internal links (sibling well-lit-paths -> site URLs; full guide -> upstream).
@@ -361,6 +372,21 @@ cp_doc "$WIP/operations/readiness-probes.md"                "$DOCS_DIR/resources
 cp_doc "$WIP/operations/rollouts/README.md"                 "$DOCS_DIR/resources/operations/rollouts/index.md"
 cp_doc "$WIP/operations/rollouts/adapter-rollout.md"        "$DOCS_DIR/resources/operations/rollouts/adapter-rollout.md"
 cp_doc "$WIP/operations/rollouts/blue-green-update.md"      "$DOCS_DIR/resources/operations/rollouts/blue-green-update.md"
+
+# Operations & Monitoring section landing page (docs/operations/README.md ->
+# "Operational Excellence"). Wired as the "Operations & Monitoring" sidebar
+# category link so clicking the section header renders this overview. Its
+# relative links point at sibling operations/ pages; repoint to site URLs.
+cp_doc "$WIP/operations/README.md"                          "$DOCS_DIR/resources/operations/index.md"
+if [[ -f "$DOCS_DIR/resources/operations/index.md" ]]; then
+    sed_inplace \
+        -e 's|\](../well-lit-paths/README\.md)|\](/well-lit-paths)|g' \
+        -e 's|\](observability/README\.md)|\](/resources/observability)|g' \
+        -e 's|\](rollouts/README\.md)|\](/resources/operations/rollouts)|g' \
+        -e 's|\](readiness-probes\.md)|\](/resources/operations/readiness-probes)|g' \
+        -e 's|\](router\.md)|\](/resources/operations/router)|g' \
+        "$DOCS_DIR/resources/operations/index.md"
+fi
 
 # Fix cross-references in operations/rollouts pages. These files are synced from
 # docs/operations/rollouts/ but placed at resources/operations/rollouts/, so all
