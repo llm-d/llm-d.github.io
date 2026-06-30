@@ -198,6 +198,27 @@ abdullahgharaibeh:
   url: https://github.com/ahg-g
   image_url: https://avatars.githubusercontent.com/u/40361897?v=4
 
+lioraronovich:
+  name: Lior Aronovich
+  title: Senior Principal Software Engineer, Red Hat
+  image_url: /img/blogs/lioraronovich.webp
+  socials:
+    github: https://github.com/lioraron
+
+raymondzhao:
+  name: Raymond Zhao
+  title: Principal Software Engineer, Red Hat
+  image_url: /img/blogs/raymondzhao.webp
+  socials:
+    github: https://github.com/yizhaodev
+
+jooyeonmok:
+  name: Jooyeon Mok
+  title: Software Engineer, Red Hat
+  image_url: /img/blogs/jooyeonmok.webp
+  socials:
+    github: https://github.com/j-mok-dev
+
 llm-d-maintainers:
   name: llm-d maintainers
   url: https://github.com/llm-d/llm-d/blob/main/MAINTAINERS.md
