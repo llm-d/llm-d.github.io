@@ -19,6 +19,8 @@
  * - GITHUB_TOKEN: Optional GitHub token to avoid rate limiting on github.com HEAD requests.
  *   Without a token, github.com may rate-limit repeated unauthenticated requests.
  *   In GitHub Actions, this is automatically available as ${{ secrets.GITHUB_TOKEN }}
+ * - GITHUB_EVENT_PATH / GITHUB_EVENT_NAME / GITHUB_REPOSITORY: Set automatically in
+ *   GitHub Actions pull_request workflows; used to post or update a PR comment with the report.
  *
  * Usage:
  *   npm run build:all  # Build the site first
@@ -127,6 +129,10 @@ async function stopServer() {
         try {
           await killProcessOnPort(config.serverPort);
         } catch (e) {
+          console.error(
+            '🚨 Error killing process on port [killProcessOnPort]:',
+            e,
+          );
           // Ignore errors
         }
 
@@ -135,10 +141,15 @@ async function stopServer() {
           try {
             process.kill(-serverProcess.pid, 'SIGKILL');
           } catch (e) {
+            console.error(
+              '🚨 Error killing process group [process.kill(-serverProcess.pid, SIGKILL)]:',
+              e,
+            );
             // Fallback to killing just the main process
             try {
               serverProcess.kill('SIGKILL');
             } catch (e2) {
+              console.error('🚨 Error killing process [serverProcess.kill(SIGKILL)]:', e2);
               // Process already dead
             }
           }
@@ -158,10 +169,18 @@ async function stopServer() {
         // Negative PID kills the process group
         process.kill(-serverProcess.pid, 'SIGTERM');
       } catch (e) {
+        console.error(
+          '🚨 Error killing process group [process.kill(-serverProcess.pid, SIGTERM)]:',
+          e,
+        );
         // Fallback to killing just the main process if process group fails
         try {
           serverProcess.kill('SIGTERM');
         } catch (e2) {
+          console.error(
+            '🚨 Error killing process [serverProcess.kill(SIGTERM)]:',
+            e2,
+          );
           // Process might already be dead, that's fine
           clearTimeout(timeout);
           serverProcess = null;
@@ -188,6 +207,10 @@ async function killProcessOnPort(port) {
         try {
           process.kill(parseInt(pid), 'SIGKILL');
         } catch (e) {
+          console.error(
+            "🚨 Error killing process [killProcessOnPort.lsof.SIGKILL]:",
+            e,
+          );
           // Process might already be dead
         }
         resolve();
@@ -214,11 +237,103 @@ function tryFuser(port, resolve) {
     resolve();
   });
 
-  fuser.on('error', () => {
+  fuser.on('error', (e) => {
+    console.error("🚨 Error killing process [tryFuser]:", e);
     // Neither lsof nor fuser available, just resolve
     // The process group kill should have worked anyway
     resolve();
   });
+}
+
+const PR_COMMENT_MARKER = '<!-- check-links-report -->';
+const GITHUB_COMMENT_MAX_LENGTH = 65536;
+
+function getPullRequestNumber() {
+  if (process.env.GITHUB_EVENT_NAME !== 'pull_request') {
+    return null;
+  }
+
+  const eventPath = process.env.GITHUB_EVENT_PATH;
+  if (!eventPath || !fs.existsSync(eventPath)) {
+    return null;
+  }
+
+  try {
+    const event = JSON.parse(fs.readFileSync(eventPath, 'utf-8'));
+    return event.pull_request?.number ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function githubApiRequest(url, options = {}) {
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`GitHub API ${response.status}: ${text.slice(0, 300)}`);
+  }
+  if (response.status === 204) {
+    return null;
+  }
+  return response.json();
+}
+
+async function postPullRequestComment(report) {
+  const token = process.env.GITHUB_TOKEN;
+  const repo = process.env.GITHUB_REPOSITORY;
+  const prNumber = getPullRequestNumber();
+
+  if (!token || !repo || !prNumber) {
+    return;
+  }
+
+  const [owner, repoName] = repo.split('/');
+  let body = `${PR_COMMENT_MARKER}\n${report}`;
+
+  if (body.length > GITHUB_COMMENT_MAX_LENGTH) {
+    body = `${body.slice(0, GITHUB_COMMENT_MAX_LENGTH - 200)}\n\n… _(report truncated)_`;
+  }
+
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    'Content-Type': 'application/json',
+    'User-Agent': 'llm-d-link-checker',
+  };
+
+  try {
+    const comments = await githubApiRequest(
+      `https://api.github.com/repos/${owner}/${repoName}/issues/${prNumber}/comments?per_page=100`,
+      { headers }
+    );
+
+    const existing = comments.find((comment) => comment.body?.includes(PR_COMMENT_MARKER));
+
+    if (existing) {
+      await githubApiRequest(
+        `https://api.github.com/repos/${owner}/${repoName}/issues/comments/${existing.id}`,
+        {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify({ body }),
+        }
+      );
+      console.log(`\n💬 Updated PR #${prNumber} comment with broken links report`);
+    } else {
+      await githubApiRequest(
+        `https://api.github.com/repos/${owner}/${repoName}/issues/${prNumber}/comments`,
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ body }),
+        }
+      );
+      console.log(`\n💬 Posted broken links report as PR #${prNumber} comment`);
+    }
+  } catch (err) {
+    console.error(`\n⚠️  Failed to post PR comment: ${err.message}`);
+  }
 }
 
 // Cleanup on exit
@@ -231,6 +346,7 @@ process.on('exit', () => {
       try {
         serverProcess.kill('SIGKILL'); // Force kill on exit
       } catch (e2) {
+        console.error('Error killing process [process.on.exit.SIGKILL]:', e2);
         // Process already dead
       }
     }
@@ -937,13 +1053,13 @@ async function checkLinks() {
       console.log('─'.repeat(80));
       console.log(report);
       console.log('─'.repeat(80));
-      await stopServer();
-      process.exit(1); // Exit with error code to fail CI
-    } else {
-      console.log(`\n🎉 No broken links found!`);
+      await postPullRequestComment(report);
+      return 1;
     }
+
+    console.log(`\n🎉 No broken links found!`);
+    return 0;
   } finally {
-    // Stop the server
     await stopServer();
   }
 }
@@ -1053,9 +1169,11 @@ function getSourceInfo(htmlPath, sourceMap) {
 }
 
 // Run the checker
-checkLinks().catch(async (err) => {
-  console.error('❌ Error:', err.message);
-  console.error(err.stack);
-  await stopServer();
-  process.exit(1);
-});
+checkLinks()
+  .then((exitCode) => process.exit(exitCode ?? 0))
+  .catch(async (err) => {
+    console.error('❌ Error:', err.message);
+    console.error(err.stack);
+    await stopServer();
+    process.exit(1);
+  });
