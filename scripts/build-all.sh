@@ -163,6 +163,9 @@ else
         -e 's|github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/README\.md|github.com/llm-d/llm-d/tree/main/docs/infrastructure/gateway|g' \
         -e 's|github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/\([^"]*\)\.md|github.com/llm-d/llm-d/tree/main/docs/infrastructure/gateway/\1.md|g' \
         -e 's|github.com/llm-d/llm-d/tree/main/docs/resources/gateway|github.com/llm-d/llm-d/tree/main/docs/infrastructure/gateway|g' \
+        -e 's|](\(\.\./\)*helpers/mooncake-master-store/base/configmap\.yaml)|](https://github.com/llm-d/llm-d/blob/main/helpers/mooncake-master-store/base/configmap.yaml)|g' \
+        -e 's|](\(\.\./\)*helpers/mooncake-master-store/)|](https://github.com/llm-d/llm-d/tree/main/helpers/mooncake-master-store)|g' \
+        -e 's|](\(\.\./\)*helpers/mooncake-client/)|](https://github.com/llm-d/llm-d/tree/main/helpers/mooncake-client)|g' \
         "$file"
     done < <(find "${WORKTREE_PATH}/preview/docs" -name "*.md" -print0)
 
