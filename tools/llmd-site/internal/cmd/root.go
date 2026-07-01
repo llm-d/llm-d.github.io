@@ -43,6 +43,7 @@ Sync, build, check, and ci commands replace the legacy bash/Node scripts.`,
 	root.AddCommand(newSyncCmd())
 	root.AddCommand(newBuildCmd())
 	root.AddCommand(newCheckCmd())
+	root.AddCommand(newBlogCmd())
 	root.AddCommand(newCICmd())
 
 	return root

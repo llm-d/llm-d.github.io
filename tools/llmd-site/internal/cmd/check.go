@@ -24,6 +24,8 @@ func newCheckCmd() *cobra.Command {
 		Short: "Validation checks on the built site",
 	}
 
+	var warnOnly bool
+
 	links := &cobra.Command{
 		Use:   "links",
 		Short: "Check links in built site (replaces scripts/check-links.mjs)",
@@ -34,7 +36,7 @@ and write broken-links-report.md. Posts a PR comment when GITHUB_TOKEN and PR co
 			if err != nil {
 				return err
 			}
-			code, err := check.CheckLinks(rootDir, m)
+			code, err := check.CheckLinksWithOptions(rootDir, m, check.CheckOptions{WarnOnly: warnOnly})
 			if err != nil {
 				return err
 			}
@@ -44,6 +46,8 @@ and write broken-links-report.md. Posts a PR comment when GITHUB_TOKEN and PR co
 			return nil
 		},
 	}
+
+	links.Flags().BoolVar(&warnOnly, "warn-on-broken-links", false, "report broken links but exit 0")
 
 	images := &cobra.Command{
 		Use:   "images",

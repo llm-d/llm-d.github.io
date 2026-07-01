@@ -15,6 +15,7 @@ func newCICmd() *cobra.Command {
 	var allowMissing bool
 	var parallel int
 	var skipCheck bool
+	var warnOnlyLinks bool
 
 	cmd := &cobra.Command{
 		Use:   "ci [dev-branch]",
@@ -57,7 +58,7 @@ Examples:
 				return nil
 			}
 
-			code, err := check.CheckLinks(rootDir, m)
+			code, err := check.CheckLinksWithOptions(rootDir, m, check.CheckOptions{WarnOnly: warnOnlyLinks})
 			if err != nil {
 				return err
 			}
@@ -74,6 +75,7 @@ Examples:
 	cmd.Flags().BoolVar(&allowMissing, "allow-missing", false, "allow missing upstream files during sync")
 	cmd.Flags().IntVar(&parallel, "parallel", 2, "max parallel release branch builds")
 	cmd.Flags().BoolVar(&skipCheck, "skip-check", false, "build only; skip link check")
+	cmd.Flags().BoolVar(&warnOnlyLinks, "warn-on-broken-links", false, "report broken links but exit 0")
 
 	return cmd
 }

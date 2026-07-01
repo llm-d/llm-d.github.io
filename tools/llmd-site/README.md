@@ -25,6 +25,7 @@ cd tools/llmd-site && go build -o ../../bin/llmd-site ./cmd/llmd-site
 | `llmd-site check links` | **Phase 4** — crawl built site, validate links, write report |
 | `llmd-site check images` | Verify all images load via HTTP |
 | `llmd-site ci [branch]` | Full CI pipeline: `build` + `check links` |
+| `llmd-site blog stamp [files...]` | Set blog frontmatter `date` on publish (see workflow) |
 
 ## Phase 4: `llmd-site check`
 
@@ -69,6 +70,7 @@ Workflows use the composite action [`.github/actions/setup-llmd-site`](../../.gi
 | `test-deploy.yml` | `./bin/llmd-site ci main` |
 | `deploy.yml` | `./bin/llmd-site build main` |
 | `sync-release-docs.yml` | `./bin/llmd-site sync` |
+| `blog-stamp-dates.yml` | `./bin/llmd-site blog stamp` on new posts merged to main |
 | `create-release-branch.yml` | `./bin/llmd-site sync` |
 | `image-verification.yml` | `./bin/llmd-site check images` |
 

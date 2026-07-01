@@ -137,12 +137,7 @@ func applyReleaseFixups(worktree string, m *manifest.Manifest) error {
 	}
 
 	// Additional regex fixups from build-all.sh not yet in manifest.
-	extra := []struct{ pattern, replace string }{
-		{
-			`github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/([^"]*)\.md`,
-			`github.com/llm-d/llm-d/tree/main/docs/infrastructure/gateway/$1.md`,
-		},
-	}
+	extra := []struct{ pattern, replace string }{}
 	for _, e := range extra {
 		re, err := regexp.Compile(e.pattern)
 		if err != nil {

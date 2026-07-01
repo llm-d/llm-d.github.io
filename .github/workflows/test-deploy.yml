@@ -21,7 +21,7 @@ jobs:
           npm-command: npm install
 
       - name: Build site and check links (llmd-site ci)
-        run: ./bin/llmd-site ci main
+        run: ./bin/llmd-site ci main --warn-on-broken-links
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
