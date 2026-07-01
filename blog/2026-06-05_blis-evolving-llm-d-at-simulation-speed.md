@@ -2,7 +2,7 @@
 title: "BLIS: Evolving llm-d at Simulation Speed"
 description: "BLIS is a calibrated discrete-event simulator for llm-d control-plane behavior. It helps developers evaluate routing, admission, KV cache, batching, prefill/decode placement, and capacity choices before spending time on cluster validation."
 slug: blis-evolving-llm-d-at-simulation-speed
-date: 2026-06-05T09:00
+date: 2026-07-01T09:00
 
 authors:
   - merttoslali
