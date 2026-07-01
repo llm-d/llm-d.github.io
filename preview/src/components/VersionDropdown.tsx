@@ -124,11 +124,11 @@ export default function VersionDropdown(): React.JSX.Element {
   };
 
   const getDropdownLabel = () => {
-    if (currentVersion === DEV_VERSION || !currentVersion) return 'dev ▾';
+    if (currentVersion === DEV_VERSION || !currentVersion) return 'dev';
 
     const vTag = `v${currentVersion}`;
-    if (vTag === latestTag) return `${vTag} (latest) ▾`;
-    return `${vTag} ▾`;
+    if (vTag === latestTag) return `${vTag} (latest)`;
+    return vTag;
   };
 
   const isDevActive = currentVersion === DEV_VERSION;

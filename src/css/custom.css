@@ -1,67 +1,521 @@
 /**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
+ * Global CSS for llm-d.ai.
+ * Design tokens are sourced from design.md — all overrides go through Infima variables.
  * https://infima.dev/
- * 
- * Colour Generation for :root
- * https://docusaurus.io/docs/styling-layout
  */
 
-/* You can override the default Infima variables here. */
+/* ===== TYPOGRAPHY: IBM Plex Sans ===== */
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-sans/700.css';
 
-@font-face {
-  font-family: "Red Hat Mono";
-  src: url(fonts/RedHatMono-VariableFont_wght.ttf);
-}
-
-@font-face {
-  font-family: "Red Hat Display";
-  src: url(fonts/RedHatDisplay-VariableFont_wght.ttf);
-}
-
+/* ===== LIGHT MODE ===== */
 :root {
-  --ifm-color-primary: #7f317f;
-  --ifm-color-primary-dark: #722c72;
-  --ifm-color-primary-darker: #6c2a6c;
-  --ifm-color-primary-darkest: #592259;
-  --ifm-color-primary-light: #8c368c;
-  --ifm-color-primary-lighter: #923892;
-  --ifm-color-primary-lightest: #a540a5;
+  /* Primary palette */
+  --ifm-color-primary: #7F317F;
+  --ifm-color-primary-dark: #6B2A6B;
+  --ifm-color-primary-darker: #5E245E;
+  --ifm-color-primary-darkest: #4A1C4A;
+  --ifm-color-primary-light: #933893;
+  --ifm-color-primary-lighter: #A044A0;
+  --ifm-color-primary-lightest: #CA77CA;
+
+  /* Surface & text */
+  --ifm-background-color: #FFFFFF;
+  --ifm-font-color-base: #000000;
+  --ifm-heading-color: #000000;
+
+  /* Typography */
+  --ifm-font-family-base: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --ifm-font-family-monospace: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --ifm-font-size-base: 1rem;
+  --ifm-line-height-base: 1.5;
   --ifm-code-font-size: 95%;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
-  --ifm-font-family-base: "Red Hat Display", Arial, Helvetica, sans-serif;
-  --ifm-font-family-monospace: "Red Hat Mono", "Courier New", monospace;
-  /* Light mode code block styling for better contrast */
+
+  /* Grid gutter base (Infima .row/.col use this; total gutter = 2x). */
+  --ifm-spacing-horizontal: 3rem;
+
+  /* Links */
+  --ifm-link-color: #7F317F;
+  --ifm-link-hover-color: #7F317F;
+  --ifm-link-decoration: none;
+  --ifm-link-hover-decoration: underline;
+
+  /* Navbar */
+  --ifm-navbar-background-color: #FFFFFF;
+  --ifm-navbar-shadow: none;
+
+  /* Sidebar */
+  --doc-sidebar-width: 384px !important;
+
+  /* Code blocks */
   --ifm-pre-background: #f6f8fa;
   --ifm-pre-color: #24292f;
   --ifm-code-background: #f6f8fa;
-  background-color: white;
+  --ifm-pre-border-radius: 0.4rem;
+  --ifm-pre-padding: 1rem;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
-[data-theme="dark"] {
-  --ifm-color-primary: #d494d4;
-  --ifm-color-primary-dark: #ca7aca;
-  --ifm-color-primary-darker: #c56dc5;
-  --ifm-color-primary-darkest: #b448b4;
-  --ifm-color-primary-light: #deaede;
-  --ifm-color-primary-lighter: #e3bbe3;
-  --ifm-color-primary-lightest: #f3e1f3;
+/* ===== DARK MODE ===== */
+html[data-theme='dark'] {
+  /* Primary palette */
+  --ifm-color-primary: #CA77CA;
+  --ifm-color-primary-dark: #B966B9;
+  --ifm-color-primary-darker: #AD5CAD;
+  --ifm-color-primary-darkest: #8F4A8F;
+  --ifm-color-primary-light: #D188D1;
+  --ifm-color-primary-lighter: #D992D9;
+  --ifm-color-primary-lightest: #E9AAE9;
+
+  /* Surface & text */
+  --ifm-background-color: #000000;
+  --ifm-font-color-base: #FFFFFF;
+  --ifm-heading-color: #FFFFFF;
+
+  /* Links */
+  --ifm-link-color: #CA77CA;
+  --ifm-link-hover-color: #CA77CA;
+
+  /* Navbar */
+  --ifm-navbar-background-color: #000000;
+
+  /* Code */
+  --ifm-code-background: rgba(255, 255, 255, 0.1);
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
-  background-color: #262626;
+
 }
+
+/* ===== TYPOGRAPHY SCALE ===== */
+h1 {
+  font-size: 3rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 2.25rem;
+}
+
+h3, h4, h5, h6 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.75rem;
+}
+
+/* Body text in .md/.mdx content (blog, community, pages) is 14px. Scoped to the
+   markdown wrapper so navbar/sidebar chrome and rem-based headings are
+   unaffected. */
+.markdown {
+  font-size: 0.875rem;
+}
+
+/* ===== NAVBAR ===== */
+.navbar {
+  border-bottom: 1px solid #000000;
+  box-shadow: none;
+}
+
+[data-theme='dark'] .navbar {
+  border-bottom: 1px solid #FFFFFF;
+}
+
+.navbar__link {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+}
+
+/* Force consistent inter-item spacing across both Docusaurus builds (main + preview). */
+.navbar__item.navbar__link,
+.navbar__items--left > .navbar__link {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+/* Active navbar items render flat (<a>) but inactive ones get wrapped in a
+   <div class="navbar__item"> by Docusaurus. The wrapper inherits the default
+   --ifm-navbar-item-padding-horizontal, so wrapped items end up wider than
+   flat ones and the row shifts as you change pages. Zero the wrapper's
+   horizontal padding for plain-link wrappers (not dropdowns) so wrapped
+   and flat items match width. */
+.navbar__items > .navbar__item:not(.navbar__link):not(.dropdown) {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Keep the version-dropdown trigger a fixed width regardless of its label
+   ("v0.7.0 (latest) ▾" on stable vs "dev ▾" on dev vs "v0.7.0 ▾" elsewhere)
+   so the rest of the navbar items don't shift between routes. */
+.navbar__items--left > .dropdown,
+.navbar__items--left > .navbar__item.dropdown {
+  min-width: 10rem;
+}
+
+.navbar__items--left > .dropdown > .navbar__link {
+  display: inline-block;
+  min-width: 9rem;
+  text-align: center;
+}
+
+/* Hide external-link icon on internal cross-app dropdown items
+   (e.g., v0.7.0 latest / Dev links that hop between main and preview). */
+.dropdown__link .iconExternalLink_nPIU,
+.dropdown__link svg[aria-label*="opens in new tab"] {
+  display: none !important;
+}
+
+/* Intro CTAs (combined-landing hero): white text on secondary button hover. */
+.intro-ctas .button--secondary:hover,
+.intro-ctas .button--secondary:focus-visible {
+  color: #fff !important;
+}
+
+.navbar__link--active,
+.navbar__link:active,
+.blog-wrapper aside .menu__link--sublist {
+  color: var(--ifm-color-primary) !important;
+}
+
+/* ===== SIDEBAR ===== */
+.theme-doc-sidebar-container {
+  border-right: none !important;
+}
+
+.menu__link {
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5rem;
+}
+
+.menu__link--active {
+  font-weight: 600;
+}
+
+/* ============================================
+   Sidebar visual hierarchy (mirrors PR #375)
+   Applied to community (docs plugin) AND blog sidebars in the main app.
+   ============================================ */
+
+/* Top-level categories AND standalone top-level doc links: semi-bold.
+   Includes blog year-group headers (rendered as .menu__link--sublist). */
+.theme-doc-sidebar-item-category-level-1 > .menu__list-item-collapsible > .menu__link,
+.theme-doc-sidebar-item-link-level-1 > .menu__link,
+.blog-wrapper aside .menu__link--sublist {
+  font-weight: 600;
+}
+
+/* Sub-categories and nested leaf doc links: normal weight */
+.theme-doc-sidebar-item-category-level-2 > .menu__list-item-collapsible > .menu__link,
+.theme-doc-sidebar-item-category-level-3 > .menu__list-item-collapsible > .menu__link,
+.theme-doc-sidebar-item-category-level-4 > .menu__list-item-collapsible > .menu__link,
+.theme-doc-sidebar-item-link-level-2 > .menu__link,
+.theme-doc-sidebar-item-link-level-3 > .menu__link,
+.theme-doc-sidebar-item-link-level-4 > .menu__link,
+.theme-doc-sidebar-item-link-level-5 > .menu__link {
+  font-weight: 400;
+}
+
+/* +4px extra spacing between items inside the sidebar.
+   Applies to community docs sidebar (theme-doc-sidebar-menu) AND blog sidebar. */
+.theme-doc-sidebar-menu .menu__list-item,
+.blog-wrapper aside .menu__list-item {
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+/* 24px breathing room between top-level sidebar sections (overrides +4px above) */
+.theme-doc-sidebar-menu > .menu__list-item:not(:last-child),
+.blog-wrapper aside > .menu > .menu__list > .menu__list-item:not(:last-child) {
+  margin-bottom: 1.5rem;
+}
+
+/* +8px extra space above sub-category headers (not first sibling) */
+.theme-doc-sidebar-item-category-level-2:not(:first-child),
+.theme-doc-sidebar-item-category-level-3:not(:first-child) {
+  margin-top: 8px;
+}
+
+/* ===== ICONS: Carbon Design System ===== */
+
+/* Sidebar collapse chevrons: Carbon ChevronUp 16, color-adaptive via mask */
+/* Covers both the separate caret button (::before) and the inline caret link (::after) */
+/* filter: none overrides Docusaurus's dark-mode invert(1) which would turn white→black */
+.menu__caret::before,
+.menu__link--sublist-caret::after {
+  background-image: none !important;
+  background-color: var(--ifm-font-color-base);
+  filter: none !important;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpolygon fill='black' points='8,5 13,10 12.3,10.7 8,6.4 3.7,10.7 3,10'/%3E%3C/svg%3E") center / 1.25rem 1.25rem no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpolygon fill='black' points='8,5 13,10 12.3,10.7 8,6.4 3.7,10.7 3,10'/%3E%3C/svg%3E") center / 1.25rem 1.25rem no-repeat;
+}
+
+/* Search input: Carbon Search 16 */
+.navbar__search-input {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='rgba(0,0,0,0.5)' d='M15,14.3L10.7,10c1.9-2.3,1.6-5.8-0.7-7.7S4.2,0.7,2.3,3S0.7,8.8,3,10.7c2,1.7,5,1.7,7,0l4.3,4.3L15,14.3z M2,6.5C2,4,4,2,6.5,2S11,4,11,6.5S9,11,6.5,11S2,9,2,6.5z'/></svg>") !important;
+}
+
+html[data-theme='dark'] .navbar__search-input {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='rgba(255,255,255,0.5)' d='M15,14.3L10.7,10c1.9-2.3,1.6-5.8-0.7-7.7S4.2,0.7,2.3,3S0.7,8.8,3,10.7c2,1.7,5,1.7,7,0l4.3,4.3L15,14.3z M2,6.5C2,4,4,2,6.5,2S11,4,11,6.5S9,11,6.5,11S2,9,2,6.5z'/></svg>") !important;
+}
+
+/* ===== TABLE OF CONTENTS ===== */
+.table-of-contents {
+  border-left: none;
+  /* Drop the list's 8px top padding so the space above the TOC is the content
+     area's 16px top padding (consistent scrolled and unscrolled). */
+  padding-top: 0;
+}
+
+.table-of-contents__link {
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5rem;
+}
+
+.table-of-contents__link--active {
+  font-weight: 600;
+}
+
+/* ===== PAGINATION NAV ===== */
+.pagination-nav {
+  box-shadow: none;
+  border-top: none;
+}
+
+.pagination-nav__link {
+  border: 1px solid var(--ifm-color-primary);
+  border-radius: 12px;
+  padding: 16px;
+  opacity: 0.8;
+  transition: opacity 0.2s ease, border-color 0.2s ease;
+}
+
+.pagination-nav__link:hover {
+  opacity: 1;
+  border-color: var(--ifm-color-primary);
+}
+
+[data-theme='dark'] .pagination-nav__link {
+  border-color: var(--ifm-color-primary);
+}
+
+[data-theme='dark'] .pagination-nav__link:hover {
+  opacity: 1;
+}
+
+.pagination-nav__sublabel {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--ifm-font-color-base);
+}
+
+.pagination-nav__label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ifm-color-primary);
+}
+
+.pagination-nav__link--prev::before,
+.pagination-nav__link--next::after {
+  display: none;
+}
+
+/* ===== BUTTONS ===== */
+.button--primary {
+  background-color: var(--ifm-color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.button--primary:hover {
+  background-color: var(--ifm-color-primary-dark);
+  color: #fff;
+}
+
+.button--secondary {
+  background-color: transparent;
+  border: 1px solid var(--ifm-color-primary);
+  color: var(--ifm-color-primary) !important;
+  border-radius: 8px;
+  padding: 0.6rem 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.button--secondary:hover {
+  background-color: var(--ifm-color-primary);
+  border-color: var(--ifm-color-primary);
+  color: var(--ifm-font-color-base) !important;
+}
+
+/* ===== LISTS ===== */
+.markdown ul,
+.markdown ol {
+  list-style-position: outside;
+  padding-left: 1.5rem;
+}
+
+.markdown li {
+  padding-left: 0;
+}
+
+/* ===== BREADCRUMBS ===== */
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumbs__item {
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumbs__link {
+  display: flex;
+  align-items: center;
+}
+
+/* ===== FOCUS RING ===== */
+:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+}
+
+/* ===== CODE BLOCKS ===== */
+html:not([data-theme='dark']) pre {
+  border: 1px solid #d0d7de;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+html:not([data-theme='dark']) .prism-code {
+  background-color: #f6f8fa !important;
+}
+
+[data-theme='dark'] .prism-code {
+  --prism-color: #9CDCFE !important;
+}
+
+[data-theme='dark'] pre.prism-code {
+  color: #9CDCFE !important;
+}
+
+[data-theme='dark'] .token-line {
+  color: #9CDCFE !important;
+}
+
+[data-theme='dark'] .token.plain {
+  color: #9CDCFE !important;
+}
+
+/* YAML token overrides */
+.language-yaml .prism-code .token.string { color: #032f62 !important; }
+.language-yaml .prism-code .token.comment { color: #6a737d !important; }
+.language-yaml .prism-code .token.key.atrule { color: #005cc5 !important; }
+.language-yaml .prism-code .token.number { color: #005cc5 !important; }
+.language-yaml .prism-code .token.boolean { color: #005cc5 !important; }
+
+[data-theme='dark'] .language-yaml .prism-code .token.string { color: #9ecbff !important; }
+[data-theme='dark'] .language-yaml .prism-code .token.comment { color: #8b949e !important; }
+[data-theme='dark'] .language-yaml .prism-code .token.key.atrule { color: #79c0ff !important; }
+[data-theme='dark'] .language-yaml .prism-code .token.number { color: #79c0ff !important; }
+[data-theme='dark'] .language-yaml .prism-code .token.boolean { color: #79c0ff !important; }
+
+/* ===== ADMONITIONS ===== */
+/* Info */
+.alert--info {
+  --ifm-alert-border-color: #316D9F;
+  background-color: #EEF4FA;
+}
+[data-theme='dark'] .alert--info {
+  --ifm-alert-border-color: #4DA3E6;
+  background-color: rgba(77, 163, 230, 0.1);
+  color: #7FBDEB;
+}
+
+/* Success / tip */
+.alert--success {
+  --ifm-alert-border-color: #3E8A58;
+  background-color: #EDF6F0;
+}
+[data-theme='dark'] .alert--success {
+  --ifm-alert-border-color: #36C98A;
+  background-color: rgba(54, 201, 138, 0.1);
+  color: #78D8AB;
+}
+
+/* Warning / caution */
+.alert--warning {
+  --ifm-alert-border-color: #C07A1A;
+  background-color: #FDF5EB;
+}
+[data-theme='dark'] .alert--warning {
+  --ifm-alert-border-color: #E6A23C;
+  background-color: rgba(230, 162, 60, 0.1);
+  color: #F2C27A;
+}
+
+/* Danger / error */
+.alert--danger {
+  --ifm-alert-border-color: #B54258;
+  background-color: #FAEDF0;
+}
+[data-theme='dark'] .alert--danger {
+  --ifm-alert-border-color: #E25566;
+  background-color: rgba(226, 85, 102, 0.1);
+  color: #F08B95;
+}
+
+/* ===== ANNOUNCEMENT BAR ===== */
+@media (min-width: 997px) {
+  :root {
+    --docusaurus-announcement-bar-height: auto !important;
+  }
+}
+
+.theme-announcement-bar {
+  height: auto !important;
+  min-height: 30px;
+  padding: 8px 16px;
+}
+
+/* Dark-mode separator between the (black) announcement banner and the navbar */
+[data-theme='dark'] .theme-announcement-bar {
+  border-bottom: 1px solid #FFFFFF;
+}
+
+/* Hide the Kapa.ai Ask-AI widget on /blog and /community.
+   Body class is toggled by src/clientModules/hide-kapa-widget.js. */
+body.hide-kapa-widget [id^="kapa"],
+body.hide-kapa-widget [class*="kapa"],
+body.hide-kapa-widget [class*="Kapa"],
+body.hide-kapa-widget iframe[src*="kapa.ai"],
+body.hide-kapa-widget mantine-modal-overlay {
+  display: none !important;
+}
+
+[class*='announcementBarContent'] {
+  white-space: normal !important;
+}
+
+/* ===== LANDING PAGE ===== */
 
 .hidden {
-display: none !important;
+  display: none !important;
 }
 
 .github {
-  background-image: url("@site/static/img/new-social/github-mark.png");
+  background-image: url('@site/static/img/new-social/github-mark.png');
 }
 
-[data-theme="dark"] .github {
-  background-image: url("@site/static/img/new-social/github-mark-white.png");
+[data-theme='dark'] .github {
+  background-image: url('@site/static/img/new-social/github-mark-white.png');
 }
 
 /* Footer social links */
@@ -79,14 +533,13 @@ display: none !important;
   justify-content: start;
 }
 
-/* Responsive layout for smaller footer widths */
 @media screen and (max-width: 996px) {
   .footer-socials-row {
     grid-template-columns: repeat(4, 28px);
     gap: 12px;
     justify-content: start;
   }
-  
+
   .footer-socials img {
     width: 28px;
     height: 28px;
@@ -95,6 +548,26 @@ display: none !important;
 
 .footer-socials-cta {
   margin-top: 4px;
+}
+
+/* CNCF Sandbox mention shown in the Social footer column */
+.footer-cncf {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 12px;
+  font-size: 0.875rem;
+}
+
+.footer-cncf-logo {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  filter: brightness(0);
+}
+
+[data-theme='dark'] .footer-cncf-logo {
+  filter: brightness(0) invert(1);
 }
 
 .footer-socials a {
@@ -113,6 +586,11 @@ display: none !important;
 
 .footer-socials img:hover {
   transform: scale(1.1);
+}
+
+/* Footer background is white in light mode; make white icon PNGs visible */
+html:not([data-theme='dark']) .footer-socials img {
+  filter: brightness(0);
 }
 
 /* Navbar GitHub icon */
@@ -135,8 +613,8 @@ display: none !important;
   margin: 0 2px !important;
 }
 
-/* Make GitHub stars iframe fit tightly */
-.navbar-github-stars {
+.navbar-github-stars,
+.navbar-slack-item {
   display: flex !important;
   align-items: center;
 }
@@ -157,9 +635,8 @@ display: none !important;
   border-radius: 6px;
   font-family: var(--ifm-font-family-base);
   font-size: 1rem;
-  font-weight: var(--ifm-font-weight-semibold);
+  font-weight: 600;
   vertical-align: middle;
-  margin-left: 0;
   transition: background-color 0.2s ease;
 }
 
@@ -169,18 +646,36 @@ display: none !important;
   text-decoration: none;
 }
 
-[data-theme="dark"] .navbar-slack-button:hover {
-  background-color: #3a3a3a;
+[data-theme='dark'] .navbar-slack-button:hover {
+  background-color: #1a1a1a;
 }
 
-/* Hide GitHub stars in top navbar below 1105px (they appear in hamburger menu instead) */
-@media screen and (max-width: 1105px) {
+@media screen and (max-width: 700px) {
   .navbar__inner .navbar-github-stars {
+    display: none !important;
+  }
+  /* Hide the Slack icon in the header on mobile to avoid overlapping the
+     logo; it remains available in the collapsed (hamburger) menu. */
+  .navbar__inner .navbar-slack-item {
     display: none !important;
   }
 }
 
-/* Style GitHub stars in mobile sidebar */
+@media screen and (max-width: 996px) {
+  /* Reserve space for the absolutely-positioned search bar (144px + 16px = 160px) */
+  .navbar__items--right {
+    padding-right: 164px !important;
+  }
+  /* Compact GitHub iframe so both items fit before search overlay */
+  .navbar-github-stars iframe {
+    width: 80px !important;
+  }
+  /* Slack icon only — hide text label */
+  .slack-label {
+    display: none !important;
+  }
+}
+
 .navbar-sidebar .navbar-github-stars {
   display: flex !important;
   padding: 8px 16px;
@@ -194,34 +689,24 @@ display: none !important;
 .header {
   display: flex;
   align-content: center;
-  @media screen and (max-width: 1440px) {
+}
+
+@media screen and (max-width: 1440px) {
+  .header {
     font-size: 2.5rem;
   }
 }
 
-* em b {
-  box-sizing: border-box;
-  font-weight: 500;
-  font-size: 1.1rem;
-  @media screen and (max-width: 768px) {
-    font-size: 1rem !important;
-  }
-}
-
-.viewport {
-  width: 100vw;
-  height: 100vh;
-  max-width: 100%;
-  @media screen and (max-width: 1024px) and (orientation: landscape) {
-    height: auto;
-  }
-}
-
+.viewport,
 .about-viewport {
   width: 100vw;
   height: 100vh;
   max-width: 100%;
-  @media screen and (max-width: 1024px) and (orientation: landscape) {
+}
+
+@media screen and (max-width: 1024px) and (orientation: landscape) {
+  .viewport,
+  .about-viewport {
     height: auto;
   }
 }
@@ -231,7 +716,10 @@ display: none !important;
   width: 100vw;
   height: 100vh;
   max-width: 100%;
-  @media screen and (max-width: 1024px) and (orientation: landscape) {
+}
+
+@media screen and (max-width: 1024px) and (orientation: landscape) {
+  .welcome-viewport {
     height: auto;
   }
 }
@@ -247,10 +735,9 @@ display: none !important;
   font-size: larger;
 }
 
-/* ----------------------------- Welcome Section ---------------------------- */
-
+/* Welcome section */
 .welcome {
-  background-image: url("@site/static/img/background.png");
+  background-image: url('@site/static/img/background.png');
   background-position: center;
   background-size: cover;
 }
@@ -263,7 +750,10 @@ display: none !important;
 img.llm-d-logo {
   display: inline-block;
   padding-bottom: 10%;
-  @media screen and (max-width: 768px) {
+}
+
+@media screen and (max-width: 768px) {
+  img.llm-d-logo {
     width: 100%;
   }
 }
@@ -275,14 +765,17 @@ img.llm-d-logo {
   margin: 20%;
   background-color: rgba(255, 255, 255);
   border-radius: 40px;
-  @media screen and (max-width: 1024px) and (orientation: landscape) {
+}
+
+@media screen and (max-width: 1024px) and (orientation: landscape) {
+  .welcome-info {
     margin: 10%;
   }
 }
 
-[data-theme="dark"] .welcome-info {
-  background-color: rgba(38, 38, 38);
-  color: #fff;
+[data-theme='dark'] .welcome-info {
+  background-color: #000000;
+  color: #FFFFFF;
 }
 
 .welcome-h1 {
@@ -292,7 +785,10 @@ img.llm-d-logo {
 
 .welcome-h2 {
   font-weight: 500;
-  @media screen and (max-width: 768px) {
+}
+
+@media screen and (max-width: 768px) {
+  .welcome-h2 {
     padding: 0%;
     font-size: 1rem;
   }
@@ -301,7 +797,10 @@ img.llm-d-logo {
 .hidden-for-mobile {
   display: block;
   padding-top: 5%;
-  @media screen and (max-width: 768px) {
+}
+
+@media screen and (max-width: 768px) {
+  .hidden-for-mobile {
     display: none;
   }
 }
@@ -321,25 +820,23 @@ img.llm-d-logo {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 15px;
-  border: 1px solid transparent;
-  padding: 1rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 700;
+  border-radius: 8px;
+  border: none;
+  padding: 0.6rem 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
   font-family: inherit;
-  background-color: #7f317f;
+  background-color: var(--ifm-color-primary);
   cursor: pointer;
-  transition: border-color 0.25s, background-color 0.25s;
+  transition: background-color 0.2s;
   text-decoration: none;
   color: #fff;
-  min-width: 160px;
   white-space: nowrap;
-  flex: 0 1 auto;
 }
 
-.static-button:hover {
-  background-color: #a540a5;
-  transition: 250ms;
+.static-button:hover,
+.install-button:hover {
+  background-color: var(--ifm-color-primary-dark);
 }
 
 .button-link,
@@ -348,8 +845,7 @@ img.llm-d-logo {
   color: #fff;
 }
 
-/* ----------------------------- Install Section ---------------------------- */
-
+/* Install section */
 .install-header {
   display: flex;
 }
@@ -360,14 +856,20 @@ img.llm-d-logo {
   align-items: center;
   justify-items: center;
   padding: 20%;
-  @media screen and (max-width: 1024px) and (orientation: landscape) {
+}
+
+@media screen and (max-width: 1024px) and (orientation: landscape) {
+  .install-info {
     padding: 10%;
   }
 }
 
 .install-h1 {
   font-size: 300%;
-  @media screen and (max-width: 1024px) {
+}
+
+@media screen and (max-width: 1024px) {
+  .install-h1 {
     font-size: 150%;
   }
 }
@@ -375,7 +877,10 @@ img.llm-d-logo {
 .install-h2 {
   font-weight: 600;
   font-size: 200%;
-  @media screen and (max-width: 1024px) {
+}
+
+@media screen and (max-width: 1024px) {
+  .install-h2 {
     font-size: 100%;
   }
 }
@@ -383,7 +888,10 @@ img.llm-d-logo {
 .install-h3 {
   font-weight: 500;
   font-size: 150%;
-  @media screen and (max-width: 1024px) {
+}
+
+@media screen and (max-width: 1024px) {
+  .install-h3 {
     font-size: 75%;
     margin: 0;
   }
@@ -396,7 +904,7 @@ img.llm-d-logo {
 }
 
 .install-code {
-  font-family: "Red Hat Mono", monospace !important;
+  font-family: var(--ifm-font-family-monospace);
   font-weight: 500;
   padding: 1rem;
   background-color: #262626;
@@ -411,13 +919,15 @@ img.llm-d-logo {
 .install-logo {
   margin-left: 2%;
   padding-bottom: 2.5%;
-  @media screen and (max-width: 1024px) {
+}
+
+@media screen and (max-width: 1024px) {
+  .install-logo {
     display: none;
   }
 }
 
-/* ------------------------------ Demo Section ------------------------------ */
-
+/* Demo section */
 .demo-h1 {
   text-align: center;
   font-size: xx-large;
@@ -430,26 +940,31 @@ img.llm-d-logo {
   width: 100%;
 }
 
-/* ------------------------------ About Section ----------------------------- */
-
+/* About section */
 .demo,
 .about {
   padding: 10%;
 }
 
-.about {
-  @media screen and (max-width: 1024px) {
+@media screen and (max-width: 1024px) {
+  .about {
     padding: 15% 10%;
-    @media screen and (max-width: 500px) {
-      padding: 30% 10%;
-    }
+  }
+}
+
+@media screen and (max-width: 500px) {
+  .about {
+    padding: 30% 10%;
   }
 }
 
 .about-header {
   display: flex;
   align-content: center;
-  @media screen and (max-width: 1440px) {
+}
+
+@media screen and (max-width: 1440px) {
+  .about-header {
     font-size: 2.5rem;
   }
 }
@@ -457,8 +972,8 @@ img.llm-d-logo {
 .about-grid {
   display: grid;
   grid-template-areas:
-    "graphic-1 graphic-2 graphic-3 graphic-4"
-    "text-1 text-2 text-3 text-4";
+    'graphic-1 graphic-2 graphic-3 graphic-4'
+    'text-1 text-2 text-3 text-4';
   align-items: center;
   align-content: stretch;
   justify-items: center;
@@ -466,26 +981,30 @@ img.llm-d-logo {
   text-align: center;
   gap: 2em;
   height: auto;
+}
 
-  @media screen and (max-width: 1024px) {
+@media screen and (max-width: 1024px) {
+  .about-grid {
     grid-template-areas:
-      "graphic-1 graphic-2"
-      "text-1 text-2"
-      "graphic-3 graphic-4"
-      "text-3 text-4";
+      'graphic-1 graphic-2'
+      'text-1 text-2'
+      'graphic-3 graphic-4'
+      'text-3 text-4';
     gap: 1em;
+  }
+}
 
-    @media screen and (max-width: 500px) {
-      grid-template-areas:
-        "graphic-1"
-        "text-1"
-        "graphic-2"
-        "text-2"
-        "graphic-3"
-        "text-3"
-        "graphic-4"
-        "text-4";
-    }
+@media screen and (max-width: 500px) {
+  .about-grid {
+    grid-template-areas:
+      'graphic-1'
+      'text-1'
+      'graphic-2'
+      'text-2'
+      'graphic-3'
+      'text-3'
+      'graphic-4'
+      'text-4';
   }
 }
 
@@ -495,37 +1014,14 @@ img.llm-d-logo {
   height: auto;
 }
 
-.about-graphic-1 {
-  grid-area: graphic-1;
-}
-
-.about-graphic-2 {
-  grid-area: graphic-2;
-}
-
-.about-graphic-3 {
-  grid-area: graphic-3;
-}
-
-.about-graphic-4 {
-  grid-area: graphic-4;
-}
-
-.about-text-1 {
-  grid-area: text-1;
-}
-
-.about-text-2 {
-  grid-area: text-2;
-}
-
-.about-text-3 {
-  grid-area: text-3;
-}
-
-.about-text-4 {
-  grid-area: text-4;
-}
+.about-graphic-1 { grid-area: graphic-1; }
+.about-graphic-2 { grid-area: graphic-2; }
+.about-graphic-3 { grid-area: graphic-3; }
+.about-graphic-4 { grid-area: graphic-4; }
+.about-text-1 { grid-area: text-1; }
+.about-text-2 { grid-area: text-2; }
+.about-text-3 { grid-area: text-3; }
+.about-text-4 { grid-area: text-4; }
 
 .about-graphic-1,
 .about-graphic-2,
@@ -533,11 +1029,23 @@ img.llm-d-logo {
 .about-graphic-4 {
   width: 18vw;
   margin-top: 1vh;
-  @media screen and (max-width: 1024px) {
+}
+
+@media screen and (max-width: 1024px) {
+  .about-graphic-1,
+  .about-graphic-2,
+  .about-graphic-3,
+  .about-graphic-4 {
     width: 25vw;
-    @media screen and (max-width: 500px) {
-      width: 75vw;
-    }
+  }
+}
+
+@media screen and (max-width: 500px) {
+  .about-graphic-1,
+  .about-graphic-2,
+  .about-graphic-3,
+  .about-graphic-4 {
+    width: 75vw;
   }
 }
 
@@ -554,118 +1062,197 @@ img.llm-d-logo {
   max-width: 280px;
 }
 
-/* ul li {
-  list-style: none;
-  padding: 0;
-} */
-
 .ul-bulleted {
   list-style-type: disc;
   padding: 0;
 }
 
 .footer--dark {
-  --ifm-footer-background-color: #262626 !important;
+  --ifm-footer-background-color: #FFFFFF !important;
+  --ifm-footer-color: #000000 !important;
+  --ifm-footer-link-color: #000000 !important;
+  --ifm-footer-title-color: #000000 !important;
+  border-top: 1px solid #000000;
 }
 
-/* ----------------------------- Announcement Bar ---------------------------- */
+/* All footer text at 14px (0.875rem) — column titles, link items, copyright,
+   CNCF mention, Slack CTA label. */
+.footer,
+.footer__title,
+.footer__link-item,
+.footer__items,
+.footer__copyright,
+.footer-socials,
+.footer-cncf,
+.footer-socials-cta {
+  font-size: 0.875rem;
+}
 
-/* Override Docusaurus fixed height on desktop */
+[data-theme='dark'] .footer--dark {
+  --ifm-footer-background-color: #000000 !important;
+  --ifm-footer-color: #FFFFFF !important;
+  --ifm-footer-link-color: #FFFFFF !important;
+  --ifm-footer-title-color: #FFFFFF !important;
+  border-top: 1px solid #FFFFFF;
+}
+
+/* ===== DOCS INTRO PAGE ===== */
+
+.intro-founded {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin: 1.5rem 0 1rem;
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.intro-founded-logos {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.intro-founder-logo {
+  height: 18px;
+  width: auto;
+  filter: brightness(0);
+}
+
+html[data-theme='dark'] .intro-founder-logo {
+  filter: brightness(0) invert(1);
+}
+
+.intro-cncf {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  font-size: 1rem;
+  color: var(--ifm-font-color-base);
+  margin-bottom: 0.5rem;
+}
+
+.intro-cncf p {
+  margin: 0;
+}
+
+.intro-cncf-logo {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  filter: brightness(0);
+}
+
+html[data-theme='dark'] .intro-cncf-logo {
+  filter: brightness(0) invert(1);
+}
+
+.intro-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+.intro-stat {
+  margin-right: 0.25rem;
+}
+
+.intro-stats li {
+  white-space: nowrap;
+}
+
+.markdown .intro-ctas + hr,
+.markdown hr:has(+ h2) {
+  margin: 1.5rem 0;
+}
+
+/* ===== BLOG LAYOUT: Exact match to docs grid (desktop only) ===== */
+/* All overrides scoped to ≥997px so mobile/tablet inherit Docusaurus defaults,
+   matching the same breakpoint used by docs and community. */
 @media (min-width: 997px) {
-  :root {
-    --docusaurus-announcement-bar-height: auto !important;
+  /* Remove centered container so sidebar anchors at viewport x=0, matching docs. */
+  .blog-wrapper .container.margin-vert--lg {
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .blog-wrapper .container.margin-vert--lg > .row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* Sidebar: exact 384px at left edge, sticky like docs sidebarViewport */
+  .blog-wrapper aside.col--3 {
+    flex: 0 0 var(--doc-sidebar-width) !important;
+    max-width: var(--doc-sidebar-width) !important;
+    position: sticky;
+    top: var(--ifm-navbar-height);
+    max-height: calc(100vh - var(--ifm-navbar-height));
+    overflow-y: auto;
+    align-self: flex-start;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* Remove the 0.5rem default .menu padding so the first item starts flush with the docs sidebar */
+  .blog-wrapper aside .menu.thin-scrollbar {
+    padding-top: 8px !important;
+    padding-left: 8px !important;
+  }
+
+  /* Main: mirror docs/community exactly. Their content area (docMainContainer)
+     fills 100% - sidebar; flex-basis 0 + the max-width cap make this column do
+     the same without ever wrapping below the sidebar. Vertical padding lives
+     here (applied once) so the blog LIST doesn't get extra spacing per post. */
+  .blog-wrapper main.col--7 {
+    flex: 1 1 0 !important;
+    max-width: calc(100% - var(--doc-sidebar-width)) !important;
+    margin: 0 !important;
+    padding: var(--ifm-spacing-vertical) 0 calc(var(--ifm-spacing-vertical) * 2) !important;
+  }
+
+  /* Inner content = docs/community's centered .container: capped at the XL
+     container width with a 1rem inset. This reproduces their exact left edge at
+     every width — flush at sidebar+16px on narrow screens, and centered once the
+     content area grows past the container width (as docs/community do). */
+  .blog-wrapper main.col--7 > article {
+    max-width: var(--ifm-container-width-xl) !important;
+    /* Left offset = the centering gap docs/community get from their margin:auto
+       1320px container: zero until the content area (viewport - sidebar) exceeds
+       the container width, then half the overflow. Computed from the viewport so
+       it is correct for BOTH the blog list (main fills the row) and the blog post
+       (a right-hand TOC column narrows main, so article auto-centering would not
+       reach the same position). */
+    margin-left: max(0px, calc((100vw - var(--doc-sidebar-width) - var(--ifm-container-width-xl)) / 2)) !important;
+    margin-right: auto !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
   }
 }
 
-/* Main announcement bar container - allow height to grow */
-.theme-announcement-bar {
-  height: auto !important;
-  min-height: 30px;
-  padding: 8px 16px;
+
+/* Blog post title: Docusaurus bumps the h2 to h1 font-size (48px) but our h2 rule
+   leaves line-height at 36px — reset to 1.25 to match docs h1 (60px at 48px) */
+.blog-wrapper article h2 {
+  line-height: 1.25 !important;
 }
 
-/* Content styling - allow wrapping */
-[class*="announcementBarContent"] {
-  white-space: normal !important;
+/* Blog post title links should use heading color, not link color */
+.blog-wrapper article h1 a,
+.blog-wrapper article h2 a {
+  color: var(--ifm-heading-color);
+  text-decoration: none;
 }
 
-/* Improved YAML syntax highlighting site-wide */
-/* Fix YAML code blocks to avoid red/green diff-like appearance */
-
-/* Light mode YAML colors */
-.language-yaml .prism-code .token.string {
-  color: #032f62 !important; /* Dark blue instead of red */
-}
-
-.language-yaml .prism-code .token.comment {
-  color: #6a737d !important; /* Muted gray instead of bright green */
-}
-
-.language-yaml .prism-code .token.key.atrule {
-  color: #005cc5 !important; /* Professional blue for YAML keys */
-}
-
-.language-yaml .prism-code .token.number {
-  color: #005cc5 !important; /* Consistent blue for numbers */
-}
-
-.language-yaml .prism-code .token.boolean {
-  color: #005cc5 !important; /* Consistent blue for booleans */
-}
-
-/* Dark mode YAML colors */
-[data-theme="dark"] .language-yaml .prism-code .token.string {
-  color: #9ecbff !important; /* Light blue instead of red */
-}
-
-[data-theme="dark"] .language-yaml .prism-code .token.comment {
-  color: #8b949e !important; /* Muted gray instead of bright green */
-}
-
-[data-theme="dark"] .language-yaml .prism-code .token.key.atrule {
-  color: #79c0ff !important; /* Light blue for keys */
-}
-
-[data-theme="dark"] .language-yaml .prism-code .token.number {
-  color: #79c0ff !important; /* Consistent light blue */
-}
-
-[data-theme="dark"] .language-yaml .prism-code .token.boolean {
-  color: #79c0ff !important; /* Consistent light blue */
-}
-
-/* Improve light mode code block visibility with border and shadow - LIGHT MODE ONLY */
-html:not([data-theme="dark"]) pre {
-  border: 1px solid #d0d7de;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-/* Override Prism inline styles for better contrast - LIGHT MODE ONLY */
-html:not([data-theme="dark"]) .prism-code {
-  background-color: #f6f8fa !important;
-}
-
-html:not([data-theme="dark"]) .codeBlockContainer_Ckt0 {
-  --prism-background-color: #f6f8fa !important;
-}
-
-html:not([data-theme="dark"]) pre.prism-code {
-  background-color: #f6f8fa !important;
-}
-
-/* Dark mode code block text - use original blue color from vsDark theme */
-[data-theme="dark"] .prism-code {
-  --prism-color: #9CDCFE !important;
-}
-
-[data-theme="dark"] pre.prism-code {
-  color: #9CDCFE !important;
-}
-
-[data-theme="dark"] .token-line {
-  color: #9CDCFE !important;
-}
-
-[data-theme="dark"] .token.plain {
-  color: #9CDCFE !important;
+.blog-wrapper article h1 a:hover,
+.blog-wrapper article h2 a:hover {
+  text-decoration: underline;
 }

@@ -231,6 +231,18 @@ Index/README:
 With any number of parent directories:
 [Guide Link](/guides/flow-control)
 
+New subdirectory layout (capabilities/):
+[Tiered Cache](/guides/tiered-prefix-cache)
+
+New subdirectory layout (operations/):
+[Flow Control](/guides/flow-control)
+
+New subdirectory layout (workloads/batch-serving/):
+[Batch Gateway](/guides/batch-gateway)
+
+New subdirectory layout (workloads/):
+[Agentic Serving](/guides/agentic-serving)
+
 ## 11. README.md Link Transformations
 
 Test that README links are transformed correctly:

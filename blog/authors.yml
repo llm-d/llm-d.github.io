@@ -203,6 +203,125 @@ llm-d-maintainers:
   url: https://github.com/llm-d/llm-d/blob/main/MAINTAINERS.md
   image_url: /img/authors/llm-d-maintainers.png
 
+praveinkannan:
+  name: Pravein Govindan Kannan
+  title: Staff Research Scientist, IBM
+  email: pravein.govindan.kannan@ibm.com
+  image_url: https://avatars.githubusercontent.com/u/9940568?v=4
+  socials:
+    linkedin: praveingk
+    github: https://github.com/praveingk
+    twitter: praveingk
+
+praveenjayachandran:
+  name: Praveen Jayachandran
+  title: Senior Technical Staff Member, IBM
+  email: praveen.j@in.ibm.com
+  image_url: /img/blogs/praveenjayachandran.webp
+  socials:
+    linkedin: praveen-jayachandran-97831113a
+
+jaikhari:
+  name: Jaikrishnan Hari
+  title: Research Partnerships & BD Executive, IBM
+  email: jaikhari@in.ibm.com
+  image_url: /img/blogs/jaikhari.webp
+  socials:
+    linkedin: jaikrishnan-hari-a137972
+
+varunraste:
+  name: Varun Raste
+  title: Solution Architect, IBM
+  email: varun.raste@ibm.com
+  image_url: /img/blogs/varunraste.webp
+  socials:
+    linkedin: varun-raste-0783b3184
+
+prasadmukhedkar:
+  name: Prasad Mukhedkar
+  title: Associate Principal AI Architect, Red Hat
+  email: pmukhedk@redhat.com
+  image_url: /img/blogs/prasadmukhedkar.webp
+  socials:
+    linkedin: prasadmukhedkar1
+
+vinodpathangay:
+  name: Vinod Pathangay
+  title: Chief Architect, Field CTO Organization, Red Hat
+  email: vpathang@redhat.com
+  image_url: /img/blogs/vinodpathangay.webp
+  socials:
+    linkedin: vinod-pathangay
+
+jayanthreddy:
+  name: Jayanth Babu Reddy
+  title: Principal Architect, NxtGen Cloud Technologies
+  email: jayanth.reddy@nxtgen.ai
+  image_url: /img/blogs/jayanthreddy.webp
+  socials:
+    linkedin: jayanth-babu-reddy-498bb0207
+
+abhisyant:
+  name: Abhisyant Anasapurapu
+  title: VP, NxtGen Cloud Technologies
+  email: abhisyant@nxtgen.ai
+  image_url: /img/blogs/abhisyant.webp
+  socials:
+    linkedin: abhisyant
+
+liranschour:
+  name: Liran Schour
+  title: Senior Research Scientist, IBM Research
+  email: liran.schour@gmail.com
+  image_url: https://ca.slack-edge.com/E27SFGS2W-W53PQF1QW-17929f20fdfc-512
+  socials:
+    linkedin: liran-schour-9a8a1027
+    github: liranschour
+
+aslom:
+  name: Aleksander Slominski
+  title: Senior Research Scientist, IBM Research
+  email: aslom@us.ibm.com
+  image_url: https://ca.slack-edge.com/E27SFGS2W-W49HTNVGR-1b0885c27e95-512
+  socials:
+    linkedin: aslom
+    github: aslom
+
+rajjoshi:
+  name: Raj Joshi
+  title: Senior Machine Learning Engineer, Red Hat
+  email: rajjoshi@redhat.com
+  image_url: https://ca.slack-edge.com/E030G10V24F-U09NVNF8JP7-cfbc57010dc3-512
+  socials:
+    linkedin: rajkiranjoshi
+    github: rajkiranjoshi
+
+nicklucche:
+  name: Nicolò Lucchesi
+  title: Senior Machine Learning Engineer, Red Hat
+  email: nicklucche@redhat.com
+  image_url: /img/blogs/nicklucche.webp
+  socials:
+    linkedin: nicklucche
+    github: nicklucche
+
+moeinkh:
+  name: Moein Khazraee
+  title: Senior Architect, NVIDIA
+  email: moein@nvidia.com
+  image_url: /img/blogs/moeinkh.webp
+  socials:
+    linkedin: mkhazraee
+    github: mkhazraee
+
+omrik:
+  name: Omri Kahalon
+  title: Senior Manager, NVIDIA
+  email: omrik@nvidia.com
+  image_url: /img/blogs/omrik.webp
+  socials:
+    linkedin: omri-kahalon-b4a025a9
+
 merttoslali:
   name: Mert Toslali
   title: Research Scientist, IBM
@@ -282,4 +401,3 @@ carloscosta:
   image_url: https://github.com/chcost.png
   socials:
     github: https://github.com/chcost
-

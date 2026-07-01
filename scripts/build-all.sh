@@ -29,6 +29,14 @@ echo "llm-d.ai Unified Build Script"
 echo "========================================="
 echo ""
 
+# Pre-step: Sync preview/docs so the main site build can find them
+echo "Pre-step: Syncing docs content..."
+cd "$PROJECT_DIR/preview"
+bash scripts/sync-docs.sh "$DEV_DOCS_BRANCH"
+cd "$PROJECT_DIR"
+echo "✓ Docs synced to preview/docs/"
+echo ""
+
 # Step 1: Build main site (landing, blog, community)
 echo "Step 1: Building main site..."
 cd "$PROJECT_DIR"
@@ -126,6 +134,20 @@ else
     # logo) come from main too, so they exist for every version's build.
     cp -r "$PROJECT_DIR/preview/static/." "${WORKTREE_PATH}/preview/static/"
 
+    # Propagate brand/social assets referenced by main's CSS so versioned builds
+    # resolve them. Doc-specific images under static/img/docs/ are left alone.
+    for asset in CNCF-logo.svg llm-d-logo-light.svg llm-d-logo-dark.svg background.png; do
+      cp -f "$PROJECT_DIR/preview/static/img/$asset" "${WORKTREE_PATH}/preview/static/img/" 2>/dev/null || true
+    done
+    cp -rf "$PROJECT_DIR/preview/static/img/new-social" "${WORKTREE_PATH}/preview/static/img/" 2>/dev/null || true
+    cp -rf "$PROJECT_DIR/preview/static/img/logos" "${WORKTREE_PATH}/preview/static/img/" 2>/dev/null || true
+    # Propagate releases.json so the version dropdown on every versioned build
+    # has the same release list as main. Without this, Netlify's worktree
+    # build relies on a fresh GitHub API fetch which can silently fail
+    # (rate-limited, network), leaving the versioned build with no
+    # releases.json and the dropdown shows only "dev".
+    cp -f "$PROJECT_DIR/preview/static/releases.json" "${WORKTREE_PATH}/preview/static/releases.json" 2>/dev/null || true
+
     # Apply fixups for known stale GitHub links in committed release-branch content.
     # These patch specific link targets that changed in upstream after the branch was cut.
     echo "  Applying link fixups to release branch docs..."
@@ -138,8 +160,29 @@ else
       "${SED_INPLACE[@]}" \
         -e 's|github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware|github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing|g' \
         -e 's|github.com/llm-d/llm-d/tree/main/guides/predicted-latency-based-scheduling|github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing|g' \
+        -e 's|github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/README\.md|github.com/llm-d/llm-d/tree/main/docs/infrastructure/gateway|g' \
+        -e 's|github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/\([^"]*\)\.md|github.com/llm-d/llm-d/tree/main/docs/infrastructure/gateway/\1.md|g' \
+        -e 's|github.com/llm-d/llm-d/tree/main/docs/resources/gateway|github.com/llm-d/llm-d/tree/main/docs/infrastructure/gateway|g' \
+        -e 's|](\(\.\./\)*helpers/mooncake-master-store/base/configmap\.yaml)|](https://github.com/llm-d/llm-d/blob/main/helpers/mooncake-master-store/base/configmap.yaml)|g' \
+        -e 's|](\(\.\./\)*helpers/mooncake-master-store/)|](https://github.com/llm-d/llm-d/tree/main/helpers/mooncake-master-store)|g' \
+        -e 's|](\(\.\./\)*helpers/mooncake-client/)|](https://github.com/llm-d/llm-d/tree/main/helpers/mooncake-client)|g' \
         "$file"
     done < <(find "${WORKTREE_PATH}/preview/docs" -name "*.md" -print0)
+
+    # === Local-preview overlay: PR #1820 combined-landing README.mdx ===
+    # The release-0.7.0 worktree ships only README.md for getting-started. Overlay
+    # the .mdx so the canonical /docs/getting-started shows the landing-style intro
+    # PR #362 was designed against. No-op if PR1820_REPO doesn't exist.
+    PR1820_REPO="${PR1820_REPO:-/tmp/llm-d-pr1820}"
+    if [[ -f "$PR1820_REPO/docs/getting-started/README.mdx" ]]; then
+      echo "  Overlaying docs home from PR #1820 ($PR1820_REPO)..."
+      cp "$PR1820_REPO/docs/getting-started/README.mdx" "${WORKTREE_PATH}/preview/docs/getting-started/index.mdx"
+      rm -f "${WORKTREE_PATH}/preview/docs/getting-started/index.md"
+      # The combined-landing MDX hardcodes absolute https://llm-d.ai/img/ asset URLs
+      # (founder + CNCF logos). Rewrite to root-relative so they resolve in local
+      # builds too; on production /img/ is the same origin, so prod is unaffected.
+      "${SED_INPLACE[@]}" -e 's|https://llm-d.ai/img/|/img/|g' "${WORKTREE_PATH}/preview/docs/getting-started/index.mdx"
+    fi
 
     cd "${WORKTREE_PATH}/preview"
     npm install --silent

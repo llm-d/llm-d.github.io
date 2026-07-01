@@ -292,7 +292,7 @@ At high replica counts, the EPP issues one prediction call per candidate pod per
 
 1) **Health checks**
 
-```shell
+```bash
 kubectl get pods
 curl http://<pod-ip>:8000/readyz   # training
 curl http://<pod-ip>:8001/readyz   # prediction (and 8002, 8003, ...)
@@ -301,7 +301,7 @@ curl http://<pod-ip>:8001/readyz   # prediction (and 8002, 8003, ...)
 
 2) **Send an SLO-aware request**
 
-```shell
+```bash
 curl -v $GW_IP/v1/completions \
   -H 'Content-Type: application/json' \
   -H 'x-prediction-based-scheduling: true' \
@@ -319,7 +319,7 @@ curl -v $GW_IP/v1/completions \
 
 3) **Watch the picker think (EPP logs, `-v=4`)**
 
-```
+```text
 msg:"Running profile handler, Pick profiles" plugin:"slo-aware-profile-handler/slo-aware-profile-handler"
 msg:"Before running scorer plugins" pods:[{... "pod_name":"...-5k7qr"}, {... "pod_name":"...-9lp5g"}]
 msg:"Pod score" scorer_type:"slo-scorer" pod_name:"vllm-...-9b4wt" score:0.82

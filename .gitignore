@@ -42,4 +42,11 @@ docs/usage/**/*.md
 # Keep category files for sidebar configuration
 !docs/guide/Installation/_category_.json
 !docs/guide/InfraProviders/_category_.json
-preview/static/releases.json
+
+
+# editor and IDE paraphernalia
+.idea
+.vscode
+*.swp
+*.swo
+*~

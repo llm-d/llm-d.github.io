@@ -1,0 +1,12 @@
+# .github/labeler.yml
+
+# Label definitions
+
+# Blog posts
+Blog Post:
+  - changed-files:
+    - any-glob-to-any-file: 'blog/**/*.md'
+action:
+  - changed-files:
+    - any-glob-to-any-file: '.github/workflows/*.yml'
+    - any-glob-to-any-file: '.github/workflows/*.yaml'

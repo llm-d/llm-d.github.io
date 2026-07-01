@@ -1,0 +1,48 @@
+.toc {
+  position: fixed;
+  /* sidebar (384px) + content (675px) + col padding (16px) */
+  left: calc(var(--doc-sidebar-width) + 675px + var(--ifm-spacing-horizontal));
+  top: calc(var(--ifm-navbar-height) + 2rem);
+  width: 210px;
+  max-height: calc(100vh - var(--ifm-navbar-height) - 4rem);
+  overflow-y: auto;
+  font-size: 0.8125rem;
+}
+
+.tocHeading {
+  font-weight: 700;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ifm-font-color-base);
+  margin-bottom: 0.75rem;
+}
+
+.tocList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tocList li {
+  margin: 0.35rem 0;
+}
+
+.tocLink {
+  color: var(--ifm-font-color-base);
+  text-decoration: none;
+  display: block;
+  line-height: 1.4;
+}
+
+.tocLink:hover {
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+}
+
+/* Hide on narrow viewports where there's no room */
+@media (max-width: 1100px) {
+  .toc {
+    display: none;
+  }
+}

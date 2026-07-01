@@ -1,7 +1,7 @@
 ---
 title: Contributing to llm-d
 description: Guidelines for contributing to the llm-d project
-sidebar_label: Welcome to llm-d
+sidebar_label: Welcome to llm-d community
 sidebar_position: 1
 ---
 
