@@ -107,7 +107,12 @@ export default function VersionDropdown() {
 
   return (
     <div className="navbar__item dropdown dropdown--hoverable">
-      <a className="navbar__link" href="#" onClick={(e) => e.preventDefault()}>
+      <a
+        className="navbar__link"
+        href="#"
+        aria-haspopup="true"
+        aria-label="Documentation version"
+        onClick={(e) => e.preventDefault()}>
         {getDropdownLabel()}
       </a>
       <ul className="dropdown__menu">

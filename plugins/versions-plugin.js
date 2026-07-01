@@ -59,7 +59,11 @@ module.exports = function versionsPlugin() {
           if (!byMinor[minor] || semverGT(tag, byMinor[minor])) byMinor[minor] = tag;
         }
 
-        const versions = Object.values(byMinor).sort().reverse();
+        const versions = Object.values(byMinor).sort((a, b) => {
+          if (semverGT(a, b)) return -1;
+          if (semverGT(b, a)) return 1;
+          return 0;
+        });
         fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
         fs.writeFileSync(OUTPUT, JSON.stringify(versions, null, 2));
         console.log(`[versions-plugin] Fetched and cached ${versions.length} versions from GitHub`);
