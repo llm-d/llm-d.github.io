@@ -359,6 +359,18 @@ release_fixups:
     - pattern: github.com/llm-d/llm-d/tree/main/docs/resources/gateway
       replace: github.com/llm-d/llm-d/tree/main/docs/infrastructure/gateway
       scope: release_branch_docs
+    - pattern: github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/([^"]*)\.md
+      replace: github.com/llm-d/llm-d/tree/main/docs/infrastructure/gateway/$1.md
+      scope: release_branch_docs
+    - pattern: '\]\((\.\./)*helpers/mooncake-master-store/base/configmap\.yaml\)'
+      replace: '](https://github.com/llm-d/llm-d/blob/main/helpers/mooncake-master-store/base/configmap.yaml)'
+      scope: release_branch_docs
+    - pattern: '\]\((\.\./)*helpers/mooncake-master-store/\)'
+      replace: '](https://github.com/llm-d/llm-d/tree/main/helpers/mooncake-master-store)'
+      scope: release_branch_docs
+    - pattern: '\]\((\.\./)*helpers/mooncake-client/\)'
+      replace: '](https://github.com/llm-d/llm-d/tree/main/helpers/mooncake-client)'
+      scope: release_branch_docs
 stubs:
     enabled: true
 replacements_pending:

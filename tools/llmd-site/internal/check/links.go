@@ -68,6 +68,16 @@ func (c *Checker) checkURLsConcurrently(
 
 // CheckLinks crawls the built site and returns exit code (0 ok, 1 broken links).
 func CheckLinks(repoRoot string, m *manifest.Manifest) (int, error) {
+	return CheckLinksWithOptions(repoRoot, m, CheckOptions{})
+}
+
+// CheckOptions configures link checking behavior.
+type CheckOptions struct {
+	WarnOnly bool
+}
+
+// CheckLinksWithOptions crawls the built site and validates links.
+func CheckLinksWithOptions(repoRoot string, m *manifest.Manifest, opts CheckOptions) (int, error) {
 	cfg := LoadConfig(repoRoot)
 	if _, err := os.Stat(cfg.BuildDir); err != nil {
 		return 1, fmt.Errorf("build directory not found at %s — run build first", cfg.BuildDir)
@@ -123,6 +133,10 @@ func CheckLinks(repoRoot string, m *manifest.Manifest) (int, error) {
 		fmt.Println(report)
 		fmt.Println(stringsRepeat("─", 80))
 		postPullRequestComment(report)
+		if opts.WarnOnly {
+			fmt.Println("\n⚠️  Broken links reported (warn-only mode; exiting 0)")
+			return 0, nil
+		}
 		return 1, nil
 	}
 
@@ -240,6 +254,9 @@ func (c *Checker) crawlAndValidate() ([]BrokenLink, int, map[string]struct{}, er
 			cat := "internal"
 			if meta.linkType == "image" {
 				cat = "image"
+			}
+			if c.pageExists(path) {
+				continue
 			}
 			for src := range meta.sourcePages {
 				broken = append(broken, BrokenLink{

@@ -1,0 +1,67 @@
+name: Stamp blog publish dates
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'blog/**'
+
+permissions:
+  contents: write
+
+jobs:
+  stamp-blog-dates:
+    name: Stamp blog publish dates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - uses: ./.github/actions/setup-llmd-site
+        with:
+          npm-command: ''
+          go-test: 'true'
+
+      - name: Stamp dates on newly added blog posts
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BEFORE}" ] || [ "${BEFORE}" = "0000000000000000000000000000000000000000" ]; then
+            echo "No previous commit on branch; skipping stamp"
+            exit 0
+          fi
+
+          mapfile -t FILES < <(git diff --name-only --diff-filter=A "${BEFORE}" "${AFTER}" -- 'blog/*.md' || true)
+          if [ "${#FILES[@]}" -eq 0 ]; then
+            echo "No new blog posts in this push"
+            exit 0
+          fi
+
+          echo "New blog posts:"
+          printf '  %s\n' "${FILES[@]}"
+
+          PUBLISH_DATE="$(date -u +%Y-%m-%d)"
+          ./bin/llmd-site blog stamp --date "${PUBLISH_DATE}" "${FILES[@]}"
+
+          git add blog/
+          if git diff --staged --quiet; then
+            echo "No date changes to commit"
+            exit 0
+          fi
+
+          git commit -m "$(cat <<EOF
+chore(blog): stamp publish date on new posts (${PUBLISH_DATE})
+
+Auto-updated by llmd-site blog stamp on merge to main.
+EOF
+)"
+          git push origin main
