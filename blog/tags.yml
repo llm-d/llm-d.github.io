@@ -98,3 +98,18 @@ inference:
   label: Inference
   permalink: /inference
   description: LLM inference serving and optimization
+
+networking:
+  label: Networking
+  permalink: /networking
+  description: Networking, transports, and KV Cache transfers for distributed inference
+
+nixl:
+  label: NIXL
+  permalink: /nixl
+  description: NVIDIA Inference Xfer Library (NIXL) backends and integration
+
+uccl:
+  label: UCCL
+  permalink: /uccl
+  description: Unified Collective Communication Library (UCCL) backend
