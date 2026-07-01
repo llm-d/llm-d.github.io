@@ -139,7 +139,7 @@ We evaluated on a 1P+3D topology (1 prefill + 3 decode instances) using BLIS's t
 
 - **Interactive chat:** 5K-token prefix, approximately 50 uncached tokens per turn, 4 turns per session. At N=16, the threshold decider disaggregates nearly every turn. Because uncached inputs are short, the KV-transfer round trip adds overhead with little throughput benefit. EDPP disaggregates only when decode backlog makes the transfer worthwhile, reducing mean TTFT by 2-3x at moderate-to-high load in BLIS.
 - **Code generation:** 30K-token prefix, approximately 1,500 uncached tokens per turn, 15 turns per session. At N=16, the threshold fires for 100% of requests. This can saturate the prefill pool and inflate TTFT by up to 20x relative to always-local. EDPP's SLO-feedback loop suppresses disaggregation when TTFT exceeds the target, stabilizing the disaggregation fraction near 50%.
-
+- **Code generation:** 30K-token prefix, approximately 1,500 uncached tokens per turn, 15 turns per session. At N=16, the threshold fires for 100% of requests, routing all of them to the prefill pool. This can saturate prefill and inflate TTFT by up to 20× relative to always-local. EDPP avoids this: when disaggregated requests start missing the TTFT SLO, its feedback loop reduces the disaggregation rate — in this workload, settling near 50% — so the prefill pool stays below saturation and TTFT remains bounded.
 The plot below shows one slice of this policy comparison for the interactive-chat workload.
 
 ![PD Decider: Threshold=16 vs Empirical Drift Plus Penalty](/img/blogs/blis-evolving-llm-d-at-simulation-speed/pd-decider-ttft.png)
