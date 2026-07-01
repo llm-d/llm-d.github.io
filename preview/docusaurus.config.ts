@@ -57,7 +57,6 @@ const config: Config = {
   trailingSlash: false,
 
   onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
   onBrokenAnchors: 'warn',
 
   i18n: {
@@ -67,6 +66,10 @@ const config: Config = {
 
   markdown: {
     mermaid: true,
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+      onBrokenMarkdownImages: 'warn',
+    },
   },
 
   themes: ['@docusaurus/theme-mermaid'],
@@ -252,7 +255,7 @@ const config: Config = {
           },
           showLastUpdateTime: true,
           // No Docusaurus versioning. Versioning is handled at the build layer
-          // (scripts/build-all.sh): the latest stable release is served at the
+          // (llmd-site build): the latest stable release is served at the
           // canonical /docs/ URL, dev lives at /docs/dev/, and each release-X.Y.Z
           // branch is also exposed at /docs/X.Y.Z/. The navbar dropdown
           // (preview/src/components/VersionDropdown.tsx) routes between them.

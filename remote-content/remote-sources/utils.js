@@ -2,7 +2,7 @@
  * Utilities for Community Documentation Remote Content
  *
  * Helper functions for syncing community documentation from llm-d/llm-d.
- * All other documentation is synced via the preview/scripts/sync-docs.sh system.
+ * All other documentation is synced via llmd-site / docs-sync.yaml.
  */
 
 import { transformRepo } from './repo-transforms.js';

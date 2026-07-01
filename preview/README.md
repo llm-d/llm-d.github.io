@@ -32,8 +32,8 @@ LLMD_REPO=~/repos/llm-d LLMD_FETCH=1 npm run build:all
 To sync docs only (without a full build):
 
 ```bash
-# From the preview/ directory
-LLMD_REPO=~/repos/llm-d bash scripts/sync-docs.sh
+make llmd-site
+LLMD_REPO=~/repos/llm-d ./bin/llmd-site sync main --local
 ```
 
 ## Build

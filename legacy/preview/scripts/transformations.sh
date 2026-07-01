@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# transformations.sh - Shared transformation functions used by both sync-docs.sh and test-transformations.sh
+# ARCHIVED copy for legacy sync-docs.sh — production: tools/llmd-site/internal/transform/
 #
 # This ensures transformations are identical in production and tests
 

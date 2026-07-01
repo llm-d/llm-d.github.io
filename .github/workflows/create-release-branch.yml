@@ -32,23 +32,15 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Create and checkout release branch
-        run: |
-          git checkout -b release-${{ inputs.version }}
+        run: git checkout -b release-${{ inputs.version }}
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
+      - uses: ./.github/actions/setup-llmd-site
         with:
-          node-version: 20.18.1
-          cache: npm
-          cache-dependency-path: preview/package-lock.json
-
-      - name: Install dependencies
-        run: cd preview && npm install
+          npm-command: ''
+          go-test: 'true'
 
       - name: Sync docs from llm-d/llm-d release branch
-        run: |
-          cd preview
-          bash scripts/sync-docs.sh ${{ inputs.source_branch }}
+        run: ./bin/llmd-site sync ${{ inputs.source_branch }}
 
       - name: Commit synced docs
         run: |
@@ -60,8 +52,7 @@ jobs:
           fi
 
       - name: Push release branch
-        run: |
-          git push origin release-${{ inputs.version }}
+        run: git push origin release-${{ inputs.version }}
 
       - name: Summary
         run: |

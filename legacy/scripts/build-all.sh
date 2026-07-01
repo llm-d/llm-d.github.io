@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# ARCHIVED — see legacy/README.md. Replaced by make build-all / ./bin/llmd-site build.
 # build-all.sh — Unified build script for local dev, Netlify, and GitHub Actions
 #
 # Layout produced:
@@ -19,7 +20,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PREVIEW_DIR="$REPO_ROOT/preview"
+LEGACY_SYNC="$REPO_ROOT/legacy/preview/scripts/sync-docs.sh"
 
 # Branch in llm-d/llm-d that backs the "dev" docs (defaults to main)
 DEV_DOCS_BRANCH="${1:-main}"
@@ -31,9 +34,9 @@ echo ""
 
 # Pre-step: Sync preview/docs so the main site build can find them
 echo "Pre-step: Syncing docs content..."
-cd "$PROJECT_DIR/preview"
-bash scripts/sync-docs.sh "$DEV_DOCS_BRANCH"
-cd "$PROJECT_DIR"
+cd "$PREVIEW_DIR"
+bash "$LEGACY_SYNC" "$DEV_DOCS_BRANCH"
+cd "$REPO_ROOT"
 echo "✓ Docs synced to preview/docs/"
 echo ""
 
@@ -48,7 +51,7 @@ echo ""
 
 # Step 2: Discover release branches and pick the latest stable
 echo "Step 2: Discovering release branches..."
-cd "$PROJECT_DIR"
+cd "$REPO_ROOT"
 git fetch origin 2>/dev/null || true
 RELEASE_BRANCHES=$(git branch -r | grep 'origin/release-' | grep -v HEAD || true)
 
@@ -76,11 +79,11 @@ fi
 # Step 3: Build dev docs from llm-d/llm-d@$DEV_DOCS_BRANCH
 echo "Step 3: Syncing and building dev docs from llm-d/llm-d @ $DEV_DOCS_BRANCH..."
 echo "        Output: build/$DEV_OUTPUT_SUBDIR/ (baseUrl: $DEV_BASE_URL)"
-cd "$PROJECT_DIR/preview"
-bash scripts/sync-docs.sh "$DEV_DOCS_BRANCH"
+cd "$PREVIEW_DIR"
+bash "$LEGACY_SYNC" "$DEV_DOCS_BRANCH"
 npm install
 DOCS_BASE_URL="$DEV_BASE_URL" npm run build
-cd "$PROJECT_DIR"
+cd "$REPO_ROOT"
 mkdir -p "build/$DEV_OUTPUT_SUBDIR"
 cp -r preview/build/* "build/$DEV_OUTPUT_SUBDIR/"
 echo "✓ Dev docs built to build/$DEV_OUTPUT_SUBDIR/"
@@ -124,31 +127,31 @@ else
     # version. Doc CONTENT in preview/docs/ comes from the worktree and is
     # left untouched.
     echo "  Syncing UX from main into worktree..."
-    cp "$PROJECT_DIR/preview/docusaurus.config.ts" \
+    cp "$REPO_ROOT/preview/docusaurus.config.ts" \
        "${WORKTREE_PATH}/preview/docusaurus.config.ts"
-    cp "$PROJECT_DIR/preview/package.json" \
+    cp "$REPO_ROOT/preview/package.json" \
        "${WORKTREE_PATH}/preview/package.json"
-    cp "$PROJECT_DIR/preview/package-lock.json" \
+    cp "$REPO_ROOT/preview/package-lock.json" \
        "${WORKTREE_PATH}/preview/package-lock.json"
     rm -rf "${WORKTREE_PATH}/preview/src"
-    cp -r "$PROJECT_DIR/preview/src" "${WORKTREE_PATH}/preview/src"
+    cp -r "$REPO_ROOT/preview/src" "${WORKTREE_PATH}/preview/src"
     # Static assets (logos referenced by the synced footer/navbar, e.g. the CNCF
     # logo) come from main too, so they exist for every version's build.
-    cp -r "$PROJECT_DIR/preview/static/." "${WORKTREE_PATH}/preview/static/"
+    cp -r "$REPO_ROOT/preview/static/." "${WORKTREE_PATH}/preview/static/"
 
     # Propagate brand/social assets referenced by main's CSS so versioned builds
     # resolve them. Doc-specific images under static/img/docs/ are left alone.
     for asset in CNCF-logo.svg llm-d-logo-light.svg llm-d-logo-dark.svg background.png; do
-      cp -f "$PROJECT_DIR/preview/static/img/$asset" "${WORKTREE_PATH}/preview/static/img/" 2>/dev/null || true
+      cp -f "$REPO_ROOT/preview/static/img/$asset" "${WORKTREE_PATH}/preview/static/img/" 2>/dev/null || true
     done
-    cp -rf "$PROJECT_DIR/preview/static/img/new-social" "${WORKTREE_PATH}/preview/static/img/" 2>/dev/null || true
-    cp -rf "$PROJECT_DIR/preview/static/img/logos" "${WORKTREE_PATH}/preview/static/img/" 2>/dev/null || true
+    cp -rf "$REPO_ROOT/preview/static/img/new-social" "${WORKTREE_PATH}/preview/static/img/" 2>/dev/null || true
+    cp -rf "$REPO_ROOT/preview/static/img/logos" "${WORKTREE_PATH}/preview/static/img/" 2>/dev/null || true
     # Propagate releases.json so the version dropdown on every versioned build
     # has the same release list as main. Without this, Netlify's worktree
     # build relies on a fresh GitHub API fetch which can silently fail
     # (rate-limited, network), leaving the versioned build with no
     # releases.json and the dropdown shows only "dev".
-    cp -f "$PROJECT_DIR/preview/static/releases.json" "${WORKTREE_PATH}/preview/static/releases.json" 2>/dev/null || true
+    cp -f "$REPO_ROOT/preview/static/releases.json" "${WORKTREE_PATH}/preview/static/releases.json" 2>/dev/null || true
 
     # Apply fixups for known stale GitHub links in committed release-branch content.
     # These patch specific link targets that changed in upstream after the branch was cut.
@@ -191,7 +194,7 @@ else
 
     # Always produce the versioned URL so external links remain stable
     DOCS_BASE_URL=/docs/${VERSION}/ npm run build
-    cd "$PROJECT_DIR"
+    cd "$REPO_ROOT"
     mkdir -p "build/docs/${VERSION}"
     cp -r "${WORKTREE_PATH}/preview/build/"* "build/docs/${VERSION}/"
     echo "  ✓ Built /docs/${VERSION}/"
@@ -200,7 +203,7 @@ else
     if [ "$IS_LATEST" = "yes" ]; then
       cd "${WORKTREE_PATH}/preview"
       DOCS_BASE_URL=/docs/ npm run build
-      cd "$PROJECT_DIR"
+      cd "$REPO_ROOT"
       cp -r "${WORKTREE_PATH}/preview/build/"* "build/docs/"
       echo "  ✓ Built /docs/ (latest = $VERSION)"
     fi
@@ -211,8 +214,8 @@ fi
 
 # Step 5: Merge /docs pages into the main site search index
 echo "Step 5: Merging docs into unified search index..."
-cd "$PROJECT_DIR"
-node scripts/merge-search-index.mjs
+cd "$REPO_ROOT"
+node "$REPO_ROOT/scripts/merge-search-index.mjs"
 echo "✓ Unified search index updated"
 echo ""
 

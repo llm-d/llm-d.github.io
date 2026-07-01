@@ -4,8 +4,8 @@
  * Simplified transformation system that converts relative markdown links
  * to absolute GitHub URLs for community documentation files.
  *
- * All other documentation is synced via the preview/scripts/sync-docs.sh system,
- * which uses its own transformation logic in preview/scripts/transformations.sh.
+ * All other documentation is synced via llmd-site / docs-sync.yaml,
+ * which uses Go transforms in tools/llmd-site/internal/transform/.
  */
 
 /**

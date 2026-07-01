@@ -53,7 +53,7 @@ gh workflow run create-release-branch.yml \
 2. For each branch:
    - Extracts version (e.g., `release-0.7.0` → version `0.7.0`)
    - Derives source branch (e.g., `0.7.0` → `release-0.7` in llm-d/llm-d)
-   - Syncs docs via `scripts/sync-docs.sh`
+   - Syncs docs via `./bin/llmd-site sync`
    - Commits and pushes changes if any
 
 #### 3. `deploy.yml` (updated)

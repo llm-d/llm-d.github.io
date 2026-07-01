@@ -1,88 +1,26 @@
-# Build Scripts
+# Active scripts
 
-## Unified Build Script
+Site builds and checks are handled by the **`llmd-site`** Go CLI (`tools/llmd-site/`).
+See [legacy/README.md](../legacy/README.md) for archived bash/Node scripts.
 
-The `build-all.sh` script provides a **single source of truth** for building the complete llm-d.ai website (main site + docs) across all environments:
+## merge-search-index.mjs
 
-- **Local development**
-- **Netlify preview deployments**
-- **GitHub Actions production deployments**
+Merges the root-site and docs-site lunr search indexes after a full build.
 
-### What it does
+**Called from:** `llmd-site build` (`internal/search/merge.go`)
 
-1. Builds the main site (landing page, blog, community)
-2. Syncs preview docs from upstream `llm-d/llm-d` repository
-3. Builds the preview docs site
-4. Merges the preview build into the main build at `/docs`
-
-### Usage
-
-#### Standard build (syncs from main branch):
-```bash
-npm run build:all
-```
-
-#### Build with specific branch:
-```bash
-bash scripts/build-all.sh release-0.7
-```
-
-#### Use local llm-d clone instead of fetching:
-```bash
-LLMD_REPO=/path/to/local/llm-d npm run build:all
-```
-
-### Local Testing Workflow
-
-To test the complete site locally (exactly as it will appear in production):
+**Manual run** (after `make build-all` or `./bin/llmd-site build main`):
 
 ```bash
-# Build everything and serve it
-npm run serve:production
-
-# Then open in browser:
-# - Main site: http://localhost:3000
-# - Docs site: http://localhost:3000/docs
+npm run merge-search-index
 ```
 
-This is the **recommended way** to verify changes before pushing to GitHub or deploying to Netlify.
+## Common commands
 
-### Environment Alignment
-
-All three deployment environments use the same build process:
-
-| Environment | Command |
-|-------------|---------|
-| **Local** | `npm run build:all` |
-| **Netlify** | `npm run build:all` (configured in `netlify.toml`) |
-| **GitHub Actions** | `npm run build:all` (configured in `.github/workflows/deploy.yml`) |
-
-This ensures that if it works locally, it will work in Netlify and GitHub Actions.
-
-### Output Structure
-
-After running `build:all`, the `build/` directory contains:
-
-```
-build/
-├── index.html          # Main site landing page
-├── blog/               # Blog posts
-├── community/          # Community content
-├── docs/              # Preview docs site (merged from preview/build)
-│   ├── index.html
-│   ├── getting-started/
-│   ├── architecture/
-│   └── ...
-└── ...
-```
-
-### Troubleshooting
-
-**Issue**: Docs not showing at `/docs`
-- **Solution**: Make sure you ran `npm run build:all` (not just `npm run build`)
-
-**Issue**: Stale docs content
-- **Solution**: The script syncs from upstream each time. Delete `preview/docs/` and re-run if needed.
-
-**Issue**: Build fails in preview step
-- **Solution**: Check that `preview/scripts/sync-docs.sh` is working correctly. You can run it manually: `cd preview && bash scripts/sync-docs.sh main`
+| Task | Command |
+|------|---------|
+| Full site build | `npm run build:all` → `make build-all` → `./bin/llmd-site build main` |
+| Link check | `npm run check-links` → `./bin/llmd-site check links` |
+| Image check | `npm run test:images` → `./bin/llmd-site check images` |
+| Sync docs | `./bin/llmd-site sync [branch]` |
+| CI (build + checks) | `./bin/llmd-site ci main` |
