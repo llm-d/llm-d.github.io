@@ -623,6 +623,27 @@ html:not([data-theme='dark']) .footer-socials img {
   width: 150px !important;
 }
 
+/* Plain GitHub icon-link (octocat, no star count). Hidden on wide screens where
+   the star button above is shown; swapped in at narrow/mobile widths below. */
+.navbar-github-icon {
+  display: none;
+}
+.navbar-github-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 8px;
+  color: var(--ifm-navbar-link-color);
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+.navbar-github-button:hover {
+  background-color: #f0f0f0;
+  color: var(--ifm-navbar-link-hover-color);
+}
+[data-theme='dark'] .navbar-github-button:hover {
+  background-color: #1a1a1a;
+}
+
 /* Navbar Slack button */
 .navbar-slack-button {
   display: inline-flex;
@@ -650,29 +671,54 @@ html:not([data-theme='dark']) .footer-socials img {
   background-color: #1a1a1a;
 }
 
-@media screen and (max-width: 700px) {
-  .navbar__inner .navbar-github-stars {
-    display: none !important;
-  }
-  /* Hide the Slack icon in the header on mobile to avoid overlapping the
-     logo; it remains available in the collapsed (hamburger) menu. */
-  .navbar__inner .navbar-slack-item {
-    display: none !important;
-  }
-}
-
 @media screen and (max-width: 996px) {
   /* Reserve space for the absolutely-positioned search bar (144px + 16px = 160px) */
   .navbar__items--right {
     padding-right: 164px !important;
   }
-  /* Compact GitHub iframe so both items fit before search overlay */
-  .navbar-github-stars iframe {
-    width: 80px !important;
+  /* Swap the star button for the plain GitHub icon (no count) at narrow widths;
+     keep it (and the Slack icon) in the header down through mobile. */
+  .navbar-github-stars {
+    display: none !important;
+  }
+  .navbar-github-icon {
+    display: flex !important;
   }
   /* Slack icon only — hide text label */
   .slack-label {
     display: none !important;
+  }
+}
+
+/* ===== Narrow-desktop navbar (997px–1200px) =====
+   Above Docusaurus's 996px hamburger breakpoint the full navbar stays inline,
+   but the left group (…version dropdown) and right group (GitHub star…) don't
+   fit and overlap under justify-content: space-between — the logo runs into
+   "Documentation" and the version dropdown runs into the GitHub star. Compact
+   the widest items so the row fits without prematurely raising the (JS-gated)
+   996px mobile breakpoint. */
+@media screen and (min-width: 997px) and (max-width: 1200px) {
+  /* Tighter inter-item spacing for the left links */
+  .navbar__item.navbar__link,
+  .navbar__items--left > .navbar__link {
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
+  }
+  /* Drop the fixed 10rem/9rem version-dropdown reservation; size to content */
+  .navbar__items--left > .dropdown,
+  .navbar__items--left > .navbar__item.dropdown {
+    min-width: 0;
+  }
+  .navbar__items--left > .dropdown > .navbar__link {
+    min-width: 0;
+  }
+  /* Slack: icon only (full label returns at wider widths) */
+  .navbar-slack-button .slack-label {
+    display: none;
+  }
+  /* Compact the GitHub star button */
+  .navbar-github-stars iframe {
+    width: 90px !important;
   }
 }
 
