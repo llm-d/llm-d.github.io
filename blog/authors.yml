@@ -292,7 +292,7 @@ rajjoshi:
   title: Senior Machine Learning Engineer, Red Hat
   email: rajjoshi@redhat.com
   image_url: https://ca.slack-edge.com/E030G10V24F-U09NVNF8JP7-cfbc57010dc3-512
-  socials: 
+  socials:
     linkedin: rajkiranjoshi
     github: rajkiranjoshi
 
@@ -321,3 +321,83 @@ omrik:
   image_url: /img/blogs/omrik.webp
   socials:
     linkedin: omri-kahalon-b4a025a9
+
+merttoslali:
+  name: Mert Toslali
+  title: Research Scientist, IBM
+  email: toslali@ibm.com
+  image_url: https://github.com/mtoslalibu.png
+  socials:
+    github: https://github.com/mtoslalibu
+
+dipanwitaguhathakurta:
+  name: Dipanwita Guhathakurta
+  title: Software Engineer, IBM
+  email: dipanwita.guhathakurta3@ibm.com
+  image_url: https://github.com/susiejojo.png
+  socials:
+    github: https://github.com/susiejojo
+
+srinivasanparthasarathy:
+  name: Srinivasan Parthasarathy
+  title: Principal Research Scientist, IBM
+  email: spartha@us.ibm.com
+  image_url: https://github.com/sriumcp.png
+  socials:
+    github: https://github.com/sriumcp
+
+jingchen:
+  name: Jing Chen
+  title: Software Engineer, IBM
+  email: Jing.Chen2@ibm.com
+  image_url: https://github.com/jgchn.png
+  socials:
+    github: https://github.com/jgchn
+
+nickmasluk:
+  name: Nick Masluk
+  title: Research Scientist, IBM
+  email: namasluk@us.ibm.com
+  image_url: https://github.com/namasl.png
+  socials:
+    github: https://github.com/namasl
+
+vishakharamani:
+  name: Vishakha Ramani
+  title: Research Scientist, IBM
+  email: vishakharamani@ibm.com
+  image_url: https://github.com/vishakha-ramani.png
+  socials:
+    github: https://github.com/vishakha-ramani
+
+michaelkalantar:
+  name: Michael Kalantar
+  title: Software Engineer, IBM
+  email: kalantar@us.ibm.com
+  image_url: https://github.com/kalantar.png
+  socials:
+    github: https://github.com/kalantar
+
+assertantawi:
+  name: Asser Tantawi
+  title: Research Scientist, IBM
+  email: tantawi@us.ibm.com
+  image_url: https://github.com/atantawi.png
+  socials:
+    github: https://github.com/atantawi
+
+fabiooliveira:
+  name: Fabio Oliveira
+  title: Senior Research Manager, IBM
+  email: fabolive@us.ibm.com
+  image_url: https://github.com/fabolive.png
+  socials:
+    github: https://github.com/fabolive
+
+carloscosta:
+  name: Carlos Costa
+  title: Distinguished Engineer, IBM
+  email: chcost@us.ibm.com
+  image_url: https://github.com/chcost.png
+  socials:
+    github: https://github.com/chcost
