@@ -2,7 +2,7 @@
 /**
  * merge-search-index.mjs
  *
- * After build-all.sh copies the /docs subsite into build/docs/, merge the
+ * After llmd-site build copies the /docs subsite into build/docs/, merge the
  * root-site and docs-site search outputs into a single lunr index at build/.
  *
  * This intentionally consumes generated JSON artifacts only:

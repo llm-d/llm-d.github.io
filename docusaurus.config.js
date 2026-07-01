@@ -365,7 +365,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} llm-d project. Apache 2.0 License.`,
+        // copyright: `Copyright © ${new Date().getFullYear()} llm-d project. Apache 2.0 License.`,
       },
       prism: {
         theme: prismThemes.vsLight,

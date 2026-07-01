@@ -1,6 +1,9 @@
 [build]
-  command = "npm run build:all"
+  command = "make build-all"
   publish = "build"
+
+[build.environment]
+  GO_VERSION = "1.22"
 
 # Slack invite redirect
 [[redirects]]

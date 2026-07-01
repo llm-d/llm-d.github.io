@@ -1,0 +1,360 @@
+# Generated/maintained by llmd-site. See tools/llmd-site/README.md.
+version: 1
+sources:
+    llm-d:
+        remote:
+            url: https://github.com/llm-d/llm-d
+            default_branch: main
+            docs_root: docs
+        local:
+            path: ~/repos/llm-d
+community:
+    - from: CONTRIBUTING.md
+      to: community/contribute.md
+      transform: contribute
+      title: Contributing to llm-d
+    - from: CODE_OF_CONDUCT.md
+      to: community/code-of-conduct.md
+      transform: standard
+      title: Code of Conduct
+    - from: SIGS.md
+      to: community/sigs.md
+      transform: standard
+      title: Special Interest Groups (SIGs)
+    - from: SECURITY.md
+      to: community/security.md
+      transform: standard
+      title: Security Policy
+releases:
+    remote: github-api
+    local: preview/static/releases.json
+directories:
+    - getting-started
+    - architecture/core/router/epp
+    - architecture/advanced/disaggregation
+    - architecture/advanced/autoscaling
+    - architecture/advanced/batch
+    - architecture/advanced/kv-management
+    - guides
+    - guides/agentic-serving
+    - resources/gateway
+    - resources/observability
+    - resources/operations
+    - resources/operations/rollouts
+    - resources/infrastructure
+    - resources/rdma
+    - resources/infra-providers
+    - api-reference
+    - accelerators
+copies:
+    - from: docs/getting-started/README.mdx
+      to: getting-started/index.mdx
+      prefer:
+        - getting-started/README.mdx
+        - getting-started/README.md
+    - from: docs/getting-started/README.md
+      to: getting-started/index.md
+      prefer:
+        - getting-started/README.mdx
+        - getting-started/README.md
+    - from: docs/getting-started/quickstart.md
+      to: getting-started/quickstart.md
+    - from: docs/getting-started/feature-matrix.md
+      to: getting-started/feature-matrix.md
+    - from: docs/getting-started/accelerators.md
+      to: getting-started/accelerators.md
+    - from: docs/architecture/README.md
+      to: architecture/index.md
+    - from: docs/architecture/core/inferencepool.md
+      to: architecture/core/inferencepool.md
+    - from: docs/architecture/core/model-servers.md
+      to: architecture/core/model-servers.md
+    - from: docs/architecture/core/router/README.md
+      to: architecture/core/router/index.md
+    - from: docs/architecture/core/router/proxy.md
+      to: architecture/core/router/proxy.md
+    - from: docs/architecture/core/router/epp/README.md
+      to: architecture/core/router/epp/index.md
+    - from: docs/architecture/core/router/epp/scheduling.md
+      to: architecture/core/router/epp/scheduling.md
+    - from: docs/architecture/core/router/epp/flow-control.md
+      to: architecture/core/router/epp/flow-control.md
+    - from: docs/architecture/core/router/epp/request-handling.md
+      to: architecture/core/router/epp/request-handling.md
+    - from: docs/architecture/core/router/epp/configuration.md
+      to: architecture/core/router/epp/configuration.md
+    - from: docs/architecture/core/router/epp/datalayer.md
+      to: architecture/core/router/epp/datalayer.md
+    - from: docs/architecture/advanced/disaggregation/README.md
+      to: architecture/advanced/disaggregation/index.md
+    - from: docs/architecture/advanced/disaggregation/operations-vllm.md
+      to: architecture/advanced/disaggregation/operations-vllm.md
+    - from: docs/architecture/advanced/disaggregation/operations-sglang.md
+      to: architecture/advanced/disaggregation/operations-sglang.md
+    - from: docs/architecture/advanced/latency-predictor.md
+      to: architecture/advanced/latency-predictor.md
+    - from: docs/architecture/advanced/kv-management/README.md
+      to: architecture/advanced/kv-management/index.md
+    - from: docs/architecture/advanced/kv-management/kv-indexer.md
+      to: architecture/advanced/kv-management/kv-indexer.md
+    - from: docs/architecture/advanced/kv-management/kv-offloader.md
+      to: architecture/advanced/kv-management/kv-offloader.md
+    - from: docs/architecture/advanced/kv-management/prefix-cache-aware-routing.md
+      to: architecture/advanced/kv-management/prefix-cache-aware-routing.md
+    - from: docs/architecture/advanced/autoscaling/README.md
+      to: architecture/advanced/autoscaling/index.md
+    - from: docs/architecture/advanced/autoscaling/hpa-wva.md
+      to: architecture/advanced/autoscaling/workload-variant-autoscaling.md
+    - from: docs/architecture/advanced/autoscaling/hpa-epp.md
+      to: architecture/advanced/autoscaling/igw-hpa.md
+    - from: docs/architecture/advanced/batch/README.md
+      to: architecture/advanced/batch/index.md
+    - from: docs/architecture/advanced/batch/batch-gateway.md
+      to: architecture/advanced/batch/batch-gateway.md
+    - from: docs/architecture/advanced/batch/async-processor.md
+      to: architecture/advanced/batch/async-processor.md
+    - from: docs/well-lit-paths/README.md
+      to: guides/index.md
+    - from: docs/well-lit-paths/foundations/optimized-baseline.md
+      to: guides/optimized-baseline.md
+      when: foundations_layout
+      comment: from $WLP; capabilities layout uses docs/well-lit-paths/capabilities/
+    - from: docs/well-lit-paths/workloads/multimodal-serving.md
+      to: guides/multimodal-serving.md
+    - from: docs/well-lit-paths/foundations/precise-prefix-cache-routing.md
+      to: guides/precise-prefix-cache-routing.md
+      when: foundations_layout
+      comment: from $WLP; capabilities layout uses docs/well-lit-paths/capabilities/
+    - from: docs/well-lit-paths/foundations/tiered-prefix-cache.md
+      to: guides/tiered-prefix-cache.md
+      when: foundations_layout
+      comment: from $WLP; capabilities layout uses docs/well-lit-paths/capabilities/
+    - from: docs/well-lit-paths/workloads/batch-serving/asynchronous-processing.md
+      to: guides/asynchronous-processing.md
+    - from: docs/well-lit-paths/foundations/flow-control.md
+      to: guides/flow-control.md
+      when: foundations_layout
+      comment: 'capabilities layout: docs/well-lit-paths/traffic-control/flow-control.md'
+    - from: docs/well-lit-paths/foundations/pd-disaggregation.md
+      to: guides/pd-disaggregation.md
+      when: foundations_layout
+      comment: from $WLP; capabilities layout uses docs/well-lit-paths/capabilities/
+    - from: docs/well-lit-paths/foundations/predicted-latency.md
+      to: guides/predicted-latency.md
+      when: foundations_layout
+      comment: from $WLP; capabilities layout uses docs/well-lit-paths/capabilities/
+    - from: docs/well-lit-paths/foundations/wide-expert-parallelism.md
+      to: guides/wide-expert-parallelism.md
+      when: foundations_layout
+      comment: from $WLP; capabilities layout uses docs/well-lit-paths/capabilities/
+    - from: docs/well-lit-paths/foundations/workload-autoscaling.md
+      to: guides/workload-autoscaling.md
+      when: foundations_layout
+      comment: 'capabilities layout: docs/well-lit-paths/traffic-control/workload-autoscaling.md'
+    - from: docs/infrastructure/no-kubernetes-deployment.md
+      to: guides/no-kubernetes-deployment.md
+    - from: docs/well-lit-paths/workloads/batch-serving/batch-gateway.md
+      to: guides/batch-gateway.md
+    - from: docs/well-lit-paths/workloads/agentic-serving.md
+      to: guides/agentic-serving/index.md
+    - from: docs/well-lit-paths/foundations/README.md
+      to: guides/capabilities.md
+      when: foundations_layout
+      comment: from $WLP; capabilities layout uses docs/well-lit-paths/capabilities/
+    - from: docs/well-lit-paths/workloads/README.md
+      to: guides/workloads.md
+    - from: docs/operations/observability/README.md
+      to: resources/observability/index.md
+    - from: docs/operations/observability/setup.md
+      to: resources/observability/setup.md
+    - from: docs/operations/observability/metrics.md
+      to: resources/observability/metrics.md
+    - from: docs/operations/observability/tracing.md
+      to: resources/observability/tracing.md
+    - from: docs/operations/observability/promql.md
+      to: resources/observability/promql.md
+    - from: docs/infrastructure/gateway/README.md
+      to: resources/gateway/index.md
+    - from: docs/infrastructure/gateway/envoy-ai-gateway.md
+      to: resources/gateway/envoy-ai-gateway.md
+    - from: docs/infrastructure/gateway/install-crds.md
+      to: resources/gateway/install-crds.md
+    - from: docs/infrastructure/gateway/istio.md
+      to: resources/gateway/istio.md
+    - from: docs/infrastructure/gateway/gke.md
+      to: resources/gateway/gke.md
+    - from: docs/infrastructure/gateway/agentgateway.md
+      to: resources/gateway/agentgateway.md
+    - from: docs/infrastructure/rdma/README.md
+      to: resources/rdma/rdma-configuration.md
+    - from: docs/operations/router.md
+      to: resources/operations/router.md
+    - from: docs/operations/readiness-probes.md
+      to: resources/operations/readiness-probes.md
+    - from: docs/operations/rollouts/README.md
+      to: resources/operations/rollouts/index.md
+    - from: docs/operations/rollouts/adapter-rollout.md
+      to: resources/operations/rollouts/adapter-rollout.md
+    - from: docs/operations/rollouts/blue-green-update.md
+      to: resources/operations/rollouts/blue-green-update.md
+    - from: docs/infrastructure/README.md
+      to: resources/infrastructure/index.md
+    - from: docs/infrastructure/multi-node.md
+      to: resources/infrastructure/multi-node.md
+    - from: docs/infrastructure/no-kubernetes-deployment.md
+      to: resources/infrastructure/no-kubernetes-deployment.md
+    - from: docs/infrastructure/providers/README.md
+      to: resources/infra-providers/index.md
+    - from: docs/infrastructure/providers/aks/README.md
+      to: resources/infra-providers/aks.md
+    - from: docs/infrastructure/providers/digitalocean/README.md
+      to: resources/infra-providers/digitalocean.md
+    - from: docs/infrastructure/providers/gke/README.md
+      to: resources/infra-providers/gke.md
+    - from: docs/infrastructure/providers/minikube/README.md
+      to: resources/infra-providers/minikube.md
+    - from: docs/infrastructure/providers/openshift/README.md
+      to: resources/infra-providers/openshift.md
+    - from: docs/infrastructure/providers/openshift-aws/README.md
+      to: resources/infra-providers/openshift-aws.md
+    - from: docs/api-reference/README.md
+      to: api-reference/index.md
+    - from: docs/api-reference/glossary.md
+      to: api-reference/glossary.md
+    - from: docs/api-reference/inferencepool.md
+      to: api-reference/inferencepool.md
+    - from: docs/api-reference/inferenceobjective.md
+      to: api-reference/inferenceobjective.md
+    - from: docs/api-reference/inferencemodelrewrite.md
+      to: api-reference/inferencemodelrewrite.md
+    - from: docs/api-reference/endpointpickerconfig.md
+      to: api-reference/endpointpickerconfig.md
+    - from: docs/api-reference/epp-http-headers.md
+      to: api-reference/epp-http-headers.md
+    - from: docs/api-reference/epp-http-apis.md
+      to: api-reference/epp-http-apis.md
+    - from: docs/api-reference/epp-grpc-apis.md
+      to: api-reference/epp-grpc-apis.md
+    - from: docs/api-reference/artifacts.md
+      to: api-reference/artifacts.md
+    - from: docs/getting-started/accelerators.md
+      to: accelerators/index.md
+slugs:
+    - file: guides/capabilities.md
+      slug: /well-lit-paths/capabilities
+    - file: guides/workloads.md
+      slug: /well-lit-paths/workloads
+    - file: guides/index.md
+      slug: /well-lit-paths
+    - file: guides/optimized-baseline.md
+      slug: /well-lit-paths/optimized-baseline
+    - file: guides/multimodal-serving.md
+      slug: /well-lit-paths/multimodal-serving
+    - file: guides/precise-prefix-cache-routing.md
+      slug: /well-lit-paths/precise-prefix-cache-routing
+    - file: guides/tiered-prefix-cache.md
+      slug: /well-lit-paths/tiered-prefix-cache
+    - file: guides/asynchronous-processing.md
+      slug: /well-lit-paths/asynchronous-processing
+    - file: guides/flow-control.md
+      slug: /well-lit-paths/flow-control
+    - file: guides/pd-disaggregation.md
+      slug: /well-lit-paths/pd-disaggregation
+    - file: guides/predicted-latency.md
+      slug: /well-lit-paths/predicted-latency
+    - file: guides/wide-expert-parallelism.md
+      slug: /well-lit-paths/wide-expert-parallelism
+    - file: guides/workload-autoscaling.md
+      slug: /well-lit-paths/workload-autoscaling
+    - file: guides/no-kubernetes-deployment.md
+      slug: /well-lit-paths/no-kubernetes-deployment
+    - file: guides/batch-gateway.md
+      slug: /well-lit-paths/batch-gateway
+    - file: guides/agentic-serving/index.md
+      slug: /well-lit-paths/agentic-serving
+    - file: guides/multimodal-serving.md
+      slug: /well-lit-paths/multimodal-serving
+edit_urls:
+    - match: guides/optimized-baseline.md
+      upstream: docs/well-lit-paths/foundations/optimized-baseline.md
+      description: well-lit path flat guide
+    - match: guides/no-kubernetes-deployment.md
+      upstream: docs/infrastructure/no-kubernetes-deployment.md
+    - match: resources/gateway/
+      upstream: docs/infrastructure/gateway/
+      description: prefix rewrite
+    - match: resources/infra-providers/index.md
+      upstream: docs/infrastructure/providers/README.md
+    - match: resources/rdma/rdma-configuration.md
+      upstream: docs/infrastructure/rdma/README.md
+    - match: architecture/advanced/autoscaling/workload-variant-autoscaling.md
+      upstream: docs/architecture/advanced/autoscaling/hpa-wva.md
+    - match: architecture/advanced/autoscaling/igw-hpa.md
+      upstream: docs/architecture/advanced/autoscaling/hpa-epp.md
+    - match: accelerators/index.md
+      upstream: docs/getting-started/accelerators.md
+    - match: resources/operations/
+      upstream: docs/operations/
+      description: prefix rewrite
+    - match: resources/infrastructure/
+      upstream: docs/infrastructure/
+      description: prefix rewrite
+    - match: getting-started/index.md
+      upstream: docs/getting-started/README.mdx
+    - match: getting-started/index.mdx
+      upstream: docs/getting-started/README.mdx
+conditionals:
+    - name: foundations_layout
+      when: upstream:docs/well-lit-paths/foundations exists
+      description: well-lit-paths/capabilities renamed to foundations; traffic-control folded in
+      copies:
+        - from: docs/well-lit-paths/foundations/optimized-baseline.md
+          to: guides/optimized-baseline.md
+        - from: docs/well-lit-paths/foundations/flow-control.md
+          to: guides/flow-control.md
+        - from: docs/well-lit-paths/foundations/workload-autoscaling.md
+          to: guides/workload-autoscaling.md
+        - from: docs/well-lit-paths/foundations/README.md
+          to: guides/capabilities.md
+    - name: capabilities_layout
+      when: upstream:docs/well-lit-paths/foundations missing
+      description: legacy release branches before foundations rename
+      copies:
+        - from: docs/well-lit-paths/capabilities/optimized-baseline.md
+          to: guides/optimized-baseline.md
+        - from: docs/well-lit-paths/traffic-control/flow-control.md
+          to: guides/flow-control.md
+        - from: docs/well-lit-paths/traffic-control/workload-autoscaling.md
+          to: guides/workload-autoscaling.md
+        - from: docs/well-lit-paths/capabilities/README.md
+          to: guides/capabilities.md
+    - name: observability_modern
+      when: upstream:docs/operations/observability exists
+      description: operations/observability layout
+      copies:
+        - from: docs/operations/observability/README.md
+          to: resources/observability/index.md
+    - name: observability_resources
+      when: upstream:docs/resources/observability exists
+      description: legacy resources/observability layout
+      copies:
+        - from: docs/resources/observability/README.md
+          to: resources/observability/index.md
+release_fixups:
+    - pattern: github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-aware
+      replace: github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing
+      scope: release_branch_docs
+    - pattern: github.com/llm-d/llm-d/tree/main/guides/predicted-latency-based-scheduling
+      replace: github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing
+      scope: release_branch_docs
+    - pattern: github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/README\.md
+      replace: github.com/llm-d/llm-d/tree/main/docs/infrastructure/gateway
+      scope: release_branch_docs
+    - pattern: github.com/llm-d/llm-d/tree/main/docs/resources/gateway
+      replace: github.com/llm-d/llm-d/tree/main/docs/infrastructure/gateway
+      scope: release_branch_docs
+stubs:
+    enabled: true
+replacements_pending:
+    sed_rule_count: 0
+    note: sed rules ported to internal/sync/rules_generated.go (regenerate via go generate)

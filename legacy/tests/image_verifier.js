@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 /**
+ * ARCHIVED — see legacy/README.md. Replaced by ./bin/llmd-site check images.
+ *
  * Image Verifier - Crawls a website and verifies all images load correctly
  * 
  * Usage: node tests/image_verifier.js --url http://localhost:3000

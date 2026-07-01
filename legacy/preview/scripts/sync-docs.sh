@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# ARCHIVED — see legacy/README.md. Replaced by ./bin/llmd-site sync.
 # sync-docs.sh — Pull WiP docs from a specific branch of llm-d/llm-d
 #
 # Usage:
@@ -63,7 +64,8 @@ set_doc_slug() {
 
 BRANCH="${1:-main}"
 REPO_URL="https://github.com/llm-d/llm-d.git"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+PROJECT_DIR="$REPO_ROOT/preview"
 DOCS_DIR="$PROJECT_DIR/docs"
 GUIDES_DIR="$PROJECT_DIR/guides"
 STATIC_DIR="$PROJECT_DIR/static/img/docs"

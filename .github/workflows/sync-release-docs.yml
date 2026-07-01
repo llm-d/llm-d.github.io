@@ -2,7 +2,6 @@ name: Sync Release Branch Docs
 
 on:
   schedule:
-    # Run nightly at 1:00 AM UTC (after main deploy at midnight)
     - cron: '0 1 * * *'
   workflow_dispatch:
 
@@ -24,22 +23,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
+      - uses: ./.github/actions/setup-llmd-site
         with:
-          node-version: 20.18.1
-          cache: npm
-          cache-dependency-path: preview/package-lock.json
-
-      - name: Install dependencies
-        run: cd preview && npm install
+          npm-command: ''
+          go-test: 'true'
 
       - name: Discover and sync release branches
         run: |
-          # Fetch all remote branches
           git fetch origin
 
-          # Find all release branches (e.g., release-0.7.0)
           RELEASE_BRANCHES=$(git branch -r | grep 'origin/release-' | sed 's|origin/||' | grep -v HEAD || true)
 
           if [ -z "$RELEASE_BRANCHES" ]; then
@@ -51,36 +43,26 @@ jobs:
           echo "$RELEASE_BRANCHES"
           echo ""
 
-          # Process each release branch
           for branch in $RELEASE_BRANCHES; do
             echo "========================================="
             echo "Processing: $branch"
             echo "========================================="
 
-            # Extract version (e.g., release-0.7.0 -> 0.7.0)
             VERSION=${branch#release-}
-
-            # Extract major.minor for source branch (e.g., 0.7.0 -> 0.7)
             MAJOR_MINOR=$(echo "$VERSION" | cut -d. -f1,2)
             SOURCE_BRANCH="release-${MAJOR_MINOR}"
 
             echo "Version: $VERSION"
             echo "Source branch in llm-d/llm-d: $SOURCE_BRANCH"
 
-            # Checkout the release branch
             git checkout "$branch"
             git pull origin "$branch"
 
-            # Sync docs from llm-d/llm-d
-            cd preview
-            bash scripts/sync-docs.sh "$SOURCE_BRANCH" || {
+            ./bin/llmd-site sync "$SOURCE_BRANCH" || {
               echo "Warning: Sync failed for $branch"
-              cd ..
               continue
             }
-            cd ..
 
-            # Commit changes if any
             git add -f preview/docs preview/static/img/docs
             if ! git diff --staged --quiet; then
               COMMIT_MSG="Nightly docs sync from llm-d/llm-d@${SOURCE_BRANCH}

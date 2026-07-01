@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-
 /**
+ * ARCHIVED — see legacy/README.md. Replaced by ./bin/llmd-site check links.
+ *
  * Link Checker for llm-d.ai Website
  *
  * Validates all links in the built site and generates a report showing:
@@ -367,7 +368,7 @@ function buildSourceMap() {
 
   // Parse sync-docs.sh to extract file mappings
   const syncScript = fs.readFileSync(
-    path.join(rootDir, 'preview/scripts/sync-docs.sh'),
+    path.join(rootDir, 'legacy/preview/scripts/sync-docs.sh'),
     'utf-8'
   );
 

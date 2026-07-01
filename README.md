@@ -20,7 +20,7 @@ This repository contains two types of documentation:
 Documentation is automatically synced from the `llm-d/llm-d` repository during the build process:
 
 - **Main Documentation** (`/docs/`) - Architecture, guides, API reference, resources
-  - Synced via `preview/scripts/sync-docs.sh`
+  - Synced via `./bin/llmd-site sync` (manifest: `docs-sync.yaml`)
   - Pulls specific files from `llm-d/llm-d@main`
   - Applies transformations for Docusaurus compatibility
 
@@ -32,9 +32,9 @@ Files with remote content show a "Content Source" banner at the bottom with link
 
 ## 🔄 Documentation Syncing Systems
 
-### Main Documentation (preview/sync-docs.sh)
+### Main Documentation (`llmd-site sync`)
 
-The primary documentation sync system in `preview/scripts/sync-docs.sh`:
+The primary documentation sync is implemented in **`tools/llmd-site`** (`llmd-site sync`), driven by [`docs-sync.yaml`](docs-sync.yaml). Archived bash: [`legacy/preview/scripts/sync-docs.sh`](legacy/preview/scripts/sync-docs.sh).
 
 **What it syncs:**
 - Architecture documentation (`/docs/architecture/`)
@@ -56,7 +56,7 @@ The primary documentation sync system in `preview/scripts/sync-docs.sh`:
 - Fixes HTML tags for MDX compatibility
 - Converts HTML comments to JSX comments
 
-See `preview/scripts/transformations.sh` for transformation details.
+See `tools/llmd-site/internal/transform/` for transformation details.
 
 ### Community Documentation (remote-content/)
 
@@ -136,7 +136,7 @@ This is the recommended workflow for previewing the complete site locally, inclu
 
 **What gets built:**
 1. Main site (landing page, blog, community docs via remote-content)
-2. Synced documentation from llm-d/llm-d via `preview/scripts/sync-docs.sh`
+2. Synced documentation from llm-d/llm-d via `./bin/llmd-site sync`
 3. Preview docs site
 4. Merged build at `build/docs/`
 
@@ -341,20 +341,19 @@ npm run build
 
 ### Adding Main Documentation
 
-Main documentation (architecture, guides, API reference) is synced via `preview/scripts/sync-docs.sh`.
+Main documentation (architecture, guides, API reference) is synced via `./bin/llmd-site sync` and [`docs-sync.yaml`](docs-sync.yaml).
 
 **To add new main documentation:**
 1. Add the file to `llm-d/llm-d` repository in the appropriate location
-2. Update `preview/scripts/sync-docs.sh` to copy the new file
+2. Update `docs-sync.yaml` to copy the new file
 3. Test the sync:
    ```bash
    # Using a local llm-d clone (recommended — no network required)
    LLMD_REPO=~/repos/llm-d npm run build:all
 
    # Or sync only, then build
-   cd preview
-   LLMD_REPO=~/repos/llm-d bash scripts/sync-docs.sh
-   npm run build
+   LLMD_REPO=~/repos/llm-d ./bin/llmd-site sync main --local
+   cd preview && npm run build
    ```
 
 ## 🚀 Deployment
@@ -372,7 +371,7 @@ Preview builds are available for all PRs via Netlify.
 | Build errors | Check that all remote sources are accessible from llm-d/llm-d |
 | Content not updating | Verify file exists in llm-d/llm-d main branch |
 | Links broken | Ensure links use proper Docusaurus paths or GitHub URLs |
-| Images not showing | Check image paths in `preview/scripts/sync-docs.sh` |
+| Images not showing | Check image paths in `docs-sync.yaml` |
 
 ## 📚 Additional Resources
 

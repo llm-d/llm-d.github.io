@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# ARCHIVED — see legacy/README.md. Replaced by ./bin/llmd-site build release worktrees.
 # create-version.sh — Snapshot current docs as a versioned release
 #
 # Usage:
@@ -16,7 +17,8 @@ set -euo pipefail
 VERSION="${1:?Usage: $0 <version> (e.g., 0.5)}"
 BRANCH="release-${VERSION}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+PREVIEW_DIR="$REPO_ROOT/preview"
 
 echo "==> Creating docs version $VERSION from branch $BRANCH"
 
@@ -26,7 +28,7 @@ echo "    Step 1: Syncing docs from $BRANCH..."
 
 # Step 2: Create Docusaurus version snapshot
 echo "    Step 2: Creating Docusaurus version snapshot..."
-cd "$PROJECT_DIR"
+cd "$PREVIEW_DIR"
 npx docusaurus docs:version "$VERSION"
 
 echo "==> Version $VERSION created."
