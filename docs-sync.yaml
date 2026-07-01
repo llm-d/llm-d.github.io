@@ -155,6 +155,8 @@ copies:
       to: guides/no-kubernetes-deployment.md
     - from: docs/well-lit-paths/workloads/batch-serving/batch-gateway.md
       to: guides/batch-gateway.md
+    - from: docs/well-lit-paths/workloads/batch-serving/README.md
+      to: guides/batch-serving.md
     - from: docs/well-lit-paths/workloads/agentic-serving.md
       to: guides/agentic-serving/index.md
     - from: docs/well-lit-paths/foundations/README.md
@@ -197,6 +199,8 @@ copies:
       to: resources/operations/rollouts/adapter-rollout.md
     - from: docs/operations/rollouts/blue-green-update.md
       to: resources/operations/rollouts/blue-green-update.md
+    - from: docs/operations/README.md
+      to: resources/operations/index.md
     - from: docs/infrastructure/README.md
       to: resources/infrastructure/index.md
     - from: docs/infrastructure/multi-node.md
@@ -270,6 +274,8 @@ slugs:
       slug: /well-lit-paths/no-kubernetes-deployment
     - file: guides/batch-gateway.md
       slug: /well-lit-paths/batch-gateway
+    - file: guides/batch-serving.md
+      slug: /well-lit-paths/batch-serving
     - file: guides/agentic-serving/index.md
       slug: /well-lit-paths/agentic-serving
     - file: guides/multimodal-serving.md
