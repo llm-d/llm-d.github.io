@@ -40,6 +40,8 @@ echo ""
 # Step 1: Build main site (landing, blog, community)
 echo "Step 1: Building main site..."
 cd "$PROJECT_DIR"
+# Keep the main-site version dropdown in sync with the docs build.
+cp -f preview/static/releases.json static/releases.json 2>/dev/null || true
 npm run build
 echo "✓ Main site built to build/"
 echo ""

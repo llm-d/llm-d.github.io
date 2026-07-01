@@ -156,6 +156,8 @@ const config = {
       },
     ],
 
+    require.resolve("./plugins/versions-plugin"),
+
     // Examples:
     // ['@docusaurus/plugin-google-analytics', { trackingID: 'UA-XXXXXX-X' }],
     // ['docusaurus-plugin-sass', {}],
@@ -226,19 +228,11 @@ const config = {
             position: "left",
             label: "Community",
           },
-          // Version dropdown — use a raw-HTML dropdown so the links inside cannot be
-          // intercepted by the SPA router. (A `type: 'dropdown'` with href items still
-          // gets wrapped by NavbarNavLink and SPA-navigates to a non-existent /docs/* route.)
+          // Version dropdown uses plain <a href> links (not SPA router) so navigation
+          // from /blog or /community → /docs forces a real page load.
           {
-            type: 'html',
+            type: 'custom-version-dropdown',
             position: 'left',
-            value: `<div class="navbar__item dropdown dropdown--hoverable">
-              <a class="navbar__link" href="#" aria-haspopup="true" onclick="return false">v0.7.0 (latest)</a>
-              <ul class="dropdown__menu">
-                <li><a class="dropdown__link" href="/docs/getting-started">v0.7.0 (latest)</a></li>
-                <li><a class="dropdown__link" href="/docs/dev/getting-started">Dev</a></li>
-              </ul>
-            </div>`,
           },
           {
             type: "html",
