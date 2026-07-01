@@ -74,6 +74,13 @@ maroonayoub:
   socials:
     linkedin: v-maroon
 
+maroonayoub-redhat:
+  name: Maroon Ayoub
+  title: Senior Principal Machine Learning Engineer, Red Hat
+  image_url: /img/blogs/maroonayoub.webp
+  socials:
+    linkedin: v-maroon
+
 dannyharnik:
   name: Danny Harnik
   title: Senior Technical Staff Member, IBM
@@ -401,3 +408,17 @@ carloscosta:
   image_url: https://github.com/chcost.png
   socials:
     github: https://github.com/chcost
+
+itayetelis:
+  name: Itay Etelis
+  title: Research Staff Member, IBM
+  image_url: /img/blogs/itayetelis.webp
+  socials:
+    linkedin: itay-etelis-1692ba157
+
+rachelbrill:
+  name: Rachel Brill
+  title: Senior Technical Staff Member, IBM
+  image_url: /img/blogs/rachelbrill.webp
+  socials:
+    linkedin: rachel-tzoref-brill-6645a11
