@@ -35,7 +35,7 @@
     "docusaurus-lunr-search": "^3.6.0",
     "docusaurus-plugin-remote-content": "^4.0.0",
     "jest-environment-jsdom": "^29.7.0",
-    "js-yaml": "^4.2.0",
+    "js-yaml": "^4.3.0",
     "jsdom": "^22.1.0",
     "lunr": "^2.3.9",
     "prism-react-renderer": "^2.3.0",
