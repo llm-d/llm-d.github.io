@@ -1,0 +1,120 @@
+name: Blog Post Suggestion
+description: Suggest a topic for the llm-d blog.
+title: "[Blog]: "
+labels: ["Blog Post", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Blog Post Suggestion
+
+        Thank you for suggesting a blog post! Please fill in the details below so we can
+        evaluate the idea and follow up if needed.
+
+        Before opening a new suggestion, please check
+        [existing issues](https://github.com/llm-d/llm-d.github.io/issues)
+        and [published posts](https://llm-d.ai/blog) to see if a similar topic is already
+        covered or in progress.
+
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com or @github-username
+    validations:
+      required: false
+
+  - type: input
+    id: proposed-title
+    attributes:
+      label: Proposed Title
+      description: A working title for the post. It does not need to be final.
+      placeholder: "Networking for Distributed Inference with llm-d"
+    validations:
+      required: true
+
+  - type: textarea
+    id: synopsis
+    attributes:
+      label: Short Synopsis
+      description: |
+        A brief summary of what the post would cover (2–4 sentences).
+      placeholder: |
+        This post would explain how llm-d handles networking across nodes for
+        distributed inference, including key design decisions and a walkthrough
+        of a real deployment.
+    validations:
+      required: true
+
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Why This Post?
+      description: |
+        Why do you want this post written? What gap does it fill, who would benefit,
+        and why is now a good time to cover this topic?
+      placeholder: |
+        Many users are deploying multi-node clusters but lack guidance on networking
+        trade-offs. This would help operators avoid common pitfalls and understand
+        how llm-d fits into their stack.
+    validations:
+      required: true
+
+  - type: textarea
+    id: target-audience
+    attributes:
+      label: Target Audience
+      description: Who is this post for? (e.g., operators, contributors, decision-makers)
+      placeholder: "Kubernetes operators running multi-node GPU clusters"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: writing-intent
+    attributes:
+      label: Who Will Write It?
+      description: |
+        Will you write this post, or are you suggesting that someone else should?
+      options:
+        - "I plan to write this post myself"
+        - "I would like someone else to write it"
+        - "I'm open to writing it or finding a co-author"
+        - "Not sure yet"
+    validations:
+      required: true
+
+  - type: textarea
+    id: author-details
+    attributes:
+      label: Author Details
+      description: |
+        If you plan to write it, briefly note your relevant experience or angle.
+        If you're suggesting someone else, name them (with permission if possible)
+        and why they'd be a good fit.
+      placeholder: |
+        I deployed llm-d across three availability zones and can share lessons learned.
+        Or: Jane Doe (@janedoe) led the networking work and would be ideal to author this.
+    validations:
+      required: false
+
+  - type: textarea
+    id: related-links
+    attributes:
+      label: Related Links
+      description: |
+        Links to docs, prior posts, talks, issues, or external references that
+        support this suggestion.
+      placeholder: |
+        - https://llm-d.ai/blog/...
+        - https://github.com/llm-d/llm-d/issues/...
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Anything else we should know—timing, co-marketing, series ideas, etc.
+    validations:
+      required: false
