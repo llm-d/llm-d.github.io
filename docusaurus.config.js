@@ -1,380 +1,298 @@
 // @ts-check
-// `@type` JSDoc annotations allow editor autocompletion and type checking
-// (when paired with `@ts-check`).
-// There are various equivalent ways to declare your Docusaurus config.
-// See: https://docusaurus.io/docs/api/docusaurus-config
+// See https://docusaurus.io/docs/api/docusaurus-config
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { themes as prismThemes } from 'prism-react-renderer';
+import { makeDocsPreprocessor } from './scripts/lib/preprocess.mjs';
+import { loadMenuConfig, makeSidebarItemsGenerator, validateMenuConfig } from './scripts/lib/sidebar.mjs';
 
-import { themes as prismThemes } from "prism-react-renderer";
-import remoteContentPlugins from "./remote-content/remote-content.js";
+const GITHUB_REPO = 'https://github.com/llm-d/llm-d';
 
+// Self-adjusting versioning: derive the version map from versions.json (which
+// docusaurus writes newest-first). The newest release is served at /docs and the
+// rest at /docs/<version>; the committed dev docs/ are the unreleased "dev"
+// version at /docs/dev. Reading the file lets `npm run version:cut` recreate
+// versioned_docs/ without the config hard-coding a version that may be absent.
+const siteDir = path.dirname(fileURLToPath(import.meta.url));
+// menu-config.json is authored in llm-d/llm-d (docs/menu-config.json) and synced
+// into docs/ alongside the docs it describes. It may be absent before the first
+// sync, so loadMenuConfig tolerates a missing file and we only validate when docs/ exists.
+const docsDir = path.join(siteDir, 'docs');
+const menuConfig = loadMenuConfig(path.join(docsDir, 'menu-config.json'));
+if (fs.existsSync(docsDir)) validateMenuConfig(menuConfig, docsDir);
+const versionsFile = path.join(siteDir, 'versions.json');
+const releasedVersions = fs.existsSync(versionsFile)
+  ? JSON.parse(fs.readFileSync(versionsFile, 'utf8'))
+  : [];
+const LATEST_VERSION = releasedVersions[0];
+const docsVersions = LATEST_VERSION
+  ? {
+      lastVersion: LATEST_VERSION,
+      versions: {
+        // Released versions first (newest = default at /docs, older at /docs/<v>),
+        // then the unreleased dev version last — this is the version dropdown order.
+        ...Object.fromEntries(
+          releasedVersions.map((v) => [
+            v,
+            {
+              // Mark the default (newest) release, served at /docs, as "(latest)".
+              label: v === LATEST_VERSION ? `v${v} (latest)` : `v${v}`,
+              path: v === LATEST_VERSION ? '' : v,
+              badge: true,
+            },
+          ]),
+        ),
+        current: { label: 'dev', path: 'dev', banner: 'unreleased' },
+      },
+    }
+  : {};
 
-// This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
+/** Docs are synced from llm-d/llm-d into docs/ (see tools/llmd-site).
+ *  Map a synced doc back to its source file for the "Edit this page" link. */
+function docsEditUrl({ versionDocsDirPath, docPath }) {
+  // Only the current ("next") version maps cleanly back to the live source tree.
+  if (versionDocsDirPath !== 'docs') return undefined;
+  return `${GITHUB_REPO}/edit/main/docs/${docPath}`;
+}
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "llm-d",
-  tagline:
-    "Open source, high-performance and scalable LLM inference - Achieve state-of-the-art inference performance on any accelerator with intelligent scheduling, KV-cache optimization, and seamless scaling.",
-  favicon: "img/llm-d-favicon.png",
+  title: 'llm-d',
+  tagline: 'Kubernetes-native, high-performance distributed LLM inference',
+  favicon: 'img/llm-d-favicon.png',
 
-  url: "https://llm-d.ai/",
-  baseUrl: "/",
+  url: 'https://llm-d.ai',
+  baseUrl: '/',
 
-  // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-
-  organizationName: "llm-d", // Usually your GitHub org/user name.
-
-  projectName: "llm-d.github.io", // Usually your repo name.
-  deploymentBranch: "gh-pages",
+  organizationName: 'llm-d',
+  projectName: 'llm-d',
 
   trailingSlash: false,
-  onBrokenLinks: "warn",
+  onBrokenLinks: 'warn',
+  onBrokenAnchors: 'warn',
 
-  // Even if you don't use internationalization, you can use this field to set
-  // useful metadata like html lang. For example, if your site is Chinese, you
-  // may want to replace "en" with "zh-Hans".
   i18n: {
-    defaultLocale: "en",
-    locales: ["en"],
+    defaultLocale: 'en',
+    locales: ['en'],
   },
 
-  // SEO: Organization structured data for rich search results
-  headTags: [
-    // Cross-app theme sync: the main site and each docs build use distinct
-    // localStorage keys for the color-mode preference — Docusaurus appends a
-    // hash of baseUrl to "theme" ("theme", "theme-23d", "theme-1a2",
-    // "theme-2af", …). Mirror across every theme* key so dark/light persists
-    // when the user navigates from one Docusaurus instance to another.
-    {
-      tagName: 'script',
-      attributes: {},
-      innerHTML: `(function(){try{var keys=[],v=null;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k==='theme'||/^theme-[a-z0-9]+$/.test(k)){keys.push(k);var x=localStorage.getItem(k);if(x)v=x;}}['theme','theme-23d','theme-1a2','theme-2af'].forEach(function(k){if(keys.indexOf(k)===-1)keys.push(k);});if(v)keys.forEach(function(k){localStorage.setItem(k,v);});}catch(e){}})();`,
+  markdown: {
+    // .md -> CommonMark (forgiving of the raw HTML in the synced GitHub docs),
+    // .mdx -> MDX (blog posts, community index/events, getting-started).
+    format: 'detect',
+    mermaid: true,
+    // Render-time link/image/brace fixes for the pristine synced docs copy.
+    preprocessor: makeDocsPreprocessor({ docsDir }),
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+      onBrokenMarkdownImages: 'warn',
     },
-    {
-      tagName: "script",
-      attributes: {
-        type: "application/ld+json",
-      },
-      innerHTML: JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        name: "llm-d",
-        url: "https://llm-d.ai",
-        logo: "https://llm-d.ai/img/llm-d-icon.png",
-        description:
-          "Open source, Kubernetes-native LLM inference - Achieve state-of-the-art inference performance on any accelerator with intelligent scheduling, KV-cache optimization, and seamless scaling.",
-        sameAs: [
-          "https://github.com/llm-d",
-          "https://linkedin.com/company/llm-d",
-          "https://x.com/_llm_d_",
-          "https://bsky.app/profile/llm-d.ai",
-          "https://www.reddit.com/r/llm_d/",
-        ],
-      }),
-    },
-  ],
-
-  // Add kapa.ai AI assistant widget
-  scripts: [
-    {
-      src: "https://widget.kapa.ai/kapa-widget.bundle.js",
-      "data-website-id": "1eea1a6a-a57b-48d7-a4aa-c993481daad7",
-      "data-project-name": "llm-d",
-      "data-project-color": "#9b4d9b",
-      "data-project-logo": "https://llm-d.ai/img/llm-d-favicon.png",
-      async: true,
-    },
-  ],
+  },
 
   presets: [
     [
-      "classic",
+      'classic',
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
-        docs: false,
+        docs: {
+          path: 'docs',
+          routeBasePath: 'docs',
+          sidebarPath: './sidebars.js',
+          editUrl: docsEditUrl,
+          sidebarItemsGenerator: makeSidebarItemsGenerator(menuConfig),
+          // Native versioning: the synced docs/ are the unreleased "dev" version;
+          // released versions are frozen snapshots under versioned_docs/.
+          includeCurrentVersion: true,
+          ...docsVersions,
+        },
         blog: {
+          path: 'blog',
+          routeBasePath: 'blog',
           showReadingTime: true,
+          blogSidebarTitle: 'All posts',
+          blogSidebarCount: 'ALL',
+          editUrl: `${GITHUB_REPO}/edit/main/website/`,
           feedOptions: {
-            type: ["rss", "atom"],
+            type: ['rss', 'atom'],
             xslt: true,
           },
-          blogSidebarTitle: "All Posts",
-          blogSidebarCount: "ALL",
-
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          //  editUrl:
-          //  "https://github.com/llm-d/llm-d-website.github.io/tree/main/",
-
-          // Useful options to enforce blogging best practices
-          onInlineTags: "warn",
-          onInlineAuthors: "warn",
-          onUntruncatedBlogPosts: "warn",
+          onInlineTags: 'warn',
+          onInlineAuthors: 'warn',
+          onUntruncatedBlogPosts: 'ignore',
         },
         theme: {
-          customCss: "./src/css/custom.css",
+          customCss: './src/css/custom.css',
         },
         sitemap: {
-          changefreq: "weekly",
+          changefreq: 'weekly',
           priority: 0.5,
-          ignorePatterns: ["/tags/**"],
-          filename: "sitemap.xml",
+          ignorePatterns: ['/tags/**'],
         },
       }),
     ],
   ],
 
-  // Client modules - run on every page
-  clientModules: [
-    require.resolve('./src/clientModules/analytics.js'),
-    require.resolve('./src/clientModules/hide-kapa-widget.js'),
-  ],
-
-
-  // Plugins configuration
   plugins: [
-    // Remote content plugins (managed independently)
-    ...remoteContentPlugins,
-
-    // Community docs as separate plugin instance
+    // Community section as its own docs instance (mirrors docusaurus.io/community).
     [
-      "@docusaurus/plugin-content-docs",
+      '@docusaurus/plugin-content-docs',
       {
-        id: "community",
-        path: "community",
-        routeBasePath: "community",
-        sidebarPath: require.resolve("./sidebars.js"),
-        sidebarCollapsible: false,
+        id: 'community',
+        path: 'community',
+        routeBasePath: 'community',
+        sidebarPath: './sidebarsCommunity.js',
+        // Contributing is its own header section / standalone page (no sidebar),
+        // so keep it out of the autogenerated community sidebar.
+        sidebarItemsGenerator: async ({ defaultSidebarItemsGenerator, ...args }) => {
+          const items = await defaultSidebarItemsGenerator(args);
+          return items.filter(
+            (item) => !(item.type === 'doc' && item.id === 'contribute'),
+          );
+        },
       },
     ],
-
-    [
-      require.resolve("docusaurus-lunr-search"),
-      {
-        languages: ["en"],
-      },
-    ],
-
-    require.resolve("./plugins/versions-plugin"),
-
-    // Examples:
-    // ['@docusaurus/plugin-google-analytics', { trackingID: 'UA-XXXXXX-X' }],
-    // ['docusaurus-plugin-sass', {}],
-    // Add any other plugins you need
   ],
 
-  markdown: {
-    mermaid: true,
-    hooks: {
-      onBrokenMarkdownLinks: "warn",
-      onBrokenMarkdownImages: "warn",
-    },
-  },
-  themes: ["@docusaurus/theme-mermaid"],
+  themes: [
+    '@docusaurus/theme-mermaid',
+    // Offline full-text search (docs + blog + community).
+    [
+      require.resolve('@easyops-cn/docusaurus-search-local'),
+      /** @type {import('@easyops-cn/docusaurus-search-local').PluginOptions} */
+      ({
+        hashed: true,
+        indexBlog: true,
+        indexPages: true,
+        docsRouteBasePath: ['/docs', '/community'],
+        highlightSearchTermsOnTargetPage: true,
+      }),
+    ],
+  ],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      // Social card image for Open Graph and Twitter Cards
-      image: "img/llm-d-social-card.jpg",
-
-      // Additional meta tags for social media (Twitter/X, LinkedIn, Bluesky, etc.)
-      metadata: [
-        // Twitter/X specific
-        { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:site", content: "@_llm_d_" },
-        // Open Graph (LinkedIn, Bluesky, Facebook, etc.)
-        { property: "og:type", content: "website" },
-        { property: "og:site_name", content: "llm-d" },
-        { property: "og:locale", content: "en_US" },
-      ],
-
-      // Announcement banner for v0.7 release
+      image: 'img/llm-d-social-card.jpg',
       colorMode: {
         respectPrefersColorScheme: true,
       },
       announcementBar: {
-        id: "llm-d-v0-8-release",
+        id: 'llm-d-0-8-0',
         content:
-          '🎉 <b>llm-d 0.8 is here!</b> Multimodal, batch &amp; flow-control graduate to production, with broader accelerator support and initial RL. <a target="_self" rel="noopener noreferrer" href="/docs/getting-started/quickstart"><b>See what\'s new →</b></a>',
-        backgroundColor: '#000000',
-        textColor: '#fff',
+          '🎉 <b>llm-d 0.8 is here!</b> Multimodal, batch &amp; flow-control graduate to production, with broader accelerator support and initial RL. <a href="/docs/getting-started/quickstart"><b>See what\'s new →</b></a>',
+        textColor: '#ffffff',
         isCloseable: true,
       },
-
+      docs: {
+        sidebar: {
+          hideable: true,
+          autoCollapseCategories: false,
+        },
+      },
       navbar: {
-        // title: "My Site",
         logo: {
-          alt: "llm-d",
-          src: "img/llm-d-logotype-and-icon.svg",
-          srcDark: "img/llm-d-logotype-and-icon.svg",
+          alt: 'llm-d',
+          src: 'img/llm-d-logotype-and-icon.svg',
+          srcDark: 'img/llm-d-logotype-and-icon-dark.svg',
+          href: '/',
         },
         items: [
-          // docs plugin disabled locally; landing-preview uses preview/ build mounted at /docs.
-          // Use raw <a> (type: 'html') so the SPA <Link> wrapper can't intercept and
-          // cross-app navigation from /blog or /community → /docs forces a real page load.
           {
-            type: "html",
-            position: "left",
-            value:
-              '<a href="/docs/getting-started" class="navbar__item navbar__link">Documentation</a>',
+            // Plain link (not a version-aware docSidebar item) so "Docs" always
+            // opens the latest release at /docs, regardless of the version the
+            // visitor last viewed (dev/0.7 are reachable via the dropdown).
+            to: '/docs',
+            position: 'left',
+            label: 'Docs',
           },
-          { to: "/blog", label: "Blog", position: "left" },
+          { to: '/blog', label: 'Blog', position: 'left' },
           {
-            type: "docSidebar",
-            sidebarId: "communitySidebar",
-            docsPluginId: "community",
-            position: "left",
-            label: "Community",
-          },
-          // Version dropdown uses plain <a href> links (not SPA router) so navigation
-          // from /blog or /community → /docs forces a real page load.
-          {
-            type: 'custom-version-dropdown',
+            // Standalone Contributing page (its own header section). The page
+            // hides the community left nav via `displayed_sidebar: null`.
+            to: '/community/contribute',
+            label: 'Contributing',
             position: 'left',
           },
           {
-            type: "html",
-            position: "right",
-            className: "navbar-github-stars",
-            value:
-              '<iframe src="https://ghbtns.com/github-btn.html?user=llm-d&repo=llm-d&type=star&count=true&size=large" frameborder="0" scrolling="0" width="170" height="30" title="GitHub Star" style="vertical-align: middle;"></iframe>',
+            type: 'docSidebar',
+            sidebarId: 'communitySidebar',
+            docsPluginId: 'community',
+            position: 'left',
+            label: 'Community',
           },
           {
-            // Plain GitHub icon (no star count). Hidden on wide screens (the star
-            // button above is shown); swapped in at narrow/mobile widths via CSS.
-            type: "html",
-            position: "right",
-            className: "navbar-github-icon",
-            value:
-              '<a href="https://github.com/llm-d/llm-d" class="navbar-github-button" target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="GitHub"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><title>GitHub</title><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58 0-.29-.01-1.05-.02-2.06-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.95 0-1.31.47-2.39 1.24-3.23-.13-.3-.54-1.53.12-3.18 0 0 1.01-.32 3.3 1.23a11.48 11.48 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.65.25 2.88.12 3.18.77.84 1.24 1.92 1.24 3.23 0 4.62-2.8 5.64-5.48 5.94.43.37.81 1.1.81 2.22 0 1.6-.02 2.89-.02 3.28 0 .32.22.7.82.58A12.01 12.01 0 0 0 24 12.5C24 5.87 18.63.5 12 .5z"></path></svg></a>',
+            type: 'docsVersionDropdown',
+            // On the left, right after Community (consistent navbar spacing).
+            position: 'left',
+            dropdownActiveClassDisabled: true,
+            // Order the dropdown releases-first (newest default at top), dev last.
+            versions: [...releasedVersions, 'current'],
           },
           {
-            type: 'html',
+            // GitHub icon + live star count (see src/components/GithubStarsNavbarItem).
+            type: 'custom-githubStars',
+            href: GITHUB_REPO,
             position: 'right',
-            className: 'navbar-slack-item',
-            value: '<a href="/slack" class="navbar-slack-button"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><title>Slack</title><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"></path></svg><span class="slack-label">Join Slack</span></a>',
+            'aria-label': 'GitHub repository',
+          },
+          {
+            href: 'https://llm-d.ai/slack',
+            position: 'right',
+            className: 'header-slack-link',
+            label: 'Join Slack',
+            'aria-label': 'llm-d Slack',
           },
         ],
       },
-
-      // Config for footer here
       footer: {
-        style: "dark",
-        copyright: `Copyright © ${new Date().getFullYear()} llm-d project. Apache 2.0 License.<br />\
-        We are a Cloud Native Computing Foundation sandbox project.<br />\
-        For website terms of use, trademark policy and other project policies please see <a href="https://lfprojects.org/policies/" target="_blank" rel="noreferrer noopener">https://lfprojects.org/policies/</a>`,
-        logo: {
-          alt: "llm-d Logo",
-          src: "img/cncf-white.png",
-          href: "https://cncf.io",
-          target: "_blank",
-          width: 240,
-          className: "footer-logo",
-          style: {
-            marginRight: "10px",
-          },
-        },
+        style: 'dark',
         links: [
           {
-            title: "Documentation",
+            title: 'Docs',
             items: [
-              {
-                html: '<a href="/docs/getting-started" class="footer__link-item">Getting Started</a>',
-              },
-              {
-                html: '<a href="/docs/architecture" class="footer__link-item">Architecture</a>',
-              },
-              {
-                html: '<a href="/docs/guides" class="footer__link-item">Guides</a>',
-              },
+              { label: 'Getting Started', to: '/docs' },
+              { label: 'Architecture', to: '/docs/architecture' },
+              { label: 'Well-Lit Paths', to: '/docs/well-lit-paths' },
+              { label: 'API Reference', to: '/docs/api-reference' },
             ],
           },
           {
-            title: "Community",
+            title: 'Community',
             items: [
-              {
-                label: "Contact us",
-                href: "/community",
-              },
-              {
-                label: "Contributing",
-                href: "/community/contribute",
-              },
-              {
-                label: "Code of Conduct",
-                href: "/community/code-of-conduct",
-              },
+              { label: 'Welcome', to: '/community' },
+              { label: 'Contributing', to: '/community/contribute' },
+              { label: 'Events', to: '/community/events' },
+              { label: 'Code of Conduct', to: '/community/code-of-conduct' },
             ],
           },
           {
-            title: "More",
+            title: 'More',
             items: [
-              {
-                label: "Blog",
-                to: "/blog",
-              },
-              {
-                label: "Privacy Policy",
-                href: "https://www.redhat.com/en/about/privacy-policy",
-              },
-            ],
-          },
-          {
-            title: "Social",
-            items: [
-              {
-                html: `
-                <div class="footer-socials" role="navigation" aria-label="Social links">
-                  <div class="footer-socials-row">
-                    <a href="https://github.com/llm-d/" target="_blank" rel="noreferrer noopener" aria-label="GitHub">
-                      <img src="/img/new-social/github-mark-white.png" alt="GitHub" />
-                    </a>
-                    <a href="https://linkedin.com/company/llm-d" target="_blank" rel="noreferrer noopener" aria-label="LinkedIn">
-                      <img src="/img/new-social/linkedin-mark-white.png" alt="LinkedIn" />
-                    </a>
-                    <a href="https://llm-d.slack.com" target="_blank" rel="noreferrer noopener" aria-label="Slack">
-                      <img src="/img/new-social/slack-mark-white.png" alt="Slack" />
-                    </a>
-                    <a href="https://www.reddit.com/r/llm_d/" target="_blank" rel="noreferrer noopener" aria-label="Reddit">
-                      <img src="/img/new-social/reddit-mark-white.png" alt="Reddit" />
-                    </a>
-                    <a href="https://bsky.app/profile/llm-d.ai" target="_blank" rel="noreferrer noopener" aria-label="Bluesky">
-                      <img src="/img/new-social/bluesky-mark-white.svg" alt="Bluesky" />
-                    </a>
-                    <a href="https://x.com/_llm_d_" target="_blank" rel="noreferrer noopener" aria-label="X / Twitter">
-                      <img src="/img/new-social/x-mark-white.png" alt="X / Twitter" />
-                    </a>
-                    <a href="https://www.youtube.com/@llm-d-project" target="_blank" rel="noreferrer noopener" aria-label="YouTube">
-                      <img src="/img/new-social/youtube-mark-white.svg" alt="YouTube" />
-                    </a>
-                  </div>
-                  <div class="footer-cncf">
-                    <img class="footer-cncf-logo" src="/img/CNCF-logo.svg" alt="CNCF" />
-                    <span>llm-d is a CNCF Sandbox project</span>
-                  </div>
-                  <div class="footer-socials-cta">
-                    <a href="/slack" target="_self" rel="noreferrer noopener" aria-label="Join our Slack">
-                      <span class="button-link">Join our Slack</span>
-                    </a>
-                  </div>
-                </div>
-              `,
-              },
+              { label: 'Blog', to: '/blog' },
+              { label: 'GitHub', href: GITHUB_REPO },
+              { label: 'Slack', href: 'https://llm-d.slack.com' },
+              { label: 'X / Twitter', href: 'https://x.com/_llm_d_' },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} llm-d project. Apache 2.0 License.`,
+        logo: {
+          alt: 'Cloud Native Computing Foundation',
+          src: 'img/cncf-white.png',
+          href: 'https://cncf.io',
+          width: 130,
+        },
+        copyright: `Copyright © ${new Date().getFullYear()} llm-d Authors. Apache 2.0 License.<br/>llm-d is a Cloud Native Computing Foundation Sandbox project.`,
       },
       prism: {
-        theme: prismThemes.vsLight,
-        darkTheme: prismThemes.vsDark,
-        additionalLanguages: ['yaml', 'toml', 'promql'],
+        theme: prismThemes.oneLight,
+        darkTheme: prismThemes.oneDark,
+        additionalLanguages: ['bash', 'yaml', 'json', 'toml', 'promql'],
+      },
+      mermaid: {
+        theme: { light: 'neutral', dark: 'dark' },
       },
     }),
 };
 
 export default config;
-
-

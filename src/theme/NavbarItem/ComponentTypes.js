@@ -1,7 +1,9 @@
 import ComponentTypes from '@theme-original/NavbarItem/ComponentTypes';
-import VersionDropdown from '@site/src/components/VersionDropdown';
+import GithubStarsNavbarItem from '@site/src/components/GithubStarsNavbarItem';
 
+// Register the custom navbar item type used in docusaurus.config.js:
+//   { type: 'custom-githubStars', ... }
 export default {
   ...ComponentTypes,
-  'custom-version-dropdown': VersionDropdown,
+  'custom-githubStars': GithubStarsNavbarItem,
 };
