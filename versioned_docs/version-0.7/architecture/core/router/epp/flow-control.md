@@ -2,10 +2,8 @@
 
 The Flow Control layer within the EPP is a critical mechanism for pool defense and multi-tenancy. It protects the pool of model servers from overload by shifting intelligent queuing to the gateway, enforcing strict priority and tenant-aware fairness.
 
-:::important
-EPP Flow Control is currently behind the `flowControl` feature gate. You must explicitly enable it in your [EndpointPickerConfig](configuration.md) to use these capabilities.
-:::
-
+> [!IMPORTANT]
+> EPP Flow Control is currently behind the `flowControl` feature gate. You must explicitly enable it in your [EndpointPickerConfig](configuration.md) to use these capabilities.
 
 ### The LLM Queuing Problem
 
@@ -58,17 +56,13 @@ curl -X POST http://${IP}:${PORT}/v1/completions \
   }'
 ```
 
-:::warning
-**Trust Boundary**: In a production system, allowing end-users to self-assert their tenant ID or traffic priority (`premium-traffic`) is an abuse vector. In production, these headers should be stripped from external requests and injected by an upstream trusted API gateway, identity provider, or Envoy AuthZ filter based on the API key.
-:::
+> [!WARNING]
+> **Trust Boundary**: In a production system, allowing end-users to self-assert their tenant ID or traffic priority (`premium-traffic`) is an abuse vector. In production, these headers should be stripped from external requests and injected by an upstream trusted API gateway, identity provider, or Envoy AuthZ filter based on the API key.
 
-
-:::tip
-**Fallbacks**:
-* If the **Fairness ID** header is missing, the request falls back to a single global bucket for that priority level.
-* If the **Inference Objective** header is missing, or references an objective without a priority set, the request defaults to **Priority `0`**.
-:::
-
+> [!TIP]
+> **Fallbacks**:
+> * If the **Fairness ID** header is missing, the request falls back to a single global bucket for that priority level.
+> * If the **Inference Objective** header is missing, or references an objective without a priority set, the request defaults to **Priority `0`**.
 
 
 #### Two Levels of Priority
@@ -97,28 +91,28 @@ flowchart TD
     Client(["Incoming HTTP Connections"]):::client --> AdmissionController
 
     subgraph EPP["EPP Flow Control Layer"]
-        AdmissionController{"1. Admission Controller<br />Assign FlowKey"}:::logic
+        AdmissionController{"1. Admission Controller<br>Assign FlowKey"}:::logic
 
         subgraph B100["Band 100: Highest QoS"]
             direction TB
-            Q1[("Premium-A<br />Ordering: FCFS")]:::premium
-            F1(("Fairness:<br />Round-Robin")):::logic
+            Q1[("Premium-A<br>Ordering: FCFS")]:::premium
+            F1(("Fairness:<br>Round-Robin")):::logic
             Q1 --> F1
         end
 
         subgraph B0["Band 0: Standard QoS"]
             direction TB
-            Q2[("Standard-A<br />Ordering: FCFS")]:::standard
-            Q3[("Standard-B<br />Ordering: FCFS")]:::standard
-            F0(("Fairness:<br />Round-Robin")):::logic
+            Q2[("Standard-A<br>Ordering: FCFS")]:::standard
+            Q3[("Standard-B<br>Ordering: FCFS")]:::standard
+            F0(("Fairness:<br>Round-Robin")):::logic
             Q2 --> F0
             Q3 --> F0
         end
 
         subgraph BM10["Band -10: Best Effort / BG"]
             direction TB
-            Q4[("Batch-A<br />Ordering: FCFS")]:::batch
-            FM1(("Fairness:<br />Round-Robin")):::logic
+            Q4[("Batch-A<br>Ordering: FCFS")]:::batch
+            FM1(("Fairness:<br>Round-Robin")):::logic
             Q4 --> FM1
         end
 
@@ -136,22 +130,22 @@ flowchart TD
         FM1 -. "3. If Band 0 Empty" .-> Disp
 
         %% Gatekeeper
-        Gate{{"3. Saturation Detector<br />(Example: concurrency-detector)<br />Pool Saturation: 44/45 (98%)"}}:::gate
+        Gate{{"3. Saturation Detector<br>(Example: concurrency-detector)<br>Pool Saturation: 44/45 (98%)"}}:::gate
 
         Disp -->|"Selects Next Req"| Gate
 
         %% Explicit label syntax forces a clean loopback curve
-        Gate -.->|"Pool Saturated<br />(Head-of-Line Block)"| Disp
+        Gate -.->|"Pool Saturated<br>(Head-of-Line Block)"| Disp
 
-        Sched["4. Late-Binding Scheduler<br />(High Affinity Routing)"]:::scheduler
-        Gate == "Capacity Available (Saturation < 100%) <br /> (Dispatch)" ==> Sched
+        Sched["4. Late-Binding Scheduler<br>(High Affinity Routing)"]:::scheduler
+        Gate == "Capacity Available (Saturation < 100%) <br> (Dispatch)" ==> Sched
     end
 
     subgraph Backend ["Backend Pool: Model Servers (vLLM)"]
         direction LR
-        P1["Endpoint 1<br />Active Batch: 10/10<br />Local Queue: 4/5<br />Saturation: 93%"]:::endpoint
-        P2["Endpoint 2<br />Active Batch: 10/10<br />Local Queue: 5/5<br />Saturation: 100%"]:::endpoint
-        P3["Endpoint 3<br />Active Batch: 10/10<br />Local Queue: 5/5<br />Saturation: 100%"]:::endpoint
+        P1["Endpoint 1<br>Active Batch: 10/10<br>Local Queue: 4/5<br>Saturation: 93%"]:::endpoint
+        P2["Endpoint 2<br>Active Batch: 10/10<br>Local Queue: 5/5<br>Saturation: 100%"]:::endpoint
+        P3["Endpoint 3<br>Active Batch: 10/10<br>Local Queue: 5/5<br>Saturation: 100%"]:::endpoint
     end
 
     Sched == "Route to Best Candidate" ==> P1
@@ -256,10 +250,8 @@ To prevent the EPP itself from resource exhaustion when queues grow, Flow Contro
 *   **Global Limits**: Configured via `maxBytes` (payload size) and `maxRequests` (count) across all priority bands. These limits support both plain integers and Kubernetes Quantity format (e.g., `10Gi`, `1k`). If a new request would exceed these limits, it is immediately rejected with an HTTP 429 (Too Many Requests).
 *   **Per-Band Limits**: Each priority band can have its own `maxBytes` and `maxRequests` limits. This provides **memory isolation** between bands; heavy traffic in a lower-priority band cannot fill the queue space reserved for higher-priority bands.
 
-:::note
-**Proxy vs. GPU Protection**: It is important to distinguish between these flow control limits and the Saturation Detector. The `maxBytes` and `maxRequests` limits protect the **Gateway's** memory footprint and prevent proxy-level Resource Exhaustion. The Saturation Detector (described below) protects the **GPU's** physical compute and KV-cache capacity.
-:::
-
+> [!NOTE]
+> **Proxy vs. GPU Protection**: It is important to distinguish between these flow control limits and the Saturation Detector. The `maxBytes` and `maxRequests` limits protect the **Gateway's** memory footprint and prevent proxy-level Resource Exhaustion. The Saturation Detector (described below) protects the **GPU's** physical compute and KV-cache capacity.
 
 
 ### The Dispatch Lifecycle
@@ -384,11 +376,9 @@ Available plugins:
 *   **[`utilization-detector`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/flowcontrol/saturationdetector/utilization/README.md)**: Closed-loop detector reacting to real-time telemetry (queue depth, KV cache). Highly accurate but subject to telemetry lag ("thundering herd"). In heterogeneous pools, it treats all endpoints equally (unweighted average), meaning a small saturated endpoint can trigger global backpressure. (Default)
 *   **[`concurrency-detector`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/flowcontrol/saturationdetector/concurrency/README.md)**: Open-loop detector based on active in-flight request accounting. Instantaneous reaction but blind to actual hardware memory pressure (KV cache filling). In heterogeneous pools, it biases toward the state of larger endpoints (aggregate capacity model).
 
-:::note
-#### The "Healthy Buffer" Principle
-Regardless of which detector you use, the core goal of tuning saturation detection is to maintain a small, **"healthy buffer"** of requests queued locally on the model servers themselves.
-:::
-
+> [!NOTE]
+> #### The "Healthy Buffer" Principle
+> Regardless of which detector you use, the core goal of tuning saturation detection is to maintain a small, **"healthy buffer"** of requests queued locally on the model servers themselves.
 >
 > This buffer should be just large enough to ensure continuous batching engines never starve for work, but small enough that the vast majority of queuing happens centrally in the EPP where priority and fairness can be enforced.
 >
@@ -404,7 +394,7 @@ Regardless of which detector you use, the core goal of tuning saturation detecti
 ### Advanced Use Cases: Autoscaling
 
 #### True Demand Autoscaling
-Traditional metrics like GPU utilization fail to quantify unfulfilled demand because LLM compute is highly non-linear. Shifting the queue to the EPP provides a definitive "True Demand" metric (Queue Depth). External scalers like KEDA can use this metric to scale out replicas based on the exact volume of traffic waiting to be served. See [Autoscaling](../../../advanced/autoscaling/index.md) for more details.
+Traditional metrics like GPU utilization fail to quantify unfulfilled demand because LLM compute is highly non-linear. Shifting the queue to the EPP provides a definitive "True Demand" metric (Queue Depth). External scalers like KEDA can use this metric to scale out replicas based on the exact volume of traffic waiting to be served. See [Autoscaling](../../../advanced/autoscaling/README.md) for more details.
 
 ### Metrics & Observability
 
@@ -422,4 +412,4 @@ The Flow Control layer exposes detailed metrics to track queuing dynamics and sy
 #### Grafana Dashboard
 A pre-configured Grafana dashboard is available to visualize these metrics, making it easy to monitor queue depths, dispatch latency, and saturation state transitions.
 
-![Flow Control Dashboard](/img/docs/0.7/flow_control_dashboard.png)
+![Flow Control Dashboard](../../images/flow_control_dashboard.png)

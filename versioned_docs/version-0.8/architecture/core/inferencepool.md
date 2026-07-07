@@ -15,8 +15,8 @@ The following diagram visualizes how the `InferencePool` resource is involved in
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" />
-    <img src="/img/docs/gateway-design.svg"  alt="InferencePool" />
+    <source media="(prefers-color-scheme: dark)">
+    <img src="/img/versioned/0.8/assets/gateway-design.svg"  alt="InferencePool">
   </picture>
 </p>
 

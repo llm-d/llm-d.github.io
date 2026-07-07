@@ -53,10 +53,8 @@ Deploy the default model server (vLLM running on NVIDIA GPUs). This will deploy 
 kubectl apply -n ${NAMESPACE} -k guides/optimized-baseline/modelserver/gpu/vllm/
 ```
 
-:::tip
-If you are using different hardware (AMD, Intel, TPU, or CPU), you can find alternative configurations in the `guides/optimized-baseline/modelserver/` directory.
-:::
-
+> [!TIP]
+> If you are using different hardware (AMD, Intel, TPU, or CPU), you can find alternative configurations in the `guides/optimized-baseline/modelserver/` directory.
 
 ## Verification
 

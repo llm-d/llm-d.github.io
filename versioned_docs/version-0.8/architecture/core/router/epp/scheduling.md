@@ -71,10 +71,8 @@ When a profile runs, it first filters the candidate endpoints. If any remain, it
 
 ## Concrete Plugins
 
-:::important
-Not all of the plugins listed below are configured by default. Only a curated subset is enabled in the [default configuration](#).
-:::
-
+> [!IMPORTANT]
+> Not all of the plugins listed below are configured by default. Only a curated subset is enabled in the [default configuration](#).
 
 ### Filters
 
@@ -114,12 +112,10 @@ Not all of the plugins listed below are configured by default. Only a curated su
 * **[`single-profile-handler`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/profilehandler/single)**: Runs a single configured primary profile.
 * **[`disagg-profile-handler`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/profilehandler/disagg)**: Runs two scheduling profiles, one for prefill and one for decode. The **decode endpoint** is set as the primary destination for the proxy to forward the original request, while the **prefill endpoint** is injected into the request as a specialized header.
 
-:::note
-Two older handlers are **deprecated** and kept only for backward compatibility:
-- `pd-profile-handler` — use `disagg-profile-handler` instead.
-- `data-parallel-profile-handler` — use `single-profile-handler` instead.
-:::
-
+> [!NOTE]
+> Two older handlers are **deprecated** and kept only for backward compatibility:
+> - `pd-profile-handler` — use `disagg-profile-handler` instead.
+> - `data-parallel-profile-handler` — use `single-profile-handler` instead.
 
 ---
 
@@ -150,7 +146,7 @@ flowchart TD
 
 The `ProfileHandler` uses the `Pick` extension point to determine which profiles need to run for a given request (e.g., if a request needs both prefill and decode, or just decode if the KV cache is already transferred). If both are needed, the prefill and decode endpoints are picked at the same time. The `ProfileHandler` then uses the `ProcessResults` extension point to merge the results from both profiles. This merging ensures that the **decode endpoint** is returned as the primary destination for the proxy to forward the original request. Simultaneously, the **prefill endpoint** is injected into the request as a specialized header. When the request reaches the decode worker, the **sidecar** running alongside the decoder intercepts it, extracts the prefill endpoint from the header, and coordinates a remote prefill from the selected prefill worker before the decoding process begins.
 
-See [Disaggregated Serving](../../../advanced/disaggregation/index.md) for more details on the design and request flow.
+See [Disaggregated Serving](../../../advanced/disaggregation/README.md) for more details on the design and request flow.
 
 ---
 

@@ -34,8 +34,8 @@ For this quickstart, we will use the **Standalone Mode** deployment, which is th
   kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
   ```
 
-- [Create the `llm-d-hf-token` secret in your target namespace with the key `HF_TOKEN` matching a valid HuggingFace token](https://github.com/llm-d/llm-d/tree/release-0.8/helpers/hf-token.md) to pull models.
-{/* llm-d-cicd:skip start */}
+- [Create the `llm-d-hf-token` secret in your target namespace with the key `HF_TOKEN` matching a valid HuggingFace token](https://github.com/llm-d/llm-d/tree/main/helpers/hf-token.md) to pull models.
+<!-- llm-d-cicd:skip start -->
   ```bash
   export HF_TOKEN=<your HuggingFace token>
   kubectl create secret generic llm-d-hf-token \
@@ -43,7 +43,7 @@ For this quickstart, we will use the **Standalone Mode** deployment, which is th
     --namespace "${NAMESPACE}" \
     --dry-run=client -o yaml | kubectl apply -f -
   ```
-{/* llm-d-cicd:skip end */}
+<!-- llm-d-cicd:skip end -->
 
 ## Installation Instructions
 
@@ -67,10 +67,8 @@ Deploy the default model server (vLLM running on NVIDIA GPUs). This will deploy 
 kubectl apply -n ${NAMESPACE} -k guides/optimized-baseline/modelserver/gpu/vllm/
 ```
 
-:::tip
-If you are using different hardware (AMD, Intel, TPU, or CPU), you can find alternative configurations in the `guides/optimized-baseline/modelserver/` directory.
-:::
-
+> [!TIP]
+> If you are using different hardware (AMD, Intel, TPU, or CPU), you can find alternative configurations in the `guides/optimized-baseline/modelserver/` directory.
 
 ## Verification
 

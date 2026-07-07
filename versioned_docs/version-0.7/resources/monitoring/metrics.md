@@ -2,10 +2,8 @@
 
 This guide shows how to collect and visualize metrics from an llm-d deployment using Prometheus and Grafana.
 
-:::note
-This guide assumes you have a running llm-d deployment with an InferencePool and model servers. See the [quickstart](/docs/0.7/getting-started/quickstart) if you need to set one up first.
-:::
-
+> [!NOTE]
+> This guide assumes you have a running llm-d deployment with an InferencePool and model servers. See the [quickstart](../../getting-started/quickstart.md) if you need to set one up first.
 
 ## Prerequisites
 
@@ -13,22 +11,18 @@ This guide assumes you have a running llm-d deployment with an InferencePool and
 - [Helm](https://helm.sh/docs/intro/install/) (for llm-d Router charts and optional Prometheus install)
 - A Prometheus instance accessible to the cluster (see [Step 1](#step-1-install-prometheus-and-grafana) if you don't have one)
 
-:::note
-Commands in this guide use `${NAMESPACE}` for the namespace where your llm-d workload runs. Set it before following along:
-```bash
-export NAMESPACE=<your-llm-d-namespace>
-```
-:::
-
+> [!NOTE]
+> Commands in this guide use `${NAMESPACE}` for the namespace where your llm-d workload runs. Set it before following along:
+> ```bash
+> export NAMESPACE=<your-llm-d-namespace>
+> ```
 
 ## Step 1: Install Prometheus and Grafana
 
 If you already have Prometheus running in your cluster, skip to [Step 2](#step-2-enable-vllm-metrics).
 
-:::note
-llm-d provides an install script that deploys Prometheus and Grafana with sensible defaults. For production environments, see the platform-specific notes below.
-:::
-
+> [!NOTE]
+> llm-d provides an install script that deploys Prometheus and Grafana with sensible defaults. For production environments, see the platform-specific notes below.
 
 ```bash
 # Install Prometheus + Grafana into the llm-d-monitoring namespace
@@ -111,7 +105,7 @@ components:
   # - ../../../recipes/modelserver/components/monitoring-pd  # add for prefill/decode disaggregation
 ```
 
-The monitoring component creates PodMonitors that scrape vLLM metrics. See [`guides/recipes/modelserver/components/monitoring/`](https://github.com/llm-d/llm-d/tree/release-0.7/guides/recipes/modelserver/components/monitoring) for details.
+The monitoring component creates PodMonitors that scrape vLLM metrics. See [`guides/recipes/modelserver/components/monitoring/`](https://github.com/llm-d/llm-d/tree/main/guides/recipes/modelserver/components/monitoring/) for details.
 
 ### Helm Deployments
 
@@ -218,10 +212,8 @@ llm-d provides pre-built Grafana dashboards for common monitoring scenarios.
 
 ### Access Grafana
 
-:::note
-The commands below use namespace and service names from the bundled install script. If you use an existing Prometheus or Grafana instance, adjust the namespace and service names accordingly.
-:::
-
+> [!NOTE]
+> The commands below use namespace and service names from the bundled install script. If you use an existing Prometheus or Grafana instance, adjust the namespace and service names accordingly.
 
 ```bash
 kubectl port-forward -n llm-d-monitoring svc/llmd-grafana 3000:80
@@ -266,10 +258,8 @@ Or import individual dashboard JSON files manually from `docs/monitoring/grafana
 
 The upstream [inference-gateway dashboard](https://github.com/kubernetes-sigs/gateway-api-inference-extension/blob/v1.0.1/tools/dashboards/inference_gateway.json) provides EPP-specific metrics visualization.
 
-:::note
-The upstream dashboard may use older `inference_model_*` metric names. Current llm-d deployments use `inference_objective_*`. If panels show "No data", update the metric names in the dashboard JSON.
-:::
-
+> [!NOTE]
+> The upstream dashboard may use older `inference_model_*` metric names. Current llm-d deployments use `inference_objective_*`. If panels show "No data", update the metric names in the dashboard JSON.
 
 ## Step 5: Query Metrics
 

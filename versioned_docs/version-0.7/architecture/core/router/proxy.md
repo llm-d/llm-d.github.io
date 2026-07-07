@@ -45,8 +45,8 @@ In standalone mode, the conformant proxy (e.g., Envoy) runs alongside the EPP in
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" />
-    <img src="/img/docs/0.7/standalone-design.svg" alt="Standalone Design" />
+    <source media="(prefers-color-scheme: dark)">
+    <img src="/img/versioned/0.7/assets/standalone-design.svg" alt="Standalone Design">
   </picture>
 </p>
 
@@ -70,8 +70,8 @@ The [Gateway API Inference Extension (GAIE)](https://gateway-api-inference-exten
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" />
-    <img src="/img/docs/0.7/gateway-design.svg"  alt="Gateway Design" />
+    <source media="(prefers-color-scheme: dark)">
+    <img src="/img/versioned/0.7/assets/gateway-design.svg"  alt="Gateway Design">
   </picture>
 </p>
 
@@ -155,7 +155,7 @@ spec:
 </table>
 
 ### Deployment Guides
-llm-d provides [Gateway Mode deployment guides](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/README.md) for the following Gateways:
+llm-d provides [Gateway Mode deployment guides](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways) for the following Gateways:
 - [Istio](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/istio.md)
 - [GKE Gateway](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/gke.md)
 - [Agentgateway](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/agentgateway.md)

@@ -92,7 +92,7 @@ Supported values:
 
 | Field | Description |
 | --- | --- |
-| `matchLabels` | `map[string]string` <br/> **Required** <br/> A set of (key,value) pairs. An object must match every label in this map (AND operation). <br/> Max properties: 64. |
+| `matchLabels` | `map[string]string` <br/> **Required** <br/> A set of &#123;key,value&#125; pairs. An object must match every label in this map (AND operation). <br/> Max properties: 64. |
 
 ---
 

@@ -10,7 +10,7 @@ Maintainers for each accelerator type are listed below. See our well-lit path gu
 | --- | --- | --- |
 | AMD | ROCm | Kenny Roche (Kenny.Roche@amd.com), Vincent Cave (Vincent.Cave@amd.com) |
 | CPU | x86_64 | Hongming Zheng (@ZhengHongming888, hongming.zheng@intel.com) |
-| Google | [TPU](/docs/resources/infra-providers/gke#llm-d-on-google-kubernetes-engine-gke) | Edwin Hernandez (@Edwinhr716), Cong Liu (@liu-cong, congliu.thu@gmail.com) |
+| Google | [TPU](../infrastructure/providers/gke/README.md#llm-d-on-google-kubernetes-engine-gke) | Edwin Hernandez (@Edwinhr716), Cong Liu (@liu-cong, congliu.thu@gmail.com) |
 | Intel | XPU | Yuan Wu (@yuanwu2017, yuan.wu@intel.com) |
 | NVIDIA | GPU | Will Eaton (weaton@redhat.com), Greg (grpereir@redhat.com) |
 | Rebellions | NPU | Jinmoo Seok (@rebel-jinmoo, jinmoo_seok@rebellions.ai), Minwook Ahn (@rebel-minwook, minwook.ahn@rebellions.ai) |
@@ -24,15 +24,11 @@ For integration into the well-lit paths our standard for contribution is higher,
 - A named maintainer responsible for keeping guide contents up to date
 - Manual or automated verification of the guide deployment for each release
 
-:::note
-We aim to increase our requirements to have active CI coverage for all hardware guide variants in a future release.
-:::
-
+> [!NOTE]
+> We aim to increase our requirements to have active CI coverage for all hardware guide variants in a future release.
 >
-:::note
-The community can assist but is not responsible for keeping hardware guide variants updated. We reserve the right to remove stale examples and documentation with regard to hardware support.
-:::
-
+> [!NOTE]
+> The community can assist but is not responsible for keeping hardware guide variants updated. We reserve the right to remove stale examples and documentation with regard to hardware support.
 
 ## NVIDIA GPUs
 
@@ -57,7 +53,7 @@ For the full CUDA/driver compatibility matrix, see the [CUDA Toolkit Release Not
 
 ## Google TPU
 
-Google Cloud TPUs (v6e, v7) are supported when running on GKE. See the [GKE infrastructure provider docs](/docs/resources/infra-providers/gke) for cluster setup.
+Google Cloud TPUs (v6e, v7) are supported when running on GKE. See the [GKE infrastructure provider docs](../infrastructure/providers/gke/README.md) for cluster setup.
 
 ## AMD ROCm
 
@@ -77,7 +73,7 @@ For P/D disaggregation with RDMA-accelerated KV-cache transfer on Intel XPU, the
 - GPU-NIC PCIe alignment for optimal transfer performance.
 - UCX transport configured with `ib,rc,ze_copy`.
 
-The RDMA overlay (`modelserver/xpu/vllm-rdma/`) reuses the standard XPU vLLM base and adds one RDMA DRA claim per pod plus RDMA-specific UCX transport settings. See the [P/D Disaggregation guide](/docs/well-lit-paths/pd-disaggregation) for deployment instructions.
+The RDMA overlay (`modelserver/xpu/vllm-rdma/`) reuses the standard XPU vLLM base and adds one RDMA DRA claim per pod plus RDMA-specific UCX transport settings. See the [P/D Disaggregation guide](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation) for deployment instructions.
 
 ## CPU Inferencing
 

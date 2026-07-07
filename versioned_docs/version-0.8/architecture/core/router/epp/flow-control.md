@@ -2,10 +2,8 @@
 
 The Flow Control layer within the EPP is a critical mechanism for pool defense and multi-tenancy. It protects the pool of model servers from overload by shifting intelligent queuing to the gateway, enforcing strict priority and tenant-aware fairness.
 
-:::important
-EPP Flow Control is currently behind the `flowControl` feature gate. You must explicitly enable it in your [EndpointPickerConfig](configuration.md) to use these capabilities.
-:::
-
+> [!IMPORTANT]
+> EPP Flow Control is currently behind the `flowControl` feature gate. You must explicitly enable it in your [EndpointPickerConfig](configuration.md) to use these capabilities.
 
 ### The LLM Queuing Problem
 
@@ -58,15 +56,11 @@ curl -X POST http://${IP}:${PORT}/v1/completions \
   }'
 ```
 
-:::warning
-**Trust Boundary**: In a production system, allowing end-users to self-assert their tenant ID or traffic priority (`premium-traffic`) is an abuse vector. In production, these headers should be stripped from external requests and injected by an upstream trusted API gateway, identity provider, or Envoy AuthZ filter based on the API key.
-:::
+> [!WARNING]
+> **Trust Boundary**: In a production system, allowing end-users to self-assert their tenant ID or traffic priority (`premium-traffic`) is an abuse vector. In production, these headers should be stripped from external requests and injected by an upstream trusted API gateway, identity provider, or Envoy AuthZ filter based on the API key.
 
-
-:::tip
-**Fallbacks**:
-:::
-
+> [!TIP]
+> **Fallbacks**:
 >
 > * If the **Fairness ID** header is missing, the request falls back to a single global bucket for that priority level.
 > * If the **Inference Objective** header is missing, or references an objective without a priority set, the request defaults to **Priority `0`**.
@@ -256,10 +250,8 @@ To prevent the EPP itself from resource exhaustion when queues grow, Flow Contro
 * **Global Limits**: Configured via `maxBytes` (payload size) and `maxRequests` (count) across all priority bands. These limits support both plain integers and Kubernetes Quantity format (e.g., `10Gi`, `1k`). If a new request would exceed these limits, it is immediately rejected with an HTTP 429 (Too Many Requests).
 * **Per-Band Limits**: Each priority band can have its own `maxBytes` and `maxRequests` limits. This provides **memory isolation** between bands; heavy traffic in a lower-priority band cannot fill the queue space reserved for higher-priority bands.
 
-:::note
-**Proxy vs. GPU Protection**: It is important to distinguish between these flow control limits and the Saturation Detector. The `maxBytes` and `maxRequests` limits protect the **Gateway's** memory footprint and prevent proxy-level Resource Exhaustion. The Saturation Detector (described below) protects the **GPU's** physical compute and KV-cache capacity.
-:::
-
+> [!NOTE]
+> **Proxy vs. GPU Protection**: It is important to distinguish between these flow control limits and the Saturation Detector. The `maxBytes` and `maxRequests` limits protect the **Gateway's** memory footprint and prevent proxy-level Resource Exhaustion. The Saturation Detector (described below) protects the **GPU's** physical compute and KV-cache capacity.
 
 ### The Dispatch Lifecycle
 
@@ -384,8 +376,7 @@ Available plugins:
 * **[`utilization-detector`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/flowcontrol/saturationdetector/utilization/README.md)**: Closed-loop detector reacting to real-time telemetry (queue depth, KV cache). Highly accurate but subject to telemetry lag ("thundering herd"). In heterogeneous pools, it treats all endpoints equally (unweighted average), meaning a small saturated endpoint can trigger global backpressure. (Default)
 * **[`concurrency-detector`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/flowcontrol/saturationdetector/concurrency/README.md)**: Open-loop detector based on active in-flight request accounting. Instantaneous reaction but blind to actual hardware memory pressure (KV cache filling). In heterogeneous pools, it biases toward the state of larger endpoints (aggregate capacity model).
 
-:::
-
+> [!NOTE]
 >
 > #### The "Healthy Buffer" Principle
 >
@@ -406,7 +397,7 @@ Available plugins:
 
 #### True Demand Autoscaling
 
-Traditional metrics like GPU utilization fail to quantify unfulfilled demand because LLM compute is highly non-linear. Shifting the queue to the EPP provides a definitive "True Demand" metric (Queue Depth). External scalers like KEDA can use this metric to scale out replicas based on the exact volume of traffic waiting to be served. See [Autoscaling](../../../advanced/autoscaling/index.md) for more details.
+Traditional metrics like GPU utilization fail to quantify unfulfilled demand because LLM compute is highly non-linear. Shifting the queue to the EPP provides a definitive "True Demand" metric (Queue Depth). External scalers like KEDA can use this metric to scale out replicas based on the exact volume of traffic waiting to be served. See [Autoscaling](../../../advanced/autoscaling/README.md) for more details.
 
 ### Metrics & Observability
 
@@ -425,4 +416,4 @@ The Flow Control layer exposes detailed metrics to track queuing dynamics and sy
 
 A pre-configured Grafana dashboard is available to visualize these metrics, making it easy to monitor queue depths, dispatch latency, and saturation state transitions.
 
-![Flow Control Dashboard](/img/docs/flow_control_dashboard.png)
+![Flow Control Dashboard](../../images/flow_control_dashboard.png)

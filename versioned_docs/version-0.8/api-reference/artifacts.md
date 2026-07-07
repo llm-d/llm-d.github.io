@@ -8,12 +8,10 @@ This page lists the llm-d release artifacts and dependencies:
 4. [**Well-Lit Path Guides**](#4-well-lit-path-guides) — deployment manifests and benchmark scripts for key user stories
 5. [**Gateway Recipes**](#5-gateway-recipes) — optional recipes for installing Gateways and integrating them with llm-d
 
-:::important
-llm-d follows a modular deployment pattern, enabling gradual feature
-adoption. Users seeking a single CRD-driven deployment pattern should
-consider KServe's [LLMInferenceService](https://kserve.github.io/website/docs/model-serving/generative-inference/llmisvc/llmisvc-overview).
-:::
-
+> [!IMPORTANT]
+> llm-d follows a modular deployment pattern, enabling gradual feature
+> adoption. Users seeking a single CRD-driven deployment pattern should
+> consider KServe's [LLMInferenceService](https://kserve.github.io/website/docs/model-serving/generative-inference/llmisvc/llmisvc-overview).
 
 ## 1. GAIE CRDs
 
@@ -43,11 +41,9 @@ llm-d Router is deployed via Helm. We offer a chart both Standalone and Gateway 
 
 The charts are currently published by the Gateway API Inference Extension (GAIE) project (see [standalone mode source](https://github.com/kubernetes-sigs/gateway-api-inference-extension/tree/main/config/charts/standalone) and [gateway mode source](https://github.com/kubernetes-sigs/gateway-api-inference-extension/tree/main/config/charts/inferencepool)). Each well-lit path guides provides values files on top of the chart defaults to enable the functionality implemented in EPP.
 
-:::note
-In a future release, the Helm Charts will be published
-from the llm-d project rather than from GAIE.
-:::
-
+> [!NOTE]
+> In a future release, the Helm Charts will be published
+> from the llm-d project rather than from GAIE.
 
 ### Images
 
@@ -60,23 +56,19 @@ llm-d releases the core EPP image as well as additional sidecar images for advan
 | `registry.k8s.io/gateway-api-inference-extension/latency-training-server` | Optional sidecar for EPP, for predicted-latency model training | v1.5.0 |
 | `registry.k8s.io/gateway-api-inference-extension/latency-prediction-server` | Optional sidecar for EPP, for predicted-latency scheduling | v1.5.0 |
 
-:::note
-In a future release, the latency server images will be
-released from the llm-d/llm-d-latency-predictor repo.
-:::
-
+> [!NOTE]
+> In a future release, the latency server images will be
+> released from the llm-d/llm-d-latency-predictor repo.
 
 ## 3. Model Servers and Extensions
 
 The llm-d stack supports vLLM and SGLang.
 
-:::important
-llm-d validates each released guide against specific versions
-of each model server, but llm-d Router communicates with model
-servers over the OpenAI-compatible HTTP API and standard
-inference engine metrics, so any recent release should work.
-:::
-
+> [!IMPORTANT]
+> llm-d validates each released guide against specific versions
+> of each model server, but llm-d Router communicates with model
+> servers over the OpenAI-compatible HTTP API and standard
+> inference engine metrics, so any recent release should work.
 
 ### Upstream Images
 
@@ -108,7 +100,7 @@ In addition to the upstream images, llm-d also builds and releases vLLM images w
 
 ### FS Offloading Extension
 
-`llmd-fs-connector` adds filesystem offloading to vLLM's `OffloadingConnector`. It is released from [llm-d-kv-cache](https://github.com/llm-d/llm-d-kv-cache/releases/tag/v0.8.0) as a python wheel and hosted on the following pypi registry https://llm-d.github.io/llm-d-kv-cache/simple/builds.
+`llmd-fs-connector` adds filesystem offloading to vLLM's `OffloadingConnector`. It is released from [llm-d-kv-cache](https://github.com/llm-d/llm-d-kv-cache/releases/tag/v0.8.0) as a python wheel and hosted on the following pypi registry <https://llm-d.github.io/llm-d-kv-cache/simple/builds>.
 
 ## 4. Well-Lit Path Guides
 
@@ -117,15 +109,13 @@ Well-Lit Paths are tested, benchmarked deployment recipes that show off llm-d's 
 * **EPP Configurations** - Helm values files with EPP configurations for usage with the charts for llm-d Router.
 * **Model Server Manifests** - Kustomize manifests for model server with labels and flags needed for usage with llm-d Router.
 
-:::important
-For some guides, we provide cloud provider specific
-settings. This is especially important for guides requiring
-IB and RoCE networking, which is not yet standardized.
-Users can adapt the examples to other platforms as needed.
-:::
+> [!IMPORTANT]
+> For some guides, we provide cloud provider specific
+> settings. This is especially important for guides requiring
+> IB and RoCE networking, which is not yet standardized.
+> Users can adapt the examples to other platforms as needed.
 
-
-See the [full list of guides](/docs/well-lit-paths) for more details.
+See the [full list of guides](../well-lit-paths/README.md) for more details.
 
 ## 5. Gateways
 
@@ -138,7 +128,7 @@ llm-d Router supports optional integration with Kubernetes Gateways. These are t
 | AgentGateway | `v1.0.x` | Preferred for new deployments |
 | kgateway | `v2.2.x` | **Deprecated** — will be removed in the next release |
 
-Install instructions live under [`guides/recipes/gateway/`](https://github.com/llm-d/llm-d/tree/release-0.8/guides/recipes/gateway).
+Install instructions live under [`guides/recipes/gateway/`](https://github.com/llm-d/llm-d/tree/main/guides/recipes/gateway).
 
 ## Source Repositories
 

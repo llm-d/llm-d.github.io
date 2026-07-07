@@ -2,10 +2,8 @@
 
 This guide shows how to enable [OpenTelemetry](https://opentelemetry.io/) distributed tracing across llm-d components.
 
-:::note
-This guide assumes a running llm-d deployment with an InferencePool and model servers. For metrics and dashboards, see [Metrics](metrics.md).
-:::
-
+> [!NOTE]
+> This guide assumes a running llm-d deployment with an InferencePool and model servers. For metrics and dashboards, see [Metrics](metrics.md).
 
 Commands in this guide use `${NAMESPACE}` for the namespace where your llm-d workload runs:
 
@@ -31,10 +29,8 @@ Deploy the OTel Collector and Jaeger into the same namespace as your llm-d workl
 ./docs/monitoring/scripts/install-otel-collector-jaeger.sh -n ${NAMESPACE}
 ```
 
-:::note
-If the [OpenTelemetry Operator](https://opentelemetry.io/docs/kubernetes/operator/) is installed, the script uses an `OpenTelemetryCollector` CR. Otherwise it deploys a standalone collector Deployment.
-:::
-
+> [!NOTE]
+> If the [OpenTelemetry Operator](https://opentelemetry.io/docs/kubernetes/operator/) is installed, the script uses an `OpenTelemetryCollector` CR. Otherwise it deploys a standalone collector Deployment.
 
 Verify the components are running:
 

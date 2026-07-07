@@ -10,8 +10,8 @@ Model servers are the lowest layer in the llm-d stack:
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" />
-    <img src="/img/docs/0.7/basic-architecture.svg" alt="Architecture" />
+    <source media="(prefers-color-scheme: dark)">
+    <img src="/img/versioned/0.7/assets/basic-architecture.svg" alt="Architecture">
   </picture>
 </p>
 
@@ -24,7 +24,7 @@ Key responsibilities:
 - **Manage KV-cache** on GPU memory, including prefix caching for repeated prompt prefixes
 - **Support parallelism strategies** such as Tensor Parallelism (TP), Data Parallelism (DP), and Expert Parallelism (EP) for large models
 
-## EPP \<-> Model Server Protocol
+## EPP <-> Model Server Protocol
 
 This is the protocol between the EPP and the model servers. 
 

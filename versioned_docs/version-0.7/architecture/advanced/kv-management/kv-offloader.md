@@ -7,10 +7,8 @@ llm-d works with any KV-cache connector compatible with vLLM or SGLang. Two inte
 - **Native (vLLM `OffloadingConnector`)** — vLLM's built-in offloading path. Targets CPU RAM directly, and a shared filesystem via the [llm-d FS backend](https://github.com/llm-d/llm-d-kv-cache).
 - **Out-of-tree connectors** — third-party cache engines (e.g., [LMCache](https://lmcache.ai), [Mooncake](https://github.com/kvcache-ai/Mooncake), [NVIDIA KVBM](https://docs.nvidia.com/dynamo/latest/kvbm/)) that plug into the model server through its KV-cache connector API and own their own indexing, memory management, and storage.
 
-:::note
-Pairs with the **llm-d Router's** cache-aware routing — the Router (specifically the **EPP**) picks replicas that can reuse cached blocks; offloading grows the cache each replica can hold.
-:::
-
+> [!NOTE]
+> Pairs with the **llm-d Router's** cache-aware routing — the Router (specifically the **EPP**) picks replicas that can reuse cached blocks; offloading grows the cache each replica can hold.
 
 ## Functionality
 
@@ -66,10 +64,8 @@ The native path lives entirely inside the vLLM stack. The `OffloadingConnector` 
 
 Today, the two targets operate as independent options — choose one offloading target based on your workload requirements.
 
-:::note
-**Hierarchical KV-cache offloading** — where blocks flow GPU → CPU → Storage as a unified tiered hierarchy — is under active development in the native path.
-:::
-
+> [!NOTE]
+> **Hierarchical KV-cache offloading** — where blocks flow GPU → CPU → Storage as a unified tiered hierarchy — is under active development in the native path.
 
 ### Out-of-tree Connectors
 
@@ -134,10 +130,8 @@ Key properties:
 - **High throughput via parallelism** — I/O operations parallelized across worker threads with NUMA-aware scheduling
 - **Minimal GPU interference** — Uses GPU DMA by default, reducing interference with compute kernels
 
-:::note
-The storage connector does not handle cleanup or eviction. Storage capacity management must be handled by the underlying storage system or an external controller. A reference implementation, the [PVC Evictor](https://github.com/llm-d/llm-d-kv-cache/tree/main/kv_connectors/pvc_evictor), can automatically clean up old KV-cache files when storage thresholds are exceeded.
-:::
-
+> [!NOTE]
+> The storage connector does not handle cleanup or eviction. Storage capacity management must be handled by the underlying storage system or an external controller. A reference implementation, the [PVC Evictor](https://github.com/llm-d/llm-d-kv-cache/tree/main/kv_connectors/pvc_evictor), can automatically clean up old KV-cache files when storage thresholds are exceeded.
 
 For implementation details and advanced configuration, see the [llm-d FS backend documentation](https://github.com/llm-d/llm-d-kv-cache/tree/main/kv_connectors/llmd_fs_backend).
 
@@ -148,12 +142,10 @@ Out-of-tree engines coexist with the native path through a common integration co
 - **Serving-stack side** — each engine is already connector-compatible with one or more of vLLM, SGLang (via HiCache), and TensorRT-LLM, so the model server drives lookups, stores, and loads through its standard KV-cache connector API.
 - **Scheduling side** — connectors integrate with llm-d through **KV-Events**: cache mutation notifications that the [KV-Cache Indexer](./kv-indexer.md) consumes to maintain a global view of cache distribution, enabling prefix-aware routing regardless of which backend is in use.
 
-:::note
-llm-d's deployment guides formally cover LMCache today. The integration pattern is the same for Mooncake, KVBM, and other connector-compatible engines — they work out-of-the-box on the serving-stack side — but first-class llm-d recipes for each are not yet in the repo.
-:::
+> [!NOTE]
+> llm-d's deployment guides formally cover LMCache today. The integration pattern is the same for Mooncake, KVBM, and other connector-compatible engines — they work out-of-the-box on the serving-stack side — but first-class llm-d recipes for each are not yet in the repo.
 
-
-For existing deployment recipes, see the [Tiered Prefix Cache Guide](https://github.com/llm-d/llm-d/tree/release-0.7/guides/tiered-prefix-cache).
+For existing deployment recipes, see the [Tiered Prefix Cache Guide](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache).
 
 ## Configuration
 
@@ -234,7 +226,7 @@ Any POSIX filesystem is a candidate; the best choice for a given deployment depe
 
 ## Further Reading
 
-- [Tiered Prefix Cache Guide](https://github.com/llm-d/llm-d/tree/release-0.7/guides/tiered-prefix-cache) — Step-by-step deployment guides
+- [Tiered Prefix Cache Guide](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache) — Step-by-step deployment guides
 - [llm-d KV-Disaggregation Roadmaps](https://github.com/llm-d/llm-d-kv-cache/issues?q=is%3Aissue%20state%3Aopen%20label%3Aroadmap) — Planned features and improvements across offloading and KV-cache management
 - [llm-d FS Backend](https://github.com/llm-d/llm-d-kv-cache/tree/main/kv_connectors/llmd_fs_backend) — Implementation details, configuration, and metrics
 - [vLLM KV Offloading Connector](https://vllm.ai/blog/kv-offloading-connector) — Deep dive into vLLM's native offloading

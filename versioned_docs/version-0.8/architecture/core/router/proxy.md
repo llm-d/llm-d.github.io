@@ -49,8 +49,8 @@ In standalone mode, the conformant proxy runs alongside the EPP in the same pod.
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" />
-    <img src="/img/docs/standalone-design.svg" alt="Standalone Design" />
+    <source media="(prefers-color-scheme: dark)">
+    <img src="/img/versioned/0.8/assets/standalone-design.svg" alt="Standalone Design">
   </picture>
 </p>
 
@@ -76,8 +76,8 @@ The [Gateway API Inference Extension (GAIE)](https://gateway-api-inference-exten
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" />
-    <img src="/img/docs/gateway-design.svg"  alt="Gateway Design" />
+    <source media="(prefers-color-scheme: dark)">
+    <img src="/img/versioned/0.8/assets/gateway-design.svg"  alt="Gateway Design">
   </picture>
 </p>
 
@@ -162,9 +162,9 @@ spec:
 
 ### Deployment Guides
 
-llm-d provides [Gateway Mode deployment guides](/docs/resources/gateway) for the following Gateways:
+llm-d provides [Gateway Mode deployment guides](../../../infrastructure/gateway/README.md) for the following Gateways:
 
-- [Istio](/docs/resources/gateway/istio)
-- [GKE Gateway](/docs/resources/gateway/gke)
-- [agentgateway](/docs/resources/gateway/agentgateway)
-- [Envoy AI Gateway](/docs/resources/gateway/envoy-ai-gateway)
+- [Istio](../../../infrastructure/gateway/istio.md)
+- [GKE Gateway](../../../infrastructure/gateway/gke.md)
+- [agentgateway](../../../infrastructure/gateway/agentgateway.md)
+- [Envoy AI Gateway](../../../infrastructure/gateway/envoy-ai-gateway.md)
