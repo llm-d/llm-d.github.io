@@ -194,6 +194,7 @@ fi
 cp_doc "$WIP/well-lit-paths/README.md"                      "$DOCS_DIR/guides/index.md"
 cp_doc "$WLP/optimized-baseline.md"                         "$DOCS_DIR/guides/optimized-baseline.md"
 cp_doc "$WIP/well-lit-paths/workloads/multimodal-serving.md"             "$DOCS_DIR/guides/multimodal-serving.md"
+cp_doc "$WLP/multi-model-routing.md"                         "$DOCS_DIR/guides/multi-model-routing.md"
 cp_doc "$WLP/precise-prefix-cache-routing.md"               "$DOCS_DIR/guides/precise-prefix-cache-routing.md"
 cp_doc "$WLP/tiered-prefix-cache.md"                        "$DOCS_DIR/guides/tiered-prefix-cache.md"
 cp_doc "$WIP/well-lit-paths/workloads/batch-serving/asynchronous-processing.md" "$DOCS_DIR/guides/asynchronous-processing.md"
@@ -237,6 +238,7 @@ for _sec in capabilities workloads; do
         -e 's|\](wide-expert-parallelism\.md)|\](/well-lit-paths/wide-expert-parallelism)|g' \
         -e 's|\](flow-control\.md)|\](/well-lit-paths/flow-control)|g' \
         -e 's|\](workload-autoscaling\.md)|\](/well-lit-paths/workload-autoscaling)|g' \
+        -e 's|\](multi-model-routing\.md)|\](/well-lit-paths/multi-model-routing)|g' \
         -e 's|\](multimodal-serving\.md)|\](/well-lit-paths/multimodal-serving)|g' \
         -e 's|\](agentic-serving\.md)|\](/well-lit-paths/agentic-serving)|g' \
         -e 's|\](batch-serving/README\.md)|\](/well-lit-paths/asynchronous-processing)|g' \
@@ -275,6 +277,7 @@ sed_inplace \
 set_doc_slug "$DOCS_DIR/guides/index.md" "/well-lit-paths"
 set_doc_slug "$DOCS_DIR/guides/optimized-baseline.md" "/well-lit-paths/optimized-baseline"
 set_doc_slug "$DOCS_DIR/guides/multimodal-serving.md" "/well-lit-paths/multimodal-serving"
+set_doc_slug "$DOCS_DIR/guides/multi-model-routing.md" "/well-lit-paths/multi-model-routing"
 set_doc_slug "$DOCS_DIR/guides/precise-prefix-cache-routing.md" "/well-lit-paths/precise-prefix-cache-routing"
 set_doc_slug "$DOCS_DIR/guides/tiered-prefix-cache.md" "/well-lit-paths/tiered-prefix-cache"
 set_doc_slug "$DOCS_DIR/guides/asynchronous-processing.md" "/well-lit-paths/asynchronous-processing"
@@ -355,6 +358,7 @@ cp_doc "$WIP/operations/observability/setup.md"   "$DOCS_DIR/resources/observabi
 cp_doc "$WIP/operations/observability/metrics.md" "$DOCS_DIR/resources/observability/metrics.md"
 cp_doc "$WIP/operations/observability/tracing.md" "$DOCS_DIR/resources/observability/tracing.md"
 cp_doc "$WIP/operations/observability/promql.md"  "$DOCS_DIR/resources/observability/promql.md"
+cp_doc "$WIP/operations/observability/alerting.md" "$DOCS_DIR/resources/observability/alerting.md"
 
 # === Resources / Gateway ===
 cp_doc "$WIP/infrastructure/gateway/README.md"         "$DOCS_DIR/resources/gateway/index.md"
@@ -579,6 +583,10 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](../../../getting-started/quickstart\.md)|\](/getting-started/quickstart)|g' \
         -e 's|\](../../getting-started/quickstart\.md)|\](/getting-started/quickstart)|g' \
         -e 's|\](../../architecture/advanced/batch/batch-gateway\.md)|\](/architecture/advanced/batch/batch-gateway)|g' \
+        -e 's|\](\.\./architecture/advanced/inference-payload-processing/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/inference-payload-processing/README.md)|g' \
+        -e 's|\](\./architecture/advanced/inference-payload-processing/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/inference-payload-processing/README.md)|g' \
+        -e 's|\](/architecture/advanced/inference-payload-processing/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/inference-payload-processing/README.md)|g' \
+        -e 's|\](/docs/architecture/advanced/inference-payload-processing/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/inference-payload-processing/README.md)|g' \
         -e 's|llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/profile)|llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/profilehandler)|g' \
         -e 's|\](../../guides/optimized-baseline)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
         -e 's|\](../../guides/multimodal/optimized-baseline/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/optimized-baseline)|g' \
@@ -775,6 +783,7 @@ find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](/docs/optimized-baseline)|\](/docs/guides/optimized-baseline)|g' \
         -e 's|\](../optimized-baseline/README\.md#2-deploy-the-model-server)|\](/guides/optimized-baseline#2-deploy-the-model-server)|g' \
         -e 's|\](../optimized-baseline/README\.md#3-enable-monitoring-optional)|\](/guides/optimized-baseline#3-enable-monitoring-optional)|g' \
+        -e 's|\](../architecture/advanced/inference-payload-processing/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/inference-payload-processing/README.md)|g' \
         "$file"
 done
 
@@ -804,13 +813,14 @@ fi
 
 # === Fix observability doc links ===
 # Link to github for repo-only paths; rewrite in-site cross-links under /resources/observability/
-for obs_file in index.md setup.md metrics.md tracing.md promql.md; do
+for obs_file in index.md setup.md metrics.md tracing.md promql.md alerting.md; do
     if [[ -f "$DOCS_DIR/resources/observability/$obs_file" ]]; then
         sed_inplace \
             -e 's|\](./setup\.md)|\](/resources/observability/setup)|g' \
             -e 's|\](./metrics\.md)|\](/resources/observability/metrics)|g' \
             -e 's|\](./tracing\.md)|\](/resources/observability/tracing)|g' \
             -e 's|\](./promql\.md)|\](/resources/observability/promql)|g' \
+            -e 's|\](./alerting\.md)|\](/resources/observability/alerting)|g' \
             -e 's|\](../../getting-started/quickstart\.md)|\](/getting-started/quickstart)|g' \
             -e 's|\](../../../guides/recipes/modelserver/components/monitoring/)|\](https://github.com/llm-d/llm-d/tree/main/guides/recipes/modelserver/components/monitoring)|g' \
             -e 's|\`](../../../guides/recipes/modelserver/components/monitoring/)|\`](https://github.com/llm-d/llm-d/tree/main/guides/recipes/modelserver/components/monitoring)|g' \
@@ -953,6 +963,20 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         "$file"
 done
 
+# === Final safety-net: normalize stale IPP README links ===
+# Some upstream files still reference inference-payload-processing/README.md as
+# a local site path, which resolves to /docs/dev/.../README.md and 404s.
+# Force all known variants to the canonical upstream GitHub source URL.
+echo "    Normalizing stale IPP README links..."
+find "$DOCS_DIR" \( -name "*.md" -o -name "*.mdx" \) -print0 | while IFS= read -r -d '' file; do
+    sed_inplace \
+        -e 's|\](../architecture/advanced/inference-payload-processing/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/inference-payload-processing/README.md)|g' \
+        -e 's|\](./architecture/advanced/inference-payload-processing/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/inference-payload-processing/README.md)|g' \
+        -e 's|\](/architecture/advanced/inference-payload-processing/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/inference-payload-processing/README.md)|g' \
+        -e 's|\](/docs/architecture/advanced/inference-payload-processing/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/inference-payload-processing/README.md)|g' \
+        "$file"
+done
+
 # === MDX hygiene: void tags + bare email/URL autolinks ===
 echo "    Normalizing bare HTML void tags + autolinks for MDX..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
@@ -1031,6 +1055,7 @@ generate_stub "$DOCS_DIR/resources/observability/setup.md" "Observability Setup"
 generate_stub "$DOCS_DIR/resources/observability/metrics.md" "Metrics" "Prometheus metrics collection and configuration"
 generate_stub "$DOCS_DIR/resources/observability/tracing.md" "Distributed Tracing" "Setting up distributed tracing with OpenTelemetry"
 generate_stub "$DOCS_DIR/resources/observability/promql.md" "PromQL Query Reference" "Ready-to-use PromQL queries for llm-d deployments"
+generate_stub "$DOCS_DIR/resources/observability/alerting.md" "Alerting" "Default Prometheus alerting rules for llm-d observability."
 generate_stub "$DOCS_DIR/resources/rdma/rdma-configuration.md" "RDMA Configuration" "RDMA network configuration"
 
 # Infrastructure Providers stubs
@@ -1045,6 +1070,8 @@ generate_stub "$DOCS_DIR/resources/infra-providers/openshift-aws.md" "OpenShift 
 # Guides stubs
 generate_stub "$DOCS_DIR/guides/multimodal-serving.md" "Multimodal Serving" "Multimodal serving guide"
 set_doc_slug "$DOCS_DIR/guides/multimodal-serving.md" "/well-lit-paths/multimodal-serving"
+generate_stub "$DOCS_DIR/guides/multi-model-routing.md" "Multi-Model Routing" "Route requests across multiple models and adapters through a single endpoint."
+set_doc_slug "$DOCS_DIR/guides/multi-model-routing.md" "/well-lit-paths/multi-model-routing"
 
 TOTAL=$(find "$DOCS_DIR" -name "*.md" | wc -l | tr -d ' ')
 echo "==> Done. $TOTAL docs synced from llm-d/llm-d @ $BRANCH"

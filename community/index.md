@@ -49,13 +49,68 @@ This page is your gateway to everything you need to know about participating in 
 
 import Link from '@docusaurus/Link';
 
-<div style={{
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-  gap: '16px',
-  marginTop: '16px'
-}}>
-  <Link to="/community/sigs#sig-router-formerly-inference-scheduler" style={{
+{(() => {
+  const sigCards = [
+    {
+      to: '/community/sigs#sig-router-formerly-inference-scheduler',
+      title: 'Router',
+      description: 'Intelligent request routing and load balancing',
+    },
+    {
+      to: '/community/sigs#sig-benchmarking',
+      title: 'Benchmarking',
+      description: 'Performance testing and optimization',
+    },
+    {
+      to: '/community/sigs#sig-pd-disaggregation',
+      title: 'PD-Disaggregation',
+      description: 'Prefill/decode separation patterns',
+    },
+    {
+      to: '/community/sigs#sig-kv-disaggregation',
+      title: 'KV-Disaggregation',
+      description: 'KV caching and distributed storage',
+    },
+    {
+      to: '/community/sigs#sig-installation',
+      title: 'Installation',
+      description: 'Kubernetes integration and deployment',
+    },
+    {
+      to: '/community/sigs#sig-autoscaling',
+      title: 'Autoscaling',
+      description: 'Traffic-aware autoscaling and resource management',
+    },
+    {
+      to: '/community/sigs#sig-observability',
+      title: 'Observability',
+      description: 'Monitoring, logging, and metrics',
+    },
+    {
+      to: '/community/sigs#sig-rl',
+      title: 'RL',
+      description: 'Improve SOTA performance for RL workloads',
+    },
+    {
+      to: '/community/sigs#sig-inference-payload-processor',
+      title: 'Inference Payload Processor',
+      description: 'Pluggable request/response payload processing and model selection',
+    },
+    {
+      to: '/community/sigs#sig-batch-inference',
+      title: 'Batch Inference',
+      description: 'Asynchronous processing, request queueing, and batch gateway management',
+    },
+  ];
+
+  const sigGridStyle = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gap: '16px',
+    marginTop: '16px',
+  };
+
+  const sigCardStyle = {
     padding: '16px',
     border: '1px solid var(--ifm-color-emphasis-200)',
     borderRadius: '8px',
@@ -64,123 +119,29 @@ import Link from '@docusaurus/Link';
     color: 'inherit',
     display: 'block',
     transition: 'all 0.2s ease',
-    ':hover': {
-      borderColor: 'var(--ifm-color-primary)',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-    }
-  }}>
-    <h4 style={{margin: '0 0 8px 0', color: 'var(--ifm-color-primary)'}}>Router</h4>
-    <p style={{margin: '0', fontSize: '14px'}}>Intelligent request routing and load balancing</p>
-  </Link>
-  
-  <Link to="/community/sigs#sig-benchmarking" style={{
-    padding: '16px',
-    border: '1px solid var(--ifm-color-emphasis-200)',
-    borderRadius: '8px',
-    backgroundColor: 'var(--ifm-background-surface-color)',
-    textDecoration: 'none',
-    color: 'inherit',
-    display: 'block',
-    transition: 'all 0.2s ease',
-    ':hover': {
-      borderColor: 'var(--ifm-color-primary)',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-    }
-  }}>
-    <h4 style={{margin: '0 0 8px 0', color: 'var(--ifm-color-primary)'}}>Benchmarking</h4>
-    <p style={{margin: '0', fontSize: '14px'}}>Performance testing and optimization</p>
-  </Link>
-  
-  <Link to="/community/sigs#sig-pd-disaggregation" style={{
-    padding: '16px',
-    border: '1px solid var(--ifm-color-emphasis-200)',
-    borderRadius: '8px',
-    backgroundColor: 'var(--ifm-background-surface-color)',
-    textDecoration: 'none',
-    color: 'inherit',
-    display: 'block',
-    transition: 'all 0.2s ease',
-    ':hover': {
-      borderColor: 'var(--ifm-color-primary)',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-    }
-  }}>
-    <h4 style={{margin: '0 0 8px 0', color: 'var(--ifm-color-primary)'}}>PD-Disaggregation</h4>
-    <p style={{margin: '0', fontSize: '14px'}}>Prefill/decode separation patterns</p>
-  </Link>
-  
-  <Link to="/community/sigs#sig-kv-disaggregation" style={{
-    padding: '16px',
-    border: '1px solid var(--ifm-color-emphasis-200)',
-    borderRadius: '8px',
-    backgroundColor: 'var(--ifm-background-surface-color)',
-    textDecoration: 'none',
-    color: 'inherit',
-    display: 'block',
-    transition: 'all 0.2s ease',
-    ':hover': {
-      borderColor: 'var(--ifm-color-primary)',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-    }
-  }}>
-    <h4 style={{margin: '0 0 8px 0', color: 'var(--ifm-color-primary)'}}>KV-Disaggregation</h4>
-    <p style={{margin: '0', fontSize: '14px'}}>KV caching and distributed storage</p>
-  </Link>
-  
-  <Link to="/community/sigs#sig-installation" style={{
-    padding: '16px',
-    border: '1px solid var(--ifm-color-emphasis-200)',
-    borderRadius: '8px',
-    backgroundColor: 'var(--ifm-background-surface-color)',
-    textDecoration: 'none',
-    color: 'inherit',
-    display: 'block',
-    transition: 'all 0.2s ease',
-    ':hover': {
-      borderColor: 'var(--ifm-color-primary)',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-    }
-  }}>
-    <h4 style={{margin: '0 0 8px 0', color: 'var(--ifm-color-primary)'}}>Installation</h4>
-    <p style={{margin: '0', fontSize: '14px'}}>Kubernetes integration and deployment</p>
-  </Link>
-  
-  <Link to="/community/sigs#sig-autoscaling" style={{
-    padding: '16px',
-    border: '1px solid var(--ifm-color-emphasis-200)',
-    borderRadius: '8px',
-    backgroundColor: 'var(--ifm-background-surface-color)',
-    textDecoration: 'none',
-    color: 'inherit',
-    display: 'block',
-    transition: 'all 0.2s ease',
-    ':hover': {
-      borderColor: 'var(--ifm-color-primary)',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-    }
-  }}>
-    <h4 style={{margin: '0 0 8px 0', color: 'var(--ifm-color-primary)'}}>Autoscaling</h4>
-    <p style={{margin: '0', fontSize: '14px'}}>Traffic-aware autoscaling and resource management</p>
-  </Link>
-  
-  <Link to="/community/sigs#sig-observability" style={{
-    padding: '16px',
-    border: '1px solid var(--ifm-color-emphasis-200)',
-    borderRadius: '8px',
-    backgroundColor: 'var(--ifm-background-surface-color)',
-    textDecoration: 'none',
-    color: 'inherit',
-    display: 'block',
-    transition: 'all 0.2s ease',
-    ':hover': {
-      borderColor: 'var(--ifm-color-primary)',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-    }
-  }}>
-    <h4 style={{margin: '0 0 8px 0', color: 'var(--ifm-color-primary)'}}>Observability</h4>
-    <p style={{margin: '0', fontSize: '14px'}}>Monitoring, logging, and metrics</p>
-  </Link>
-</div>
+  };
+
+  const sigCardTitleStyle = {
+    margin: '0 0 8px 0',
+    color: 'var(--ifm-color-primary)',
+  };
+
+  const sigCardDescriptionStyle = {
+    margin: 0,
+    fontSize: '14px',
+  };
+
+  return (
+    <div style={sigGridStyle}>
+      {sigCards.map((sig) => (
+        <Link key={sig.to} to={sig.to} className="community-sig-card" style={sigCardStyle}>
+          <h4 style={sigCardTitleStyle}>{sig.title}</h4>
+          <p style={sigCardDescriptionStyle}>{sig.description}</p>
+        </Link>
+      ))}
+    </div>
+  );
+})()}
 
 <p style={{marginTop: '16px', textAlign: 'center'}}>
   <a href="/community/sigs" style={{
