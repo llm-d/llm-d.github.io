@@ -65,8 +65,10 @@ Then, in each scheduling cycle, the EPP traverses the queues in 3 tiers:
 
 In the background EPP monitors the model servers for saturation. If it detects saturation, requests are queued until saturation subsides.
 
-> [!WARNING]
-> **Trust Boundary**: In a production system, allowing end-users to self-assert their tenant ID or traffic priority (`premium-traffic`) is an abuse vector. In production, these headers should be stripped from external requests and injected by an upstream trusted API gateway, identity provider, or Envoy AuthZ filter based on the API key.
+:::warning
+**Trust Boundary**: In a production system, allowing end-users to self-assert their tenant ID or traffic priority (`premium-traffic`) is an abuse vector. In production, these headers should be stripped from external requests and injected by an upstream trusted API gateway, identity provider, or Envoy AuthZ filter based on the API key.
+:::
+
 
 ## Further Reading
 

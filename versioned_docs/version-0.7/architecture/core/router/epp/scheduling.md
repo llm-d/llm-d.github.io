@@ -70,8 +70,10 @@ When a profile runs, it first filters the candidate endpoints. If any remain, it
 
 ## Concrete Plugins
 
-> [!IMPORTANT]
-> Not all of the plugins listed below are configured by default. Only a curated subset is enabled in the [default configuration](#).
+:::info
+Not all of the plugins listed below are configured by default. Only a curated subset is enabled in the [default configuration](#).
+:::
+
 
 ### Filters
 *   **[`prefix-cache-affinity-filter`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/scheduling/filter/prefixcacheaffinity/README.md)**: A probabilistic filter that narrows candidates to "sticky" endpoints (those with high prefix cache scores). It includes a "TTFT load gate" to break stickiness if sticky endpoints are significantly slower than non-sticky ones.
@@ -92,8 +94,11 @@ When a profile runs, it first filters the candidate endpoints. If any remain, it
 *   **[`running-requests-size-scorer`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/scheduling/scorer/runningrequests/README.md)**: Scores based on the number of currently active requests.
 *   **[`token-load-scorer`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/scheduling/scorer/tokenload/README.md)**: Scores based on the total token load (input + output) handled by the endpoint.
 *   **[`precise-prefix-cache-scorer`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/scheduling/scorer/preciseprefixcache)**: Scores requests based on real-time KV-cache locality. While the `prefix-scorer` relies on historical scheduling estimates, this version tracks actual cache states via model server events to ensure higher precision.
-  > [!NOTE]
-  > If you configure this plugin but do not explicitly configure its required data producer (`approx-prefix-cache-producer`), the loader will automatically instantiate it with the same parameters. This was done for historical reasons to simplify configuration when data producers were introduced.
+
+:::note
+If you configure this plugin but do not explicitly configure its required data producer (`approx-prefix-cache-producer`), the loader will automatically instantiate it with the same parameters. This was done for historical reasons to simplify configuration when data producers were introduced.
+:::
+
 *   **[`session-affinity-scorer`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/scheduling/scorer/sessionaffinity)**: Assigns a maximum score to the specific endpoint that handled previous requests for the same session, while all other endpoints receive the minimum score.
 *   **[`no-hit-lru-scorer`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/scheduling/scorer/nohitlru)**: For cold requests (zero cache hits), the scorer prioritizes endpoints that have never handled one, followed by those used least recently. This ensures an even distribution of the intensive "prefill" workload across the cluster. If a request has existing cache hits, the scorer assigns equal scores to all endpoints (scorer has no impact).
 

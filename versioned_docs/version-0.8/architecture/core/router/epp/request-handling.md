@@ -59,8 +59,10 @@ The framework also supports advanced, auto-resolved hooks in the request control
 * **`ResponseHeaderProcessor`**: Executes when response headers are received from the backend.
 * **`ResponseBodyProcessor`**: Executes during response streaming (e.g., for usage tracking on completion).
 
- > [!NOTE]
- > In practice, these interfaces are often implemented by Data Producers to maintain state or track metrics across the request lifecycle. For example, the `predicted-latency-producer` implements these hooks to track request latency.
+:::note
+In practice, these interfaces are often implemented by Data Producers to maintain state or track metrics across the request lifecycle. For example, the `predicted-latency-producer` implements these hooks to track request latency.
+:::
+
 
 ---
 

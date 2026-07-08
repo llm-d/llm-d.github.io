@@ -8,8 +8,10 @@ This page also provides guidance on traffic splitting and rollbacks to help ensu
 Blue-Green update is a powerful technique for performing various infrastructure and model updates with minimal disruption and built-in rollback capabilities.
 This method allows you to introduce changes incrementally, monitor their impact, and revert to the previous state if necessary.
 
-> [!IMPORTANT]
-> This guide applies to llm-d router gateway mode only. For standalone mode, use rolling updates or adapter rollouts.
+:::info
+This guide applies to llm-d router gateway mode only. For standalone mode, use rolling updates or adapter rollouts.
+:::
+
 
 ## Use Cases
 Use Cases for InferencePool Rollout:

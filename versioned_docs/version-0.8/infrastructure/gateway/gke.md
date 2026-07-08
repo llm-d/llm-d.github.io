@@ -3,9 +3,11 @@
 This guide shows how to deploy llm-d with
 [GKE Gateway](https://docs.cloud.google.com/kubernetes-engine/docs/concepts/about-gke-inference-gateway) as your inference gateway. By the end, inference requests will be forwarded by a GKE-managed `Gateway` to your model servers via the llm-d EPP.
 
-> [!NOTE]
-> This guide assumes familiarity with
-> [Gateway API](https://gateway-api.sigs.k8s.io/) and llm-d.
+:::note
+This guide assumes familiarity with
+[Gateway API](https://gateway-api.sigs.k8s.io/) and llm-d.
+:::
+
 
 ## Prerequisites
 
@@ -20,8 +22,10 @@ This guide shows how to deploy llm-d with
 
 ## Step 1: Install Gateway API and Gateway API Inference Extension CRDs
 
-> [!NOTE]
-> GKE automatically installs all GA CRDs for Gateway API and Gateway API Inference Extension on GKE versions `1.34.0-gke.1626000` or later. If using this version or newer, skip to Step 2.
+:::note
+GKE automatically installs all GA CRDs for Gateway API and Gateway API Inference Extension on GKE versions `1.34.0-gke.1626000` or later. If using this version or newer, skip to Step 2.
+:::
+
 
 For GKE versions earlier than `1.34.0-gke.1626000`, install the CRDs manually:
 
@@ -81,8 +85,10 @@ Wait until `PROGRAMMED` shows `True` before proceeding.
 
 ## Step 4: Send a Request
 
-> [!IMPORTANT]
-> Before sending requests, you must deploy a well-lit path guide. This sets up a model server deployment, an `InferencePool`, and an `HTTPRoute` to connect the Gateway to the pool.
+:::info
+Before sending requests, you must deploy a well-lit path guide. This sets up a model server deployment, an `InferencePool`, and an `HTTPRoute` to connect the Gateway to the pool.
+:::
+
 
 Get the `Gateway` external address:
 

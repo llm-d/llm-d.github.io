@@ -24,11 +24,13 @@ For integration into the well-lit paths our standard for contribution is higher,
 - A named maintainer responsible for keeping guide contents up to date
 - Manual or automated verification of the guide deployment for each release
 
-> [!NOTE]
-> We aim to increase our requirements to have active CI coverage for all hardware guide variants in a future release.
->
-> [!NOTE]
-> The community can assist but is not responsible for keeping hardware guide variants updated. We reserve the right to remove stale examples and documentation with regard to hardware support.
+:::note
+We aim to increase our requirements to have active CI coverage for all hardware guide variants in a future release.
+
+[!NOTE]
+The community can assist but is not responsible for keeping hardware guide variants updated. We reserve the right to remove stale examples and documentation with regard to hardware support.
+:::
+
 
 ## NVIDIA GPUs
 

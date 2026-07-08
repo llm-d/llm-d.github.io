@@ -7,8 +7,10 @@ This path is for operators who want to adopt predicted latency-based scheduling 
 - Your clients can express **per-request latency SLOs** (interactive vs. batch) and you want the gateway to enforce them.
 - Static weight tuning between cache affinity and load has become **fragile** as traffic shifts.
 
-> [!NOTE]
-> Predicted latency is not a fit when the pool is **heterogeneous** — mixed GPU types, model variants (e.g. prefill vs decode), or serving configurations in the same pool will produce inaccurate predictions, because the predictor assumes a single pod shape.
+:::note
+Predicted latency is not a fit when the pool is **heterogeneous** — mixed GPU types, model variants (e.g. prefill vs decode), or serving configurations in the same pool will produce inaccurate predictions, because the predictor assumes a single pod shape.
+:::
+
 
 ## Deploy
 

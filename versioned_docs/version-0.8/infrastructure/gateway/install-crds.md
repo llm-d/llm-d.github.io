@@ -2,8 +2,10 @@
 
 Before deploying any Gateway provider, you must install the Gateway API and Gateway API Inference Extension CRDs.
 
-> [!NOTE]
-> GKE automatically installs all GA CRDs for Gateway API and Gateway API Inference Extension on GKE versions `1.34.0-gke.1626000` or later. If using GKE with this version or newer, you can skip the installation steps below.
+:::note
+GKE automatically installs all GA CRDs for Gateway API and Gateway API Inference Extension on GKE versions `1.34.0-gke.1626000` or later. If using GKE with this version or newer, you can skip the installation steps below.
+:::
+
 
 ## Option 1: Using the Installation Script
 

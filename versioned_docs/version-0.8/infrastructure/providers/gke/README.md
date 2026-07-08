@@ -25,11 +25,13 @@ For A3 Ultra, A4, and A4X machines, follow the [steps for creating an AI-optimiz
 
 This section provides specific instructions for deploying P/D (Prefill/Decode) disaggregation on GKE using **Dynamic Resource Allocation (DRA)** for NVIDIA GPUs and RDMA (RoCE) networking (e.g. NVIDIA H200 GPUs on A3 Ultra).
 
-> [!NOTE]
-> Follow the official GCP documentation for the latest updates and detailed instructions:
-> * [GKE AI Hypercomputer Custom Provisioning](https://docs.cloud.google.com/ai-hypercomputer/docs/create/gke-ai-hypercompute-custom)
-> * [Set up GPU Dynamic Resource Allocation (DRA)](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/set-up-dra)
-> * [Allocate network resources by using GKE managed DRANET](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/allocate-network-resources-dra#use-rdma-interfaces-gpu)
+:::note
+Follow the official GCP documentation for the latest updates and detailed instructions:
+* [GKE AI Hypercomputer Custom Provisioning](https://docs.cloud.google.com/ai-hypercomputer/docs/create/gke-ai-hypercompute-custom)
+* [Set up GPU Dynamic Resource Allocation (DRA)](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/set-up-dra)
+* [Allocate network resources by using GKE managed DRANET](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/allocate-network-resources-dra#use-rdma-interfaces-gpu)
+:::
+
 
 #### Prerequisites
 
@@ -53,12 +55,14 @@ gcloud container clusters create "${CLUSTER_NAME}" \
     --project="${PROJECT}"
 ```
 
-> [!NOTE]
-> **Deploying on an Existing GKE Cluster:**
-> If you are deploying on an existing cluster instead of creating a new one, your configuration path depends on whether Dataplane V2 is enabled:
-> 
-> * **Existing Cluster with Dataplane V2 Enabled:** You can skip Step 1 (creating the cluster) and proceed directly to Step 2 (creating the node pool) using the automated GKE-managed DRANet profile (`--accelerator-network-profile=auto`).
-> * **Existing Cluster without Dataplane V2 Enabled:** GKE-managed automated DRANet is not supported. You **CANNOT** directly use the node pool creation command in ***Step 2*** below. Instead, you must **manually** configure and manage the multi-networking for the additional network interfaces (NICs) by manually creating subnetworks and mapping node pool network interfaces to them, as detailed in GKE's [Set up multi-network support for pods](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/setup-multinetwork-support-for-pods) documentation. Once the subnets and node pool are manually provisioned, proceed directly to **Step 3**.
+:::note
+**Deploying on an Existing GKE Cluster:**
+If you are deploying on an existing cluster instead of creating a new one, your configuration path depends on whether Dataplane V2 is enabled:
+
+* **Existing Cluster with Dataplane V2 Enabled:** You can skip Step 1 (creating the cluster) and proceed directly to Step 2 (creating the node pool) using the automated GKE-managed DRANet profile (`--accelerator-network-profile=auto`).
+* **Existing Cluster without Dataplane V2 Enabled:** GKE-managed automated DRANet is not supported. You **CANNOT** directly use the node pool creation command in ***Step 2*** below. Instead, you must **manually** configure and manage the multi-networking for the additional network interfaces (NICs) by manually creating subnetworks and mapping node pool network interfaces to them, as detailed in GKE's [Set up multi-network support for pods](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/setup-multinetwork-support-for-pods) documentation. Once the subnets and node pool are manually provisioned, proceed directly to **Step 3**.
+:::
+
 
 
 #### 2. Create Node Pool (Enable DRANET & Disable Default GPU Driver)

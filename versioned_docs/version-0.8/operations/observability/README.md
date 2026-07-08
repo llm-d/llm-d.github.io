@@ -2,8 +2,10 @@
 
 Monitor and debug llm-d deployments with Prometheus metrics, Grafana dashboards, and OpenTelemetry distributed tracing.
 
-> [!NOTE]
-> Every well-lit path guide links here for observability setup. Install the stack once and reuse it across guides.
+:::note
+Every well-lit path guide links here for observability setup. Install the stack once and reuse it across guides.
+:::
+
 
 ## Documentation
 

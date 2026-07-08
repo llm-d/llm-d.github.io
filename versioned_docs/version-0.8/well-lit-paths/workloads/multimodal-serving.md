@@ -30,8 +30,10 @@ See the [multimodal e-disaggregation guide](https://github.com/llm-d/llm-d/tree/
 
 The llm-d-router schedules multimodal requests using prefix cache affinity and server load metrics.
 
-> [!NOTE]
-> For the high-level scheduling architecture flow and EPP load-balancing diagrams, see the [Optimized Baseline guide](../foundations/optimized-baseline.md#architecture).
+:::note
+For the high-level scheduling architecture flow and EPP load-balancing diagrams, see the [Optimized Baseline guide](../foundations/optimized-baseline.md#architecture).
+:::
+
 
 ### Prefix-Aware Scheduling
 

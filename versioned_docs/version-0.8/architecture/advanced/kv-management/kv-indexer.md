@@ -2,8 +2,10 @@
 
 The **KV-Cache Indexer** is a component of the **llm-d Router** (residing within the **EPP**) that enables precise prefix-cache-aware routing functionality.
 
-> [!NOTE]
-> This page assumes familiarity with the EPP's design. See [EPP architecture](../../core/router/epp) for more details.
+:::note
+This page assumes familiarity with the EPP's design. See [EPP architecture](../../core/router/epp) for more details.
+:::
+
 
 ## Functionality
 
@@ -15,8 +17,10 @@ The precise view offers improved precision for harder-to-approximate scenarios:
 - **Hybrid-Attention Models** — In hybrid models, KV cache usage per layer groups (full, sliding-window, linear) scales non-linearly making byte-based trees imprecise.
 - **Advanced KV-Cache Orchestration** — As model-server KV-cache management policies grow beyond simple LRU, approximate views become increasingly unreliable and complex to create; the event-driven view tracks the actual state.
 
-> [!NOTE]
-> Hybrid-attention-aware scoring is a work in progress.
+:::note
+Hybrid-attention-aware scoring is a work in progress.
+:::
+
 
 ## Architecture
 
@@ -96,8 +100,10 @@ The Index is the hot data structure of the system: every scoring call queries it
 | **Cost-Aware Memory**   | Ristretto cache with admission control and cost-based eviction                  | Workloads where per-entry size varies a lot (multimodal, variable-length LoRA metadata)                                                                                    | Budget specified in bytes (e.g. `2GiB`) rather than entry count; probabilistic admission can reject entries under pressure                                     |
 | **Redis / Valkey**      | External server (TCP; Valkey is Redis-wire-compatible, BSD-licensed)            | Need for persistent or very-long lived index (uncommon)                                                                                                                    | Adds a network hop per lookup and ties EPP availability to the external store; shared state gives strong consistency across replicas but is rarely necessary   |
 
-> [!IMPORTANT]
-> In-memory is typically the best option, offering low-latency, simple operations, and high availability via multi-replica deployment (each EPP replica in pod-discovery mode subscribes to every model-server's events independently and converges to the same index).
+:::info
+In-memory is typically the best option, offering low-latency, simple operations, and high availability via multi-replica deployment (each EPP replica in pod-discovery mode subscribes to every model-server's events independently and converges to the same index).
+:::
+
 
 **Sizing.** In-memory backends size independently per replica; plan for roughly `keys × pod_entries` with overhead for the two-level LRU. The cost-aware backend is easier to bound because you specify a byte ceiling; it is the safer choice when per-entry size is hard to predict. For Redis / Valkey, the key space is proportional to unique blocks across the fleet, not to request volume.
 
@@ -109,8 +115,10 @@ Today this role is implemented by the `token-producer` plugin.
 
 The plugin tokenizes by calling vLLM's render endpoints — `/v1/completions/render` and `/v1/chat/completions/render` over HTTP. This is the default backend, pointed at `http://localhost:8000`. Those endpoints are served by `vllm serve <model>` or by the GPU-less `vllm launch render <model>`, deployed either as a sidecar in the EPP pod (loopback) or as a dedicated render Service shared across EPP replicas.
 
-> [!NOTE]
-> The earlier gRPC-over-UDS tokenizer sidecar (the `udsTokenizerConfig` backend) is **deprecated** and will be removed in a future release. Existing configs keep working but emit a deprecation warning at startup; migrate to the `vllm` HTTP backend.
+:::note
+The earlier gRPC-over-UDS tokenizer sidecar (the `udsTokenizerConfig` backend) is **deprecated** and will be removed in a future release. Existing configs keep working but emit a deprecation warning at startup; migrate to the `vllm` HTTP backend.
+:::
+
 
 ### Scorer
 

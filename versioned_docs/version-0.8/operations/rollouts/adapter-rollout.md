@@ -11,8 +11,10 @@ Use LoRA adapter rollouts to test improvements, bug fixes, or new features in yo
 The [`InferenceModelRewrite`](../../api-reference/inferencemodelrewrite.md) resource allows platform administrators and model owners to control how inference requests are routed to specific models within an InferencePool.
 This capability is essential for managing model/adapter lifecycles without disrupting client applications.
 
-> [!IMPORTANT]
-> This guide applies to both llm-d router standalone and gateway modes.
+:::info
+This guide applies to both llm-d router standalone and gateway modes.
+:::
+
 
 ## Prerequisites & Setup
 
@@ -227,8 +229,10 @@ With the file-based resolver, you can simply remove the `small-segment-lora-v1` 
 rm -rf /adapters/small-segment-lora-v1
 ```
 
-> [!IMPORTANT]
-> While deleting the folder stops vLLM from *newly* loading the adapter, it might still remain in vLLM's internal VRAM cache until evicted. To deterministically free up VRAM immediately, use vLLM's `/v1/unload_lora_adapter` HTTP endpoint.
+:::info
+While deleting the folder stops vLLM from *newly* loading the adapter, it might still remain in vLLM's internal VRAM cache until evicted. To deterministically free up VRAM immediately, use vLLM's `/v1/unload_lora_adapter` HTTP endpoint.
+:::
+
 
 
 With this, the old adapter is removed, and the rollout is complete.

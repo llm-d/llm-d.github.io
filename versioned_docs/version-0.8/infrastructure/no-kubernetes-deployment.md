@@ -4,13 +4,15 @@ llm-d's reference deployment runs on Kubernetes — workers are managed by Kuber
 
 The No-Kubernetes path runs the same routing stack — the llm-d EPP, Envoy, and one or more model servers — directly as host processes or containers. The EPP gets its endpoint inventory from a YAML file on disk via the [file-discovery plugin][filediscovery-plugin] instead of watching an `InferencePool` over the Kubernetes API; everything else (EPP plugin set, scoring, Envoy ext_proc, vLLM arguments) is unchanged.
 
-> [!IMPORTANT]
-> Without Kubernetes, some pieces of the llm-d stack are
-> out of scope: `InferenceObjective`-driven FlowControl, the
-> `InferenceModelRewrite` model-name rewriter, and `PodMonitor`-based
-> Prometheus discovery. Scoring, prefix-cache affinity, saturation-based
-> admission, and Prometheus metrics on `--metrics-port` all work; see
-> the [parity caveats][blog-parity] for the full list.
+:::info
+Without Kubernetes, some pieces of the llm-d stack are
+out of scope: `InferenceObjective`-driven FlowControl, the
+`InferenceModelRewrite` model-name rewriter, and `PodMonitor`-based
+Prometheus discovery. Scoring, prefix-cache affinity, saturation-based
+admission, and Prometheus metrics on `--metrics-port` all work; see
+the [parity caveats][blog-parity] for the full list.
+:::
+
 
 ## Deploy
 

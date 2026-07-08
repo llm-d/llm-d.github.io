@@ -6,8 +6,10 @@ The Workload Variant Autoscaler (WVA) is an optimizer and a Kubernetes controlle
 
 WVA introduces the concept of **variants** -- multiple model servers in an InferencePool that all serve the same base model but differ in hardware configuration (e.g., GPU type), serving configuration (e.g., tensor parallelism, max batch size, quantization), or both, each with an associated cost. The autoscaler optimizes across variants to minimize total cost while meeting capacity or latency requirements.
 
-> [!NOTE]
-> WVA assumes a 1:1:1 relationship between InferencePool, Endpoint Picker (EPP), and base model. All variants within an InferencePool share the same EPP and therefore the same EPP metrics (e.g., request queue size).
+:::note
+WVA assumes a 1:1:1 relationship between InferencePool, Endpoint Picker (EPP), and base model. All variants within an InferencePool share the same EPP and therefore the same EPP metrics (e.g., request queue size).
+:::
+
 
 WVA provides two main scaling analyzers:
 
@@ -29,8 +31,10 @@ The following diagram shows how WVA fits into the overall llm-d architecture:
 
 The WVA scaling engine runs as a background goroutine alongside the Kubernetes controller, communicating scaling decisions through an in-memory decision cache and a trigger channel.
 
-> [!NOTE]
-> The engine supports both a `saturation-percentage-based` and `saturation-token-based` analysis path. `saturation-percentage-based` is the default. `saturation-token-based` is an experimental token-based approach that is not yet production-ready. The architecture described here covers both pipelines.
+:::note
+The engine supports both a `saturation-percentage-based` and `saturation-token-based` analysis path. `saturation-percentage-based` is the default. `saturation-token-based` is an experimental token-based approach that is not yet production-ready. The architecture described here covers both pipelines.
+:::
+
 
 The engine follows a three-stage pipeline pattern:
 

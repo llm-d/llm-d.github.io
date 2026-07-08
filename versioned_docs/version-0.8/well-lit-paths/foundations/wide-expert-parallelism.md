@@ -24,8 +24,10 @@ The following steps occurs:
 * Each expert runs independently
 * Tokens are "combined" backed to the original attention rank
 
-> [!IMPORTANT]
-> Dispatch/combine uses the **DeepEP** backend over NVSHMEM with GPU-initiated RDMA (`ibgda` transport), requiring full-mesh InfiniBand/RoCE connectivity.
+:::info
+Dispatch/combine uses the **DeepEP** backend over NVSHMEM with GPU-initiated RDMA (`ibgda` transport), requiring full-mesh InfiniBand/RoCE connectivity.
+:::
+
 
 ## Deploy
 

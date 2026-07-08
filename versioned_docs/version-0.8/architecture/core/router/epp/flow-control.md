@@ -2,8 +2,10 @@
 
 The Flow Control layer within the EPP is a critical mechanism for pool defense and multi-tenancy. It protects the pool of model servers from overload by shifting intelligent queuing to the gateway, enforcing strict priority and tenant-aware fairness.
 
-> [!IMPORTANT]
-> EPP Flow Control is currently behind the `flowControl` feature gate. You must explicitly enable it in your [EndpointPickerConfig](configuration.md) to use these capabilities.
+:::info
+EPP Flow Control is currently behind the `flowControl` feature gate. You must explicitly enable it in your [EndpointPickerConfig](configuration.md) to use these capabilities.
+:::
+
 
 ### The LLM Queuing Problem
 
@@ -56,14 +58,18 @@ curl -X POST http://${IP}:${PORT}/v1/completions \
   }'
 ```
 
-> [!WARNING]
-> **Trust Boundary**: In a production system, allowing end-users to self-assert their tenant ID or traffic priority (`premium-traffic`) is an abuse vector. In production, these headers should be stripped from external requests and injected by an upstream trusted API gateway, identity provider, or Envoy AuthZ filter based on the API key.
+:::warning
+**Trust Boundary**: In a production system, allowing end-users to self-assert their tenant ID or traffic priority (`premium-traffic`) is an abuse vector. In production, these headers should be stripped from external requests and injected by an upstream trusted API gateway, identity provider, or Envoy AuthZ filter based on the API key.
+:::
 
-> [!TIP]
-> **Fallbacks**:
->
-> * If the **Fairness ID** header is missing, the request falls back to a single global bucket for that priority level.
-> * If the **Inference Objective** header is missing, or references an objective without a priority set, the request defaults to **Priority `0`**.
+
+:::tip
+**Fallbacks**:
+
+* If the **Fairness ID** header is missing, the request falls back to a single global bucket for that priority level.
+* If the **Inference Objective** header is missing, or references an objective without a priority set, the request defaults to **Priority `0`**.
+:::
+
 
 #### Two Levels of Priority
 
@@ -250,8 +256,10 @@ To prevent the EPP itself from resource exhaustion when queues grow, Flow Contro
 * **Global Limits**: Configured via `maxBytes` (payload size) and `maxRequests` (count) across all priority bands. These limits support both plain integers and Kubernetes Quantity format (e.g., `10Gi`, `1k`). If a new request would exceed these limits, it is immediately rejected with an HTTP 429 (Too Many Requests).
 * **Per-Band Limits**: Each priority band can have its own `maxBytes` and `maxRequests` limits. This provides **memory isolation** between bands; heavy traffic in a lower-priority band cannot fill the queue space reserved for higher-priority bands.
 
-> [!NOTE]
-> **Proxy vs. GPU Protection**: It is important to distinguish between these flow control limits and the Saturation Detector. The `maxBytes` and `maxRequests` limits protect the **Gateway's** memory footprint and prevent proxy-level Resource Exhaustion. The Saturation Detector (described below) protects the **GPU's** physical compute and KV-cache capacity.
+:::note
+**Proxy vs. GPU Protection**: It is important to distinguish between these flow control limits and the Saturation Detector. The `maxBytes` and `maxRequests` limits protect the **Gateway's** memory footprint and prevent proxy-level Resource Exhaustion. The Saturation Detector (described below) protects the **GPU's** physical compute and KV-cache capacity.
+:::
+
 
 ### The Dispatch Lifecycle
 
@@ -376,22 +384,23 @@ Available plugins:
 * **[`utilization-detector`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/flowcontrol/saturationdetector/utilization/README.md)**: Closed-loop detector reacting to real-time telemetry (queue depth, KV cache). Highly accurate but subject to telemetry lag ("thundering herd"). In heterogeneous pools, it treats all endpoints equally (unweighted average), meaning a small saturated endpoint can trigger global backpressure. (Default)
 * **[`concurrency-detector`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/flowcontrol/saturationdetector/concurrency/README.md)**: Open-loop detector based on active in-flight request accounting. Instantaneous reaction but blind to actual hardware memory pressure (KV cache filling). In heterogeneous pools, it biases toward the state of larger endpoints (aggregate capacity model).
 
-> [!NOTE]
->
-> #### The "Healthy Buffer" Principle
->
-> Regardless of which detector you use, the core goal of tuning saturation detection is to maintain a small, **"healthy buffer"** of requests queued locally on the model servers themselves.
->
-> This buffer should be just large enough to ensure continuous batching engines never starve for work, but small enough that the vast majority of queuing happens centrally in the EPP where priority and fairness can be enforced.
->
-> **Tuning the Buffer:**
->
-> Tuning this buffer involves adjusting the specific parameters of the configured Saturation Detector. For instance:
->
-> * In the `utilization-detector`, this is typically controlled via the `queueDepthThreshold` parameter.
-> * In the `concurrency-detector`, it is controlled by setting `maxConcurrency` just above your model server's effective batch size.
->
-> See the linked READMEs for each detector above for full details on their available knobs.
+:::note
+#### The "Healthy Buffer" Principle
+
+Regardless of which detector you use, the core goal of tuning saturation detection is to maintain a small, **"healthy buffer"** of requests queued locally on the model servers themselves.
+
+This buffer should be just large enough to ensure continuous batching engines never starve for work, but small enough that the vast majority of queuing happens centrally in the EPP where priority and fairness can be enforced.
+
+**Tuning the Buffer:**
+
+Tuning this buffer involves adjusting the specific parameters of the configured Saturation Detector. For instance:
+
+* In the `utilization-detector`, this is typically controlled via the `queueDepthThreshold` parameter.
+* In the `concurrency-detector`, it is controlled by setting `maxConcurrency` just above your model server's effective batch size.
+
+See the linked READMEs for each detector above for full details on their available knobs.
+:::
+
 
 ### Advanced Use Cases: Autoscaling
 

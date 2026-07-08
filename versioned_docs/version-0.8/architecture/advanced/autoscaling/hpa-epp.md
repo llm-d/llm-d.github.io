@@ -36,8 +36,10 @@ The steps are:
 3. **Metric Translation**: The Prometheus Adapter translates the Prometheus series into Kubernetes External Metrics, exposing them as `igw_queue_depth` and `igw_running_requests` through the `external.metrics.k8s.io` API.
 4. **Scaling Decision**: The HPA polls external metrics on each evaluation interval. When a metric exceeds its configured target, the HPA computes a desired replica count and reconciles the model server `Deployment`.
 
-> [!NOTE]
-> Although `igw_queue_depth` and `igw_running_requests` are emitted by the EPP pod, the HPA uses `type: External` rather than `type: Pods`. `type: Pods` requires metrics to be sourced from the pods being scaled — the model servers. Since the EPP is a separate `Deployment` acting as a gateway, its metrics are treated as external signals with respect to the model server pool.
+:::note
+Although `igw_queue_depth` and `igw_running_requests` are emitted by the EPP pod, the HPA uses `type: External` rather than `type: Pods`. `type: Pods` requires metrics to be sourced from the pods being scaled — the model servers. Since the EPP is a separate `Deployment` acting as a gateway, its metrics are treated as external signals with respect to the model server pool.
+:::
+
 
 ### Dual-Metric Strategy
 
@@ -88,8 +90,12 @@ Two paths are supported to enable scale-to-zero:
 - **Native HPA** — The `HPAScaleToZero` alpha feature gate allows `minReplicas: 0`. This is the preferred path when the cluster supports the feature gate.
 - **KEDA** — When `HPAScaleToZero` is unavailable, a KEDA `ScaledObject` monitors `igw_queue_depth` and scales the deployment from 0 to 1 as soon as the queue is non-empty. Standard HPA (with `minReplicas: 1`) then handles scaling from 1 to N.
 
-> [!NOTE]
-> KEDA ships with its own metrics server (`keda-operator-metrics-apiserver`) and a native Prometheus scaler that queries Prometheus directly via PromQL. When using KEDA, the separate Prometheus Adapter installation step is not required.
+:::note
+KEDA ships with its own metrics server (`keda-operator-metrics-apiserver`) and a native Prometheus scaler that queries Prometheus directly via PromQL. When using KEDA, the separate Prometheus Adapter installation step is not required.
+:::
 
-> [!IMPORTANT]
-> EPP Flow Control queues are stored in memory only. If the EPP process restarts while requests are queued, those requests are lost. Clients will receive an HTTP 500 during a graceful EPP shutdown (as requests are evicted) or a hard connection drop on an abrupt crash. Plan EPP replicas and disruption budgets accordingly.
+
+:::info
+EPP Flow Control queues are stored in memory only. If the EPP process restarts while requests are queued, those requests are lost. Clients will receive an HTTP 500 during a graceful EPP shutdown (as requests are evicted) or a hard connection drop on an abrupt crash. Plan EPP replicas and disruption budgets accordingly.
+:::
+

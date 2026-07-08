@@ -13,8 +13,10 @@ An implementation of disaggregated serving requires two key components:
 * **Request Flow Orchestration** - select and route the requests to the correct prefill and decode pods
 * **Efficient KV Transfer** - transfer the KV cache from the P instance to the D instance, typically over RDMA
 
-> [!NOTE]
-> Disaggregated Serving requires high performance (RDMA) interconnects between nodes for efficient KV transfer. Without RDMA, NIXL falls back to TCP for transfer which is not efficient and should only be used for testing and development.
+:::note
+Disaggregated Serving requires high performance (RDMA) interconnects between nodes for efficient KV transfer. Without RDMA, NIXL falls back to TCP for transfer which is not efficient and should only be used for testing and development.
+:::
+
 
 ## Request Flow Orchestration
 
@@ -51,8 +53,10 @@ Next we will discuss the design of the EPP and Routing Sidecar for disaggregated
 
 The llm-d EPP supports disaggregation via the `disagg-profile-handler`.
 
-> [!NOTE]
-> Rather than hardcoding a single scheduling algorithm, the EPP delegates execution to one or more `Profile Handlers`, each of which represents a complete scheduling strategy. They can be thought of as "the dispatcher", which maps each incoming inference request to the right scheduling strategy before the scorers and pickers do their work of selecting the actual endpoint. By default, llm-d uses the `single-profile-handler` for simple aggregated serving.
+:::note
+Rather than hardcoding a single scheduling algorithm, the EPP delegates execution to one or more `Profile Handlers`, each of which represents a complete scheduling strategy. They can be thought of as "the dispatcher", which maps each incoming inference request to the right scheduling strategy before the scorers and pickers do their work of selecting the actual endpoint. By default, llm-d uses the `single-profile-handler` for simple aggregated serving.
+:::
+
 
 When configured with `disagg-profile-handler`, the EPP processes requests in the following steps:
 
@@ -98,8 +102,10 @@ Note that both the prefill and decode endpoints are part of one `InferencePool`.
 * `decode` → decode-capable pods
 * `prefill-decode` → pods capable of both prefill and decode
 
-> [!NOTE]
-> It is possible to override the default labels by configuring the `EndpointPickerConfig` to use the generic by-label filter plugin instead of the `prefill-filter` / `decode-filter`. TODO: provide an example of this.
+:::note
+It is possible to override the default labels by configuring the `EndpointPickerConfig` to use the generic by-label filter plugin instead of the `prefill-filter` / `decode-filter`. TODO: provide an example of this.
+:::
+
 
 ### Routing Proxy Sidecar
 
@@ -148,8 +154,10 @@ NIXL provides a standardized API for transferring memory between remote instance
 | **UCCL**    | ✓  |  ✓   |   ✓   |  ✓  |
 | **libfabric**|   |      |       |  ✓  |
 
-> [!NOTE]
-> UCX also supports transfer via TCP and NVLINK. TCP is extremely slow and is targeted for local development. NVLINK transfer is used for local development and cannot be used in Kubernetes deployments as it cannot cross pod boundaries.
+:::note
+UCX also supports transfer via TCP and NVLINK. TCP is extremely slow and is targeted for local development. NVLINK transfer is used for local development and cannot be used in Kubernetes deployments as it cannot cross pod boundaries.
+:::
+
 
 ### Direct KV Cache Transfer
 

@@ -1,7 +1,9 @@
 # HPA/KEDA with WVA Metrics
 
-> [!WARNING]
-> **Deprecation Notice:** The `VariantAutoscaling` (VA) CRD-based approach described in this document is deprecated. The recommended path is the [HPA + WVA guide](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling/README.wva.md), which configures HPA directly with WVA-published metrics without requiring the `VariantAutoscaling` CRD. If you are currently using VA objects, see the [Migration from VA to HPA + WVA](#migration-from-va-to-hpa--wva) section below.
+:::warning
+**Deprecation Notice:** The `VariantAutoscaling` (VA) CRD-based approach described in this document is deprecated. The recommended path is the [HPA + WVA guide](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling/README.wva.md), which configures HPA directly with WVA-published metrics without requiring the `VariantAutoscaling` CRD. If you are currently using VA objects, see the [Migration from VA to HPA + WVA](#migration-from-va-to-hpa--wva) section below.
+:::
+
 
 ## Functionality
 
@@ -9,15 +11,19 @@ The Workload Variant Autoscaler (WVA) is an optimizer and a Kubernetes controlle
 
 WVA is **variant-aware**. A **variant** is one of multiple model servers in an InferencePool that all serve the same base model but differ in hardware configuration (e.g., GPU type), serving configuration (e.g., tensor parallelism, max batch size, quantization), or both, each with an associated cost. WVA optimizes across these variants to minimize total cost while meeting capacity or latency requirements.
 
-> [!NOTE]
-> WVA assumes a 1:1:1 relationship between InferencePool, Endpoint Picker (EPP), and base model. All variants within an InferencePool share the same EPP and therefore the same EPP metrics (e.g., request queue size).
+:::note
+WVA assumes a 1:1:1 relationship between InferencePool, Endpoint Picker (EPP), and base model. All variants within an InferencePool share the same EPP and therefore the same EPP metrics (e.g., request queue size).
+:::
+
 
 WVA provides two main scaling analyzers:
 
 - **Saturation Analyzer** -- Scales based on resource saturation signals (KV cache utilization, request queue depth, and token-level capacity). When the system detects that model servers are saturated (running out of KV cache space or building up queues), it triggers scale-up on the cheapest available variant. When spare capacity is detected, it scales down the most expensive variant. This is the default analyzer. It has two sub-variants: `saturation-percentage-based` (default) and `saturation-token-based` (experimental).
 
-  > [!NOTE]
-  > These two sub-variants are also referred to as the **V1** (`saturation-percentage-based`) and **V2** (`saturation-token-based`) saturation engines. The [HPA + WVA guide](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling/README.wva.md), the WVA configuration keys, and the controller logs (e.g. `V2 saturation analysis completed`) use the V1/V2 names; this document uses the descriptive `saturation-percentage-based` / `saturation-token-based` names for the same engines.
+:::note
+These two sub-variants are also referred to as the **V1** (`saturation-percentage-based`) and **V2** (`saturation-token-based`) saturation engines. The [HPA + WVA guide](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling/README.wva.md), the WVA configuration keys, and the controller logs (e.g. `V2 saturation analysis completed`) use the V1/V2 names; this document uses the descriptive `saturation-percentage-based` / `saturation-token-based` names for the same engines.
+:::
+
 
 - **SLO Analyzer (Queueing Model)** *(Experimental)* -- Scales based on latency SLO targets using queueing theory. It uses a Kalman filter to learn hardware-specific performance parameters online, then applies a state-dependent Markovian queueing model to determine the maximum sustainable request rate per replica that meets target TTFT (Time To First Token) and ITL (Inter-Token Latency). The desired replica count is computed as the ratio of observed arrival rate to this capacity.
 
@@ -35,8 +41,10 @@ The following diagram shows how WVA fits into the overall llm-d architecture:
 
 The WVA scaling engine runs as a background goroutine alongside the Kubernetes controller. Each cycle it groups the active WVA-managed HPAs by `modelID`, scrapes per-replica metrics, and runs them through the pipeline below. Decisions land in an in-memory decision cache, from which an actuator emits the `wva_desired_replicas` external metric that the HPAs consume.
 
-> [!NOTE]
-> The engine supports both a `saturation-percentage-based` and `saturation-token-based` analysis path. `saturation-percentage-based` is the default. `saturation-token-based` is an experimental token-based approach that is not yet production-ready. The architecture described here covers both pipelines.
+:::note
+The engine supports both a `saturation-percentage-based` and `saturation-token-based` analysis path. `saturation-percentage-based` is the default. `saturation-token-based` is an experimental token-based approach that is not yet production-ready. The architecture described here covers both pipelines.
+:::
+
 
 The main loop runs every 30 seconds and follows a four-stage pipeline pattern:
 
@@ -333,18 +341,20 @@ data:
     scaleDownBoundary: 0.75
 ```
 
-> [!NOTE]
-> There are two equivalent ways to select the token-based (V2) saturation engine.
-> The scalar `analyzerName: "saturation"` shown above is the backward-compatible
-> form. The newer list form, used in the [HPA + WVA guide](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling/README.wva.md#enabling-saturation-engine-v2-recommended), is equivalent:
->
-> ```yaml
-> analyzers:
->   - name: saturation
-> ```
->
-> Populating the `analyzers` list also enables per-analyzer score and threshold
-> overrides. Omit both to fall back to the percentage-based (V1) engine.
+:::note
+There are two equivalent ways to select the token-based (V2) saturation engine.
+The scalar `analyzerName: "saturation"` shown above is the backward-compatible
+form. The newer list form, used in the [HPA + WVA guide](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling/README.wva.md#enabling-saturation-engine-v2-recommended), is equivalent:
+
+```yaml
+analyzers:
+  - name: saturation
+```
+
+Populating the `analyzers` list also enables per-analyzer score and threshold
+overrides. Omit both to fall back to the percentage-based (V1) engine.
+:::
+
 
 #### SLO Analyzer (Queueing Model) Configuration -- Experimental
 
@@ -447,8 +457,10 @@ The new [HPA + WVA](https://github.com/llm-d/llm-d/tree/main/guides/workload-aut
    kubectl delete va <va-name> -n <namespace>
    ```
 
-   > [!NOTE]
-   > Deleting a VA object stops WVA from managing that deployment's replica count. Scale the deployment to its desired replica count manually before deleting the VA if you need to avoid disruption.
+:::note
+Deleting a VA object stops WVA from managing that deployment's replica count. Scale the deployment to its desired replica count manually before deleting the VA if you need to avoid disruption.
+:::
+
 
 2. **Create HPA objects** with the `llm-d.ai/managed: "true"` annotation. WVA discovers these and publishes `wva_desired_replicas` labeled with `variant_name` and `exported_namespace`:
 

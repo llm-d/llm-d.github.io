@@ -28,8 +28,10 @@ llm-d requires you select a [Gateway implementation that supports the Gateway AP
 * [Agentgateway](./agentgateway.md) - Agentgateway is a high-performance, Rust-based AI gateway for LLM, MCP, and A2A workloads that can also serve as a Gateway API and Inference Gateway implementation. [Official Agentgateway docs](https://agentgateway.dev/).
 * [Envoy AI Gateway](./envoy-ai-gateway.md) - Envoy AI Gateway is an open source project for using Envoy Gateway to handle request traffic from application clients to GenAI services that can also serve as a Gateway API and Inference Gateway implementation. [Official Envoy AI Gateway docs](https://aigateway.envoyproxy.io/).
 
-> [!NOTE]
-> Setting up a Gateway generally requires cluster administration rights.
+:::note
+Setting up a Gateway generally requires cluster administration rights.
+:::
+
 
 ## Other Providers
 

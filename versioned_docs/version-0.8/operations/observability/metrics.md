@@ -2,11 +2,13 @@
 
 This page covers how to enable and interpret metrics from an llm-d deployment. For Prometheus and Grafana installation, see [Observability Setup](./setup.md) first.
 
-> [!NOTE]
-> Commands in this page use `${NAMESPACE}` for the namespace where your llm-d workload runs. Set it before following along:
-> ```bash
-> export NAMESPACE=<your-llm-d-namespace>
-> ```
+:::note
+Commands in this page use `${NAMESPACE}` for the namespace where your llm-d workload runs. Set it before following along:
+```bash
+export NAMESPACE=<your-llm-d-namespace>
+```
+:::
+
 
 ## Prerequisites
 
@@ -127,8 +129,10 @@ llm-d provides pre-built Grafana dashboards for common monitoring scenarios.
 
 ### Access Grafana
 
-> [!NOTE]
-> The commands below use namespace and service names from the bundled install script. If you use an existing Prometheus or Grafana instance, adjust the namespace and service names accordingly.
+:::note
+The commands below use namespace and service names from the bundled install script. If you use an existing Prometheus or Grafana instance, adjust the namespace and service names accordingly.
+:::
+
 
 ```bash
 kubectl port-forward -n llm-d-monitoring svc/llmd-grafana 3000:80

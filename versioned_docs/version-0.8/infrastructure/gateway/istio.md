@@ -2,8 +2,10 @@
 
 This guide shows how to deploy llm-d with [Istio](https://istio.io/) as your inference gateway. By the end, inference requests will flow from an Istio-managed `Gateway` to your model servers via the llm-d EPP.
 
-> [!NOTE]
-> This guide assumes familiarity with [Gateway API](https://gateway-api.sigs.k8s.io/) and llm-d.
+:::note
+This guide assumes familiarity with [Gateway API](https://gateway-api.sigs.k8s.io/) and llm-d.
+:::
+
 
 ## Prerequisites
 
@@ -72,8 +74,10 @@ Wait until `PROGRAMMED` shows `True` before proceeding.
 
 ## Step 4: Send a Request
 
-> [!IMPORTANT]
-> Before sending requests, you must deploy a well-lit path guide. This sets up a model server deployment, an `InferencePool`, and an `HTTPRoute` to connect the Gateway to the pool.
+:::info
+Before sending requests, you must deploy a well-lit path guide. This sets up a model server deployment, an `InferencePool`, and an `HTTPRoute` to connect the Gateway to the pool.
+:::
+
 
 Get the `Gateway` external address:
 

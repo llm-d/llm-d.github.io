@@ -2,11 +2,13 @@
 
 This page explains how to set up Prometheus, Grafana, and distributed tracing for an llm-d deployment. All guides reference this page — set this up once and it works across every guide.
 
-> [!NOTE]
-> Commands in this page use `${NAMESPACE}` for the namespace where your llm-d workload runs. Set it before following along:
-> ```bash
-> export NAMESPACE=<your-llm-d-namespace>
-> ```
+:::note
+Commands in this page use `${NAMESPACE}` for the namespace where your llm-d workload runs. Set it before following along:
+```bash
+export NAMESPACE=<your-llm-d-namespace>
+```
+:::
+
 
 ## Step 1: Install Prometheus and Grafana
 
@@ -55,8 +57,10 @@ To use GMP as a Grafana data source, follow the [GMP Grafana integration guide](
 
 ## Manual ServiceMonitor Setup (Fallback)
 
-> [!NOTE]
-> **The recommended path is the llm-d helm charts**, which create ServiceMonitors automatically when you include `monitoring.values.yaml`. Skip this section if you deployed that way.
+:::note
+**The recommended path is the llm-d helm charts**, which create ServiceMonitors automatically when you include `monitoring.values.yaml`. Skip this section if you deployed that way.
+:::
+
 
 Use this manual setup **only as a fallback** for workloads deployed outside the llm-d helm charts — e.g. CRD, KServe, or RHAII — where ServiceMonitors are not created for you. In that case, create them manually as shown below.
 

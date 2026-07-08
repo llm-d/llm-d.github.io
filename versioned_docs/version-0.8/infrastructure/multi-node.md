@@ -20,8 +20,10 @@ helm install lws oci://registry.k8s.io/lws/charts/lws \
   --create-namespace
 ```
 
-> [!WARNING]
-> If you installed LWS 0.7.0 or earlier with Helm, do not upgrade directly to 0.9.0. Helm may delete the LWS CRD and cascade-delete existing `LeaderWorkerSet` resources during upgrade; see [kubernetes-sigs/lws#880](https://github.com/kubernetes-sigs/lws/issues/880).
+:::warning
+If you installed LWS 0.7.0 or earlier with Helm, do not upgrade directly to 0.9.0. Helm may delete the LWS CRD and cascade-delete existing `LeaderWorkerSet` resources during upgrade; see [kubernetes-sigs/lws#880](https://github.com/kubernetes-sigs/lws/issues/880).
+:::
+
 
 ### Uninstall LWS
 

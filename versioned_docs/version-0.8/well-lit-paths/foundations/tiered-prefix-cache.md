@@ -48,8 +48,10 @@ This increases the **KV-working set size**, growing the **receptive-field** (the
                                               └────────────┘
 ```
 
-> [!IMPORTANT]
-> CPU KV Cache offloading is low overhead and introduces ~no additional complexity. It can be enabled in almost all deployments. Storage offloading requires additional consideration.
+:::info
+CPU KV Cache offloading is low overhead and introduces ~no additional complexity. It can be enabled in almost all deployments. Storage offloading requires additional consideration.
+:::
+
 
 ## Storage Tiers
 

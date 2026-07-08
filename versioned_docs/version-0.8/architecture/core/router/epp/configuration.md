@@ -25,8 +25,10 @@ dataLayer:
   ...
 ```
 
-> [!IMPORTANT]
-> While the configuration syntax looks like a Kubernetes Custom Resource, it is **not** a Kubernetes CRD. The configuration is not reconciled by a controller and is only read on startup. Updating the configuration requires a restart of the EPP.
+:::info
+While the configuration syntax looks like a Kubernetes Custom Resource, it is **not** a Kubernetes CRD. The configuration is not reconciled by a controller and is only read on startup. Updating the configuration requires a restart of the EPP.
+:::
+
 
 - **Metadata**: The first two lines of the configuration are constant (`apiVersion` and `kind`) and must appear as is.
 - **Plugins**: Defines the set of plugins that will be instantiated and their parameters.
@@ -46,8 +48,10 @@ The `EndpointPickerConfig` forms a configuration **graph** that defines how the 
 
 This design allows you to define a plugin once and reuse it across multiple profiles or priority bands without duplicating its parameters.
 
-> [!NOTE]
-> **Auto-Wiring**: Some subsystems support automatic binding. If a plugin is declared in the top-level `plugins` list and implements a specific Go interface (like `Admitter`, `DataProducer`, or advanced hooks like `PreRequest`, `ResponseHeaderProcessor`, and `ResponseBodyProcessor`), the system will automatically discover and bind it to its role without requiring an explicit edge in the structural configuration.
+:::note
+**Auto-Wiring**: Some subsystems support automatic binding. If a plugin is declared in the top-level `plugins` list and implements a specific Go interface (like `Admitter`, `DataProducer`, or advanced hooks like `PreRequest`, `ResponseHeaderProcessor`, and `ResponseBodyProcessor`), the system will automatically discover and bind it to its role without requiring an explicit edge in the structural configuration.
+:::
+
 
 To ensure the integrity of this graph, the following **validation rules** apply across all layers:
 
@@ -286,8 +290,10 @@ For a full list of available Fairness and Ordering policies, see the [Flow Contr
 
 #### Saturation Detector
 
-> [!NOTE]
-> While `saturationDetector` is presented here conceptually as part of Flow Control, it is a **top-level field** in the YAML schema, at the same level as `flowControl`.
+:::note
+While `saturationDetector` is presented here conceptually as part of Flow Control, it is a **top-level field** in the YAML schema, at the same level as `flowControl`.
+:::
+
 
 The `saturationDetector` section configures the mechanism that evaluates whether the backend InferencePool is overloaded.
 
@@ -328,8 +334,10 @@ schedulingProfiles:
   - pluginRef: max-score-picker # Default picker (auto-injected if omitted)
 ```
 
-> [!NOTE]
-> To use **precise** prefix-cache routing (exact, KV-event-driven) instead of the approximate default, declare a `precise-prefix-cache-producer` in the top-level `plugins` section and set `prefixMatchInfoProducerName: precise-prefix-cache-producer` on the `prefix-cache-scorer`; otherwise the scorer falls back to the approximate producer. See the [Precise Prefix Cache Routing guide](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing).
+:::note
+To use **precise** prefix-cache routing (exact, KV-event-driven) instead of the approximate default, declare a `precise-prefix-cache-producer` in the top-level `plugins` section and set `prefixMatchInfoProducerName: precise-prefix-cache-producer` on the `prefix-cache-scorer`; otherwise the scorer falls back to the approximate producer. See the [Precise Prefix Cache Routing guide](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing).
+:::
+
 
 #### Scheduling Profile Fields
 
@@ -341,8 +349,10 @@ schedulingProfiles:
 - `pluginRef`: References a plugin by its name (or type if name was omitted) defined in the top-level `plugins` section.
 - `weight`: Optional float weight applied if the referenced plugin is a Scorer. If omitted for a scorer, it defaults to `1.0`.
 
-> [!CAUTION]
-> If you define multiple pickers in the top-level `plugins` section and omit `schedulingProfiles`, the auto-generated `default` profile will include references to **all** of them, which will cause an error during initialization (see Multiple Pickers below).
+:::danger
+If you define multiple pickers in the top-level `plugins` section and omit `schedulingProfiles`, the auto-generated `default` profile will include references to **all** of them, which will cause an error during initialization (see Multiple Pickers below).
+:::
+
 
 <details>
 <summary>Defaulting Behaviors</summary>
@@ -445,8 +455,10 @@ dataLayer:
   - `extractors`: A list of extractors associated with this data source.
     - `pluginRef`: References a plugin instance defined in the global `plugins` section that implements the `Extractor` interface.
 
-> [!NOTE]
-> The `metrics-data-source` and `core-metrics-extractor` are injected **by default**, so standard metrics collection works without configuring `dataLayer` at all. Injection is additive — even when you supply your own `dataLayer`, the default metrics source is appended with your sources. Unless you set `injectDefaults: false` or  `dataLayer.sources` already contains a `metrics-data-source` source
+:::note
+The `metrics-data-source` and `core-metrics-extractor` are injected **by default**, so standard metrics collection works without configuring `dataLayer` at all. Injection is additive — even when you supply your own `dataLayer`, the default metrics source is appended with your sources. Unless you set `injectDefaults: false` or  `dataLayer.sources` already contains a `metrics-data-source` source
+:::
+
 
 ## High Availability
 

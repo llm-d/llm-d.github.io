@@ -80,9 +80,11 @@ In a disaggregation setup this is more complicated, because the resources associ
 - The decode instance aborts the in-flight request and releases its tree cache.
 - The prefill instance frees the room's tree cache once its KV transfer reaches a terminal state. On the NIXL transfer backend used by this guide, a prefill whose decode disconnected *before* initiating the transfer has no timeout that reclaims it (see the note below). The periodic `SGLANG_DISAGGREGATION_BOOTSTRAP_ENTRY_CLEANUP_INTERVAL` (default `120s`) only evicts stale bookkeeping entries from the bootstrap server, not GPU KV cache.
 
-> [!NOTE]
-> This differs from vLLM, which sends an explicit `NIXL.send_notif` to free the prefill-side KV cache on abort. With the NIXL transfer backend, SGLang has no equivalent prefill-side abort signal: if a request is cancelled after the decode has been paired but before it initiates the transfer, the prefill can hold that room's KV cache until the prefill pod is restarted.
-> This is analogous to vLLM's `VLLM_NIXL_ABORT_REQUEST_TIMEOUT` stranding window, except that vLLM bounds it with a timeout (default `480s`) whereas NIXL-backed SGLang does not. The `SGLANG_DISAGGREGATION_BOOTSTRAP_TIMEOUT` that bounds prefill-side reclaim is implemented for the Mooncake and Mori transfer backends, not NIXL.
+:::note
+This differs from vLLM, which sends an explicit `NIXL.send_notif` to free the prefill-side KV cache on abort. With the NIXL transfer backend, SGLang has no equivalent prefill-side abort signal: if a request is cancelled after the decode has been paired but before it initiates the transfer, the prefill can hold that room's KV cache until the prefill pod is restarted.
+This is analogous to vLLM's `VLLM_NIXL_ABORT_REQUEST_TIMEOUT` stranding window, except that vLLM bounds it with a timeout (default `480s`) whereas NIXL-backed SGLang does not. The `SGLANG_DISAGGREGATION_BOOTSTRAP_TIMEOUT` that bounds prefill-side reclaim is implemented for the Mooncake and Mori transfer backends, not NIXL.
+:::
+
 
 ## Fault Tolerance
 
@@ -136,8 +138,10 @@ sequenceDiagram
     P-->>P: Tree cache held until pod restart
 ```
 
-> [!WARNING]
-> On the NIXL transfer backend used by this guide, a prefill room whose decode died before initiating the transfer is not reclaimed automatically; it holds its tree cache until the prefill pod is restarted. The `SGLANG_DISAGGREGATION_BOOTSTRAP_TIMEOUT` (default `300s`) that bounds this stranding is implemented for the Mooncake and Mori transfer backends, not NIXL. This is comparable to the decode-failure stranding documented for vLLM, which bounds it with `VLLM_NIXL_ABORT_REQUEST_TIMEOUT` (default `480s`).
+:::warning
+On the NIXL transfer backend used by this guide, a prefill room whose decode died before initiating the transfer is not reclaimed automatically; it holds its tree cache until the prefill pod is restarted. The `SGLANG_DISAGGREGATION_BOOTSTRAP_TIMEOUT` (default `300s`) that bounds this stranding is implemented for the Mooncake and Mori transfer backends, not NIXL. This is comparable to the decode-failure stranding documented for vLLM, which bounds it with `VLLM_NIXL_ABORT_REQUEST_TIMEOUT` (default `480s`).
+:::
+
 
 ## Rollouts
 
@@ -150,8 +154,10 @@ SGLang validates layout compatibility at connection time. When a decode instance
 
 Mismatched tensor-parallel sizes between P and D are supported (the decode resolves a TP/CP/PP rank mapping), but for non-MLA models SGLang warns that performance is not guaranteed.
 
-> [!IMPORTANT]
-> As with vLLM, the llm-d EPP currently assumes all P and D instances within an `InferencePool` are compatible and will schedule requests to any arbitrary pair. Because incompatible `page_size` / `kv_cache_dtype` combinations fail at connection time, it is recommended to roll out model-server upgrades by creating a new `InferencePool` rather than mixing versions in one pool. When deploying with a `Gateway`, traffic can be gradually shifted to the new `InferencePool` by modifying the `HTTPRoute`. See [operations-vllm.md#rollouts](operations-vllm.md#rollouts).
+:::info
+As with vLLM, the llm-d EPP currently assumes all P and D instances within an `InferencePool` are compatible and will schedule requests to any arbitrary pair. Because incompatible `page_size` / `kv_cache_dtype` combinations fail at connection time, it is recommended to roll out model-server upgrades by creating a new `InferencePool` rather than mixing versions in one pool. When deploying with a `Gateway`, traffic can be gradually shifted to the new `InferencePool` by modifying the `HTTPRoute`. See [operations-vllm.md#rollouts](operations-vllm.md#rollouts).
+:::
+
 
 ## Tuning Reference
 

@@ -12,9 +12,11 @@ For long context workloads (10:1 ISL:OSL) and medium-to-large models, separating
 
 llm-d's EPP natively supports the concept of disaggregation, enabling composition with other scorers (e.g. prefix-aware routing).
 
-> [!IMPORTANT]
-> NIXL supports TCP transfer, but high-bandwidth networking
-> (IB, RoCE, EFA) is **highly recommended** for production usage.
+:::info
+NIXL supports TCP transfer, but high-bandwidth networking
+(IB, RoCE, EFA) is **highly recommended** for production usage.
+:::
+
 
 ## Deploy
 

@@ -10,10 +10,12 @@ The EPP is the "brains" of an llm-d deployment. It is focused on two key objecti
 
 The EPP is an extensible component that integrates with the proxy layer via Envoy's [External Processing (ext-proc)](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/ext_proc_filter) protocol.
 
-> [!NOTE]
-> The project provides tools for automatic Envoy installation. However, if you install or
-> configure it yourself, please note that the only supported [request_body_mode and response_body_mode](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/ext_proc/v3/external_processor.proto)
-> is `FULL_DUPLEX_STREAMED`
+:::note
+The project provides tools for automatic Envoy installation. However, if you install or
+configure it yourself, please note that the only supported [request_body_mode and response_body_mode](https://www.envoyproxy.io/docs/envoy/latest/api-v3/service/ext_proc/v3/external_processor.proto)
+is `FULL_DUPLEX_STREAMED`
+:::
+
 
 When a request arrives at the proxy, the proxy calls the EPP to select a backend endpoint, and the EPP returns the optimal pod address according to the [Endpoint Picking Protocol](https://github.com/kubernetes-sigs/gateway-api-inference-extension/tree/main/docs/proposals/004-endpoint-picker-protocol).
 
@@ -94,8 +96,10 @@ See [Data Layer](datalayer.md) for more details on the design.
 
 The EPP is configured by passing an `EndpointPickerConfig` YAML to the binary via the `--config-file` or `--config-text` command-line arguments. This configuration defines the plugins, feature gates, and operational parameters that govern request handling, flow control, and scheduling.
 
-> [!IMPORTANT]
-> The configuration is only read on startup. Any updates to the configuration require a restart of the EPP process to take effect.
+:::info
+The configuration is only read on startup. Any updates to the configuration require a restart of the EPP process to take effect.
+:::
+
 
 For a detailed guide on the configuration schema, mental model, and examples, see the [Configuration Guide](configuration.md).
 

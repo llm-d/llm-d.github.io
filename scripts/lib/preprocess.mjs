@@ -21,6 +21,41 @@ const IMAGE_EXT = new Set(['.png', '.svg', '.jpg', '.jpeg', '.gif', '.webp', '.i
 const LINK_RE = /(!?)\[([^\]]*)\]\(\s*(<[^>]*>|[^)\s]+)([^)]*)\)/g;
 const SECTIONS = ['getting-started', 'guides', 'architecture', 'api-reference', 'accelerators', 'well-lit-paths', 'operations', 'infrastructure'];
 
+const GH_ALERT_TYPES = { NOTE: 'note', TIP: 'tip', IMPORTANT: 'info', WARNING: 'warning', CAUTION: 'danger' };
+
+/**
+ * Convert GitHub-style alerts (`> [!NOTE]` blockquotes) into Docusaurus
+ * admonitions (`:::note … :::`) so they render as callout cards instead of
+ * plain blockquotes. Fence-aware; leaves everything else untouched.
+ */
+export function convertGithubAdmonitions(content) {
+  const lines = content.split('\n');
+  const out = [];
+  let inFence = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^\s*(```+|~~~+)/.test(line)) { inFence = !inFence; out.push(line); continue; }
+    const m = !inFence && line.match(/^\s*>\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*$/i);
+    if (m) {
+      const type = GH_ALERT_TYPES[m[1].toUpperCase()];
+      const body = [];
+      let j = i + 1;
+      while (j < lines.length && /^\s*>/.test(lines[j])) {
+        body.push(lines[j].replace(/^\s*>\s?/, ''));
+        j++;
+      }
+      while (body.length && body[0].trim() === '') body.shift();
+      while (body.length && body[body.length - 1].trim() === '') body.pop();
+      if (out.length && out[out.length - 1].trim() !== '') out.push('');
+      out.push(`:::${type}`, ...body, ':::', '');
+      i = j - 1;
+      continue;
+    }
+    out.push(line);
+  }
+  return out.join('\n');
+}
+
 export function makeDocsPreprocessor({ docsDir }) {
   const isImg = (p) => IMAGE_EXT.has(path.posix.extname(p).toLowerCase());
   const relLink = (fromDir, to) => {
@@ -107,6 +142,7 @@ export function makeDocsPreprocessor({ docsDir }) {
         return SECTIONS.includes(sec) ? `${pre}/docs/${sec}` : full;
       },
     );
+    content = convertGithubAdmonitions(content);
 
     let inFence = false;
     return content
