@@ -1,5 +1,5 @@
 # llm-d Website Repository
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fllm-d%2Fllm-d.github.io.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fllm-d%2Fllm-d.github.io?ref=badge_shield)
+[![OpenSSF Baseline](https://www.bestpractices.dev/projects/13537/baseline)](https://www.bestpractices.dev/projects/13537) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fllm-d%2Fllm-d.github.io.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fllm-d%2Fllm-d.github.io?ref=badge_shield)
 
 
 This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
