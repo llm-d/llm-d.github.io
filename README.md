@@ -1,4 +1,6 @@
 # llm-d Website Repository
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fllm-d%2Fllm-d.github.io.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fllm-d%2Fllm-d.github.io?ref=badge_shield)
+
 
 This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
 
@@ -377,3 +379,7 @@ Preview builds are available for all PRs via Netlify.
 - [Docusaurus Documentation](https://docusaurus.io/)
 - [llm-d Main Repository](https://github.com/llm-d/llm-d)
 - [Contributing Guidelines](https://llm-d.ai/docs/community/contribute)
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fllm-d%2Fllm-d.github.io.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fllm-d%2Fllm-d.github.io?ref=badge_large)
