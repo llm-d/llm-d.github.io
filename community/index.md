@@ -180,6 +180,60 @@ import Link from '@docusaurus/Link';
     <h4 style={{margin: '0 0 8px 0', color: 'var(--ifm-color-primary)'}}>Observability</h4>
     <p style={{margin: '0', fontSize: '14px'}}>Monitoring, logging, and metrics</p>
   </Link>
+
+  <Link to="/community/sigs#sig-rl" style={{
+    padding: '16px',
+    border: '1px solid var(--ifm-color-emphasis-200)',
+    borderRadius: '8px',
+    backgroundColor: 'var(--ifm-background-surface-color)',
+    textDecoration: 'none',
+    color: 'inherit',
+    display: 'block',
+    transition: 'all 0.2s ease',
+    ':hover': {
+      borderColor: 'var(--ifm-color-primary)',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+    }
+  }}>
+    <h4 style={{margin: '0 0 8px 0', color: 'var(--ifm-color-primary)'}}>RL</h4>
+    <p style={{margin: '0', fontSize: '14px'}}>Improve SOTA performance for RL workloads</p>
+  </Link>
+
+  <Link to="/community/sigs#sig-inference-payload-processor" style={{
+    padding: '16px',
+    border: '1px solid var(--ifm-color-emphasis-200)',
+    borderRadius: '8px',
+    backgroundColor: 'var(--ifm-background-surface-color)',
+    textDecoration: 'none',
+    color: 'inherit',
+    display: 'block',
+    transition: 'all 0.2s ease',
+    ':hover': {
+      borderColor: 'var(--ifm-color-primary)',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+    }
+  }}>
+    <h4 style={{margin: '0 0 8px 0', color: 'var(--ifm-color-primary)'}}>Inference Payload Processor</h4>
+    <p style={{margin: '0', fontSize: '14px'}}>Pluggable request/response payload processing and model selection</p>
+  </Link>
+
+  <Link to="/community/sigs#sig-batch-inference" style={{
+    padding: '16px',
+    border: '1px solid var(--ifm-color-emphasis-200)',
+    borderRadius: '8px',
+    backgroundColor: 'var(--ifm-background-surface-color)',
+    textDecoration: 'none',
+    color: 'inherit',
+    display: 'block',
+    transition: 'all 0.2s ease',
+    ':hover': {
+      borderColor: 'var(--ifm-color-primary)',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+    }
+  }}>
+    <h4 style={{margin: '0 0 8px 0', color: 'var(--ifm-color-primary)'}}>Batch Inference</h4>
+    <p style={{margin: '0', fontSize: '14px'}}>Asynchronous processing, request queueing, and batch gateway management</p>
+  </Link>
 </div>
 
 <p style={{marginTop: '16px', textAlign: 'center'}}>
