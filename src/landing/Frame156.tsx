@@ -1532,27 +1532,11 @@ function Frame70() {
   );
 }
 
-function Frame72() {
-  return (
-    <div className="flex-[1_0_0] min-h-px relative w-full">
-      <div className="flex flex-col justify-end size-full">
-        <div className="[word-break:break-word] content-stretch flex flex-col font-['IBM_Plex_Sans',sans-serif] gap-[4px] items-start justify-end leading-[24px] not-italic p-[16px] relative size-full text-[#f2f4f8] text-[16px]">
-          <p className="relative shrink-0 w-full">300mm wafer</p>
-          <p className="relative shrink-0 w-full">300mm wafer</p>
-          <p className="relative shrink-0 w-full">300mm wafer</p>
-          <p className="relative shrink-0 w-full">300mm wafer</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function Frame69() {
   return (
-    <div className="flex-[1_0_0] h-[307px] min-w-px mr-[-1px] relative">
+    <div className="flex-[1_0_0] min-w-px mr-[-1px] relative">
       <div className="content-stretch flex flex-col items-start overflow-clip relative rounded-[inherit] size-full">
         <Frame70 />
-        <Frame72 />
       </div>
       <div aria-hidden className="absolute border border-[#f2f4f8] border-solid inset-0 pointer-events-none" />
     </div>
@@ -1584,27 +1568,11 @@ function Frame75() {
   );
 }
 
-function Frame77() {
-  return (
-    <div className="flex-[1_0_0] min-h-px relative w-full">
-      <div className="flex flex-col justify-end size-full">
-        <div className="[word-break:break-word] content-stretch flex flex-col font-['IBM_Plex_Sans',sans-serif] gap-[4px] items-start justify-end leading-[24px] not-italic p-[16px] relative size-full text-[#f2f4f8] text-[16px]">
-          <p className="relative shrink-0 w-full">300mm wafer</p>
-          <p className="relative shrink-0 w-full">300mm wafer</p>
-          <p className="relative shrink-0 w-full">300mm wafer</p>
-          <p className="relative shrink-0 w-full">300mm wafer</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function Frame73() {
   return (
-    <div className="flex-[1_0_0] h-[307px] min-w-px mr-[-1px] relative">
+    <div className="flex-[1_0_0] min-w-px mr-[-1px] relative">
       <div className="content-stretch flex flex-col items-start overflow-clip relative rounded-[inherit] size-full">
         <Frame75 />
-        <Frame77 />
       </div>
       <div aria-hidden className="absolute border border-[#f2f4f8] border-solid inset-0 pointer-events-none" />
     </div>
@@ -1636,27 +1604,11 @@ function Frame79() {
   );
 }
 
-function Frame81() {
-  return (
-    <div className="flex-[1_0_0] min-h-px relative w-full">
-      <div className="flex flex-col justify-end size-full">
-        <div className="[word-break:break-word] content-stretch flex flex-col font-['IBM_Plex_Sans',sans-serif] gap-[4px] items-start justify-end leading-[24px] not-italic p-[16px] relative size-full text-[#f2f4f8] text-[16px]">
-          <p className="relative shrink-0 w-full">300mm wafer</p>
-          <p className="relative shrink-0 w-full">300mm wafer</p>
-          <p className="relative shrink-0 w-full">300mm wafer</p>
-          <p className="relative shrink-0 w-full">300mm wafer</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function Frame78() {
   return (
-    <div className="flex-[1_0_0] h-[307px] min-w-px mr-[-1px] relative">
+    <div className="flex-[1_0_0] min-w-px mr-[-1px] relative">
       <div className="content-stretch flex flex-col items-start overflow-clip relative rounded-[inherit] size-full">
         <Frame79 />
-        <Frame81 />
       </div>
       <div aria-hidden className="absolute border border-[#f2f4f8] border-solid inset-0 pointer-events-none" />
     </div>
@@ -1696,27 +1648,11 @@ function Frame83() {
   );
 }
 
-function Frame84() {
-  return (
-    <div className="flex-[1_0_0] min-h-px relative w-full">
-      <div className="flex flex-col justify-end size-full">
-        <div className="[word-break:break-word] content-stretch flex flex-col font-['IBM_Plex_Sans',sans-serif] gap-[4px] items-start justify-end leading-[24px] not-italic p-[16px] relative size-full text-[#f2f4f8] text-[16px]">
-          <p className="relative shrink-0 w-full">300mm wafer</p>
-          <p className="relative shrink-0 w-full">300mm wafer</p>
-          <p className="relative shrink-0 w-full">300mm wafer</p>
-          <p className="relative shrink-0 w-full">300mm wafer</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function Frame82() {
   return (
-    <div className="flex-[1_0_0] h-[307px] min-w-px relative">
+    <div className="flex-[1_0_0] min-w-px relative">
       <div className="content-stretch flex flex-col items-start overflow-clip relative rounded-[inherit] size-full">
         <Frame83 />
-        <Frame84 />
       </div>
       <div aria-hidden className="absolute border border-[#f2f4f8] border-solid inset-0 pointer-events-none" />
     </div>
@@ -1725,7 +1661,7 @@ function Frame82() {
 
 function Frame68() {
   return (
-    <div className="llmd-grid-hardware aspect-[920/307] content-stretch flex items-center relative shrink-0 w-full">
+    <div className="llmd-grid-hardware content-stretch flex items-stretch relative shrink-0 w-full">
       <Frame69 />
       <Frame73 />
       <Frame78 />
