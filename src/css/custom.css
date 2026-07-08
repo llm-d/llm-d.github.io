@@ -1144,6 +1144,14 @@ img.llm-d-logo {
 
 /* ===== DOCS INTRO PAGE ===== */
 
+/* Community page: SIG cards */
+.community-sig-card:hover,
+.community-sig-card:focus-visible {
+  border-color: var(--ifm-color-primary) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-decoration: none;
+}
+
 .intro-founded {
   display: flex;
   flex-direction: column;
