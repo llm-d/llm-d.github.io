@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"sync"
 
 	"github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/manifest"
 )
@@ -21,6 +22,48 @@ type Checker struct {
 type linkMeta struct {
 	sourcePages map[string]struct{}
 	linkType    string
+}
+
+// checkURLsConcurrently validates urls in parallel (bounded by MaxConcurrent),
+// printing progress every 10 checks, and streams each result to onResult.
+func (c *Checker) checkURLsConcurrently(
+	urls []string,
+	label, token string,
+	onResult func(url string, res validateResult),
+) int {
+	rl := newRateLimiter(c.Config.MaxConcurrent)
+	results := make(chan struct {
+		url string
+		res validateResult
+	}, len(urls))
+	var wg sync.WaitGroup
+	for _, url := range urls {
+		wg.Add(1)
+		go func(u string) {
+			defer wg.Done()
+			res := rl.run(func() validateResult {
+				return validateExternalURL(u, c.Config.ExternalTimeout(), token)
+			})
+			results <- struct {
+				url string
+				res validateResult
+			}{url: u, res: res}
+		}(url)
+	}
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	checked := 0
+	for r := range results {
+		checked++
+		onResult(r.url, r.res)
+		if checked%10 == 0 || checked == len(urls) {
+			fmt.Printf("   Checked %d/%d %s...\n", checked, len(urls), label)
+		}
+	}
+	return checked
 }
 
 // CheckLinks crawls the built site and returns exit code (0 ok, 1 broken links).
@@ -219,18 +262,16 @@ func (c *Checker) crawlAndValidate() ([]BrokenLink, int, map[string]struct{}, er
 		if c.Config.GitHubToken != "" {
 			fmt.Println("   Using GITHUB_TOKEN for authentication (better rate limits)")
 		}
-		rl := newRateLimiter(c.Config.MaxConcurrent)
-		n := 0
-		for url, sources := range githubURLs {
+		urls := make([]string, 0, len(githubURLs))
+		for url := range githubURLs {
 			if isIgnored(url, c.Config.IgnorePatterns) {
 				continue
 			}
-			n++
-			res := rl.run(func() validateResult {
-				return validateExternalURL(url, c.Config.ExternalTimeout(), c.Config.GitHubToken)
-			})
+			urls = append(urls, url)
+		}
+		checkedGithub := c.checkURLsConcurrently(urls, "GitHub URLs", c.Config.GitHubToken, func(url string, res validateResult) {
 			if !res.Valid {
-				for src := range sources {
+				for src := range githubURLs[url] {
 					broken = append(broken, BrokenLink{
 						SourcePage: src,
 						URL:        url,
@@ -240,25 +281,20 @@ func (c *Checker) crawlAndValidate() ([]BrokenLink, int, map[string]struct{}, er
 					})
 				}
 			}
-			if n%10 == 0 {
-				fmt.Printf("\r   Checked %d/%d GitHub URLs...", n, len(githubURLs))
-			}
-		}
-		fmt.Printf("\r   Checked %d GitHub URLs ✓\n\n", n)
+		})
+		fmt.Printf("   Checked %d GitHub URLs ✓\n\n", checkedGithub)
 	}
 
 	if c.Config.CheckExternalLinks {
 		fmt.Println("🌐 Validating external URLs...")
-		rl := newRateLimiter(c.Config.MaxConcurrent)
-		n := 0
+		urls := make([]string, 0, len(externalURLs))
 		for url := range externalURLs {
 			if isIgnored(url, c.Config.IgnorePatterns) {
 				continue
 			}
-			n++
-			res := rl.run(func() validateResult {
-				return validateExternalURL(url, c.Config.ExternalTimeout(), "")
-			})
+			urls = append(urls, url)
+		}
+		checkedExternal := c.checkURLsConcurrently(urls, "external URLs", "", func(url string, res validateResult) {
 			if !res.Valid {
 				broken = append(broken, BrokenLink{
 					SourcePage: "Multiple pages",
@@ -268,8 +304,8 @@ func (c *Checker) crawlAndValidate() ([]BrokenLink, int, map[string]struct{}, er
 					Category:   "external",
 				})
 			}
-		}
-		fmt.Printf("\r   Checked %d external URLs ✓\n\n", n)
+		})
+		fmt.Printf("   Checked %d external URLs ✓\n\n", checkedExternal)
 	} else {
 		fmt.Println("⏭️  Skipping external URL validation (disabled in config)")
 	}
