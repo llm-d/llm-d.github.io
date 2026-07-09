@@ -59,7 +59,7 @@ In addition, the following performance-related design choices were made:
 
 Using the FS offloading connector is simple, requires a `pip install`, and a directory path to the storage being used. Other optional tunable parameters are the storage block size (in tokens) and the number of worker threads. 
 
-Detailed instructions can be found in the llm-d well-lit path [guide](/docs/well-lit-paths/tiered-prefix-cache).
+Detailed instructions can be found in the llm-d well-lit path [guide](/docs/well-lit-paths/foundations/tiered-prefix-cache).
 
 Note that while the results presented in this blog were of tests run with IBM Storage Scale, the connector was also tested with other storage options including local storage (NVMe drive with a filesystem mounted on it) and CephFS. In general it will work seamlessly with any storage supporting a filesystem API or that has a filesystem mounted on it.
 

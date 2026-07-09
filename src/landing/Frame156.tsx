@@ -973,10 +973,10 @@ function Frame33() {
 function Frame() {
   return (
     <div className="llmd-grid-paths content-stretch flex gap-[24px] items-start relative shrink-0 w-full">
-      <Link to="/docs/well-lit-paths/optimized-baseline" className="llmd-cta"><Frame27 /></Link>
-      <Link to="/docs/well-lit-paths/predicted-latency" className="llmd-cta"><Frame31 /></Link>
-      <Link to="/docs/well-lit-paths/precise-prefix-cache-routing" className="llmd-cta"><Frame32 /></Link>
-      <Link to="/docs/well-lit-paths/tiered-prefix-cache" className="llmd-cta"><Frame33 /></Link>
+      <Link to="/docs/well-lit-paths/foundations/optimized-baseline" className="llmd-cta"><Frame27 /></Link>
+      <Link to="/docs/well-lit-paths/foundations/predicted-latency" className="llmd-cta"><Frame31 /></Link>
+      <Link to="/docs/well-lit-paths/foundations/precise-prefix-cache-routing" className="llmd-cta"><Frame32 /></Link>
+      <Link to="/docs/well-lit-paths/foundations/tiered-prefix-cache" className="llmd-cta"><Frame33 /></Link>
     </div>
   );
 }
@@ -1162,10 +1162,10 @@ function Frame39() {
 function Frame1() {
   return (
     <div className="llmd-grid-paths content-stretch flex gap-[24px] items-start relative shrink-0 w-full">
-      <Link to="/docs/well-lit-paths/pd-disaggregation" className="llmd-cta"><Frame28 /></Link>
-      <Link to="/docs/well-lit-paths/wide-expert-parallelism" className="llmd-cta"><Frame34 /></Link>
-      <Link to="/docs/well-lit-paths/flow-control" className="llmd-cta"><Frame37 /></Link>
-      <Link to="/docs/well-lit-paths/workload-autoscaling" className="llmd-cta"><Frame39 /></Link>
+      <Link to="/docs/well-lit-paths/foundations/pd-disaggregation" className="llmd-cta"><Frame28 /></Link>
+      <Link to="/docs/well-lit-paths/foundations/wide-expert-parallelism" className="llmd-cta"><Frame34 /></Link>
+      <Link to="/docs/well-lit-paths/foundations/flow-control" className="llmd-cta"><Frame37 /></Link>
+      <Link to="/docs/well-lit-paths/foundations/workload-autoscaling" className="llmd-cta"><Frame39 /></Link>
     </div>
   );
 }
