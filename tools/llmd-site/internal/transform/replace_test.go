@@ -51,3 +51,15 @@ func TestGeneratedMultimodalMathRule(t *testing.T) {
 		t.Fatalf("generated rule: got %q want %q", out, want)
 	}
 }
+
+func TestCompiledRulesMatchApplyRules(t *testing.T) {
+	rules := benchSampleRules()
+	vars := map[string]string{"UPSTREAM_REF": "main"}
+	in := benchDocContent(t)
+
+	got := ApplyCompiledRules(in, CompileRulesSkipInvalid(rules), vars)
+	want := ApplyRules(in, rules, vars)
+	if got != want {
+		t.Fatalf("compiled rules diverged from ApplyRules")
+	}
+}

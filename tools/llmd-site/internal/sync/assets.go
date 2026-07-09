@@ -35,7 +35,7 @@ func (e *engine) copyAssets() error {
 		if strings.HasPrefix(rel, "assets/") {
 			src = filepath.Join(e.src.Root, filepath.FromSlash(rel))
 		}
-		if fileExists(src) {
+		if e.fileExists(src) {
 			_ = copyFileSimple(src, filepath.Join(e.staticDir, filepath.Base(src)))
 		}
 	}

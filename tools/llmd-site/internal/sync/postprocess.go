@@ -1,9 +1,7 @@
 package sync
 
 import (
-	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/transform"
@@ -12,211 +10,6 @@ import (
 type ruleGroup struct {
 	scope string
 	rules []transform.Rule
-}
-
-func (e *engine) postprocess() error {
-	vars := map[string]string{
-		"UPSTREAM_REF": e.upstreamRef,
-	}
-
-	for _, g := range generatedRuleGroups() {
-		if err := e.applyRuleGroup(g, vars); err != nil {
-			return err
-		}
-	}
-
-	if err := e.applyGuideDynamicRules(vars); err != nil {
-		return err
-	}
-
-	// apply_transformations (shared transforms) on all markdown.
-	fmtMsg := "    Applying markdown transformations (callouts, tabs, MDX escaping, well-lit-paths links)..."
-	fmt.Println(fmtMsg)
-	if err := walkDocs(e.docsDir, func(path string) error {
-		if strings.HasSuffix(path, ".md") {
-			return transform.ApplyShared(path)
-		}
-		return nil
-	}); err != nil {
-		return err
-	}
-
-	// Post-transform fixes that must run after ApplyShared.
-	postShared := []transform.Rule{
-		{Pattern: `/img/docs/images/`, Replacement: `/img/docs/`},
-	}
-	if err := walkDocs(e.docsDir, func(path string) error {
-		if !strings.HasSuffix(path, ".md") {
-			return nil
-		}
-		return transform.ApplyRulesToFile(path, postShared, vars)
-	}); err != nil {
-		return err
-	}
-
-	// Canonicalize /guides -> /well-lit-paths (runs after shared transforms in bash too for some paths).
-	return e.applyLateRules(vars)
-}
-
-func (e *engine) applyLateRules(vars map[string]string) error {
-	lateGroups := []ruleGroup{
-		{scope: "all_md", rules: canonicalizeGuideRules()},
-		{scope: "glob:**/*.mdx", rules: mdxGuideRules()},
-		{scope: "glob:guides/*.md", rules: flattenedArchRules()},
-		{scope: "all_md", rules: upstreamDeepLinkRules()},
-		{scope: "all_md", rules: upstreamBranchRules()},
-		{scope: "all_md", rules: mdxHygieneRules()},
-		{scope: "glob:**/*.{md,mdx}", rules: []transform.Rule{
-			{Pattern: `https://llm-d.ai/img/`, Replacement: `/img/`},
-		}},
-	}
-	for _, g := range lateGroups {
-		if err := e.applyRuleGroup(g, vars); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (e *engine) applyRuleGroup(g ruleGroup, vars map[string]string) error {
-	switch g.scope {
-	case "all_md":
-		return walkDocs(e.docsDir, func(path string) error {
-			if strings.HasSuffix(path, ".md") {
-				return transform.ApplyRulesToFile(path, g.rules, vars)
-			}
-			return nil
-		})
-	case "glob:guides/**/*.md":
-		return walkDocsIfExists(filepath.Join(e.docsDir, "guides"), func(path string) error {
-			if strings.HasSuffix(path, ".md") {
-				return transform.ApplyRulesToFile(path, g.rules, vars)
-			}
-			return nil
-		})
-	case "glob:guides/*.md":
-		guidesDir := filepath.Join(e.docsDir, "guides")
-		if _, err := os.Stat(guidesDir); err != nil {
-			if os.IsNotExist(err) {
-				return nil
-			}
-			return err
-		}
-		return filepath.Walk(guidesDir, func(path string, info os.FileInfo, err error) error {
-			if err != nil || info.IsDir() || !strings.HasSuffix(path, ".md") {
-				return err
-			}
-			if filepath.Dir(path) != filepath.Join(e.docsDir, "guides") {
-				return nil
-			}
-			return transform.ApplyRulesToFile(path, g.rules, vars)
-		})
-	case "glob:resources/infra-providers/*.md":
-		return walkDocsIfExists(filepath.Join(e.docsDir, "resources", "infra-providers"), func(path string) error {
-			if strings.HasSuffix(path, ".md") {
-				return transform.ApplyRulesToFile(path, g.rules, vars)
-			}
-			return nil
-		})
-	case "glob:**/*.{md,mdx}":
-		return walkDocs(e.docsDir, func(path string) error {
-			if strings.HasSuffix(path, ".md") || strings.HasSuffix(path, ".mdx") {
-				return transform.ApplyRulesToFile(path, g.rules, vars)
-			}
-			return nil
-		})
-	case "glob:**/*.mdx":
-		return walkDocs(e.docsDir, func(path string) error {
-			if strings.HasSuffix(path, ".mdx") {
-				return transform.ApplyRulesToFile(path, g.rules, vars)
-			}
-			return nil
-		})
-	case "files:section_overviews":
-		for _, name := range []string{"capabilities.md", "workloads.md"} {
-			p := filepath.Join(e.docsDir, "guides", name)
-			if err := transform.ApplyRulesToFileIfExists(p, g.rules, vars); err != nil {
-				return err
-			}
-		}
-	case "files:operations":
-		for _, name := range []string{
-			"resources/operations/rollouts/adapter-rollout.md",
-			"resources/operations/rollouts/blue-green-update.md",
-			"resources/operations/rollouts/index.md",
-			"resources/operations/readiness-probes.md",
-			"resources/operations/router.md",
-		} {
-			p := filepath.Join(e.docsDir, filepath.FromSlash(name))
-			if err := transform.ApplyRulesToFileIfExists(p, g.rules, vars); err != nil {
-				return err
-			}
-		}
-	case "files:accelerators":
-		for _, name := range []string{"accelerators/index.md", "getting-started/accelerators.md"} {
-			p := filepath.Join(e.docsDir, filepath.FromSlash(name))
-			if err := transform.ApplyRulesToFileIfExists(p, g.rules, vars); err != nil {
-				return err
-			}
-		}
-	case "files:observability":
-		for _, name := range []string{"index.md", "setup.md", "metrics.md", "tracing.md", "promql.md"} {
-			p := filepath.Join(e.docsDir, "resources", "observability", name)
-			if err := transform.ApplyRulesToFileIfExists(p, g.rules, vars); err != nil {
-				return err
-			}
-		}
-	default:
-		if strings.HasPrefix(g.scope, "file:") {
-			rel := strings.TrimPrefix(g.scope, "file:")
-			p := filepath.Join(e.docsDir, filepath.FromSlash(rel))
-			return transform.ApplyRulesToFileIfExists(p, g.rules, vars)
-		}
-	}
-	return nil
-}
-
-func (e *engine) applyGuideDynamicRules(vars map[string]string) error {
-	guidesDocs := filepath.Join(e.docsDir, "guides")
-	if _, err := os.Stat(guidesDocs); err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-	return filepath.Walk(guidesDocs, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() || !strings.HasSuffix(path, ".md") {
-			return err
-		}
-		rel, err := filepath.Rel(guidesDocs, path)
-		if err != nil {
-			return err
-		}
-		subdir := filepath.ToSlash(filepath.Dir(rel))
-		if subdir == "." {
-			return nil
-		}
-		imgRules := []transform.Rule{
-			{Pattern: `!\[([^]]*)\]\(images/([^)]*)\)`, Replacement: `![$1](/img/docs/guides/` + subdir + `/` + `$2)`},
-			{Pattern: `!\[([^]]*)\]\(\./images/([^)]*)\)`, Replacement: `![$1](/img/docs/guides/` + subdir + `/` + `$2)`},
-		}
-		if err := transform.ApplyRulesToFile(path, imgRules, vars); err != nil {
-			return err
-		}
-		benchDir := filepath.Join(e.staticDir, "guides", subdir, "benchmark-results")
-		if hasPNG(benchDir) {
-			benchRules := []transform.Rule{
-				{Pattern: `src="\./benchmark-results/([^"]*)"`, Replacement: `src="/img/docs/guides/` + subdir + `/benchmark-results/` + `$1"`},
-				{Pattern: `src="benchmark-results/([^"]*)"`, Replacement: `src="/img/docs/guides/` + subdir + `/benchmark-results/` + `$1"`},
-				{Pattern: `!\[([^]]*)\]\(\./benchmark-results/([^)]*)\)`, Replacement: `![$1](/img/docs/guides/` + subdir + `/benchmark-results/` + `$2)`},
-				{Pattern: `!\[([^]]*)\]\(benchmark-results/([^)]*)\)`, Replacement: `![$1](/img/docs/guides/` + subdir + `/benchmark-results/` + `$2)`},
-			}
-			if err := transform.ApplyRulesToFile(path, benchRules, vars); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
 }
 
 func hasPNG(dir string) bool {
@@ -230,25 +23,6 @@ func hasPNG(dir string) bool {
 		}
 	}
 	return false
-}
-
-func walkDocs(root string, fn func(string) error) error {
-	return walkDocsIfExists(root, fn)
-}
-
-func walkDocsIfExists(root string, fn func(string) error) error {
-	if _, err := os.Stat(root); err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-	return filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() {
-			return err
-		}
-		return fn(path)
-	})
 }
 
 func canonicalizeGuideRules() []transform.Rule {
@@ -297,4 +71,41 @@ func mdxHygieneRules() []transform.Rule {
 		{Pattern: `<([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})>`, Replacement: `$1`},
 		{Pattern: `<(https?://[^ >]*)>`, Replacement: `$1`},
 	}
+}
+
+// fileExists checks path with optional engine-level memoization.
+func fileExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && !info.IsDir()
+}
+
+func (e *engine) fileExists(path string) bool {
+	if e.existence != nil {
+		if v, ok := e.existence.files[path]; ok {
+			return v
+		}
+	}
+	ok := fileExists(path)
+	if e.existence != nil {
+		e.existence.files[path] = ok
+	}
+	return ok
+}
+
+func dirExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
+}
+
+func (e *engine) dirExists(path string) bool {
+	if e.existence != nil {
+		if v, ok := e.existence.dirs[path]; ok {
+			return v
+		}
+	}
+	ok := dirExists(path)
+	if e.existence != nil {
+		e.existence.dirs[path] = ok
+	}
+	return ok
 }

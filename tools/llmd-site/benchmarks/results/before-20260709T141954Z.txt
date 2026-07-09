@@ -1,0 +1,29 @@
+llmd-site benchmarks (before)
+timestamp: 20260709T141954Z
+go: go version go1.26.4 darwin/arm64
+
+# github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/sync
+internal/manifest/manifest.go:7:2: no required module provides package gopkg.in/yaml.v3; to add it:
+	go get gopkg.in/yaml.v3
+FAIL	github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/sync [setup failed]
+# github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/check
+internal/manifest/manifest.go:7:2: no required module provides package gopkg.in/yaml.v3; to add it:
+	go get gopkg.in/yaml.v3
+FAIL	github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/check [setup failed]
+goos: darwin
+goarch: arm64
+pkg: github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/transform
+cpu: Apple M2 Max
+BenchmarkApplyRules-12            	    3228	    344381 ns/op	  254131 B/op	     410 allocs/op
+BenchmarkApplyRules-12            	    3620	    298832 ns/op	  254082 B/op	     410 allocs/op
+BenchmarkApplyRules-12            	    4191	    295212 ns/op	  254190 B/op	     410 allocs/op
+BenchmarkApplyRules-12            	    4086	    295850 ns/op	  254117 B/op	     410 allocs/op
+BenchmarkApplyRules-12            	    4071	    296638 ns/op	  253877 B/op	     410 allocs/op
+BenchmarkApplySharedContent-12    	     348	   3941420 ns/op	 1573191 B/op	    1200 allocs/op
+BenchmarkApplySharedContent-12    	     315	   3504253 ns/op	 1574873 B/op	    1201 allocs/op
+BenchmarkApplySharedContent-12    	     290	   3471696 ns/op	 1574506 B/op	    1200 allocs/op
+BenchmarkApplySharedContent-12    	     343	   3540194 ns/op	 1574380 B/op	    1201 allocs/op
+BenchmarkApplySharedContent-12    	     345	   3508786 ns/op	 1574240 B/op	    1202 allocs/op
+PASS
+ok  	github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/transform	13.990s
+FAIL

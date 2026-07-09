@@ -11,8 +11,10 @@ type validateResult struct {
 	Reason string
 }
 
-func validateExternalURL(raw string, timeout time.Duration, token string) validateResult {
-	client := &http.Client{Timeout: timeout}
+func validateExternalURL(client *http.Client, raw string, timeout time.Duration, token string) validateResult {
+	if client == nil {
+		client = newHTTPClient(timeout)
+	}
 	req, err := http.NewRequest(http.MethodHead, raw, nil)
 	if err != nil {
 		return validateResult{Valid: false, Reason: err.Error()}

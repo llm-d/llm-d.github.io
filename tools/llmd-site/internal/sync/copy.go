@@ -46,7 +46,7 @@ func (e *engine) runCopies() error {
 
 	// Accelerators fallback when getting-started copy did not produce index.
 	accIndex := filepath.Join(e.docsDir, "accelerators", "index.md")
-	if !fileExists(accIndex) {
+	if !e.fileExists(accIndex) {
 		_ = e.copyOne("docs/accelerators/README.md", "accelerators/index.md")
 	}
 
@@ -90,16 +90,16 @@ func (e *engine) evalWhenExpr(expr string) bool {
 	}
 	path := filepath.Join(e.wip, filepath.FromSlash(upstreamRel(rel)))
 	if missing {
-		return !fileExists(path) && !dirExists(path)
+		return !e.fileExists(path) && !e.dirExists(path)
 	}
-	return fileExists(path) || dirExists(path)
+	return e.fileExists(path) || e.dirExists(path)
 }
 
 func (e *engine) copyPrefer(c manifest.Copy) error {
 	destExt := filepath.Ext(c.To)
 	for _, pref := range c.Prefer {
 		src := filepath.Join(e.wip, filepath.FromSlash(pref))
-		if !fileExists(src) {
+		if !e.fileExists(src) {
 			continue
 		}
 		// Multiple manifest copies can share the same prefer list with different
@@ -116,7 +116,7 @@ func (e *engine) copyPrefer(c manifest.Copy) error {
 
 func (e *engine) copyOne(from, to string) error {
 	src := filepath.Join(e.wip, filepath.FromSlash(upstreamRel(from)))
-	if !fileExists(src) {
+	if !e.fileExists(src) {
 		return nil
 	}
 	dst := filepath.Join(e.docsDir, filepath.FromSlash(to))
@@ -149,7 +149,7 @@ func (e *engine) syncObservability() error {
 	var pairs []pair
 
 	switch {
-	case fileExists(filepath.Join(e.wip, "operations", "observability", "setup.md")):
+	case e.fileExists(filepath.Join(e.wip, "operations", "observability", "setup.md")):
 		pairs = []pair{
 			{"operations/observability/README.md", "index.md"},
 			{"operations/observability/setup.md", "setup.md"},
@@ -157,7 +157,7 @@ func (e *engine) syncObservability() error {
 			{"operations/observability/tracing.md", "tracing.md"},
 			{"operations/observability/promql.md", "promql.md"},
 		}
-	case fileExists(filepath.Join(e.wip, "resources", "observability", "setup.md")):
+	case e.fileExists(filepath.Join(e.wip, "resources", "observability", "setup.md")):
 		pairs = []pair{
 			{"resources/observability/README.md", "index.md"},
 			{"resources/observability/setup.md", "setup.md"},
@@ -174,7 +174,7 @@ func (e *engine) syncObservability() error {
 			{"guides/monitoring/tracing.md", "tracing.md"},
 		} {
 			src := filepath.Join(e.wip, filepath.FromSlash(p.from))
-			if fileExists(src) {
+			if e.fileExists(src) {
 				dst := filepath.Join(dest, p.to)
 				if err := e.copyFile(src, dst); err != nil {
 					return err
@@ -185,7 +185,7 @@ func (e *engine) syncObservability() error {
 
 	for _, p := range pairs {
 		src := filepath.Join(e.wip, filepath.FromSlash(p.from))
-		if fileExists(src) {
+		if e.fileExists(src) {
 			if err := e.copyFile(src, filepath.Join(dest, p.to)); err != nil {
 				return err
 			}
@@ -201,7 +201,7 @@ func (e *engine) syncObservability() error {
 		{"operations/observability/promql.md", "promql.md"},
 	} {
 		src := filepath.Join(e.wip, filepath.FromSlash(p.from))
-		if fileExists(src) {
+		if e.fileExists(src) {
 			if err := e.copyFile(src, filepath.Join(dest, p.to)); err != nil {
 				return err
 			}

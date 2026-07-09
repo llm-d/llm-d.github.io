@@ -8,23 +8,16 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"time"
+	"sync"
 )
 
 var (
-	reImgSrc    = regexp.MustCompile(`(?i)<img[^>]+src=["']([^"']+)["']`)
-	reBgURL     = regexp.MustCompile(`(?i)background(?:-image)?:\s*url\(["']?([^"')]+)["']?\)`)
-	reSrcset    = regexp.MustCompile(`(?i)srcset=["']([^"']+)["']`)
-	rePageLink  = regexp.MustCompile(`(?i)<a[^>]+href=["']([^"'#]+)["']`)
-	reSkipExt   = regexp.MustCompile(`(?i)\.(png|jpg|jpeg|gif|svg|webp|pdf|css|js|ico|woff|woff2|ttf|eot)$`)
+	reImgSrc   = regexp.MustCompile(`(?i)<img[^>]+src=["']([^"']+)["']`)
+	reBgURL    = regexp.MustCompile(`(?i)background(?:-image)?:\s*url\(["']?([^"')]+)["']?\)`)
+	reSrcset   = regexp.MustCompile(`(?i)srcset=["']([^"']+)["']`)
+	rePageLink = regexp.MustCompile(`(?i)<a[^>]+href=["']([^"'#]+)["']`)
+	reSkipExt  = regexp.MustCompile(`(?i)\.(png|jpg|jpeg|gif|svg|webp|pdf|css|js|ico|woff|woff2|ttf|eot)$`)
 )
-
-type brokenImage struct {
-	PageURL string
-	ImageURL string
-	Status  int
-	Error   string
-}
 
 // CheckImages crawls the site and verifies all images load (HTTP 2xx/3xx).
 func CheckImages(repoRoot string) (int, error) {
@@ -41,6 +34,7 @@ func CheckImages(repoRoot string) (int, error) {
 	}
 	defer srv.Stop()
 
+	c := newChecker(repoRoot, cfg, nil)
 	base := srv.BaseURL()
 	seeds := parseSitemapSeeds(cfg.BuildDir, cfg.IgnorePatterns)
 	if len(seeds) == 0 {
@@ -48,61 +42,117 @@ func CheckImages(repoRoot string) (int, error) {
 	}
 
 	visitedPages := map[string]struct{}{}
+	visitedMu := sync.Mutex{}
 	checkedImages := map[string]struct{}{}
+	imagesMu := sync.Mutex{}
 	var broken []brokenImage
-	queue := append([]string{}, seeds...)
+	brokenMu := sync.Mutex{}
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	workers := cfg.CrawlConcurrency
+	if workers <= 0 {
+		workers = 8
+	}
+	sem := make(chan struct{}, workers)
+	var pending sync.WaitGroup
 
-	for len(queue) > 0 {
-		pagePath := queue[0]
-		queue = queue[1:]
+	var enqueuePage func(string)
+	enqueuePage = func(pagePath string) {
+		visitedMu.Lock()
 		if _, ok := visitedPages[pagePath]; ok {
-			continue
+			visitedMu.Unlock()
+			return
 		}
 		visitedPages[pagePath] = struct{}{}
+		nPages := len(visitedPages)
+		visitedMu.Unlock()
 
-		pageURL := base + pagePath
-		resp, err := client.Get(pageURL)
-		if err != nil || resp.StatusCode >= 400 {
-			if resp != nil {
-				resp.Body.Close()
-			}
-			continue
-		}
-		body, _ := io.ReadAll(io.LimitReader(resp.Body, 5<<20))
-		resp.Body.Close()
-		html := string(body)
+		pending.Add(1)
+		go func(pagePath string, nPages int) {
+			defer pending.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
 
-		for _, imgURL := range extractImageURLs(html, pageURL) {
-			if _, ok := checkedImages[imgURL]; ok {
-				continue
+			pageURL := base + pagePath
+			resp, err := c.client.Get(pageURL)
+			if err != nil || resp.StatusCode >= 400 {
+				if resp != nil {
+					resp.Body.Close()
+				}
+				return
 			}
-			checkedImages[imgURL] = struct{}{}
+			body, _ := io.ReadAll(io.LimitReader(resp.Body, 5<<20))
+			resp.Body.Close()
+			html := string(body)
 
-			status, err := headStatus(client, imgURL)
-			if err != nil || status < 200 || status >= 400 {
-				broken = append(broken, brokenImage{
-					PageURL:  pagePath,
-					ImageURL: imgURL,
-					Status:   status,
-					Error:    errString(err),
-				})
+			var imageURLs []string
+			for _, imgURL := range extractImageURLs(html, pageURL) {
+				imagesMu.Lock()
+				if _, ok := checkedImages[imgURL]; ok {
+					imagesMu.Unlock()
+					continue
+				}
+				checkedImages[imgURL] = struct{}{}
+				nImages := len(checkedImages)
+				imagesMu.Unlock()
+				imageURLs = append(imageURLs, imgURL)
+				fmt.Printf("\r   Checked %d pages, %d images...", nPages, nImages)
 			}
-		}
 
-		for _, link := range extractPageLinks(html, base) {
-			if isIgnored(link, cfg.IgnorePatterns) {
-				continue
+			var imgWG sync.WaitGroup
+			imgSem := make(chan struct{}, workers)
+			for _, imgURL := range imageURLs {
+				imgURL := imgURL
+				imgWG.Add(1)
+				go func() {
+					defer imgWG.Done()
+					imgSem <- struct{}{}
+					defer func() { <-imgSem }()
+					status, err := headStatus(c.client, imgURL)
+					if err != nil || status < 200 || status >= 400 {
+						brokenMu.Lock()
+						broken = append(broken, brokenImage{
+							PageURL:  pagePath,
+							ImageURL: imgURL,
+							Status:   status,
+							Error:    errString(err),
+						})
+						brokenMu.Unlock()
+					}
+				}()
 			}
-			if _, ok := visitedPages[link]; !ok {
-				queue = append(queue, link)
+			imgWG.Wait()
+
+			var next []string
+			for _, link := range extractPageLinks(html, base) {
+				if isIgnored(link, cfg.IgnorePatterns) {
+					continue
+				}
+				visitedMu.Lock()
+				_, seen := visitedPages[link]
+				visitedMu.Unlock()
+				if !seen {
+					next = append(next, link)
+				}
 			}
-		}
-		fmt.Printf("\r   Checked %d pages, %d images...", len(visitedPages), len(checkedImages))
+			for _, link := range next {
+				enqueuePage(link)
+			}
+		}(pagePath, nPages)
 	}
 
-	fmt.Printf("\r   Checked %d pages, %d images ✓\n\n", len(visitedPages), len(checkedImages))
+	for _, seed := range seeds {
+		enqueuePage(seed)
+	}
+	pending.Wait()
+
+	visitedMu.Lock()
+	nPages := len(visitedPages)
+	imagesMu.Lock()
+	nImages := len(checkedImages)
+	imagesMu.Unlock()
+	visitedMu.Unlock()
+
+	fmt.Printf("\r   Checked %d pages, %d images ✓\n\n", nPages, nImages)
 
 	if len(broken) > 0 {
 		fmt.Printf("❌ Found %d broken images:\n\n", len(broken))
@@ -118,6 +168,13 @@ func CheckImages(repoRoot string) (int, error) {
 
 	fmt.Println("🎉 All images loaded successfully!")
 	return 0, nil
+}
+
+type brokenImage struct {
+	PageURL  string
+	ImageURL string
+	Status   int
+	Error    string
 }
 
 func extractImageURLs(html, pageURL string) []string {

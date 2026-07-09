@@ -1,0 +1,34 @@
+llmd-site benchmarks (after)
+timestamp: 20260709T143516Z
+go: go version go1.26.4 darwin/arm64
+
+# github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/sync
+internal/manifest/manifest.go:7:2: no required module provides package gopkg.in/yaml.v3; to add it:
+	go get gopkg.in/yaml.v3
+FAIL	github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/sync [setup failed]
+# github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/check
+internal/manifest/manifest.go:7:2: no required module provides package gopkg.in/yaml.v3; to add it:
+	go get gopkg.in/yaml.v3
+FAIL	github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/check [setup failed]
+goos: darwin
+goarch: arm64
+pkg: github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/transform
+cpu: Apple M2 Max
+BenchmarkApplyRules-12            	    3756	    297800 ns/op	  254324 B/op	     411 allocs/op
+BenchmarkApplyRules-12            	    3958	    300961 ns/op	  254386 B/op	     411 allocs/op
+BenchmarkApplyRules-12            	    3949	    296768 ns/op	  254443 B/op	     411 allocs/op
+BenchmarkApplyRules-12            	    4059	    296978 ns/op	  254393 B/op	     411 allocs/op
+BenchmarkApplyRules-12            	    4004	    295828 ns/op	  254337 B/op	     411 allocs/op
+BenchmarkApplyCompiledRules-12    	    4281	    285827 ns/op	  225610 B/op	     229 allocs/op
+BenchmarkApplyCompiledRules-12    	    4284	    306826 ns/op	  225821 B/op	     229 allocs/op
+BenchmarkApplyCompiledRules-12    	    4326	    283789 ns/op	  225612 B/op	     229 allocs/op
+BenchmarkApplyCompiledRules-12    	    4048	    285798 ns/op	  225679 B/op	     229 allocs/op
+BenchmarkApplyCompiledRules-12    	    4358	    279391 ns/op	  225703 B/op	     229 allocs/op
+BenchmarkApplySharedContent-12    	     352	   3378076 ns/op	 1409860 B/op	     351 allocs/op
+BenchmarkApplySharedContent-12    	     302	   3372338 ns/op	 1410013 B/op	     351 allocs/op
+BenchmarkApplySharedContent-12    	     357	   3388678 ns/op	 1411167 B/op	     353 allocs/op
+BenchmarkApplySharedContent-12    	     355	   3441438 ns/op	 1410290 B/op	     351 allocs/op
+BenchmarkApplySharedContent-12    	     345	   3485172 ns/op	 1409898 B/op	     351 allocs/op
+PASS
+ok  	github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/transform	20.120s
+FAIL
