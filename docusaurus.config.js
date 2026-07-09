@@ -262,9 +262,6 @@ const config = {
       // Config for footer here
       footer: {
         style: "dark",
-        copyright: `Copyright llm-d a Series of LF Projects, LLC. Apache 2.0 License.<br />\
-        We are a Cloud Native Computing Foundation sandbox project.<br />\
-        For website terms of use, trademark policy and other project policies please see <a href="https://lfprojects.org/policies/" target="_blank" rel="noreferrer noopener">https://lfprojects.org/policies/</a>`,
         logo: {
           alt: "llm-d Logo",
           src: "img/cncf-white.png",
@@ -295,16 +292,13 @@ const config = {
             title: "Community",
             items: [
               {
-                label: "Contact us",
-                href: "/community",
+                html: '<a href="/community" class="footer__link-item">Contact us</a>',
               },
               {
-                label: "Contributing",
-                href: "/community/contribute",
+                html: '<a href="/community/contribute" class="footer__link-item">Contributing</a>',
               },
               {
-                label: "Code of Conduct",
-                href: "/community/code-of-conduct",
+                html: '<a href="/community/code-of-conduct" class="footer__link-item">Code of Conduct</a>',
               },
             ],
           },
@@ -312,8 +306,7 @@ const config = {
             title: "More",
             items: [
               {
-                label: "Blog",
-                to: "/blog",
+                html: '<a href="/blog" class="footer__link-item">Blog</a>',
               },
               {
                 label: "Privacy Policy",
@@ -365,7 +358,9 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright llm-d a Series of LF Projects, LLC. Apache 2.0 License.`,
+        copyright: `Copyright llm-d a Series of LF Projects, LLC. Apache 2.0 License.<br />\
+        We are a Cloud Native Computing Foundation sandbox project.<br />\
+        For website terms of use, trademark policy and other project policies please see <a href="https://lfprojects.org/policies/" target="_blank" rel="noreferrer noopener">https://lfprojects.org/policies/</a>`,
       },
       prism: {
         theme: prismThemes.vsLight,
