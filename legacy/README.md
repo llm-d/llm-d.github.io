@@ -2,7 +2,7 @@
 
 These bash and Node scripts powered site builds before the **`llmd-site`** Go CLI
 (`tools/llmd-site/`). They are **not used by CI, Netlify, or `npm run build:all`**
-anymore. Kept for reference, golden `--legacy` baselines, and rule extraction.
+anymore. Kept for reference and golden `--legacy` baselines.
 
 ## Use instead
 
@@ -39,8 +39,6 @@ legacy/
 ## When you might still run archived scripts
 
 - **`llmd-site golden capture main --legacy`** — compares Go sync output against `sync-docs.sh`
-- **`llmd-site extract-manifest --write`** — regenerates `docs-sync.yaml` from archived `sync-docs.sh`
-- **`go generate ./internal/sync/...`** — regenerates sed rules from archived `sync-docs.sh`
 - **Manual archaeology** — understanding why a transform exists
 
 ## Archived date

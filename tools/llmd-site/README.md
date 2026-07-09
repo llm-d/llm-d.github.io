@@ -15,7 +15,6 @@ cd tools/llmd-site && go build -o ../../bin/llmd-site ./cmd/llmd-site
 | Command | Description |
 |---------|-------------|
 | `llmd-site validate` | Validate `docs-sync.yaml` |
-| `llmd-site extract-manifest --write` | Regenerate manifest from `legacy/preview/scripts/sync-docs.sh` |
 | `llmd-site sync [branch]` | Sync docs (native Go, Phase 2.1) |
 | `llmd-site sync --local` | Sync using `llmd-site.local.yaml` upstream path |
 | `llmd-site build [branch]` | **Phase 3** — full site build (replaces `build-all.sh`) |
@@ -90,15 +89,9 @@ Legacy scripts live under [`legacy/`](../../legacy/README.md) for reference and 
 
 1. **Go** resolves upstream (`--local`, shallow clone, or `LLMD_REPO`)
 2. **Go** copies from `docs-sync.yaml` (manifest-driven copies, conditionals, slugs)
-3. **Go** applies link fixups via `internal/sync/rules_generated.go` (from `sync-docs.sh` sed rules)
+3. **Go** applies link fixups from `transform_rules` in `docs-sync.yaml`
 4. **Go** applies MDX transforms via `internal/transform/`
 5. **Go** writes `sync-report.json`
-
-Regenerate sed rules after editing `legacy/preview/scripts/sync-docs.sh`:
-
-```bash
-cd tools/llmd-site/internal/sync && go generate
-```
 
 Golden tests compare Go output to legacy `sync-docs.sh`:
 
@@ -123,12 +116,11 @@ Copy `llmd-site.local.yaml.example` to `llmd-site.local.yaml` (gitignored) and s
 
 ## Manifest
 
-[`docs-sync.yaml`](../../docs-sync.yaml) at repo root is the single source of truth for:
+[`docs-sync.yaml`](../../docs-sync.yaml) at repo root is the single source of truth for sync configuration. Edit it directly (no code generation from legacy scripts):
 
 - Upstream copy mappings
 - Published URL slugs
 - Edit URL mappings
 - Conditional layout branches (foundations vs capabilities)
 - Release-branch link fixups
-
-Post-copy sed rules live in `internal/sync/rules_generated.go` (regenerate with `go generate`).
+- Post-copy transform rules (`transform_rules`)

@@ -24,8 +24,8 @@ func newSyncCmd() *cobra.Command {
 Uses docs-sync.yaml for configuration. With --local, reads upstream path
 from llmd-site.local.yaml (see llmd-site.local.yaml.example).
 
-Native Go sync engine (Phase 2.1): manifest-driven copies, generated sed
-rules, and shared MDX transforms — no bash delegation.`,
+Native Go sync engine (Phase 2.1): manifest-driven copies, transform_rules
+from docs-sync.yaml, and shared MDX transforms — no bash delegation.`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			branch := "main"

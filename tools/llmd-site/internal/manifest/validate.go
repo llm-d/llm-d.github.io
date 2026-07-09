@@ -46,6 +46,17 @@ func (m *Manifest) Validate() error {
 		}
 	}
 
+	for i, g := range m.TransformRules {
+		if g.Scope == "" {
+			return fmt.Errorf("transform_rules[%d]: scope is required", i)
+		}
+		for j, r := range g.Rules {
+			if r.Pattern == "" {
+				return fmt.Errorf("transform_rules[%d].rules[%d]: pattern is required", i, j)
+			}
+		}
+	}
+
 	return nil
 }
 

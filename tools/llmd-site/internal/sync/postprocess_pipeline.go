@@ -113,7 +113,7 @@ func (e *engine) buildPostprocessStages(vars map[string]string) ([]compiledStage
 		})
 	}
 
-	for _, g := range generatedRuleGroups() {
+	for _, g := range manifestRuleGroups(e.m) {
 		addRules(scopeApplier(e.docsDir, g.scope), g.rules)
 	}
 

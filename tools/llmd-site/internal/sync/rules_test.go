@@ -1,16 +1,37 @@
 package sync
 
 import (
+	"path/filepath"
 	"regexp"
 	"testing"
+
+	"github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/manifest"
+	"github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/repo"
 )
 
-func TestGeneratedRulesCompile(t *testing.T) {
+func loadManifestTransformRules(t *testing.T) []ruleGroup {
+	t.Helper()
+	root, err := repo.Root()
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, err := manifest.Load(filepath.Join(root, "docs-sync.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	groups := manifestRuleGroups(m)
+	if len(groups) == 0 {
+		t.Fatal("expected transform_rules in docs-sync.yaml")
+	}
+	return groups
+}
+
+func TestManifestTransformRulesCompile(t *testing.T) {
 	critical := map[string]bool{
 		"/img/docs/flow_control_dashboard.png":             true,
 		"`Tokens = (Image Width * Image Height) / Factor`": true,
 	}
-	for _, g := range generatedRuleGroups() {
+	for _, g := range loadManifestTransformRules(t) {
 		for _, r := range g.rules {
 			if !critical[r.Replacement] {
 				continue
@@ -22,9 +43,9 @@ func TestGeneratedRulesCompile(t *testing.T) {
 	}
 }
 
-func TestGeneratedMultimodalRuleInManifest(t *testing.T) {
+func TestManifestMultimodalRule(t *testing.T) {
 	var pattern string
-	for _, g := range generatedRuleGroups() {
+	for _, g := range loadManifestTransformRules(t) {
 		if g.scope != "file:guides/multimodal-serving.md" {
 			continue
 		}
@@ -47,9 +68,9 @@ func TestGeneratedMultimodalRuleInManifest(t *testing.T) {
 	}
 }
 
-func TestGeneratedFlowControlImageRule(t *testing.T) {
+func TestManifestFlowControlImageRule(t *testing.T) {
 	var pattern string
-	for _, g := range generatedRuleGroups() {
+	for _, g := range loadManifestTransformRules(t) {
 		if g.scope != "all_md" {
 			continue
 		}

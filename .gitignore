@@ -11,6 +11,7 @@ preview/static/img/docs/*
 # Link checker
 link-checker.config.json
 sync-report.json
+broken-links-report.md
 
 # llmd-site local config and build output
 llmd-site.local.yaml
@@ -22,7 +23,7 @@ bin/llmd-site
 # Architecture content (from llm-d/llm-d main repo)
 docs/architecture/architecture.mdx
 
-# Component documentation (from all component repos in component-configs.js)  
+# Component documentation (from all component repos in component-configs.js)
 docs/architecture/Components/
 docs/architecture/latest-release.md
 
