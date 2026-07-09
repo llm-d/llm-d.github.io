@@ -10,6 +10,11 @@ import (
 	"github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/upstream"
 )
 
+type existenceCache struct {
+	files map[string]bool
+	dirs  map[string]bool
+}
+
 type engine struct {
 	m           *manifest.Manifest
 	opts        Options
@@ -20,6 +25,7 @@ type engine struct {
 	guidesDir   string
 	upstreamRef string
 	flags       layoutFlags
+	existence   *existenceCache
 }
 
 type layoutFlags struct {
@@ -37,8 +43,12 @@ func runNative(m *manifest.Manifest, opts Options, src *upstream.Source) error {
 		staticDir:   filepath.Join(previewDir, "static", "img", "docs"),
 		guidesDir:   filepath.Join(src.Root, "guides"),
 		upstreamRef: src.Branch,
+		existence: &existenceCache{
+			files: make(map[string]bool),
+			dirs:  make(map[string]bool),
+		},
 	}
-	e.flags.FoundationsLayout = dirExists(filepath.Join(e.wip, "well-lit-paths", "foundations"))
+	e.flags.FoundationsLayout = e.dirExists(filepath.Join(e.wip, "well-lit-paths", "foundations"))
 
 	fmt.Println("    Cleaning docs/ directory...")
 	if err := cleanDir(e.docsDir); err != nil {
@@ -107,16 +117,6 @@ func (e *engine) createDirectories() error {
 		}
 	}
 	return nil
-}
-
-func dirExists(path string) bool {
-	info, err := os.Stat(path)
-	return err == nil && info.IsDir()
-}
-
-func fileExists(path string) bool {
-	info, err := os.Stat(path)
-	return err == nil && !info.IsDir()
 }
 
 func cleanDir(dir string) error {

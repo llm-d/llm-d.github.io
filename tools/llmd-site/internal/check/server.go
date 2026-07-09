@@ -4,25 +4,87 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
 )
 
-// Server runs docusaurus serve for HTTP-based checks.
+// Server runs HTTP serving for link/image checks.
 type Server struct {
-	cmd    *exec.Cmd
-	port   int
-	host   string
-	root   string
-	ready  chan struct{}
-	err    error
-	stdout io.ReadCloser
+	cmd      *exec.Cmd
+	static   *http.Server
+	port     int
+	host     string
+	root     string
+	buildDir string
+	ready    chan struct{}
+	stdout   io.ReadCloser
 }
 
+// StartServer starts an HTTP server for link/image checks.
 func StartServer(repoRoot string, cfg Config) (*Server, error) {
+	if cfg.ServeMode == "docusaurus" {
+		return startDocusaurusServer(repoRoot, cfg)
+	}
+	return startStaticServer(cfg)
+}
+
+func startStaticServer(cfg Config) (*Server, error) {
+	buildDir := cfg.BuildDir
+	if _, err := os.Stat(buildDir); err != nil {
+		return nil, fmt.Errorf("build directory not found: %w", err)
+	}
+
+	mux := http.NewServeMux()
+	fileServer := http.FileServer(http.Dir(buildDir))
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		if path != "/" && !strings.HasSuffix(path, "/") {
+			full := filepath.Join(buildDir, filepath.FromSlash(strings.TrimPrefix(path, "/")))
+			if info, err := os.Stat(full); err == nil && info.IsDir() {
+				if _, err := os.Stat(filepath.Join(full, "index.html")); err == nil {
+					r.URL.Path = path + "/"
+				}
+			}
+		}
+		fileServer.ServeHTTP(w, r)
+	})
+
+	addr := cfg.ServerHost + ":" + itoa(cfg.ServerPort)
+	srv := &http.Server{Addr: addr, Handler: mux}
+	ready := make(chan struct{})
+	go func() {
+		close(ready)
+		_ = srv.ListenAndServe()
+	}()
+	<-ready
+
+	client := newHTTPClient(2 * time.Second)
+	deadline := time.Now().Add(10 * time.Second)
+	for time.Now().Before(deadline) {
+		resp, err := client.Get("http://" + addr + "/")
+		if err == nil {
+			resp.Body.Close()
+			if resp.StatusCode < 500 {
+				return &Server{
+					static:   srv,
+					port:     cfg.ServerPort,
+					host:     cfg.ServerHost,
+					buildDir: buildDir,
+				}, nil
+			}
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	_ = srv.Close()
+	return nil, fmt.Errorf("static server start timeout")
+}
+
+func startDocusaurusServer(repoRoot string, cfg Config) (*Server, error) {
 	s := &Server{
 		port:  cfg.ServerPort,
 		host:  cfg.ServerHost,
@@ -57,7 +119,18 @@ func StartServer(repoRoot string, cfg Config) (*Server, error) {
 
 	select {
 	case <-s.ready:
-		time.Sleep(time.Second)
+		client := newHTTPClient(2 * time.Second)
+		deadline := time.Now().Add(5 * time.Second)
+		for time.Now().Before(deadline) {
+			resp, err := client.Get(s.BaseURL() + "/")
+			if err == nil {
+				resp.Body.Close()
+				if resp.StatusCode < 500 {
+					return s, nil
+				}
+			}
+			time.Sleep(50 * time.Millisecond)
+		}
 		return s, nil
 	case <-time.After(30 * time.Second):
 		_ = s.Stop()
@@ -96,6 +169,10 @@ func serverReady(s string) bool {
 }
 
 func (s *Server) Stop() error {
+	if s.static != nil {
+		fmt.Println("\n🛑 Stopping server...")
+		return s.static.Close()
+	}
 	if s.cmd == nil || s.cmd.Process == nil {
 		return nil
 	}

@@ -54,6 +54,7 @@ type Options struct {
 	LocalConfig   string
 	AllowMissing  bool
 	CacheDir      string
+	RefreshRemote bool
 }
 
 // Resolve obtains an upstream source tree.
@@ -94,6 +95,18 @@ func Resolve(m *manifest.Manifest, opts Options) (*Source, error) {
 	if err := os.MkdirAll(cache, 0o755); err != nil {
 		return nil, err
 	}
+
+	if opts.RefreshRemote {
+		_ = os.RemoveAll(dest)
+	}
+
+	if isGitRepo(dest) {
+		if err := gitFetchReset(dest, branch); err != nil {
+			return nil, err
+		}
+		return &Source{Root: dest, Branch: branch, Temp: false}, nil
+	}
+
 	_ = os.RemoveAll(dest)
 	url := m.Sources.LLMD.Remote.URL
 	if !strings.HasSuffix(url, ".git") {
@@ -105,7 +118,12 @@ func Resolve(m *manifest.Manifest, opts Options) (*Source, error) {
 	if err := cmd.Run(); err != nil {
 		return nil, fmt.Errorf("clone %s @ %s: %w", url, branch, err)
 	}
-	return &Source{Root: dest, Branch: branch, Temp: true}, nil
+	return &Source{Root: dest, Branch: branch, Temp: false}, nil
+}
+
+func isGitRepo(path string) bool {
+	_, err := os.Stat(filepath.Join(path, ".git"))
+	return err == nil
 }
 
 type localOverrides struct {

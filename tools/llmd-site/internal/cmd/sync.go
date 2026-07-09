@@ -13,6 +13,8 @@ func newSyncCmd() *cobra.Command {
 	var fetch bool
 	var allowMissing bool
 	var failOnStubs bool
+	var refreshUpstream bool
+	var syncWorkers int
 
 	cmd := &cobra.Command{
 		Use:   "sync [branch]",
@@ -40,13 +42,15 @@ rules, and shared MDX transforms — no bash delegation.`,
 			}
 
 			_, err = sync.Run(m, sync.Options{
-				RepoRoot:     rootDir,
-				Branch:       branch,
-				Local:        localMode,
-				Fetch:        fetch,
-				LocalConfig:  repo.LocalConfigPath(rootDir),
-				AllowMissing: allowMissing,
-				FailOnStubs:  failOnStubs,
+				RepoRoot:        rootDir,
+				Branch:          branch,
+				Local:           localMode,
+				Fetch:           fetch,
+				LocalConfig:     repo.LocalConfigPath(rootDir),
+				AllowMissing:    allowMissing,
+				FailOnStubs:     failOnStubs,
+				RefreshUpstream: refreshUpstream,
+				SyncWorkers:     syncWorkers,
 			})
 			if err != nil {
 				return err
@@ -60,6 +64,8 @@ rules, and shared MDX transforms — no bash delegation.`,
 	cmd.Flags().BoolVar(&fetch, "fetch", false, "git fetch and reset local upstream clone before sync")
 	cmd.Flags().BoolVar(&allowMissing, "allow-missing", false, "skip errors for missing upstream files (legacy release branches)")
 	cmd.Flags().BoolVar(&failOnStubs, "fail-on-stubs", false, "fail if WIP stub pages were generated")
+	cmd.Flags().BoolVar(&refreshUpstream, "refresh-upstream", false, "force fresh shallow clone of remote upstream (ignore cache)")
+	cmd.Flags().IntVar(&syncWorkers, "sync-workers", 0, "parallel workers for doc transforms (0 = NumCPU)")
 
 	return cmd
 }

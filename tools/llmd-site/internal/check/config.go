@@ -15,6 +15,8 @@ type Config struct {
 	CheckExternalLinks bool          `json:"checkExternalLinks"`
 	CheckGitHubLinks   bool          `json:"checkGitHubLinks"`
 	MaxConcurrent      int           `json:"maxConcurrent"`
+	CrawlConcurrency   int           `json:"crawlConcurrency"`
+	ServeMode          string        `json:"serveMode"` // "static" (default) or "docusaurus"
 	ExternalTimeoutMs  int           `json:"externalTimeout"`
 	IgnorePatterns     []string      `json:"ignorePatterns"`
 	GitHubToken        string        `json:"-"`
@@ -29,6 +31,8 @@ func DefaultConfig(repoRoot string) Config {
 		CheckExternalLinks: false,
 		CheckGitHubLinks:   true,
 		MaxConcurrent:      10,
+		CrawlConcurrency:   8,
+		ServeMode:          "static",
 		ExternalTimeoutMs:  10000,
 	}
 }
@@ -65,6 +69,12 @@ func LoadConfig(repoRoot string) Config {
 	}
 	if cfg.MaxConcurrent == 0 {
 		cfg.MaxConcurrent = 10
+	}
+	if cfg.CrawlConcurrency == 0 {
+		cfg.CrawlConcurrency = 8
+	}
+	if cfg.ServeMode == "" {
+		cfg.ServeMode = "static"
 	}
 	cfg.GitHubToken = os.Getenv("GITHUB_TOKEN")
 	return cfg

@@ -2,6 +2,7 @@ package check
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
@@ -17,6 +18,9 @@ type Checker struct {
 	Manifest   *manifest.Manifest
 	server     *Server
 	sourceMap  map[string]SourceInfo
+	client     *http.Client
+	crawlCache map[string]crawlResult
+	crawlMu    sync.RWMutex
 }
 
 type linkMeta struct {
@@ -42,7 +46,7 @@ func (c *Checker) checkURLsConcurrently(
 		go func(u string) {
 			defer wg.Done()
 			res := rl.run(func() validateResult {
-				return validateExternalURL(u, c.Config.ExternalTimeout(), token)
+				return validateExternalURL(c.client, u, c.Config.ExternalTimeout(), token)
 			})
 			results <- struct {
 				url string
@@ -89,12 +93,7 @@ func CheckLinksWithOptions(repoRoot string, m *manifest.Manifest, opts CheckOpti
 		fmt.Printf("📦 Auto-ignoring versioned paths: %s\n\n", stringsJoin(versioned, ", "))
 	}
 
-	c := &Checker{
-		RepoRoot:  repoRoot,
-		Config:    cfg,
-		Manifest:  m,
-		sourceMap: BuildSourceMap(m),
-	}
+	c := newChecker(repoRoot, cfg, m)
 
 	fmt.Println("🔍 Link Checker Starting...")
 	fmt.Println("📂 Build directory:", cfg.BuildDir)
@@ -142,192 +141,6 @@ func CheckLinksWithOptions(repoRoot string, m *manifest.Manifest, opts CheckOpti
 
 	fmt.Println("\n🎉 No broken links found!")
 	return 0, nil
-}
-
-func (c *Checker) crawlAndValidate() ([]BrokenLink, int, map[string]struct{}, error) {
-	base := c.server.BaseURL()
-	seeds := parseSitemapSeeds(c.Config.BuildDir, c.Config.IgnorePatterns)
-	fmt.Printf("🕷️  Crawling site...\n   Seeded crawl with %d URLs from sitemaps\n\n", len(seeds))
-
-	toVisit := append([]string{}, seeds...)
-	inQueue := map[string]struct{}{}
-	for _, s := range seeds {
-		inQueue[s] = struct{}{}
-	}
-	visited := map[string]struct{}{}
-	allLinks := map[string]*linkMeta{}
-	externalURLs := map[string]struct{}{}
-	githubURLs := map[string]map[string]struct{}{}
-	var broken []BrokenLink
-
-	for len(toVisit) > 0 {
-		current := toVisit[0]
-		toVisit = toVisit[1:]
-		if _, ok := visited[current]; ok {
-			continue
-		}
-		visited[current] = struct{}{}
-		fmt.Printf("\r   Crawled %d pages...", len(visited))
-
-		result := c.crawlPage(base + current)
-		if !result.Success {
-			sources := []string{"N/A"}
-			if meta, ok := allLinks[current]; ok && len(meta.sourcePages) > 0 {
-				sources = sortedKeys(meta.sourcePages)
-			}
-			reason := result.Error
-			if reason == "" {
-				reason = fmt.Sprintf("HTTP %d", result.StatusCode)
-			}
-			typ := "link"
-			if meta, ok := allLinks[current]; ok {
-				typ = meta.linkType
-			}
-			for _, src := range sources {
-				broken = append(broken, BrokenLink{
-					SourcePage: src,
-					URL:        current,
-					Reason:     reason,
-					Type:       typ,
-					Category:   "internal",
-				})
-			}
-			continue
-		}
-
-		for _, link := range result.Links {
-			path, ext, isGH := normalizeURL(link.URL, base+current, c.Config)
-			if ext != "" {
-				if isGH {
-					if githubURLs[ext] == nil {
-						githubURLs[ext] = map[string]struct{}{}
-					}
-					githubURLs[ext][current] = struct{}{}
-					if c.Config.CheckGitHubLinks {
-						continue
-					}
-				}
-				externalURLs[ext] = struct{}{}
-				continue
-			}
-			if path == "" {
-				continue
-			}
-			if allLinks[path] == nil {
-				allLinks[path] = &linkMeta{sourcePages: map[string]struct{}{}, linkType: link.Type}
-			}
-			allLinks[path].sourcePages[current] = struct{}{}
-			if isIgnored(path, c.Config.IgnorePatterns) {
-				continue
-			}
-			if _, ok := visited[path]; ok {
-				continue
-			}
-			if _, ok := inQueue[path]; ok {
-				continue
-			}
-			toVisit = append(toVisit, path)
-			inQueue[path] = struct{}{}
-		}
-	}
-	fmt.Printf("\r   Crawled %d pages ✓\n\n", len(visited))
-	fmt.Printf("   Found %d unique internal links\n", len(allLinks))
-	fmt.Printf("   Found %d unique external URLs\n", len(externalURLs))
-	fmt.Printf("   Found %d unique GitHub URLs\n\n", len(githubURLs))
-
-	fmt.Println("✅ Validating discovered links...")
-	checked := 0
-	for path, meta := range allLinks {
-		if isIgnored(path, c.Config.IgnorePatterns) {
-			continue
-		}
-		checked++
-		if _, ok := visited[path]; ok {
-			continue
-		}
-		result := c.crawlPage(base + path)
-		if !result.Success {
-			reason := result.Error
-			if reason == "" {
-				reason = fmt.Sprintf("HTTP %d", result.StatusCode)
-			}
-			cat := "internal"
-			if meta.linkType == "image" {
-				cat = "image"
-			}
-			if c.pageExists(path) {
-				continue
-			}
-			for src := range meta.sourcePages {
-				broken = append(broken, BrokenLink{
-					SourcePage: src,
-					URL:        path,
-					Reason:     reason,
-					Type:       meta.linkType,
-					Category:   cat,
-				})
-			}
-		}
-		if checked%100 == 0 {
-			fmt.Printf("\r   Checked %d links...", checked)
-		}
-	}
-	fmt.Printf("\r   Checked %d links ✓\n\n", checked)
-
-	if c.Config.CheckGitHubLinks && len(githubURLs) > 0 {
-		fmt.Println("🐙 Validating GitHub URLs...")
-		if c.Config.GitHubToken != "" {
-			fmt.Println("   Using GITHUB_TOKEN for authentication (better rate limits)")
-		}
-		urls := make([]string, 0, len(githubURLs))
-		for url := range githubURLs {
-			if isIgnored(url, c.Config.IgnorePatterns) {
-				continue
-			}
-			urls = append(urls, url)
-		}
-		checkedGithub := c.checkURLsConcurrently(urls, "GitHub URLs", c.Config.GitHubToken, func(url string, res validateResult) {
-			if !res.Valid {
-				for src := range githubURLs[url] {
-					broken = append(broken, BrokenLink{
-						SourcePage: src,
-						URL:        url,
-						Reason:     res.Reason,
-						Type:       "link",
-						Category:   "github",
-					})
-				}
-			}
-		})
-		fmt.Printf("   Checked %d GitHub URLs ✓\n\n", checkedGithub)
-	}
-
-	if c.Config.CheckExternalLinks {
-		fmt.Println("🌐 Validating external URLs...")
-		urls := make([]string, 0, len(externalURLs))
-		for url := range externalURLs {
-			if isIgnored(url, c.Config.IgnorePatterns) {
-				continue
-			}
-			urls = append(urls, url)
-		}
-		checkedExternal := c.checkURLsConcurrently(urls, "external URLs", "", func(url string, res validateResult) {
-			if !res.Valid {
-				broken = append(broken, BrokenLink{
-					SourcePage: "Multiple pages",
-					URL:        url,
-					Reason:     res.Reason,
-					Type:       "link",
-					Category:   "external",
-				})
-			}
-		})
-		fmt.Printf("   Checked %d external URLs ✓\n\n", checkedExternal)
-	} else {
-		fmt.Println("⏭️  Skipping external URL validation (disabled in config)")
-	}
-
-	return broken, len(allLinks), visited, nil
 }
 
 func sortedKeys(m map[string]struct{}) []string {

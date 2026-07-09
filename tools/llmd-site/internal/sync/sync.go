@@ -17,8 +17,11 @@ type Options struct {
 	Local        bool
 	Fetch        bool
 	LocalConfig  string
-	AllowMissing bool
-	FailOnStubs  bool
+	AllowMissing      bool
+	FailOnStubs       bool
+	RefreshUpstream   bool
+	SyncWorkers       int
+	Quiet             bool
 }
 
 // Result describes sync output.
@@ -30,11 +33,12 @@ type Result struct {
 // Run syncs documentation from llm-d/llm-d into preview/docs (native Go engine).
 func Run(m *manifest.Manifest, opts Options) (*Result, error) {
 	src, err := upstream.Resolve(m, upstream.Options{
-		Branch:       opts.Branch,
-		Local:        opts.Local,
-		Fetch:        opts.Fetch,
-		LocalConfig:  opts.LocalConfig,
-		AllowMissing: opts.AllowMissing,
+		Branch:        opts.Branch,
+		Local:         opts.Local,
+		Fetch:         opts.Fetch,
+		LocalConfig:   opts.LocalConfig,
+		AllowMissing:  opts.AllowMissing,
+		RefreshRemote: opts.RefreshUpstream,
 	})
 	if err != nil {
 		return nil, err

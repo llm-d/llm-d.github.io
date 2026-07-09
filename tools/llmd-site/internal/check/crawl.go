@@ -2,7 +2,6 @@ package check
 
 import (
 	"io"
-	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -30,7 +29,10 @@ type crawlResult struct {
 }
 
 func (c *Checker) crawlPage(pageURL string) crawlResult {
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := c.client
+	if client == nil {
+		client = newHTTPClient(10 * time.Second)
+	}
 	resp, err := client.Get(pageURL)
 	if err != nil {
 		return crawlResult{Success: false, Error: err.Error()}

@@ -62,7 +62,7 @@ func internalPathCandidates(path string) []string {
 
 func (c *Checker) pageExists(path string) bool {
 	for _, candidate := range internalPathCandidates(path) {
-		if result := c.crawlPage(c.server.BaseURL() + candidate); result.Success {
+		if result := c.crawlPageCached(c.server.BaseURL() + candidate); result.Success {
 			return true
 		}
 	}

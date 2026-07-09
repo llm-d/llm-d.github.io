@@ -46,7 +46,57 @@ var (
 	reWellLitPrefix   = regexp.MustCompile(`well-lit-paths/(capabilities|operations|workloads/batch-serving|workloads)/`)
 	reWellLitRel      = regexp.MustCompile(`\(\.\./well-lit-paths/([^)]+)\.md\)`)
 	reWellLitAny      = regexp.MustCompile(`\][^)]*/well-lit-paths/([^)]*)\.md\)`)
+	reHTMLComments    = regexp.MustCompile(`<!--(.*?)-->`)
+	reUnquotedImgAttr = regexp.MustCompile(`(<img [^>]*)(width|height|alt|src)=([^"' ][^ >]*)`)
+	reVoidImg         = regexp.MustCompile(`<img ([^>]*[^/])>`)
+	reVoidSource      = regexp.MustCompile(`<source ([^>]*[^/])>`)
+	reRemainingHTML   = regexp.MustCompile(`<!--(.*)-->`)
+	reTabValue        = regexp.MustCompile(`[^a-z0-9]+`)
+
+	compiledGuideSlugNorm    = MustCompileRules(guideSlugNormRules())
+	compiledDeploymentLinks  = MustCompileRules(deploymentLinkRules())
+	compiledReadmeLinks      = MustCompileRules(readmeLinkRules())
 )
+
+func guideSlugNormRules() []Rule {
+	return []Rule{
+		{Pattern: `\]\(/docs/guides/predicted-latency-routing\)`, Replacement: `](/docs/guides/predicted-latency)`},
+		{Pattern: `\]\(/guides/predicted-latency-routing\)`, Replacement: `](/guides/predicted-latency)`},
+		{Pattern: `\]\(\../../guides/predicted-latency-routing\)`, Replacement: `](/guides/predicted-latency)`},
+		{Pattern: `\]\(/docs/guides/wide-ep-lws\)`, Replacement: `](/docs/guides/wide-expert-parallelism)`},
+		{Pattern: `\]\(/guides/wide-ep-lws\)`, Replacement: `](/guides/wide-expert-parallelism)`},
+		{Pattern: `\]\(\../../guides/wide-ep-lws\)`, Replacement: `](/guides/wide-expert-parallelism)`},
+		{Pattern: `\]\(\../../prereq/gateway-provider/common-configurations/\*\)`, Replacement: `](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider#common-configurations)`},
+		{Pattern: `\]\(\../gateway/\*\)`, Replacement: `](/guides/recipes/gateway)`},
+	}
+}
+
+func deploymentLinkRules() []Rule {
+	return []Rule{
+		{Pattern: `\][^)]*/guides/prereq/gateways/README\.md\)`, Replacement: `](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/README.md)`},
+		{Pattern: `\][^)]*/guides/prereq/gateways/istio\.md\)`, Replacement: `](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/istio.md)`},
+		{Pattern: `\][^)]*/guides/prereq/gateways/gke\.md\)`, Replacement: `](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/gke.md)`},
+		{Pattern: `\][^)]*/guides/prereq/gateways/agentgateway\.md\)`, Replacement: `](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/agentgateway.md)`},
+		{Pattern: `\][^)]*/guides/multimodal/optimized-baseline/README\.md\)`, Replacement: `](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/optimized-baseline/README.md)`},
+	}
+}
+
+func readmeLinkRules() []Rule {
+	return []Rule{
+		{Pattern: `\][^)]*/accelerators/README\.md\)`, Replacement: `](/accelerators)`},
+		{Pattern: `\][^)]*/architecture/core/router/epp/README\.md\)`, Replacement: `](/architecture/core/router/epp)`},
+		{Pattern: `\][^)]*/architecture/advanced/kv-management/README\.md\)`, Replacement: `](/architecture/advanced/kv-management)`},
+		{Pattern: `\][^)]*/guides/precise-prefix-cache-routing/README\.md\)`, Replacement: `](/guides/precise-prefix-cache-routing)`},
+		{Pattern: `\][^)]*/guides/precise-prefix-cache-aware/README\.md\)`, Replacement: `](/guides/precise-prefix-cache-routing)`},
+		{Pattern: `\]\(/guides/README\)`, Replacement: `](/guides)`},
+		{Pattern: `\]\(\./gcp-pubsub/README\.md\)`, Replacement: `](./gcp-pubsub/index.md)`},
+		{Pattern: `\]\(\./redis/README\.md\)`, Replacement: `](./redis/index.md)`},
+		{Pattern: `\]\(\./gcp-pubsub/README\.md#testing\)`, Replacement: `](./gcp-pubsub/index.md#testing)`},
+		{Pattern: `\]\(\./redis/README\.md#testing\)`, Replacement: `](./redis/index.md#testing)`},
+		{Pattern: `\]\(\./cpu/README\.md\)`, Replacement: `](./cpu/index.md)`},
+		{Pattern: `\]\(\./storage/README\.md\)`, Replacement: `](./storage/index.md)`},
+	}
+}
 
 func transformImages(s string) string {
 	s = reMDImageAssets.ReplaceAllString(s, `![$1](/img/docs/$3)`)
@@ -87,8 +137,7 @@ func transformWellLitPaths(s string) string {
 }
 
 func transformHTMLComments(s string) string {
-	re := regexp.MustCompile(`<!--(.*?)-->`)
-	return re.ReplaceAllStringFunc(s, func(match string) string {
+	return reHTMLComments.ReplaceAllStringFunc(s, func(match string) string {
 		inner := strings.TrimPrefix(strings.TrimSuffix(match, "-->"), "<!--")
 		trimmed := strings.TrimSpace(inner)
 		if strings.HasPrefix(trimmed, "TABS") || strings.HasPrefix(trimmed, "TAB:") {
@@ -99,70 +148,24 @@ func transformHTMLComments(s string) string {
 }
 
 func transformGuideSlugNorm(s string) string {
-	repl := []struct{ pat, rep string }{
-		{`\]\(/docs/guides/predicted-latency-routing\)`, `](/docs/guides/predicted-latency)`},
-		{`\]\(/guides/predicted-latency-routing\)`, `](/guides/predicted-latency)`},
-		{`\]\(\../../guides/predicted-latency-routing\)`, `](/guides/predicted-latency)`},
-		{`\]\(/docs/guides/wide-ep-lws\)`, `](/docs/guides/wide-expert-parallelism)`},
-		{`\]\(/guides/wide-ep-lws\)`, `](/guides/wide-expert-parallelism)`},
-		{`\]\(\../../guides/wide-ep-lws\)`, `](/guides/wide-expert-parallelism)`},
-		{`\]\(\../../prereq/gateway-provider/common-configurations/\*\)`, `](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider#common-configurations)`},
-		{`\]\(\../gateway/\*\)`, `](/guides/recipes/gateway)`},
-	}
-	for _, r := range repl {
-		re := regexp.MustCompile(r.pat)
-		s = re.ReplaceAllString(s, r.rep)
-	}
-	return s
+	return ApplyCompiledRules(s, compiledGuideSlugNorm, nil)
 }
 
 func transformDeploymentLinks(s string) string {
-	repl := []struct{ pat, rep string }{
-		{`\][^)]*/guides/prereq/gateways/README\.md\)`, `](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/README.md)`},
-		{`\][^)]*/guides/prereq/gateways/istio\.md\)`, `](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/istio.md)`},
-		{`\][^)]*/guides/prereq/gateways/gke\.md\)`, `](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/gke.md)`},
-		{`\][^)]*/guides/prereq/gateways/agentgateway\.md\)`, `](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/agentgateway.md)`},
-		{`\][^)]*/guides/multimodal/optimized-baseline/README\.md\)`, `](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/optimized-baseline/README.md)`},
-	}
-	for _, r := range repl {
-		re := regexp.MustCompile(r.pat)
-		s = re.ReplaceAllString(s, r.rep)
-	}
-	return s
+	return ApplyCompiledRules(s, compiledDeploymentLinks, nil)
 }
 
 func transformUnquotedImgAttrs(s string) string {
-	re := regexp.MustCompile(`(<img [^>]*)(width|height|alt|src)=([^"' ][^ >]*)`)
-	return re.ReplaceAllString(s, `$1$2="$3"`)
+	return reUnquotedImgAttr.ReplaceAllString(s, `$1$2="$3"`)
 }
 
 func transformReadmeLinks(s string) string {
-	repl := []struct{ pat, rep string }{
-		{`\][^)]*/accelerators/README\.md\)`, `](/accelerators)`},
-		{`\][^)]*/architecture/core/router/epp/README\.md\)`, `](/architecture/core/router/epp)`},
-		{`\][^)]*/architecture/advanced/kv-management/README\.md\)`, `](/architecture/advanced/kv-management)`},
-		{`\][^)]*/guides/precise-prefix-cache-routing/README\.md\)`, `](/guides/precise-prefix-cache-routing)`},
-		{`\][^)]*/guides/precise-prefix-cache-aware/README\.md\)`, `](/guides/precise-prefix-cache-routing)`},
-		{`\]\(/guides/README\)`, `](/guides)`},
-		{`\]\(\./gcp-pubsub/README\.md\)`, `](./gcp-pubsub/index.md)`},
-		{`\]\(\./redis/README\.md\)`, `](./redis/index.md)`},
-		{`\]\(\./gcp-pubsub/README\.md#testing\)`, `](./gcp-pubsub/index.md#testing)`},
-		{`\]\(\./redis/README\.md#testing\)`, `](./redis/index.md#testing)`},
-		{`\]\(\./cpu/README\.md\)`, `](./cpu/index.md)`},
-		{`\]\(\./storage/README\.md\)`, `](./storage/index.md)`},
-	}
-	for _, r := range repl {
-		re := regexp.MustCompile(r.pat)
-		s = re.ReplaceAllString(s, r.rep)
-	}
-	return s
+	return ApplyCompiledRules(s, compiledReadmeLinks, nil)
 }
 
 func transformVoidTags(s string) string {
-	reImg := regexp.MustCompile(`<img ([^>]*[^/])>`)
-	reSource := regexp.MustCompile(`<source ([^>]*[^/])>`)
-	s = reImg.ReplaceAllString(s, `<img $1 />`)
-	s = reSource.ReplaceAllString(s, `<source $1 />`)
+	s = reVoidImg.ReplaceAllString(s, `<img $1 />`)
+	s = reVoidSource.ReplaceAllString(s, `<source $1 />`)
 	return s
 }
 
@@ -184,11 +187,11 @@ func transformCallouts(s string) string {
 	}
 
 	calloutTypes := map[string]string{
-		"> [!NOTE]":     "note",
-		"> [!TIP]":      "tip",
+		"> [!NOTE]":      "note",
+		"> [!TIP]":       "tip",
 		"> [!IMPORTANT]": "important",
-		"> [!WARNING]":  "warning",
-		"> [!CAUTION]":  "caution",
+		"> [!WARNING]":   "warning",
+		"> [!CAUTION]":   "caution",
 	}
 
 	for _, line := range lines {
@@ -278,13 +281,11 @@ func fmtTabItem(value, label, defaultAttr string) string {
 
 func tabValue(label string) string {
 	v := strings.ToLower(label)
-	re := regexp.MustCompile(`[^a-z0-9]+`)
-	v = re.ReplaceAllString(v, "-")
+	v = reTabValue.ReplaceAllString(v, "-")
 	v = strings.Trim(v, "-")
 	return v
 }
 
 func transformRemainingComments(s string) string {
-	re := regexp.MustCompile(`<!--(.*)-->`)
-	return re.ReplaceAllString(s, `{/*$1*/}`)
+	return reRemainingHTML.ReplaceAllString(s, `{/*$1*/}`)
 }
