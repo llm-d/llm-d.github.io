@@ -47,7 +47,7 @@ const config = {
     // "theme-2af", …). Mirror across every theme* key so dark/light persists
     // when the user navigates from one Docusaurus instance to another.
     {
-      tagName: 'script',
+      tagName: "script",
       attributes: {},
       innerHTML: `(function(){try{var keys=[],v=null;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k==='theme'||/^theme-[a-z0-9]+$/.test(k)){keys.push(k);var x=localStorage.getItem(k);if(x)v=x;}}['theme','theme-23d','theme-1a2','theme-2af'].forEach(function(k){if(keys.indexOf(k)===-1)keys.push(k);});if(v)keys.forEach(function(k){localStorage.setItem(k,v);});}catch(e){}})();`,
     },
@@ -127,10 +127,9 @@ const config = {
 
   // Client modules - run on every page
   clientModules: [
-    require.resolve('./src/clientModules/analytics.js'),
-    require.resolve('./src/clientModules/hide-kapa-widget.js'),
+    require.resolve("./src/clientModules/analytics.js"),
+    require.resolve("./src/clientModules/hide-kapa-widget.js"),
   ],
-
 
   // Plugins configuration
   plugins: [
@@ -198,8 +197,8 @@ const config = {
         id: "llm-d-v0-8-release",
         content:
           '🎉 <b>llm-d 0.8 is here!</b> Multimodal, batch &amp; flow-control graduate to production, with broader accelerator support and initial RL. <a target="_self" rel="noopener noreferrer" href="/docs/getting-started/quickstart"><b>See what\'s new →</b></a>',
-        backgroundColor: '#000000',
-        textColor: '#fff',
+        backgroundColor: "#000000",
+        textColor: "#fff",
         isCloseable: true,
       },
 
@@ -231,8 +230,8 @@ const config = {
           // Version dropdown uses plain <a href> links (not SPA router) so navigation
           // from /blog or /community → /docs forces a real page load.
           {
-            type: 'custom-version-dropdown',
-            position: 'left',
+            type: "custom-version-dropdown",
+            position: "left",
           },
           {
             type: "html",
@@ -251,10 +250,11 @@ const config = {
               '<a href="https://github.com/llm-d/llm-d" class="navbar-github-button" target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="GitHub"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><title>GitHub</title><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58 0-.29-.01-1.05-.02-2.06-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.95 0-1.31.47-2.39 1.24-3.23-.13-.3-.54-1.53.12-3.18 0 0 1.01-.32 3.3 1.23a11.48 11.48 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.65.25 2.88.12 3.18.77.84 1.24 1.92 1.24 3.23 0 4.62-2.8 5.64-5.48 5.94.43.37.81 1.1.81 2.22 0 1.6-.02 2.89-.02 3.28 0 .32.22.7.82.58A12.01 12.01 0 0 0 24 12.5C24 5.87 18.63.5 12 .5z"></path></svg></a>',
           },
           {
-            type: 'html',
-            position: 'right',
-            className: 'navbar-slack-item',
-            value: '<a href="/slack" class="navbar-slack-button"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><title>Slack</title><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"></path></svg><span class="slack-label">Join Slack</span></a>',
+            type: "html",
+            position: "right",
+            className: "navbar-slack-item",
+            value:
+              '<a href="/slack" class="navbar-slack-button"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><title>Slack</title><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"></path></svg><span class="slack-label">Join Slack</span></a>',
           },
         ],
       },
@@ -262,7 +262,7 @@ const config = {
       // Config for footer here
       footer: {
         style: "dark",
-        copyright: `Copyright © ${new Date().getFullYear()} llm-d project. Apache 2.0 License.<br />\
+        copyright: `Copyright llm-d a Series of LF Projects, LLC. Apache 2.0 License.<br />\
         We are a Cloud Native Computing Foundation sandbox project.<br />\
         For website terms of use, trademark policy and other project policies please see <a href="https://lfprojects.org/policies/" target="_blank" rel="noreferrer noopener">https://lfprojects.org/policies/</a>`,
         logo: {
@@ -370,7 +370,7 @@ const config = {
       prism: {
         theme: prismThemes.vsLight,
         darkTheme: prismThemes.vsDark,
-        additionalLanguages: ['yaml', 'toml', 'promql'],
+        additionalLanguages: ["yaml", "toml", "promql"],
       },
     }),
 };
