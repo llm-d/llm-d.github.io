@@ -121,6 +121,10 @@ copies:
       comment: from $WLP; capabilities layout uses docs/well-lit-paths/capabilities/
     - from: docs/well-lit-paths/workloads/multimodal-serving.md
       to: guides/multimodal-serving.md
+    - from: docs/well-lit-paths/foundations/multi-model-routing.md
+      to: guides/multi-model-routing.md
+      when: foundations_layout
+      comment: from $WLP; capabilities layout uses docs/well-lit-paths/capabilities/
     - from: docs/well-lit-paths/foundations/precise-prefix-cache-routing.md
       to: guides/precise-prefix-cache-routing.md
       when: foundations_layout
@@ -175,6 +179,8 @@ copies:
       to: resources/observability/tracing.md
     - from: docs/operations/observability/promql.md
       to: resources/observability/promql.md
+    - from: docs/operations/observability/alerting.md
+      to: resources/observability/alerting.md
     - from: docs/infrastructure/gateway/README.md
       to: resources/gateway/index.md
     - from: docs/infrastructure/gateway/envoy-ai-gateway.md
@@ -254,6 +260,8 @@ slugs:
       slug: /well-lit-paths/optimized-baseline
     - file: guides/multimodal-serving.md
       slug: /well-lit-paths/multimodal-serving
+    - file: guides/multi-model-routing.md
+      slug: /well-lit-paths/multi-model-routing
     - file: guides/precise-prefix-cache-routing.md
       slug: /well-lit-paths/precise-prefix-cache-routing
     - file: guides/tiered-prefix-cache.md
@@ -280,6 +288,8 @@ slugs:
       slug: /well-lit-paths/agentic-serving
     - file: guides/multimodal-serving.md
       slug: /well-lit-paths/multimodal-serving
+    - file: guides/multi-model-routing.md
+      slug: /well-lit-paths/multi-model-routing
 edit_urls:
     - match: guides/optimized-baseline.md
       upstream: docs/well-lit-paths/foundations/optimized-baseline.md
@@ -359,20 +369,703 @@ release_fixups:
     - pattern: github.com/llm-d/llm-d/tree/main/docs/resources/gateway
       replace: github.com/llm-d/llm-d/tree/main/docs/infrastructure/gateway
       scope: release_branch_docs
-    - pattern: github.com/llm-d/llm-d/tree/main/guides/prereq/gateways/([^"]*)\.md
-      replace: github.com/llm-d/llm-d/tree/main/docs/infrastructure/gateway/$1.md
-      scope: release_branch_docs
-    - pattern: '\]\((\.\./)*helpers/mooncake-master-store/base/configmap\.yaml\)'
-      replace: '](https://github.com/llm-d/llm-d/blob/main/helpers/mooncake-master-store/base/configmap.yaml)'
-      scope: release_branch_docs
-    - pattern: '\]\((\.\./)*helpers/mooncake-master-store/\)'
-      replace: '](https://github.com/llm-d/llm-d/tree/main/helpers/mooncake-master-store)'
-      scope: release_branch_docs
-    - pattern: '\]\((\.\./)*helpers/mooncake-client/\)'
-      replace: '](https://github.com/llm-d/llm-d/tree/main/helpers/mooncake-client)'
-      scope: release_branch_docs
+transform_rules:
+    - scope: files:section_overviews
+      rules:
+        - pattern: \](optimized-baseline\.md)
+          replace: \](/well-lit-paths/optimized-baseline)
+        - pattern: \](predicted-latency\.md)
+          replace: \](/well-lit-paths/predicted-latency)
+        - pattern: \](precise-prefix-cache-routing\.md)
+          replace: \](/well-lit-paths/precise-prefix-cache-routing)
+        - pattern: \](tiered-prefix-cache\.md)
+          replace: \](/well-lit-paths/tiered-prefix-cache)
+        - pattern: \](pd-disaggregation\.md)
+          replace: \](/well-lit-paths/pd-disaggregation)
+        - pattern: \](wide-expert-parallelism\.md)
+          replace: \](/well-lit-paths/wide-expert-parallelism)
+        - pattern: \](flow-control\.md)
+          replace: \](/well-lit-paths/flow-control)
+        - pattern: \](workload-autoscaling\.md)
+          replace: \](/well-lit-paths/workload-autoscaling)
+        - pattern: \](multimodal-serving\.md)
+          replace: \](/well-lit-paths/multimodal-serving)
+        - pattern: \](agentic-serving\.md)
+          replace: \](/well-lit-paths/agentic-serving)
+        - pattern: \](batch-serving/README\.md)
+          replace: \](/well-lit-paths/asynchronous-processing)
+        - pattern: \](\.\./foundations/README\.md)
+          replace: \](/well-lit-paths/capabilities)
+        - pattern: \](\.\./capabilities/README\.md)
+          replace: \](/well-lit-paths/capabilities)
+    - scope: all_md
+      rules:
+        - pattern: \](optimized-baseline\.md)
+          replace: \](/guides/optimized-baseline)
+        - pattern: \](predicted-latency\.md)
+          replace: \](/guides/predicted-latency)
+        - pattern: \](precise-prefix-cache-aware\.md)
+          replace: \](/guides/precise-prefix-cache-routing)
+        - pattern: \](precise-prefix-cache-routing\.md)
+          replace: \](/guides/precise-prefix-cache-routing)
+        - pattern: \](tiered-prefix-cache\.md)
+          replace: \](/guides/tiered-prefix-cache)
+        - pattern: \](pd-disaggregation\.md)
+          replace: \](/guides/pd-disaggregation)
+        - pattern: \](wide-expert-parallelism\.md)
+          replace: \](/guides/wide-expert-parallelism)
+        - pattern: \](flow-control\.md)
+          replace: \](/guides/flow-control)
+        - pattern: \](workload-autoscaling\.md)
+          replace: \](/guides/workload-autoscaling)
+        - pattern: \](asynchronous-processing\.md)
+          replace: \](/guides/asynchronous-processing)
+        - pattern: \](batch-gateway\.md)
+          replace: \](/guides/batch-gateway)
+        - pattern: \](experimental/batch-gateway\.md)
+          replace: \](/guides/batch-gateway)
+        - pattern: \](\./multimodal-serving/optimized-baseline/README\.md)
+          replace: \](/guides/multimodal-serving)
+        - pattern: \](no-kubernetes-deployment\.md)
+          replace: \](/guides/no-kubernetes-deployment)
+        - pattern: \](../workloads/README\.md)
+          replace: \](https://github.com/llm-d/llm-d/blob/main/docs/workloads/README.md)
+        - pattern: \](foundations/README\.md)
+          replace: \](/well-lit-paths/capabilities)
+        - pattern: \](capabilities/README\.md)
+          replace: \](/well-lit-paths/capabilities)
+        - pattern: \](traffic-control/README\.md)
+          replace: \](/well-lit-paths/capabilities)
+        - pattern: \](workloads/README\.md)
+          replace: \](/well-lit-paths/workloads)
+        - pattern: \](operations/README\.md)
+          replace: \](/well-lit-paths)
+    - scope: file:guides/agentic-serving/index.md
+      rules:
+        - pattern: \](../capabilities/optimized-baseline\.md)
+          replace: \](/well-lit-paths/optimized-baseline)
+        - pattern: \](../well-lit-paths/capabilities/optimized-baseline\.md)
+          replace: \](/well-lit-paths/optimized-baseline)
+        - pattern: \](../capabilities/tiered-prefix-cache\.md)
+          replace: \](/well-lit-paths/tiered-prefix-cache)
+        - pattern: \](../well-lit-paths/capabilities/tiered-prefix-cache\.md)
+          replace: \](/well-lit-paths/tiered-prefix-cache)
+        - pattern: \](../capabilities/precise-prefix-cache-routing\.md)
+          replace: \](/well-lit-paths/precise-prefix-cache-routing)
+        - pattern: \](../well-lit-paths/capabilities/precise-prefix-cache-routing\.md)
+          replace: \](/well-lit-paths/precise-prefix-cache-routing)
+        - pattern: \](../capabilities/pd-disaggregation\.md)
+          replace: \](/well-lit-paths/pd-disaggregation)
+        - pattern: \](../well-lit-paths/capabilities/pd-disaggregation\.md)
+          replace: \](/well-lit-paths/pd-disaggregation)
+        - pattern: \](../foundations/optimized-baseline\.md)
+          replace: \](/well-lit-paths/optimized-baseline)
+        - pattern: \](../foundations/tiered-prefix-cache\.md)
+          replace: \](/well-lit-paths/tiered-prefix-cache)
+        - pattern: \](../foundations/precise-prefix-cache-routing\.md)
+          replace: \](/well-lit-paths/precise-prefix-cache-routing)
+        - pattern: \](../foundations/pd-disaggregation\.md)
+          replace: \](/well-lit-paths/pd-disaggregation)
+        - pattern: \](../../guides/agentic-serving)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/agentic-serving)
+        - pattern: \](agentic-code-generation\.md)
+          replace: \](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/agentic-code-generation.md)
+    - scope: file:guides/multimodal-serving.md
+      rules:
+        - pattern: ^\$\$\\text{Tokens} = \\frac{\\text{Image Width} \\times \\text{Image Height}}{\\text{Factor}}\$\$
+          replace: '`Tokens = (Image Width * Image Height) / Factor`'
+        - pattern: \](../../guides/multimodal-serving/optimized-baseline)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/optimized-baseline)
+        - pattern: \](../well-lit-paths/optimized-baseline\.md)
+          replace: \](/guides/optimized-baseline)
+        - pattern: \](../well-lit-paths/optimized-baseline\.md#architecture)
+          replace: \](/guides/optimized-baseline#architecture)
+        - pattern: \](../../guides/multimodal-serving/e-disaggregation)
+          replace: \](/guides/pd-disaggregation)
+        - pattern: \](../advanced/kv-management/kv-indexer\.md)
+          replace: \](/architecture/advanced/kv-management/kv-indexer)
+        - pattern: \](../well-lit-paths/capabilities/optimized-baseline\.md#([^)]*))
+          replace: \](/guides/optimized-baseline#\1)
+        - pattern: \](../well-lit-paths/capabilities/optimized-baseline\.md)
+          replace: \](/guides/optimized-baseline)
+        - pattern: \](../capabilities/optimized-baseline\.md#([^)]*))
+          replace: \](/well-lit-paths/optimized-baseline#\1)
+        - pattern: \](../capabilities/optimized-baseline\.md)
+          replace: \](/well-lit-paths/optimized-baseline)
+        - pattern: \](../foundations/optimized-baseline\.md#([^)]*))
+          replace: \](/well-lit-paths/optimized-baseline#\1)
+        - pattern: \](../foundations/optimized-baseline\.md)
+          replace: \](/well-lit-paths/optimized-baseline)
+        - pattern: \](../architecture/core/router/epp/README\.md)
+          replace: \](/architecture/core/router/epp)
+    - scope: files:operations
+      rules:
+        - pattern: \](../../api-reference/([^)]*)\.md)
+          replace: \](/api-reference/\1)
+        - pattern: \](../../getting-started/README\.md)
+          replace: \](/getting-started)
+        - pattern: \](../../getting-started/README\.mdx)
+          replace: \](/getting-started)
+        - pattern: \](../../getting-started/quickstart\.md)
+          replace: \](/getting-started/quickstart)
+        - pattern: \](../../infrastructure/gateway)
+          replace: \](/resources/gateway)
+        - pattern: \](../../well-lit-paths/capabilities/optimized-baseline\.md[^)#]*)
+          replace: \](/well-lit-paths/optimized-baseline)
+        - pattern: \](../../well-lit-paths/capabilities/optimized-baseline\.md#([^)]*))
+          replace: \](/well-lit-paths/optimized-baseline#\1)
+        - pattern: \](../../well-lit-paths/foundations/optimized-baseline\.md[^)#]*)
+          replace: \](/well-lit-paths/optimized-baseline)
+        - pattern: \](../../well-lit-paths/foundations/optimized-baseline\.md#([^)]*))
+          replace: \](/well-lit-paths/optimized-baseline#\1)
+        - pattern: \](observability/README\.md)
+          replace: \](/resources/observability)
+        - pattern: \](../../README\.md)
+          replace: '](https://github.com/llm-d/llm-d/blob/main/README.md)'
+        - pattern: \](adapter-rollout-example/kustomization\.yaml)
+          replace: '](https://github.com/llm-d/llm-d/blob/main/docs/operations/rollouts/adapter-rollout-example/kustomization.yaml)'
+        - pattern: \](adapter-rollout-example/patch-lora-config\.yaml)
+          replace: '](https://github.com/llm-d/llm-d/blob/main/docs/operations/rollouts/adapter-rollout-example/patch-lora-config.yaml)'
+    - scope: file:resources/infrastructure/index.md
+      rules:
+        - pattern: '](providers/README\.md)'
+          replace: '](../infra-providers/index.md)'
+        - pattern: '](providers/([^/)]*)/README\.md)'
+          replace: '](../infra-providers/\1.md)'
+        - pattern: '](rdma/README\.md)'
+          replace: '](../rdma/rdma-configuration.md)'
+        - pattern: '](gateway/README\.md)'
+          replace: '](../gateway/index.md)'
+    - scope: files:accelerators
+      rules:
+        - pattern: \.\./infra-providers/gke/README\.md
+          replace: /resources/infra-providers/gke
+        - pattern: \.\./infrastructure/providers/gke/README\.md
+          replace: /resources/infra-providers/gke
+        - pattern: \.\./infrastructure/providers/gke/README\.md#[^)]*
+          replace: /resources/infra-providers/gke
+    - scope: all_md
+      rules:
+        - pattern: (\.\.\/){1,}images/flow_control_dashboard\.png
+          replace: /img/docs/flow_control_dashboard.png
+        - pattern: networking-stack.svg
+          replace: /img/docs/networking-stack.svg
+        - pattern: hpa-architecture.svg
+          replace: /img/docs/hpa-architecture.svg
+    - scope: glob:resources/infra-providers/*.md
+      rules:
+        - pattern: \./images/([^)]*)
+          replace: /img/docs/\1
+        - pattern: '](images/([^)]*))'
+          replace: '](/img/docs/\1)'
+        - pattern: \.\./\.\./\.\./guides/optimized-baseline/README\.md
+          replace: /guides/optimized-baseline
+        - pattern: \.\./\.\./\.\./guides/precise-prefix-cache-aware/README\.md
+          replace: /guides/precise-prefix-cache-routing
+        - pattern: \.\./\.\./\.\./guides/precise-prefix-cache-routing/README\.md
+          replace: /guides/precise-prefix-cache-routing
+        - pattern: \.\./\.\./\.\./guides/pd-disaggregation/README\.md
+          replace: /guides/pd-disaggregation
+        - pattern: \.\./\.\./\.\./guides/wide-ep-lws/README\.md
+          replace: https://github.com/llm-d/llm-d/tree/main/guides/wide-ep-lws
+        - pattern: \.\./\.\./\.\./guides/tiered-prefix-cache/README\.md
+          replace: https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache
+        - pattern: \.\./\.\./\.\./guides/index\.md
+          replace: /guides
+        - pattern: \.\./\.\./\.\./guides/\)
+          replace: /guides)
+        - pattern: \.\./\.\./\.\./guides\)
+          replace: /guides)
+        - pattern: \.\./\.\./\.\./helpers/client-setup/README\.md
+          replace: https://github.com/llm-d/llm-d/tree/main/helpers/client-setup
+    - scope: all_md
+      rules:
+        - pattern: \./hpa-epp\.md
+          replace: ./igw-hpa.md
+        - pattern: \./hpa-epp/index\.md
+          replace: ./igw-hpa.md
+        - pattern: \./hpa-keda\.md
+          replace: ./igw-hpa.md
+        - pattern: \./hpa-wva\.md
+          replace: ./workload-variant-autoscaling.md
+        - pattern: \./wva\.md
+          replace: ./workload-variant-autoscaling.md
+        - pattern: epp\.md
+          replace: epp/index.md
+        - pattern: core/epp/README\.md
+          replace: core/epp/index.md
+        - pattern: advanced/autoscaling/README\.md
+          replace: advanced/autoscaling/index.md
+        - pattern: advanced/disaggregation/README\.md
+          replace: advanced/disaggregation/index.md
+        - pattern: \](README\.md)
+          replace: \](index.md)
+        - pattern: resources/gateway/README\.md
+          replace: resources/gateway/index.md
+        - pattern: resources/gateways/README\.md
+          replace: ../resources/gateway/index.md
+        - pattern: \](.*guides/prereq/gateways/README\.md)
+          replace: \](/resources/gateway)
+        - pattern: \](.*guides/prereq/gateways/istio\.md)
+          replace: \](/resources/gateway/istio)
+        - pattern: \](.*guides/prereq/gateways/gke\.md)
+          replace: \](/resources/gateway/gke)
+        - pattern: \](.*guides/prereq/gateways/agentgateway\.md)
+          replace: \](/resources/gateway/agentgateway)
+        - pattern: \](../../../infrastructure/gateway/README\.md)
+          replace: \](/resources/gateway)
+        - pattern: \](../../../infrastructure/gateway/envoy-ai-gateway\.md)
+          replace: \](/resources/gateway/envoy-ai-gateway)
+        - pattern: \](../../../infrastructure/gateway/istio\.md)
+          replace: \](/resources/gateway/istio)
+        - pattern: \](../../../infrastructure/gateway/gke\.md)
+          replace: \](/resources/gateway/gke)
+        - pattern: \](../../../infrastructure/gateway/agentgateway\.md)
+          replace: \](/resources/gateway/agentgateway)
+        - pattern: guides/README\.md
+          replace: guides/index.md
+        - pattern: architecture/introduction\.md
+          replace: architecture/index.md
+        - pattern: architecture/README\.md
+          replace: architecture/index.md
+        - pattern: \](\.\.\/getting-started/README\.md)
+          replace: \](/getting-started)
+        - pattern: \](\.\.\/\.\.\/getting-started/README\.md)
+          replace: \](/getting-started)
+        - pattern: \](\.\.\/\.\.\/\.\.\/getting-started/README\.md)
+          replace: \](/getting-started)
+        - pattern: getting-started/README\.md
+          replace: getting-started/index.md
+        - pattern: api-reference/README\.md
+          replace: api-reference/index.md
+        - pattern: resources/rdma/README\.md
+          replace: resources/rdma/rdma-configuration.md
+        - pattern: advanced/batch/README\.md
+          replace: advanced/batch/index.md
+        - pattern: \](/docs/guides/README)
+          replace: \](/docs/guides)
+        - pattern: \](/docs/experimental/batch-gateway)
+          replace: \](/guides/batch-gateway)
+        - pattern: \](/docs/architecture/core/epp)
+          replace: \](/docs/architecture/core/router/epp)
+        - pattern: \](/docs/well-lit-paths/([^)]*)\.md)
+          replace: \](/docs/guides/\1)
+        - pattern: \](well-lit-paths/([^)]*))
+          replace: \](/guides/\1)
+        - pattern: \](.*\/docs/infra-providers)
+          replace: \](/resources/infra-providers)
+        - pattern: \](.*\/infra-providers)
+          replace: \](/resources/infra-providers)
+        - pattern: \](/docs/infra-providers)
+          replace: \](/docs/resources/infra-providers)
+        - pattern: \](infra-providers/([^)]*))
+          replace: \](/resources/infra-providers/\1)
+        - pattern: \](/docs/([^)]*)/README\.md)
+          replace: \](/docs/\1)
+        - pattern: \](../../../getting-started/quickstart\.md)
+          replace: \](/getting-started/quickstart)
+        - pattern: \](../../getting-started/quickstart\.md)
+          replace: \](/getting-started/quickstart)
+        - pattern: \](../../architecture/advanced/batch/batch-gateway\.md)
+          replace: \](/architecture/advanced/batch/batch-gateway)
+        - pattern: llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/profile)
+          replace: llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/profilehandler)
+        - pattern: \](../../guides/optimized-baseline)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)
+        - pattern: \](../../guides/multimodal/optimized-baseline/README\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/optimized-baseline)
+        - pattern: \](../../guides/precise-prefix-cache-routing)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing)
+        - pattern: \](../../../../../guides/precise-prefix-cache-routing/README\.md)
+          replace: \](/guides/precise-prefix-cache-routing)
+        - pattern: \](../../guides/tiered-prefix-cache)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache)
+        - pattern: \](../../guides/asynchronous-processing)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/asynchronous-processing)
+        - pattern: \](../../guides/flow-control)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/flow-control)
+        - pattern: \](../../guides/pd-disaggregation)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation)
+        - pattern: \](../../guides/predicted-latency-routing)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing)
+        - pattern: \](../../guides/wide-ep-lws)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/wide-ep-lws)
+        - pattern: \](../../guides/workload-autoscaling)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling)
+        - pattern: \](../../guides/no-kubernetes-deployment)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/no-kubernetes-deployment)
+        - pattern: \](../../../guides/batch-gateway)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/batch-gateway)
+        - pattern: \](../../../guides/asynchronous-processing)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/asynchronous-processing)
+        - pattern: \](../../../../guides/tiered-prefix-cache)
+          replace: \](/guides/tiered-prefix-cache)
+        - pattern: \](/guides/tiered-prefix-cache)
+          replace: \](/guides/tiered-prefix-cache)
+        - pattern: \](../../../../guides/batch-gateway)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/batch-gateway)
+        - pattern: \](/guides/batch-gateway)
+          replace: \](/guides/batch-gateway)
+        - pattern: \](../../../guides/batch-gateway)
+          replace: \](/guides/batch-gateway)
+        - pattern: \](../../../guides/asynchronous-processing)
+          replace: \](/guides/asynchronous-processing)
+        - pattern: \](../../guides/pd-disaggregation/README\.md)
+          replace: \](/guides/pd-disaggregation)
+    - scope: glob:guides/**/*.md
+      rules:
+        - pattern: \](README\.md)
+          replace: \](index.md)
+        - pattern: \](./README\.md)
+          replace: \](./index.md)
+        - pattern: \](../README\.md)
+          replace: \](../index.md)
+        - pattern: \](../../README\.md)
+          replace: \](../../index.md)
+        - pattern: \](../../../README\.md)
+          replace: \](../index.md)
+        - pattern: \](../../../../README\.md)
+          replace: \](../../index.md)
+        - pattern: \](cpu/README\.md)
+          replace: \](cpu/index.md)
+        - pattern: \](storage/README\.md)
+          replace: \](storage/index.md)
+        - pattern: \](gcp-pubsub/README\.md)
+          replace: \](gcp-pubsub/index.md)
+        - pattern: \](redis/README\.md)
+          replace: \](redis/index.md)
+        - pattern: \](./gcp-pubsub/README\.md)
+          replace: \](./gcp-pubsub/index.md)
+        - pattern: \](./redis/README\.md)
+          replace: \](./redis/index.md)
+        - pattern: \](./gcp-pubsub/README\.md#testing)
+          replace: \](./gcp-pubsub/index.md#testing)
+        - pattern: \](./redis/README\.md#testing)
+          replace: \](./redis/index.md#testing)
+        - pattern: \](../optimized-baseline/README\.md)
+          replace: \](../optimized-baseline/index.md)
+        - pattern: \](../prereq/gateway-provider/README\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider)
+        - pattern: \](../../prereq/gateway-provider/README\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider)
+        - pattern: \](../prereq/gateway-provider/index\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider)
+        - pattern: \](../../prereq/gateway-provider/index\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider)
+        - pattern: \](../asynchronous-processing/README\.md)
+          replace: \](../asynchronous-processing/index.md)
+        - pattern: \](../pd-disaggregation/README\.md)
+          replace: \](/guides/pd-disaggregation)
+        - pattern: \](/docs/guides/cpu/README\.md)
+          replace: \](/docs/guides/tiered-prefix-cache/cpu)
+        - pattern: \](/docs/guides/storage/README\.md)
+          replace: \](/docs/guides/tiered-prefix-cache/storage)
+        - pattern: \](/docs/guides/redis/README\.md)
+          replace: \](/docs/guides/asynchronous-processing/redis)
+        - pattern: \](/docs/guides/gcp-pubsub/README\.md)
+          replace: \](/docs/guides/asynchronous-processing/gcp-pubsub)
+        - pattern: \](/docs/guides/README\.md)
+          replace: \](/docs/guides)
+        - pattern: \](../README\.md#installation)
+          replace: \](../index.md#installation)
+        - pattern: \](../../recipes/gateway/README\.md)
+          replace: \](/guides/recipes/gateway)
+        - pattern: \](../gateway)
+          replace: \](/guides/recipes/gateway)
+        - pattern: \](/docs/guides/gateway)
+          replace: \](/docs/guides/recipes/gateway)
+        - pattern: \](/docs/guides/tiered-prefix-cache/manifests/backends/lustre/README\.md)
+          replace: \](/docs/guides/tiered-prefix-cache/storage/manifests/backends/lustre)
+        - pattern: \](/docs/guides/tiered-prefix-cache/manifests/backends/aws/README\.md)
+          replace: \](/docs/guides/tiered-prefix-cache/storage/manifests/backends/aws)
+        - pattern: \](./manifests/backends/lustre/README\.md)
+          replace: \](./manifests/backends/lustre/index.md)
+        - pattern: \](./manifests/backends/aws/README\.md)
+          replace: \](./manifests/backends/aws/index.md)
+    - scope: glob:guides/**/*.md
+      rules:
+        - pattern: \](../prereq/gateways)
+          replace: \](/resources/gateway)
+        - pattern: \](../../prereq/gateways)
+          replace: \](/resources/gateway)
+        - pattern: \](/docs/prereq/gateways)
+          replace: \](/resources/gateway)
+        - pattern: \](/docs/guides/prereq/gateway-provider)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider)
+        - pattern: \](../../prereq/gateway-provider/README\.md#supported-providers)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider#supported-providers)
+        - pattern: \](../../prereq/gateway-provider/common-configurations)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider#common-configurations)
+        - pattern: \](/docs/prereq/gateway-provider/index\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/prereq/gateway-provider)
+        - pattern: \](../../helpers/client-setup/README\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/helpers/client-setup)
+        - pattern: \](../../../helpers/client-setup/README\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/helpers/client-setup)
+        - pattern: \](/helpers/client-setup/README\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/helpers/client-setup)
+        - pattern: \](../../helpers/hf-token\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/helpers/hf-token.md)
+        - pattern: \](../../../helpers/hf-token\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/helpers/hf-token.md)
+        - pattern: \](/helpers/hf-token\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/helpers/hf-token.md)
+        - pattern: \](../../helpers/benchmark\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/helpers/benchmark.md)
+        - pattern: \](../../../helpers/benchmark\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/helpers/benchmark.md)
+        - pattern: \](/helpers/benchmark\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/helpers/benchmark.md)
+        - pattern: \](../../docs/resources/observability/setup\.md)
+          replace: \](/resources/observability/setup)
+        - pattern: \](../../../docs/resources/observability/setup\.md)
+          replace: \](/resources/observability/setup)
+        - pattern: \](../../docs/resources/observability/README\.md)
+          replace: \](/resources/observability)
+        - pattern: \](../../../docs/resources/observability/README\.md)
+          replace: \](/resources/observability)
+        - pattern: \](../../docs/resources/observability/metrics\.md)
+          replace: \](/resources/observability/metrics)
+        - pattern: \](../../../docs/resources/observability/metrics\.md)
+          replace: \](/resources/observability/metrics)
+        - pattern: \](../../docs/resources/observability/metrics\.md#([^)]*))
+          replace: \](/resources/observability/metrics#\1)
+        - pattern: \](../../../docs/resources/observability/metrics\.md#([^)]*))
+          replace: \](/resources/observability/metrics#\1)
+        - pattern: \](../../docs/resources/observability/tracing\.md)
+          replace: \](/resources/observability/tracing)
+        - pattern: \](../../../docs/resources/observability/tracing\.md)
+          replace: \](/resources/observability/tracing)
+        - pattern: \](../../docs/monitoring/README\.md)
+          replace: \](/resources/observability/setup)
+        - pattern: \](../../../docs/monitoring/README\.md)
+          replace: \](/resources/observability/setup)
+        - pattern: \](/docs/monitoring/README\.md)
+          replace: \](/resources/observability/setup)
+        - pattern: \](../../docs/monitoring/README\.md#([^)]*))
+          replace: \](/resources/observability/metrics#\1)
+        - pattern: \](../../../docs/monitoring/README\.md#([^)]*))
+          replace: \](/resources/observability/metrics#\1)
+        - pattern: \](../../../../../prereq/infrastructure/README\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/prereq/multi-node-serving)
+        - pattern: \](/docs/prereq/infrastructure/README\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/prereq/multi-node-serving)
+    - scope: all_md
+      rules:
+        - pattern: \](../../helpers/hf-token\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/helpers/hf-token.md)
+    - scope: glob:guides/**/*.md
+      rules:
+        - pattern: \](placeholder-link)
+          replace: \](https://github.com/llm-d/llm-d)
+        - pattern: \](/docs/guides/placeholder-link)
+          replace: \](https://github.com/llm-d/llm-d)
+        - pattern: \](tuning\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/flow-control/tuning.md)
+        - pattern: \](/docs/guides/tuning\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/flow-control/tuning.md)
+        - pattern: \](./objectives\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/flow-control/objectives.yaml)
+        - pattern: \](/docs/guides/objectives\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/flow-control/objectives.yaml)
+        - pattern: \](scheduler/precise-prefix-cache-aware\.values\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing/scheduler/precise-prefix-cache-aware.values.yaml)
+        - pattern: \](/docs/guides/scheduler/precise-prefix-cache-aware\.values\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing/scheduler/precise-prefix-cache-aware.values.yaml)
+        - pattern: \](router/precise-prefix-cache-routing\.values\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing/router/precise-prefix-cache-routing.values.yaml)
+        - pattern: \](/docs/guides/router/precise-prefix-cache-routing\.values\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing/router/precise-prefix-cache-routing.values.yaml)
+        - pattern: \](./scheduler/predicted-latency\.values\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing/scheduler/predicted-latency.values.yaml)
+        - pattern: \](/docs/guides/scheduler/predicted-latency\.values\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing/scheduler/predicted-latency.values.yaml)
+        - pattern: \](./router/predicted-latency\.values\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing/router/predicted-latency.values.yaml)
+        - pattern: \](/docs/guides/router/predicted-latency\.values\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing/router/predicted-latency.values.yaml)
+        - pattern: \](./scheduler/predicted-latency-slo\.values\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing/scheduler/predicted-latency-slo.values.yaml)
+        - pattern: \](/docs/guides/scheduler/predicted-latency-slo\.values\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing/scheduler/predicted-latency-slo.values.yaml)
+        - pattern: \](./router/predicted-latency-slo\.values\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing/router/predicted-latency-slo.values.yaml)
+        - pattern: \](/docs/guides/router/predicted-latency-slo\.values\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/predicted-latency-routing/router/predicted-latency-slo.values.yaml)
+        - pattern: \](./storage_class\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache/storage/manifests/backends/lustre/storage_class.yaml)
+        - pattern: \](/docs/guides/tiered-prefix-cache/storage/manifests/backends/storage_class\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache/storage/manifests/backends/lustre/storage_class.yaml)
+        - pattern: \](./README\.hpa-epp/index\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling)
+        - pattern: \](/docs/guides/README\.hpa-epp/index\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling)
+        - pattern: \](./README\.wva\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling)
+        - pattern: \](/docs/guides/README\.wva\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling)
+        - pattern: \](../optimized-baseline/modelserver)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline/modelserver)
+        - pattern: \](../optimized-baseline/modelserver/)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline/modelserver)
+        - pattern: \](../optimized-baseline/modelserver/gpu/vllm/base/patch-vllm\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/blob/main/guides/optimized-baseline/modelserver/gpu/vllm/base/patch-vllm.yaml)
+        - pattern: \](./router/epp/config\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/blob/main/guides/no-kubernetes-deployment/router/epp/config.yaml)
+        - pattern: \](./router/epp/endpoints\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/blob/main/guides/no-kubernetes-deployment/router/epp/endpoints.yaml)
+        - pattern: \](./router/envoy/envoy\.yaml)
+          replace: \](https://github.com/llm-d/llm-d/blob/main/guides/no-kubernetes-deployment/router/envoy/envoy.yaml)
+        - pattern: \](../../04_customizing_a_guide\.md)
+          replace: \](/resources/gateway)
+        - pattern: \](/docs/04_customizing_a_guide\.md)
+          replace: \](/resources/gateway)
+        - pattern: \](../../02_verifying_a_guide\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)
+        - pattern: \](/docs/02_verifying_a_guide\.md)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)
+        - pattern: \](../../02_verifying_a_guide\.md#following-logs-for-requests)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)
+    - scope: glob:guides/**/*.md
+      rules:
+        - pattern: \](../../docs/architecture/advanced/latency-predictor\.md)
+          replace: \](/architecture/advanced/latency-predictor)
+        - pattern: \](/docs/architecture/advanced/latency-predictor\.md)
+          replace: \](/architecture/advanced/latency-predictor)
+        - pattern: \](../../docs/architecture/advanced/latency-predictor\.md#observability)
+          replace: \](/architecture/advanced/latency-predictor#observability)
+        - pattern: \](../../docs/architecture/core/router/epp/flow-control\.md)
+          replace: \](/architecture/core/router/epp/flow-control)
+        - pattern: \](/docs/architecture/core/router/epp/flow-control\.md)
+          replace: \](/architecture/core/router/epp/flow-control)
+        - pattern: \](../../docs/architecture/core/epp/flow-control\.md)
+          replace: \](/architecture/core/router/epp/flow-control)
+        - pattern: \](/docs/architecture/core/epp/flow-control\.md)
+          replace: \](/architecture/core/router/epp/flow-control)
+        - pattern: \](../../docs/api-reference/epp-http-headers\.md)
+          replace: \](/api-reference/epp-http-headers)
+        - pattern: \](/docs/api-reference/epp-http-headers\.md)
+          replace: \](/api-reference/epp-http-headers)
+        - pattern: \](../optimized-baseline/README\.md#supported-hardware-backends)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline#supported-hardware-backends)
+        - pattern: \](/docs/optimized-baseline/README\.md#supported-hardware-backends)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline#supported-hardware-backends)
+        - pattern: \](../optimized-baseline)
+          replace: \](/guides/optimized-baseline)
+        - pattern: \](/docs/optimized-baseline)
+          replace: \](/docs/guides/optimized-baseline)
+        - pattern: \](../optimized-baseline/README\.md#2-deploy-the-model-server)
+          replace: \](/guides/optimized-baseline#2-deploy-the-model-server)
+        - pattern: \](../optimized-baseline/README\.md#3-enable-monitoring-optional)
+          replace: \](/guides/optimized-baseline#3-enable-monitoring-optional)
+    - scope: file:resources/gateway/index.md
+      rules:
+        - pattern: \](../../guides/README\.md)
+          replace: \](/guides)
+        - pattern: \](../../guides/index\.md)
+          replace: \](/guides)
+        - pattern: \](./gke\.md)
+          replace: \](/resources/gateway/gke)
+        - pattern: \](./istio\.md)
+          replace: \](/resources/gateway/istio)
+        - pattern: \](./agentgateway\.md)
+          replace: \](/resources/gateway/agentgateway)
+    - scope: file:resources/rdma/rdma-configuration.md
+      rules:
+        - pattern: \](../../well-lit-paths/capabilities/pd-disaggregation\.md)
+          replace: \](/guides/pd-disaggregation)
+        - pattern: \](../../well-lit-paths/capabilities/wide-expert-parallelism\.md)
+          replace: \](/guides/wide-expert-parallelism)
+        - pattern: \](../../well-lit-paths/foundations/pd-disaggregation\.md)
+          replace: \](/guides/pd-disaggregation)
+        - pattern: \](../../well-lit-paths/foundations/wide-expert-parallelism\.md)
+          replace: \](/guides/wide-expert-parallelism)
+        - pattern: \](../../architecture/core/model-servers\.md)
+          replace: \](/architecture/core/model-servers)
+    - scope: files:observability
+      rules:
+        - pattern: \](./setup\.md)
+          replace: \](/resources/observability/setup)
+        - pattern: \](./metrics\.md)
+          replace: \](/resources/observability/metrics)
+        - pattern: \](./tracing\.md)
+          replace: \](/resources/observability/tracing)
+        - pattern: \](./promql\.md)
+          replace: \](/resources/observability/promql)
+        - pattern: \](../../getting-started/quickstart\.md)
+          replace: \](/getting-started/quickstart)
+        - pattern: \](../../../guides/recipes/modelserver/components/monitoring/)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/recipes/modelserver/components/monitoring)
+        - pattern: \`](../../../guides/recipes/modelserver/components/monitoring/)
+          replace: \`](https://github.com/llm-d/llm-d/tree/main/guides/recipes/modelserver/components/monitoring)
+        - pattern: \](../../../guides/recipes/observability/)
+          replace: \](https://github.com/llm-d/llm-d/tree/main/guides/recipes/observability)
+        - pattern: \](../../../guides/recipes/observability/([^)]*))
+          replace: \](https://github.com/llm-d/llm-d/blob/main/guides/recipes/observability/\1)
+        - pattern: \](inferencepool\.md)
+          replace: \](/api-reference/inferencepool)
+        - pattern: \](inferenceobjective\.md)
+          replace: \](/api-reference/inferenceobjective)
+        - pattern: \](inferencemodelrewrite\.md)
+          replace: \](/api-reference/inferencemodelrewrite)
+        - pattern: \](endpointpickerconfig\.md)
+          replace: \](/api-reference/endpointpickerconfig)
+        - pattern: \](epp-http-headers\.md)
+          replace: \](/api-reference/epp-http-headers)
+        - pattern: \](epp-http-apis\.md)
+          replace: \](/api-reference/epp-http-apis)
+        - pattern: \](epp-grpc-apis\.md)
+          replace: \](https://github.com/llm-d/llm-d/blob/main/docs/api-reference/epp-grpc-apis.md)
+        - pattern: \](glossary\.md)
+          replace: \](/api-reference/glossary)
+    - scope: file:api-reference/index.md
+      rules:
+        - pattern: guides/multimodal-serving/optimized-baseline/README\.md
+          replace: docs/well-lit-paths/workloads/multimodal-serving.md
+    - scope: file:api-reference/epp-http-apis.md
+      rules:
+        - pattern: (\[.*\])(\./core/inferencepool)
+          replace: \1(/architecture/core/inferencepool)
+        - pattern: (\[.*\])(\./core/model-servers)
+          replace: \1(/architecture/core/model-servers)
+        - pattern: (\[.*\])(\./core/router/proxy)
+          replace: \1(/architecture/core/router/proxy)
+        - pattern: (\[.*\])(\./core/router/)
+          replace: \1(/architecture/core/router)
+        - pattern: (\[.*\])(\./core/router)
+          replace: \1(/architecture/core/router)
+        - pattern: (\[.*\])(\./core/router/epp/)
+          replace: \1(/architecture/core/router/epp)
+        - pattern: (\[.*\])(\./advanced/kv-management/)
+          replace: \1(/architecture/advanced/kv-management)
+        - pattern: (\[.*\])(\./advanced/kv-management)
+          replace: \1(/architecture/advanced/kv-management)
+        - pattern: \](core/router/README\.md)
+          replace: \](/architecture/core/router)
+        - pattern: \](core/router/epp/README\.md)
+          replace: \](/architecture/core/router/epp)
+        - pattern: \](core/inferencepool\.md)
+          replace: \](/architecture/core/inferencepool)
+        - pattern: \](core/model-servers\.md)
+          replace: \](/architecture/core/model-servers)
+        - pattern: \](advanced/kv-management/README\.md)
+          replace: \](/architecture/advanced/kv-management)
+        - pattern: \](/core/router/README\.md)
+          replace: \](/architecture/core/router)
+        - pattern: \](/core/router/epp/README\.md)
+          replace: \](/architecture/core/router/epp)
+        - pattern: \](/advanced/kv-management/README\.md)
+          replace: \](/architecture/advanced/kv-management)
+    - scope: file:architecture/index.md
+      rules:
+        - pattern: \](\.\/epp/)
+          replace: \](/architecture/core/router/epp)
+        - pattern: \](\.\/epp)
+          replace: \](/architecture/core/router/epp)
+        - pattern: \](epp/README\.md)
+          replace: \](/architecture/core/router/epp)
+        - pattern: \](/architecture/core/epp/README\.md)
+          replace: \](/architecture/core/router/epp)
+
 stubs:
     enabled: true
-replacements_pending:
-    sed_rule_count: 0
-    note: sed rules ported to internal/sync/rules_generated.go (regenerate via go generate)

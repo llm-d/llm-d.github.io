@@ -116,7 +116,7 @@ Main documentation (architecture, guides, API reference, resources) is synced fr
 3. Submit a PR to llm-d/llm-d
 4. Once merged, changes will appear on the website after the next deployment
 
-**Files synced via `docs-sync.yaml` (see [legacy/preview/scripts/sync-docs.sh](legacy/preview/scripts/sync-docs.sh) for archived bash):**
+**Files synced via [`docs-sync.yaml`](docs-sync.yaml):**
 - Architecture documentation
 - User guides
 - API reference

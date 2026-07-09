@@ -38,7 +38,6 @@ Sync, build, check, and ci commands replace the legacy bash/Node scripts.`,
 	root.PersistentFlags().StringVar(&rootDir, "root", "", "repository root (auto-detected by default)")
 
 	root.AddCommand(newValidateCmd())
-	root.AddCommand(newExtractManifestCmd())
 	root.AddCommand(newGoldenCmd())
 	root.AddCommand(newSyncCmd())
 	root.AddCommand(newBuildCmd())

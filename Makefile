@@ -1,4 +1,4 @@
-.PHONY: llmd-site test-llmd-site validate-manifest extract-manifest sync-docs build-all check-links check-images ci
+.PHONY: llmd-site test-llmd-site validate-manifest sync-docs build-all check-links check-images ci
 
 LLMD_SITE_DIR := tools/llmd-site
 LLMD_SITE_BIN := bin/llmd-site
@@ -11,9 +11,6 @@ test-llmd-site:
 
 validate-manifest: llmd-site
 	./$(LLMD_SITE_BIN) validate
-
-extract-manifest: llmd-site
-	./$(LLMD_SITE_BIN) extract-manifest --write
 
 sync-docs: llmd-site
 	./$(LLMD_SITE_BIN) sync main

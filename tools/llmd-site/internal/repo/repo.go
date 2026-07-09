@@ -35,10 +35,6 @@ func LocalConfigPath(root string) string {
 	return filepath.Join(root, "llmd-site.local.yaml")
 }
 
-func SyncScriptPath(root string) string {
-	return filepath.Join(root, "legacy", "preview", "scripts", "sync-docs.sh")
-}
-
 func PreviewDocsDir(root string) string {
 	return filepath.Join(root, "preview", "docs")
 }

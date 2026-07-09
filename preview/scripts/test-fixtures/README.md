@@ -31,4 +31,4 @@ cd preview && npm test
 3. If changes are correct, update `transformation-test.expected.md`
 4. Commit both code and fixture changes
 
-Doc-specific post-copy rules (in `internal/sync/postprocess.go` and `rules_generated.go`) are tested separately via golden sync tests.
+Doc-specific post-copy rules (in `docs-sync.yaml` `transform_rules` and `internal/sync/postprocess.go`) are tested separately via golden sync tests.

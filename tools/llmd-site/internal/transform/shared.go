@@ -7,7 +7,7 @@ import (
 )
 
 // ApplyShared applies shared MDX/markdown transforms during doc sync.
-// Doc-specific sed rules run via internal/sync/postprocess.go.
+// Doc-specific transform rules run via internal/sync/postprocess_pipeline.go.
 func ApplyShared(path string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {

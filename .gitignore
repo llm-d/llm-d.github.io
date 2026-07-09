@@ -13,6 +13,7 @@ bin/llmd-site
 link-checker.config.json
 broken-links-report.md
 sync-report.json
+broken-links-report.md
 
 # llmd-site local config and build output
 llmd-site.local.yaml
