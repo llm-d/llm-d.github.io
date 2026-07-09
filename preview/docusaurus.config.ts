@@ -400,7 +400,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} llm-d project. Apache 2.0 License.<br />\
+      copyright: `Copyright llm-d a Series of LF Projects, LLC. Apache 2.0 License.<br />\
         We are a Cloud Native Computing Foundation sandbox project.<br />\
         For website terms of use, trademark policy and other project policies please see <a href="https://lfprojects.org/policies/" target="_blank" rel="noreferrer noopener">https://lfprojects.org/policies/</a>`,
       logo: {
