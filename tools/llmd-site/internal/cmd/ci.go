@@ -13,6 +13,7 @@ import (
 
 func newCICmd() *cobra.Command {
 	var skipCheck bool
+	var warnOnBrokenLinks bool
 
 	cmd := &cobra.Command{
 		Use:   "ci [branch]",
@@ -62,6 +63,10 @@ Examples:
 				return err
 			}
 			if code != 0 {
+				if warnOnBrokenLinks {
+					fmt.Println("⚠️  link check reported issues (see broken-links-report.md); continuing (--warn-on-broken-links)")
+					return nil
+				}
 				return ExitError{Code: code}
 			}
 
@@ -71,6 +76,7 @@ Examples:
 	}
 
 	cmd.Flags().BoolVar(&skipCheck, "skip-check", false, "build only; skip link check")
+	cmd.Flags().BoolVar(&warnOnBrokenLinks, "warn-on-broken-links", false, "report broken links but do not fail the command")
 
 	return cmd
 }
