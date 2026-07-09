@@ -51,17 +51,9 @@ The transfer itself is best-effort and asynchronous. The consumer sends the prod
 
 ## How llm-d Decides When to Pull
 
-The scheduling side is a small, opt-in EPP plugin: the `kv-cache-source-producer`. The prefix-cache data producers already compute, per request, how many cached prefix blocks every candidate pod holds. The plugin compares the best-cached candidate against the pod that will actually compute the prefix (the selected prefill pod under P/D disaggregation, the selected decode pod otherwise). When the best peer out-caches the computing pod by a configurable threshold (`minCachedBlockDelta`), the EPP attaches a header to the request:
+llm-d's scheduler already estimates, for every request, how much of the prompt's prefix each candidate pod has cached - the same signal that powers prefix-aware routing. P2P adds one decision on top: it compares the best-cached pod against the pod that will actually compute the prefix, and when that peer holds enough more of the prefix to be worth a transfer, it marks the request - through a header the routing sidecar reads - to pull the missing blocks from that peer.
 
-```
-x-kv-cache-source-host-port: <peer-ip>:<peer-port>
-```
-
-The llm-d routing sidecar translates the header into vLLM's `kv_transfer_params`, marking the request as a P2P consumer pointed at that peer. A tie or a self-match never sets the header - pulling adds no blocks - and deployments that do not enable the plugin are unaffected.
-
-Because the plugin consumes the same `PrefixCacheMatchInfo` that drives prefix-aware scoring and the P/D disaggregation decision, it works unchanged with both the approximate and the precise prefix-cache producers.
-
-P2P composes with P/D disaggregation. A prefill worker can act as a P2P consumer for the same request it is prefilling: it pulls the cached prefix from a peer, computes only the remainder, and still keeps its computed blocks available for the remote decoder to pull. Without disaggregation, the decode pod pulls the prefix directly.
+This is a small, opt-in scheduling step, off by default. Because it reuses the existing prefix-cache signal, it works with both prefix-aware routing modes and composes with P/D disaggregation: a prefill worker can pull a cached prefix from a peer, compute only the remainder, and still serve its own blocks to the decoder. Without disaggregation, the decode pod pulls the prefix directly. A tie or a self-match never triggers a pull - there is nothing to gain - and deployments that leave the feature off are unaffected.
 
 ## What This Enables
 
@@ -81,6 +73,8 @@ We evaluate P2P KV cache sharing with the llm-d benchmarking framework (inferenc
 2. **P2P**: prefix-aware routing plus the `kv-cache-source-producer` and the P2P connector.
 3. **Reference**: single warm pod (upper bound on cache-hit behavior).
 
+The P/D-disaggregated configurations build on the llm-d [P/D disaggregation guide](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation)'s published benchmark - the same model, inference-perf workload template, and serving topology - so P2P is measured as a layer on the established P/D baseline rather than through a fresh harness, and the numbers stay comparable to the guide's.
+
 One deployment prerequisite applies to every P2P configuration: vLLM seeds its KV block hashes per process, so all peers must run with the same `PYTHONHASHSEED`. Without it, block hashes never match across pods and P2P silently degrades to zero matches - the protocol runs, but every lookup misses and every prefix is recomputed locally. The external prefix cache hit rate metric is the quickest way to catch this: it stays at zero.
 
 Proposed scenarios:
@@ -88,12 +82,14 @@ Proposed scenarios:
 * **Session handoff.** Multi-turn conversations with forced pod switches mid-session; measures TTFT for the first turn after a switch, where P2P should convert a full-prefix recompute into a pull.
 * **Scale-out warmup.** Add a cold replica under steady shared-prefix load; measure its TTFT and external prefix cache hit rate over time versus baseline.
 * **Shared system prompt fan-out.** Many users sharing a long system prompt (2K-8K tokens) spread across N replicas; measures aggregate throughput and mean/p99 TTFT as the prefix is pulled instead of recomputed per pod.
+* **Prefill placement under P/D.** With P/D disaggregation and a skewed shared-prefix load, vary only the prefill selection strategy: prefix-affinity routing (prefill lands on the pod that already caches the prefix) versus load-aware routing plus a P2P pull (prefill lands on the least-loaded worker, which pulls the prefix from a peer). Affinity concentrates a hot prefix's prefill work onto one worker; the pull lets load-aware placement spread that work while preserving cache reuse. Measures per-worker prefill load balance, p99 TTFT, and throughput at a fixed SLO, with the external prefix cache hit rate held roughly constant across both strategies.
 * **Pull versus recompute crossover.** Single-request TTFT as prefix length grows, P2P pull versus local prefill, to characterize the prompt-length threshold where pulling wins and inform `minCachedBlockDelta` tuning.
 
-Metrics: TTFT (mean/p99), output throughput, external prefix cache hit rate, prefill GPU-seconds saved, and transfer time per pulled block.
+Metrics: TTFT (mean/p99), output throughput, external prefix cache hit rate, per-worker prefill load balance, prefill GPU-seconds saved, and transfer time per pulled block.
 
-{/* Setup TODO: model (e.g. Llama-3.1-8B / 70B), GPUs, node count and
-   interconnect (TCP vs RDMA), vLLM version, CPU offload tier size. */}
+{/* Setup TODO: match the P/D guide's benchmark for comparability - model
+   (the guide uses openai/gpt-oss-120b), GPUs, node count and interconnect
+   (TCP vs RDMA), vLLM version, CPU offload tier size. */}
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   {/* TODO: Figure 1 - session handoff TTFT, baseline vs P2P */}
