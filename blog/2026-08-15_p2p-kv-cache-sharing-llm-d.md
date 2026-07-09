@@ -87,9 +87,11 @@ Proposed scenarios:
 
 Metrics: TTFT (mean/p99), output throughput, external prefix cache hit rate, per-worker prefill load balance, prefill GPU-seconds saved, and transfer time per pulled block.
 
-{/* Setup TODO: match the P/D guide's benchmark for comparability - model
-   (the guide uses openai/gpt-oss-120b), GPUs, node count and interconnect
-   (TCP vs RDMA), vLLM version, CPU offload tier size. */}
+{/* Setup TODO: match the P/D guide's benchmark - openai/gpt-oss-120b, prefill
+   at TP=1 and decode at TP=4 (the guide's base topology is 8 prefill + 2 decode
+   = 16 GPUs / 2 H200 nodes; a down-scaled 4 prefill + 1 decode ~8-GPU single-node
+   run is enough for the prefill-placement comparison). Record GPUs, node count,
+   interconnect (TCP vs RDMA), vLLM version, CPU offload tier size. */}
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   {/* TODO: Figure 1 - session handoff TTFT, baseline vs P2P */}
