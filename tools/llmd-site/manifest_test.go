@@ -25,6 +25,44 @@ func TestManifestFromRepo(t *testing.T) {
 	}
 }
 
+func TestCommunityFileHelpers(t *testing.T) {
+	f := manifest.CommunityFile{
+		From:            "CONTRIBUTING.md",
+		To:              "community/contribute.md",
+		Title:           "Contributing to llm-d",
+		SidebarLabelYAML: "Contributing",
+		SidebarPosition: 3,
+	}
+	if f.OutputFile() != "contribute.md" {
+		t.Fatalf("OutputFile: got %q", f.OutputFile())
+	}
+	if f.SitePath() != "/community/contribute" {
+		t.Fatalf("SitePath: got %q", f.SitePath())
+	}
+	if f.SidebarLabel() != "Contributing" {
+		t.Fatalf("SidebarLabel: got %q", f.SidebarLabel())
+	}
+}
+
+func TestManifestCommunityEntries(t *testing.T) {
+	root, err := repo.Root()
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, err := manifest.Load(repo.ManifestPath(root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range m.Community {
+		if c.SidebarLabel() == "" {
+			t.Fatalf("community entry %q missing sidebar label/title", c.From)
+		}
+		if c.SiteRoute() == "" {
+			t.Fatalf("community entry %q missing site route", c.From)
+		}
+	}
+}
+
 func TestSourceMap(t *testing.T) {
 	m := manifest.Default()
 	m.Copies = []manifest.Copy{

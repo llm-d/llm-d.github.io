@@ -21,12 +21,21 @@ community:
     - from: CONTRIBUTING.md
       to: community/contribute.md
       title: Contributing to llm-d
+      sidebar_label: Contributing
+      sidebar_position: 3
+      hide_sidebar: true
     - from: CODE_OF_CONDUCT.md
       to: community/code-of-conduct.md
       title: Code of Conduct
+      sidebar_label: Code of Conduct
+      sidebar_position: 4
     - from: SECURITY.md
       to: community/security.md
       title: Security Policy
+      sidebar_label: Security
+      sidebar_position: 5
     - from: SIGS.md
       to: community/sigs.md
       title: Special Interest Groups (SIGs)
+      sidebar_label: SIGs
+      sidebar_position: 6

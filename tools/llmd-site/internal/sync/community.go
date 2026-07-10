@@ -9,50 +9,39 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/manifest"
 )
 
-// Community mirror pages. These reproduce scripts/sync-community.mjs: the
-// contributing / code-of-conduct / security / SIGs pages mirror the canonical
-// source files at the llm-d repo root, wrapped with frontmatter + a "source"
+// Community mirror pages. Each entry in docs-sync.yaml community: mirrors an
+// upstream repo-root file into community/, wrapped with frontmatter + a "source"
 // admonition. Unlike docs/, community/ is NOT processed by preprocess.mjs, so
 // links are rewritten here (via the same semantics as scripts/lib/rewrite.mjs).
-type communityPage struct {
-	Src         string
-	Out         string
-	Title       string
-	Label       string
-	Position    int
-	HideSidebar bool
-}
-
-var communityPages = []communityPage{
-	{Src: "CONTRIBUTING.md", Out: "contribute.md", Title: "Contributing to llm-d", Label: "Contributing", Position: 3, HideSidebar: true},
-	{Src: "CODE_OF_CONDUCT.md", Out: "code-of-conduct.md", Title: "Code of Conduct", Label: "Code of Conduct", Position: 4},
-	{Src: "SECURITY.md", Out: "security.md", Title: "Security Policy", Label: "Security", Position: 5},
-	{Src: "SIGS.md", Out: "sigs.md", Title: "Special Interest Groups (SIGs)", Label: "SIGs", Position: 6},
-}
-
-var communityPathMap = map[string]string{
-	"CONTRIBUTING.md":    "/community/contribute",
-	"CODE_OF_CONDUCT.md": "/community/code-of-conduct",
-	"SECURITY.md":        "/community/security",
-	"SIGS.md":            "/community/sigs",
-}
 
 var reLeadingH1 = regexp.MustCompile(`^\s*#\s+.*\n`)
 
 func (e *engine) syncCommunity() error {
+	if len(e.m.Community) == 0 {
+		return nil
+	}
+
 	outDir := filepath.Join(e.opts.RepoRoot, "community")
 	if err := os.MkdirAll(outDir, 0o755); err != nil {
 		return err
 	}
-	rw := newRewriter(e.src.Root, communityPathMap)
+
+	pathMap := communityPathMap(e.m.Community)
+	rw := newRewriter(e.src.Root, pathMap)
+
+	repoURL := strings.TrimSuffix(e.m.Sources.LLMD.Remote.URL, "/")
+	editBase := repoURL + "/edit/main/"
+	blobBase := repoURL + "/blob/main/"
 
 	count := 0
-	for _, p := range communityPages {
-		srcPath := filepath.Join(e.src.Root, p.Src)
+	for _, page := range e.m.Community {
+		srcPath := filepath.Join(e.src.Root, page.From)
 		if !fileExists(srcPath) {
-			fmt.Printf("    ! community source not found, skipping: %s\n", p.Src)
+			fmt.Printf("    ! community source not found, skipping: %s\n", page.From)
 			continue
 		}
 		data, err := os.ReadFile(srcPath)
@@ -63,31 +52,41 @@ func (e *engine) syncCommunity() error {
 		body := reLeadingH1.ReplaceAllString(string(data), "")
 		body = rw.transformContent(body, ".")
 
+		label := page.SidebarLabel()
+
 		fm := []string{
 			"---",
-			"title: " + jsonString(p.Title),
-			"sidebar_label: " + jsonString(p.Label),
-			fmt.Sprintf("sidebar_position: %d", p.Position),
-			"description: " + jsonString(p.Title+" — llm-d community"),
-			"custom_edit_url: https://github.com/llm-d/llm-d/edit/main/" + p.Src,
+			"title: " + jsonString(page.Title),
+			"sidebar_label: " + jsonString(label),
+			fmt.Sprintf("sidebar_position: %d", page.SidebarPosition),
+			"description: " + jsonString(page.Title+" — llm-d community"),
+			"custom_edit_url: " + editBase + page.From,
 		}
-		if p.HideSidebar {
+		if page.HideSidebar {
 			fm = append(fm, `# Standalone page reached from the "Contributing" navbar item — no left sidebar.`)
 			fm = append(fm, "displayed_sidebar: null")
 		}
 		fm = append(fm, "---")
 		frontmatter := strings.Join(fm, "\n")
 
-		note := fmt.Sprintf(":::info\nThis page mirrors [`%s`](https://github.com/llm-d/llm-d/blob/main/%s) from the llm-d repository. Edit it there.\n:::", p.Src, p.Src)
+		note := fmt.Sprintf(":::info\nThis page mirrors [`%s`](%s%s) from the llm-d repository. Edit it there.\n:::", page.From, blobBase, page.From)
 
 		content := frontmatter + "\n\n" + note + "\n\n" + strings.TrimSpace(body) + "\n"
-		if err := os.WriteFile(filepath.Join(outDir, p.Out), []byte(content), 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(outDir, page.OutputFile()), []byte(content), 0o644); err != nil {
 			return err
 		}
 		count++
 	}
 	fmt.Printf("    ✓ synced community -> community/ (%d pages from repo root)\n", count)
 	return nil
+}
+
+func communityPathMap(entries []manifest.CommunityFile) map[string]string {
+	out := make(map[string]string, len(entries))
+	for _, e := range entries {
+		out[e.From] = e.SitePath()
+	}
+	return out
 }
 
 // jsonString mirrors JavaScript's JSON.stringify for a string value (used for

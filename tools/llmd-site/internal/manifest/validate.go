@@ -2,6 +2,7 @@ package manifest
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 )
 
@@ -38,6 +39,16 @@ func (m *Manifest) Validate() error {
 	for i, f := range m.Community {
 		if f.From == "" || f.To == "" {
 			return fmt.Errorf("community[%d]: from and to are required", i)
+		}
+		if f.Title == "" {
+			return fmt.Errorf("community[%d]: title is required", i)
+		}
+		to := filepath.ToSlash(f.To)
+		if !strings.HasPrefix(to, "community/") {
+			return fmt.Errorf("community[%d]: to must be under community/", i)
+		}
+		if f.SidebarPosition == 0 {
+			return fmt.Errorf("community[%d]: sidebar_position is required", i)
 		}
 	}
 

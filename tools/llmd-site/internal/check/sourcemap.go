@@ -40,15 +40,10 @@ func BuildSourceMap(m *manifest.Manifest) map[string]SourceInfo {
 		}
 	}
 
-	community := []struct{ source, dest string }{
-		{"CONTRIBUTING.md", "docs/community/contribute"},
-		{"CODE_OF_CONDUCT.md", "docs/community/code-of-conduct"},
-		{"SECURITY.md", "docs/community/security"},
-		{"SIGS.md", "docs/community/sigs"},
-	}
-	for _, c := range community {
-		out[c.dest+".html"] = SourceInfo{Source: "llm-d/llm-d", File: c.source}
-		out[c.dest+"/"] = SourceInfo{Source: "llm-d/llm-d", File: c.source}
+	for _, c := range m.Community {
+		route := c.SiteRoute()
+		out[route+".html"] = SourceInfo{Source: "llm-d/llm-d", File: c.From}
+		out[route+"/"] = SourceInfo{Source: "llm-d/llm-d", File: c.From}
 	}
 	return out
 }

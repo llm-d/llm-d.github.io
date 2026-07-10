@@ -69,10 +69,13 @@ type Releases struct {
 }
 
 type CommunityFile struct {
-	From      string `yaml:"from"`
-	To        string `yaml:"to"`
-	Transform string `yaml:"transform,omitempty"`
-	Title     string `yaml:"title,omitempty"`
+	From             string `yaml:"from"`
+	To               string `yaml:"to"`
+	Title            string `yaml:"title,omitempty"`
+	SidebarLabelYAML string `yaml:"sidebar_label,omitempty"`
+	SidebarPosition  int    `yaml:"sidebar_position,omitempty"`
+	HideSidebar      bool   `yaml:"hide_sidebar,omitempty"`
+	Transform        string `yaml:"transform,omitempty"` // reserved; community transform is built-in
 }
 
 type Copy struct {
