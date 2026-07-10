@@ -40,18 +40,18 @@ func startStaticServer(cfg Config) (*Server, error) {
 	}
 
 	mux := http.NewServeMux()
-	fileServer := http.FileServer(http.Dir(buildDir))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
-		if path != "/" && !strings.HasSuffix(path, "/") {
-			full := filepath.Join(buildDir, filepath.FromSlash(strings.TrimPrefix(path, "/")))
-			if info, err := os.Stat(full); err == nil && info.IsDir() {
-				if _, err := os.Stat(filepath.Join(full, "index.html")); err == nil {
-					r.URL.Path = path + "/"
-				}
-			}
+		if resolved, ok := ResolveStaticBuildPath(buildDir, r.URL.Path); ok {
+			http.ServeFile(w, r, resolved)
+			return
 		}
-		fileServer.ServeHTTP(w, r)
+		notFound := filepath.Join(buildDir, "404.html")
+		if _, err := os.Stat(notFound); err == nil {
+			w.WriteHeader(http.StatusNotFound)
+			http.ServeFile(w, r, notFound)
+			return
+		}
+		http.NotFound(w, r)
 	})
 
 	addr := cfg.ServerHost + ":" + itoa(cfg.ServerPort)

@@ -7,20 +7,21 @@ import (
 	"github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/check"
 	"github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/manifest"
 	"github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/repo"
+	syncpkg "github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/sync"
 	"github.com/spf13/cobra"
 )
 
 func newCICmd() *cobra.Command {
-	var fetch bool
-	var allowMissing bool
-	var parallel int
 	var skipCheck bool
-	var warnOnlyLinks bool
+	var warnOnBrokenLinks bool
+	var fetch bool
+	var refreshUpstream bool
 
 	cmd := &cobra.Command{
-		Use:   "ci [dev-branch]",
-		Short: "Full CI pipeline (build + link check)",
-		Long: `Run the same steps as GitHub Actions test-deploy: full site build then link check.
+		Use:   "ci [branch]",
+		Short: "Full CI pipeline: sync docs, build the site, then check links",
+		Long: `Run the same steps as CI: sync docs from llm-d/llm-d@<branch> (default main),
+build the site, then check links.
 
 Examples:
   llmd-site ci
@@ -28,9 +29,9 @@ Examples:
   llmd-site ci --skip-check`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			devBranch := "main"
+			branch := "main"
 			if len(args) > 0 {
-				devBranch = args[0]
+				branch = args[0]
 			}
 
 			m, err := manifest.Load(repo.ManifestPath(rootDir))
@@ -41,15 +42,18 @@ Examples:
 				return err
 			}
 
-			if err := build.Run(m, build.Options{
-				RepoRoot:     rootDir,
-				DevBranch:    devBranch,
-				Local:        localMode,
-				Fetch:        fetch,
-				LocalConfig:  repo.LocalConfigPath(rootDir),
-				AllowMissing: allowMissing,
-				Parallel:     parallel,
+			if _, err := syncpkg.Run(m, syncpkg.Options{
+				RepoRoot:        rootDir,
+				Branch:          branch,
+				Local:           localMode,
+				Fetch:           fetch,
+				LocalConfig:     repo.LocalConfigPath(rootDir),
+				RefreshUpstream: refreshUpstream,
 			}); err != nil {
+				return err
+			}
+
+			if err := build.Run(rootDir); err != nil {
 				return err
 			}
 
@@ -58,7 +62,7 @@ Examples:
 				return nil
 			}
 
-			code, err := check.CheckLinksWithOptions(rootDir, m, check.CheckOptions{WarnOnly: warnOnlyLinks})
+			code, err := check.CheckLinksWithOptions(rootDir, m, check.CheckOptions{WarnOnly: warnOnBrokenLinks})
 			if err != nil {
 				return err
 			}
@@ -72,10 +76,9 @@ Examples:
 	}
 
 	cmd.Flags().BoolVar(&fetch, "fetch", false, "git fetch local upstream clone before sync")
-	cmd.Flags().BoolVar(&allowMissing, "allow-missing", false, "allow missing upstream files during sync")
-	cmd.Flags().IntVar(&parallel, "parallel", 2, "max parallel release branch builds")
+	cmd.Flags().BoolVar(&refreshUpstream, "refresh-upstream", false, "force fresh shallow clone of remote upstream (ignore cache)")
 	cmd.Flags().BoolVar(&skipCheck, "skip-check", false, "build only; skip link check")
-	cmd.Flags().BoolVar(&warnOnlyLinks, "warn-on-broken-links", false, "report broken links but exit 0")
+	cmd.Flags().BoolVar(&warnOnBrokenLinks, "warn-on-broken-links", false, "report broken links but do not fail the command")
 
 	return cmd
 }

@@ -16,7 +16,7 @@ func TestApplySharedFixture(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fixtureDir := filepath.Join(root, "preview", "scripts", "test-fixtures")
+	fixtureDir := filepath.Join(root, "tools", "llmd-site", "testdata", "transform")
 	inputPath := filepath.Join(fixtureDir, "transformation-test.md")
 	expectedPath := filepath.Join(fixtureDir, "transformation-test.expected.md")
 

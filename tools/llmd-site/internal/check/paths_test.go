@@ -5,9 +5,10 @@ import "testing"
 func TestInternalPathCandidates(t *testing.T) {
 	candidates := internalPathCandidates("/guides/batch-gateway")
 	want := map[string]bool{
-		"/guides/batch-gateway":           true,
-		"/docs/guides/batch-gateway":      true,
-		"/docs/dev/guides/batch-gateway":  true,
+		"/guides/batch-gateway":          true,
+		"/guides/batch-gateway.html":     true,
+		"/docs/guides/batch-gateway":     true,
+		"/docs/dev/guides/batch-gateway": true,
 	}
 	for _, c := range candidates {
 		if !want[c] {

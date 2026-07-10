@@ -17,11 +17,8 @@ type Options struct {
 	Local        bool
 	Fetch        bool
 	LocalConfig  string
-	AllowMissing      bool
-	FailOnStubs       bool
-	RefreshUpstream   bool
-	SyncWorkers       int
-	Quiet             bool
+	AllowMissing    bool
+	RefreshUpstream bool
 }
 
 // Result describes sync output.
@@ -30,7 +27,12 @@ type Result struct {
 	Report   *report.SyncReport
 }
 
-// Run syncs documentation from llm-d/llm-d into preview/docs (native Go engine).
+// Run pulls documentation from llm-d/llm-d into the single-site docs/ tree.
+//
+// docs/** is copied verbatim (no link/image rewriting — that happens at
+// Docusaurus build time via scripts/lib/preprocess.mjs). Doc images are also
+// mirrored into static/img/docs/ so the build-time <img src> rewrites resolve,
+// and the community mirror pages are regenerated from the upstream repo root.
 func Run(m *manifest.Manifest, opts Options) (*Result, error) {
 	src, err := upstream.Resolve(m, upstream.Options{
 		Branch:        opts.Branch,
@@ -56,7 +58,7 @@ func Run(m *manifest.Manifest, opts Options) (*Result, error) {
 		return nil, fmt.Errorf("sync failed: %w", err)
 	}
 
-	docsDir := filepath.Join(opts.RepoRoot, "preview", "docs")
+	docsDir := filepath.Join(opts.RepoRoot, "docs")
 	docCount, err := countMarkdown(docsDir)
 	if err != nil {
 		return nil, err

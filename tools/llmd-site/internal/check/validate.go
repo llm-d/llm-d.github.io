@@ -7,8 +7,9 @@ import (
 )
 
 type validateResult struct {
-	Valid  bool
-	Reason string
+	Valid   bool
+	Reason  string
+	Skipped bool
 }
 
 func validateExternalURL(client *http.Client, raw string, timeout time.Duration, token string) validateResult {
@@ -29,6 +30,13 @@ func validateExternalURL(client *http.Client, raw string, timeout time.Duration,
 		return validateResult{Valid: false, Reason: err.Error()}
 	}
 	resp.Body.Close()
+
+	if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode == http.StatusForbidden {
+		return validateResult{
+			Skipped: true,
+			Reason:  fmt.Sprintf("HTTP %d (rate limited, skipped)", resp.StatusCode),
+		}
+	}
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 400 {
 		return validateResult{Valid: true}

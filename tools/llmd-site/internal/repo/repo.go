@@ -35,6 +35,13 @@ func LocalConfigPath(root string) string {
 	return filepath.Join(root, "llmd-site.local.yaml")
 }
 
+// DocsDir is the single-site Docusaurus docs home (<root>/docs), the verbatim
+// mirror target for upstream llm-d/llm-d docs.
+func DocsDir(root string) string {
+	return filepath.Join(root, "docs")
+}
+
+// PreviewDocsDir is the legacy two-build docs output (golden --legacy only).
 func PreviewDocsDir(root string) string {
 	return filepath.Join(root, "preview", "docs")
 }

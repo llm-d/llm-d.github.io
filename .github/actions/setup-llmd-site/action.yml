@@ -1,5 +1,5 @@
 name: Setup llmd-site
-description: Install Node/Go toolchain, build the llmd-site CLI, and optionally run Go tests
+description: Install the Node/Go toolchain and build the llmd-site CLI
 
 inputs:
   node-version:
@@ -9,10 +9,10 @@ inputs:
     description: Go version
     default: '1.22'
   npm-command:
-    description: npm command to install root dependencies (empty to skip)
-    default: 'npm install'
+    description: npm command to install site dependencies (empty to skip)
+    default: 'npm ci'
   go-test:
-    description: Run make test-llmd-site before site build
+    description: Run make test-llmd-site before building the CLI
     default: 'true'
 
 runs:
@@ -23,6 +23,7 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
         cache: npm
+        cache-dependency-path: package-lock.json
 
     - uses: actions/setup-go@v5
       with:

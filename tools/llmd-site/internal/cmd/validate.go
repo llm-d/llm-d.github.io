@@ -22,8 +22,7 @@ func newValidateCmd() *cobra.Command {
 				return err
 			}
 			fmt.Printf("✓ Manifest valid: %s\n", path)
-			fmt.Printf("  copies: %d, slugs: %d, edit_urls: %d, community: %d, transform_rules: %d\n",
-				len(m.Copies), len(m.Slugs), len(m.EditURLs), len(m.Community), len(m.TransformRules))
+			fmt.Printf("  community: %d\n", len(m.Community))
 			return nil
 		},
 	}

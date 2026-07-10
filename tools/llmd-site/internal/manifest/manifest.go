@@ -19,12 +19,13 @@ type Manifest struct {
 
 	Releases Releases `yaml:"releases,omitempty"`
 
-	// Directories created under preview/docs before copies run.
+	// Deprecated: the single-site sync mirrors docs/** verbatim and no longer
+	// reads directories/copies/slugs/conditionals/etc. These fields are retained
+	// only so older manifests still parse and validate.
 	Directories []string `yaml:"directories,omitempty"`
 
 	Copies []Copy `yaml:"copies,omitempty"`
 
-	// Slugs set frontmatter slug on preview/docs files (published URL path).
 	Slugs []Slug `yaml:"slugs,omitempty"`
 
 	// EditURLs map local doc paths to upstream edit paths (replaces docusaurus.config.ts logic).
@@ -36,10 +37,10 @@ type Manifest struct {
 	// ReleaseFixups are sed-style replacements applied to release-branch committed docs during build.
 	ReleaseFixups []Replacement `yaml:"release_fixups,omitempty"`
 
-	// TransformRules are scoped post-copy link and content fixups applied during sync.
-	TransformRules []TransformRuleGroup `yaml:"transform_rules,omitempty"`
-
 	Stubs Stubs `yaml:"stubs,omitempty"`
+
+	// ReplacementsPending notes count of sed rules still in sync-docs.sh (Phase 2 port).
+	ReplacementsPending *ReplacementsMeta `yaml:"replacements_pending,omitempty"`
 }
 
 type Sources struct {
@@ -112,14 +113,9 @@ type Stubs struct {
 	FailInCI   bool `yaml:"fail_in_ci,omitempty"`
 }
 
-type TransformRuleGroup struct {
-	Scope string          `yaml:"scope"`
-	Rules []TransformRule `yaml:"rules"`
-}
-
-type TransformRule struct {
-	Pattern string `yaml:"pattern"`
-	Replace string `yaml:"replace"`
+type ReplacementsMeta struct {
+	SedRuleCount int    `yaml:"sed_rule_count"`
+	Note         string `yaml:"note"`
 }
 
 func Default() *Manifest {
@@ -140,7 +136,7 @@ func Default() *Manifest {
 		},
 		Releases: Releases{
 			Remote: "github-api",
-			Local:  "preview/static/releases.json",
+			Local:  "static/releases.json",
 		},
 		Stubs: Stubs{
 			Enabled:  true,
