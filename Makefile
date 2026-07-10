@@ -16,6 +16,10 @@ sync-docs: llmd-site
 	./$(LLMD_SITE_BIN) sync main
 
 build: llmd-site
+	@if [ ! -d docs ]; then \
+		echo "docs/ not found; running initial sync (llmd-site sync main)..."; \
+		./$(LLMD_SITE_BIN) sync main; \
+	fi
 	./$(LLMD_SITE_BIN) build
 
 build-all: build
