@@ -11,8 +11,8 @@ func collapseSlashes(path string) string {
 }
 
 // internalPathCandidates returns alternate paths to try when validating internal links.
-// Unified static serving does not mirror Docusaurus client redirects, so root-absolute
-// /guides/* and *.md targets often resolve under /docs/ or /docs/dev/.
+// The static server resolves clean URLs to .html files, but crawled link targets may
+// use .html suffixes, omit version prefixes, or use legacy root-absolute section paths.
 func internalPathCandidates(path string) []string {
 	path = collapseSlashes(path)
 	seen := map[string]struct{}{}
@@ -30,6 +30,13 @@ func internalPathCandidates(path string) []string {
 	}
 
 	add(path)
+
+	if strings.HasSuffix(path, ".html") {
+		add(strings.TrimSuffix(path, ".html"))
+	}
+	if !strings.HasSuffix(path, ".html") && path != "/" {
+		add(path + ".html")
+	}
 
 	if strings.HasSuffix(path, ".md") {
 		trimmed := strings.TrimSuffix(path, ".md")
@@ -49,8 +56,10 @@ func internalPathCandidates(path string) []string {
 		add("/docs/dev" + path)
 	}
 
-	// Root-absolute architecture/resources paths from dev docs pages.
-	for _, prefix := range []string{"/architecture/", "/getting-started/", "/helpers/"} {
+	for _, prefix := range []string{
+		"/architecture/", "/getting-started/", "/helpers/", "/well-lit-paths/",
+		"/operations/", "/infrastructure/", "/api-reference/", "/accelerators/",
+	} {
 		if strings.HasPrefix(path, prefix) {
 			add("/docs" + path)
 			add("/docs/dev" + path)

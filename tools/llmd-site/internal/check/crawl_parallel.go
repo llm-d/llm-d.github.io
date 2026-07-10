@@ -210,6 +210,9 @@ func (c *Checker) crawlAndValidate() ([]BrokenLink, int, map[string]struct{}, er
 			urls = append(urls, url)
 		}
 		checkedGithub := c.checkURLsConcurrently(urls, "GitHub URLs", c.Config.GitHubToken, func(url string, res validateResult) {
+			if res.Skipped {
+				return
+			}
 			if !res.Valid {
 				for src := range githubURLs[url] {
 					broken = append(broken, BrokenLink{
@@ -235,6 +238,9 @@ func (c *Checker) crawlAndValidate() ([]BrokenLink, int, map[string]struct{}, er
 			urls = append(urls, url)
 		}
 		checkedExternal := c.checkURLsConcurrently(urls, "external URLs", "", func(url string, res validateResult) {
+			if res.Skipped {
+				return
+			}
 			if !res.Valid {
 				broken = append(broken, BrokenLink{
 					SourcePage: "Multiple pages",
