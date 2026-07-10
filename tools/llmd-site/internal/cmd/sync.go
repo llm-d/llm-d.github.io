@@ -12,20 +12,20 @@ import (
 func newSyncCmd() *cobra.Command {
 	var fetch bool
 	var allowMissing bool
-	var failOnStubs bool
 	var refreshUpstream bool
-	var syncWorkers int
 
 	cmd := &cobra.Command{
 		Use:   "sync [branch]",
-		Short: "Sync docs from llm-d/llm-d into preview/docs",
-		Long: `Pull documentation from llm-d/llm-d and materialize preview/docs/.
+		Short: "Sync docs from llm-d/llm-d into docs/",
+		Long: `Pull documentation from llm-d/llm-d@<branch> (default main) into the
+single-site docs/ tree.
 
-Uses docs-sync.yaml for configuration. With --local, reads upstream path
-from llmd-site.local.yaml (see llmd-site.local.yaml.example).
+Copies upstream docs/** verbatim (README.md kept as-is, menu-config.json and
+images included), mirrors doc images into static/img/docs/, and regenerates the
+community mirror pages. All link/image rewriting happens later at Docusaurus
+build time via scripts/lib/preprocess.mjs, so the copy stays pristine.
 
-Native Go sync engine (Phase 2.1): manifest-driven copies, transform_rules
-from docs-sync.yaml, and shared MDX transforms — no bash delegation.`,
+With --local, reads the upstream path from llmd-site.local.yaml (or LLMD_REPO).`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			branch := "main"
@@ -48,9 +48,7 @@ from docs-sync.yaml, and shared MDX transforms — no bash delegation.`,
 				Fetch:           fetch,
 				LocalConfig:     repo.LocalConfigPath(rootDir),
 				AllowMissing:    allowMissing,
-				FailOnStubs:     failOnStubs,
 				RefreshUpstream: refreshUpstream,
-				SyncWorkers:     syncWorkers,
 			})
 			if err != nil {
 				return err
@@ -62,10 +60,8 @@ from docs-sync.yaml, and shared MDX transforms — no bash delegation.`,
 	}
 
 	cmd.Flags().BoolVar(&fetch, "fetch", false, "git fetch and reset local upstream clone before sync")
-	cmd.Flags().BoolVar(&allowMissing, "allow-missing", false, "skip errors for missing upstream files (legacy release branches)")
-	cmd.Flags().BoolVar(&failOnStubs, "fail-on-stubs", false, "fail if WIP stub pages were generated")
+	cmd.Flags().BoolVar(&allowMissing, "allow-missing", false, "skip the minimum doc-count sanity check")
 	cmd.Flags().BoolVar(&refreshUpstream, "refresh-upstream", false, "force fresh shallow clone of remote upstream (ignore cache)")
-	cmd.Flags().IntVar(&syncWorkers, "sync-workers", 0, "parallel workers for doc transforms (0 = NumCPU)")
 
 	return cmd
 }

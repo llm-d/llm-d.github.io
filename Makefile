@@ -1,4 +1,4 @@
-.PHONY: llmd-site test-llmd-site validate-manifest sync-docs build-all check-links check-images ci
+.PHONY: llmd-site test-llmd-site validate-manifest sync-docs build build-all check-links check-images ci golden-capture golden-verify
 
 LLMD_SITE_DIR := tools/llmd-site
 LLMD_SITE_BIN := bin/llmd-site
@@ -15,14 +15,16 @@ validate-manifest: llmd-site
 sync-docs: llmd-site
 	./$(LLMD_SITE_BIN) sync main
 
+build: llmd-site
+	./$(LLMD_SITE_BIN) build
+
+build-all: build
+
 golden-capture: llmd-site
 	./$(LLMD_SITE_BIN) golden capture main
 
 golden-verify: llmd-site
 	./$(LLMD_SITE_BIN) golden verify main
-
-build-all: llmd-site
-	./$(LLMD_SITE_BIN) build main
 
 check-links: llmd-site
 	./$(LLMD_SITE_BIN) check links

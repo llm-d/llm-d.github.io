@@ -72,7 +72,10 @@ func Capture(opts CaptureOptions) (*Record, error) {
 		return nil, fmt.Errorf("unknown sync engine %q", opts.Engine)
 	}
 
-	docsDir := repo.PreviewDocsDir(opts.Root)
+	docsDir := repo.DocsDir(opts.Root)
+	if opts.Engine == EngineLegacy {
+		docsDir = repo.PreviewDocsDir(opts.Root)
+	}
 	files, aggregate, err := hashTree(docsDir)
 	if err != nil {
 		return nil, err

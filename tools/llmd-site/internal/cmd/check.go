@@ -29,7 +29,7 @@ func newCheckCmd() *cobra.Command {
 	links := &cobra.Command{
 		Use:   "links",
 		Short: "Check links in built site (replaces scripts/check-links.mjs)",
-		Long: `Crawl the built site via docusaurus serve, validate internal and GitHub links,
+		Long: `Crawl the built site, validate internal and GitHub links,
 and write broken-links-report.md. Posts a PR comment when GITHUB_TOKEN and PR context are set.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			m, err := manifest.Load(repo.ManifestPath(rootDir))

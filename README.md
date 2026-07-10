@@ -1,384 +1,96 @@
-# llm-d Website Repository
-[![OpenSSF Baseline](https://www.bestpractices.dev/projects/13537/baseline)](https://www.bestpractices.dev/projects/13537) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fllm-d%2Fllm-d.github.io.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fllm-d%2Fllm-d.github.io?ref=badge_shield)
+# llm-d website
 
+The [llm-d.ai](https://llm-d.ai) website — **landing page, documentation, blog, and
+community** — built with [Docusaurus](https://docusaurus.io) and living inside the `llm-d`
+repo (`website/`), next to the docs it publishes.
 
-This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
-
-Site previews are powered by Netlify and can be viewed in the specific PR.
-
-If you spot any errors or omissions in the site, please open an issue at [github.com/llm-d/llm-d.github.io](https://github.com/llm-d/llm-d.github.io/issues).
-
-## 📋 Documentation Types
-
-This repository contains two types of documentation:
-
-1. **Local Documentation** - Written directly in this repository (blog posts, landing pages, etc.)
-2. **Remote Synced Content** - Automatically synced from llm-d/llm-d repository during build
-
-### Remote Synced Content
-
-Documentation is automatically synced from the `llm-d/llm-d` repository during the build process:
-
-- **Main Documentation** (`/docs/`) - Architecture, guides, API reference, resources
-  - Synced via `./bin/llmd-site sync` (manifest: `docs-sync.yaml`)
-  - Pulls specific files from `llm-d/llm-d@main`
-  - Applies transformations for Docusaurus compatibility
-
-- **Community Documentation** (`/docs/community/`) - Contributing, Code of Conduct, Security, SIGs
-  - Synced via remote-content plugins in `remote-content/`
-  - Simple markdown files from root of `llm-d/llm-d@main`
-
-Files with remote content show a "Content Source" banner at the bottom with links to edit the original source.
-
-## 🔄 Documentation Syncing Systems
-
-### Main Documentation (`llmd-site sync`)
-
-The primary documentation sync is implemented in **`tools/llmd-site`** (`llmd-site sync`), driven by [`docs-sync.yaml`](docs-sync.yaml). Archived bash: [`legacy/preview/scripts/sync-docs.sh`](legacy/preview/scripts/sync-docs.sh).
-
-**What it syncs:**
-- Architecture documentation (`/docs/architecture/`)
-- User guides (`/docs/guides/`)
-- API reference (`/docs/api-reference/`)
-- Resources (`/docs/resources/`)
-- Getting Started (`/docs/getting-started/`)
-
-**How it works:**
-1. Clones `llm-d/llm-d` into a temp dir (or uses a local clone via `LLMD_REPO`)
-2. Copies specific files to `preview/docs/` with explicit path mapping
-3. Applies transformations (tabs, callouts, images, MDX fixes)
-4. Builds preview site and merges into main site at `/docs`
-
-**Transformations applied:**
-- Converts GitHub tab markers to Docusaurus `<Tabs>` components
-- Converts GitHub callouts (`> [!NOTE]`) to Docusaurus admonitions
-- Fixes image paths to point to `/img/docs/`
-- Fixes HTML tags for MDX compatibility
-- Converts HTML comments to JSX comments
-
-See `tools/llmd-site/internal/transform/` for transformation details.
-
-### Community Documentation (remote-content/)
-
-A minimal remote-content plugin system for community files:
-
-**What it syncs:**
-- CONTRIBUTING.md → `/docs/community/contribute.md`
-- CODE_OF_CONDUCT.md → `/docs/community/code-of-conduct.md`
-- SECURITY.md → `/docs/community/security.md`
-- SIGS.md → `/docs/community/sigs.md`
-
-**How it works:**
-1. Uses `docusaurus-plugin-remote-content` to download files
-2. Applies minimal transformations (converts relative links to GitHub URLs)
-3. Adds frontmatter and source attribution callout
-
-**File structure:**
-```
-remote-content/
-├── remote-content.js                    # Plugin exports
-└── remote-sources/
-    ├── repo-transforms.js              # Link transformation logic
-    ├── utils.js                        # Frontmatter and callout generation
-    └── community/                      # Individual file configs
-        ├── contribute.js
-        ├── code-of-conduct.js
-        ├── security.js
-        └── sigs.js
-```
-
-## 🛠️ Development
-
-### Installation
+## Quick start
 
 ```bash
+cd website
 npm install
+npm start        # dev server at http://localhost:3000
+npm run build    # production build -> ./build
+npm run serve    # serve the production build
 ```
 
-### Local Development
+## Layout
 
-Choose the development mode based on what content you need:
+```
+website/
+├── docs/                  # Documentation (committed). Sidebar from folder tree + menu-config.json
+│   └── how-to-guides/     #   Deployment recipes folded in from ../guides.
+├── menu-config.json       # Sidebar labels, section order, collapse, page order
+├── versioned_docs/        # Frozen releases (version-0.7, version-0.8) + versioned_sidebars/ + versions.json
+├── blog/                  # Posts (.mdx) + authors.yml + tags.yml
+├── community/             # index/events (authored); contribute/code-of-conduct/security/sigs (generated)
+├── src/
+│   ├── pages/index.js     # Home — renders the landing page
+│   ├── landing/           # Ported landing page + its scoped Tailwind (build with npm run landing:css)
+│   ├── components/        # Shared React (e.g. the navbar GitHub star count)
+│   ├── theme/             # Swizzled theme: Footer, NavbarItem, DocBreadcrumbs
+│   └── css/custom.css     # Site theme (brand purple, IBM Plex Sans)
+├── static/img/            # Logos, social card, and doc images (img/docs/)
+├── scripts/               # version cut, community sync, landing CSS build, markdown preprocessor
+├── tools/llmd-site/       # Go CLI for build orchestration and link/image checks
+├── Makefile               # make build, make ci, make check-links
+├── docusaurus.config.js
+└── sidebars.js            # Autogenerated sidebar; metadata from menu-config.json
+```
 
-#### Fast Development (Local Content Only)
+## How it works
+
+- **Docs** are committed under `docs/` (the current "dev" version). The sidebar is
+  autogenerated from the folder tree; labels, order, and collapse come from
+  [`menu-config.json`](menu-config.json). See [Contributing to the Docs](docs/contributing.md).
+- **Versioning** is native. The latest release (**0.8**) is served at `/docs`, older releases
+  at `/docs/<version>` (e.g. `/docs/0.7`), and the dev docs at `/docs/dev`. The version
+  dropdown sits in the navbar. Cut a new frozen release with `npm run version:cut -- 0.9`.
+- **Landing page** is a React port of the design under `src/landing/`. Its Tailwind is
+  compiled and scoped to `.llmd-frame` so it can't leak into the docs — regenerate it after
+  editing with `npm run landing:css`.
+- **Footer & navbar.** The footer is the landing footer, reused on every page via a swizzled
+  `@theme/Footer` (`src/theme/Footer`). The navbar (Docs, Blog, Contributing, Community, the
+  version dropdown, GitHub stars, Slack) is configured in `docusaurus.config.js`.
+- **How-to Guides** are the `../guides` recipe READMEs rendered in-site; the "deploy" links
+  in the well-lit-path docs point to them, in the same version.
+- **Markdown fixups** run at build time (`scripts/lib/preprocess.mjs`) so source files stay
+  clean: out-of-tree links → GitHub, relative `<img>` → `/img/docs/…`, and so on.
+- **Community** `contribute` / `code-of-conduct` / `security` / `sigs` pages are generated
+  from repo-root files (`CONTRIBUTING.md`, …) by `node scripts/sync-community.mjs`.
+
+## Editing content
+
+- **Docs** — add or edit Markdown under `docs/`. Full guide: [Contributing to the Docs](docs/contributing.md).
+- **Blog** — add an `.mdx` post under `blog/`.
+- **Landing** — edit `src/landing/`, then run `npm run landing:css`.
+
+## CI and validation
+
+PRs that touch `website/` run automated build and link checks via GitHub Actions (`ci-website-test`).
+
+**Full CI pipeline** (build + link check):
 
 ```bash
-npm start
+cd website
+npm ci
+npm run ci          # full pipeline (build + link check)
 ```
 
-Starts a live development server with hot reload for fast iteration on:
-- Landing pages and blog posts
-- Website configuration
-- Community docs (synced via remote-content plugin)
-
-**Note:** Does NOT include main documentation from llm-d/llm-d (architecture, guides, API reference).
-
-#### Full Site Preview (All Content)
+Individual steps:
 
 ```bash
-# Build everything once (includes all synced docs — clones llm-d/llm-d from GitHub)
-npm run build:all
-
-# Serve the built site
-npm run serve
+npm run build:all    # landing:css + docusaurus build → build/
+npm run check-links  # crawl built site, write broken-links-report.md
+npm run test:images  # verify images load over HTTP
+npm run test:llmd-site  # Go unit tests for tools/llmd-site
 ```
 
-If you have a local clone of `llm-d/llm-d`, point `LLMD_REPO` at it to skip the GitHub clone and use your local files as-is:
+Equivalent Makefile targets: `make ci`, `make build`, `make check-links`, etc.
 
-```bash
-# Use local llm-d clone (fast, no network required, uses current local state)
-LLMD_REPO=~/repos/llm-d npm run build:all
+Optional local config: copy `link-checker.config.json.example` to `link-checker.config.json` (gitignored).
 
-# Use local clone but pull the latest from origin first
-LLMD_REPO=~/repos/llm-d LLMD_FETCH=1 npm run build:all
-```
+## Notes
 
-This is the recommended workflow for previewing the complete site locally, including all documentation synced from llm-d/llm-d. Re-run when you need to refresh synced content.
-
-**What gets built:**
-1. Main site (landing page, blog, community docs via remote-content)
-2. Synced documentation from llm-d/llm-d via `./bin/llmd-site sync`
-3. Preview docs site
-4. Merged build at `build/docs/`
-
-This matches exactly what Netlify and GitHub Actions deploy.
-
-### Building for Production
-
-```bash
-npm run build:all
-```
-
-Generates the complete static site into the `build/` directory. This is the same command used by:
-- **Netlify** (configured in [netlify.toml](netlify.toml))
-- **GitHub Actions** ([.github/workflows/deploy.yml](.github/workflows/deploy.yml))
-- **Local testing** (when you want to verify the full build)
-
-### Link Checking
-
-A tool to validate all links in the built website by running a local server and checking links via HTTP requests.
-
-#### Quick Start
-
-```bash
-# 1. Build the site first
-npm run build:all
-
-# 2. Run the link checker
-npm run check-links
-```
-
-The link checker will:
-1. Start a local Docusaurus server
-2. Crawl all pages starting from the homepage
-3. Check all links via HTTP requests
-4. Generate a `broken-links-report.md` file in the root directory
-5. Stop the server automatically
-
-#### Features
-
-- 🚀 **Server-based validation** - Starts local server and checks links via HTTP (matches production behavior)
-- 🕷️ **Web crawler** - Discovers all pages by following internal links from homepage
-- ✅ **Internal link validation** - Checks all internal page links, images, and assets
-- 🗺️ **Source mapping** - Shows which upstream file needs fixing (llm-d/llm-d or local)
-- 📊 **Detailed reporting** - Broken links grouped by page and category
-- ⚡ **Fast** - Uses regex-based parsing and concurrent HTTP requests
-- 🔧 **Configurable** - Optional config file for customization
-
-#### Configuration
-
-The link checker uses sensible defaults and runs without configuration in GitHub Actions. For local development, you can optionally create a `link-checker.config.json` file in the root directory to customize behavior:
-
-```json
-{
-  "serverPort": 3333,
-  "checkExternalLinks": false,
-  "ignorePatterns": [
-    "https://example.com/draft",
-    "/docs/draft/"
-  ],
-  "externalTimeout": 10000,
-  "maxConcurrent": 10
-}
-```
-
-**Available Options:**
-- `serverPort` (default: `3333`) - Port for the local Docusaurus server
-- `checkExternalLinks` (default: `false`) - Whether to validate external URLs (slow and often blocked)
-- `ignorePatterns` (default: `[]`) - Array of URL patterns to skip
-- `externalTimeout` (default: `10000`) - Timeout in milliseconds for external requests
-- `maxConcurrent` (default: `10`) - Maximum concurrent external requests
-
-**Note:** The config file is gitignored and only used for local customization.
-
-#### Report Format
-
-The generated report shows:
-- Summary (total pages crawled, links found, broken links)
-- Broken links grouped by source page
-- Source file information (which repo to fix the issue in)
-- Categorized summary (internal, external, images)
-
-Example:
-```markdown
-### /videos
-
-**Source:** Local (this repository)
-
-- 🔗 `/docs/guide` → **HTTP 404** (link)
-```
-
-#### GitHub Actions Integration
-
-The link checker runs automatically on every PR via [.github/workflows/test-deploy.yml](.github/workflows/test-deploy.yml).
-
-To view the report:
-1. Go to the PR's "Checks" tab
-2. Find the "Test deployment" workflow
-3. Download the "broken-links-report" artifact
-
-The check uses `continue-on-error: true` so it won't fail the build.
-
-#### Common Issues
-
-**Issue: `/docs/guide` → HTTP 404**
-- Link points to a page that doesn't exist
-- Fix: Update the link to point to the correct page, create the missing page, or remove the link
-
-**Issue: HTTP 404 for valid-looking URLs**
-- Docusaurus has specific routing rules
-- URLs like `/blog/index` or `/docs/getting-started/index` don't work
-- Fix: Remove `/index` from URLs - Docusaurus handles this automatically
-
-**Issue: Server fails to start**
-- Error: `Server start timeout` or `EADDRINUSE`
-- Solution: Something is using port 3333. Either stop the other service or configure a different port in `link-checker.config.json`
-
-**Issue: External links showing 403/999 errors**
-- Many sites (Twitter, LinkedIn, Reddit) block automated requests
-- These links may work in browsers but fail in the checker
-- Solution: Add them to `ignorePatterns` or manually test them
-
-## 📝 Making Changes
-
-### Editing Local Content
-
-Content written directly in this repository:
-- Blog posts (`blog/`)
-- Landing pages (`src/pages/`)
-- Website configuration (`docusaurus.config.js`)
-
-Edit these files directly in this repository and submit a PR.
-
-### Editing Remote Content
-
-Remote content is synced from `llm-d/llm-d` repository.
-
-**To update remote content:**
-1. Find the source file using the "Content Source" banner at the bottom of the page
-2. Click "edit the source file" to make changes in the llm-d/llm-d repository
-3. Submit PR to llm-d/llm-d
-4. Once merged, changes will appear on the website after the next deployment
-
-### Adding New Community Documentation
-
-To add a new community file (e.g., `GOVERNANCE.md`):
-
-1. **Create the remote source config** at `remote-content/remote-sources/community/governance.js`:
-
-```javascript
-import { createContentWithSource, createStandardTransform, getLlmdRepoConfig } from '../utils.js';
-
-const { sourceBaseUrl } = getLlmdRepoConfig();
-const contentTransform = createStandardTransform();
-
-export default [
-  'docusaurus-plugin-remote-content',
-  {
-    name: 'governance',
-    sourceBaseUrl,
-    outDir: 'community',
-    documents: ['GOVERNANCE.md'],
-    noRuntimeDownloads: false,
-    performCleanup: true,
-
-    modifyContent(filename, content) {
-      if (filename === 'GOVERNANCE.md') {
-        return createContentWithSource({
-          title: 'Project Governance',
-          description: 'Governance structure for the llm-d project',
-          sidebarLabel: 'Governance',
-          sidebarPosition: 6,
-          filename: 'GOVERNANCE.md',
-          newFilename: 'governance.md',
-          content,
-          contentTransform
-        });
-      }
-      return undefined;
-    },
-  },
-];
-```
-
-2. **Import and add to remote-content.js**:
-
-```javascript
-import governanceSource from './remote-sources/community/governance.js';
-
-const remoteContentPlugins = [
-  contributeSource,
-  codeOfConductSource,
-  securitySource,
-  sigsSource,
-  governanceSource,  // Add here
-];
-```
-
-3. **Test locally**:
-```bash
-npm run build
-```
-
-### Adding Main Documentation
-
-Main documentation (architecture, guides, API reference) is synced via `./bin/llmd-site sync` and [`docs-sync.yaml`](docs-sync.yaml).
-
-**To add new main documentation:**
-1. Add the file to `llm-d/llm-d` repository in the appropriate location
-2. Update `docs-sync.yaml` to copy the new file
-3. Test the sync:
-   ```bash
-   # Using a local llm-d clone (recommended — no network required)
-   LLMD_REPO=~/repos/llm-d npm run build:all
-
-   # Or sync only, then build
-   LLMD_REPO=~/repos/llm-d ./bin/llmd-site sync main --local
-   cd preview && npm run build
-   ```
-
-## 🚀 Deployment
-
-The website is automatically deployed when:
-- PRs are merged to `main` branch
-- Scheduled rebuild runs (syncs latest content from llm-d/llm-d)
-
-Preview builds are available for all PRs via Netlify.
-
-## 🔍 Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| Build errors | Check that all remote sources are accessible from llm-d/llm-d |
-| Content not updating | Verify file exists in llm-d/llm-d main branch |
-| Links broken | Ensure links use proper Docusaurus paths or GitHub URLs |
-| Images not showing | Check image paths in `docs-sync.yaml` |
-
-## 📚 Additional Resources
-
-- [Docusaurus Documentation](https://docusaurus.io/)
-- [llm-d Main Repository](https://github.com/llm-d/llm-d)
-- [Contributing Guidelines](https://llm-d.ai/docs/community/contribute)
-
-
-## License
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fllm-d%2Fllm-d.github.io.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fllm-d%2Fllm-d.github.io?ref=badge_large)
+- A few harmless anchor warnings remain at build time (GitHub vs. Docusaurus heading slugs in
+  vendored content).

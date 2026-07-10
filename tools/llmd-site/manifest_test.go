@@ -20,8 +20,8 @@ func TestManifestFromRepo(t *testing.T) {
 	if err := m.Validate(); err != nil {
 		t.Fatalf("validate: %v", err)
 	}
-	if len(m.Copies) < 50 {
-		t.Fatalf("expected at least 50 copy rules, got %d", len(m.Copies))
+	if len(m.Community) < 4 {
+		t.Fatalf("expected at least 4 community entries, got %d", len(m.Community))
 	}
 }
 

@@ -1,0 +1,10 @@
+{
+  "buildDir": "build",
+  "serverPort": 3333,
+  "serverHost": "localhost",
+  "checkExternalLinks": false,
+  "checkGitHubLinks": true,
+  "maxConcurrent": 10,
+  "externalTimeout": 10000,
+  "ignorePatterns": []
+}

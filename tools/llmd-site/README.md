@@ -1,6 +1,6 @@
 # llmd-site — Go orchestrator for llm-d.github.io
 
-Phase 1–3: manifest, sync, build orchestration, and golden tests.
+Native CLI for the single-site Docusaurus build: sync docs from `llm-d/llm-d`, build, and validate links/images.
 
 ## Build
 
@@ -15,112 +15,46 @@ cd tools/llmd-site && go build -o ../../bin/llmd-site ./cmd/llmd-site
 | Command | Description |
 |---------|-------------|
 | `llmd-site validate` | Validate `docs-sync.yaml` |
-| `llmd-site sync [branch]` | Sync docs (native Go, Phase 2.1) |
+| `llmd-site sync [branch]` | Mirror upstream `docs/**` into `docs/` + community pages |
 | `llmd-site sync --local` | Sync using `llmd-site.local.yaml` upstream path |
-| `llmd-site build [branch]` | **Phase 3** — full site build (replaces `build-all.sh`) |
-| `llmd-site build --parallel 3` | Build release branches concurrently |
+| `llmd-site build` | `npm run landing:css` + `npm run build` (native versioning) |
 | `llmd-site golden capture main` | Snapshot sync output checksums |
 | `llmd-site golden verify main` | Compare sync output to golden |
-| `llmd-site check links` | **Phase 4** — crawl built site, validate links, write report |
-| `llmd-site check images` | Verify all images load via HTTP |
-| `llmd-site ci [branch]` | Full CI pipeline: `build` + `check links` |
-| `llmd-site blog stamp [files...]` | Set blog frontmatter `date` on publish (see workflow) |
+| `llmd-site check links` | Crawl built site, validate links, write report |
+| `llmd-site check images` | Verify images load via HTTP |
+| `llmd-site ci [branch]` | Sync + build + link check |
+| `llmd-site blog stamp [files...]` | Set blog frontmatter `date` on publish |
 
-## Phase 4: `llmd-site check`
-
-Native reimplementation of `legacy/scripts/check-links.mjs` and `legacy/tests/image_verifier.js`:
+## Typical workflow
 
 ```bash
-make build-all          # build site first
-make check-links        # llmd-site check links
-llmd-site check images
+make sync-docs          # llmd-site sync main
+make build              # llmd-site build
+make check-links        # after build
+make ci                 # full pipeline
 ```
 
-- Starts `docusaurus serve` on port 3333 (configurable via `link-checker.config.json`)
-- Seeds crawl from sitemaps; auto-ignores versioned `/docs/X.Y.Z/` paths
-- Validates internal links + GitHub links (with `GITHUB_TOKEN`)
-- Writes `broken-links-report.md`; upserts PR comment in CI
-- Source map built from `docs-sync.yaml` (not sync-docs.sh)
+## Link checking
 
-## Phase 3: `llmd-site build`
+- Default **static file server** (fast); set `serveMode: docusaurus` in `link-checker.config.json` to use `docusaurus serve`
+- Parallel BFS crawl with shared HTTP client and result cache
+- Writes `broken-links-report.md`; upserts PR comment in CI when `GITHUB_TOKEN` is set
 
-Native reimplementation of `legacy/scripts/build-all.sh`:
+## Sync
 
-1. Sync dev docs (`llmd-site sync`)
-2. `npm run build` — main site
-3. Discover `release-*` branches, build dev docs subsite
-4. Parallel release worktree builds with UX overlay + link fixups from `docs-sync.yaml`
-5. Merge search index via `scripts/merge-search-index.mjs`
-
-```bash
-make build-all          # llmd-site build main
-llmd-site build main
-LLMD_REPO=~/repos/llm-d llmd-site build --local
-```
-
-| `llmd-site check images` | Verify all images load via HTTP |
-
-## Phase 5: CI cutover
-
-Workflows use the composite action [`.github/actions/setup-llmd-site`](../../.github/actions/setup-llmd-site/action.yml) and invoke the CLI directly:
-
-| Workflow | Command |
-|----------|---------|
-| `test-deploy.yml` | `./bin/llmd-site ci main` |
-| `deploy.yml` | `./bin/llmd-site build main` |
-| `sync-release-docs.yml` | `./bin/llmd-site sync` |
-| `blog-stamp-dates.yml` | `./bin/llmd-site blog stamp` on new posts merged to main |
-| `create-release-branch.yml` | `./bin/llmd-site sync` |
-| `image-verification.yml` | `./bin/llmd-site check images` |
-
-Local equivalents:
-
-```bash
-npm run build:all    # make build-all → llmd-site build
-npm run check-links  # make check-links → llmd-site check links
-make ci              # llmd-site ci (build + link check)
-```
-
-Legacy scripts live under [`legacy/`](../../legacy/README.md) for reference and golden `--legacy` baselines.
-
-## Phase 2.1: native Go sync
-
-`llmd-site sync` is fully native Go — no embedded bash, no `sync-docs.sh` delegation:
-
-1. **Go** resolves upstream (`--local`, shallow clone, or `LLMD_REPO`)
-2. **Go** copies from `docs-sync.yaml` (manifest-driven copies, conditionals, slugs)
-3. **Go** applies link fixups from `transform_rules` in `docs-sync.yaml`
-4. **Go** applies MDX transforms via `internal/transform/`
-5. **Go** writes `sync-report.json`
-
-Golden tests compare Go output to legacy `sync-docs.sh`:
-
-```bash
-llmd-site golden capture main --legacy   # baseline from sync-docs.sh
-llmd-site golden verify main             # verify Go engine matches
-```
-
-## Golden tests
-
-Requires a local `llm-d/llm-d` clone (or uses shallow clone from GitHub):
-
-```bash
-export LLMD_REPO=~/repos/llm-d
-llmd-site golden capture main
-llmd-site golden verify main
-```
-
-## Local config
-
-Copy `llmd-site.local.yaml.example` to `llmd-site.local.yaml` (gitignored) and set upstream paths for `--local` mode.
+- Mirrors upstream `docs/**` verbatim into `docs/` (link fixups run at build time via `scripts/lib/preprocess.mjs`)
+- Copies doc images to `static/img/docs/`
+- Regenerates `community/*.md` from upstream repo-root files
+- `--refresh-upstream` bypasses shallow-clone cache for remote syncs
 
 ## Manifest
 
-[`docs-sync.yaml`](../../docs-sync.yaml) at repo root is the single source of truth for sync configuration. Edit it directly (no code generation from legacy scripts):
+[`docs-sync.yaml`](../../docs-sync.yaml) lists upstream sources and community mirror pages. Edit it directly.
 
-- Upstream copy mappings
-- Published URL slugs
-- Edit URL mappings
-- Conditional layout branches (foundations vs capabilities)
-- Release-branch link fixups
-- Post-copy transform rules (`transform_rules`)
+## Local config
+
+Copy `llmd-site.local.yaml.example` to `llmd-site.local.yaml` (gitignored) for `--local` upstream paths.
+
+## Legacy
+
+Archived bash/Node scripts live under [`legacy/`](../../legacy/README.md). `golden capture --legacy` compares against archived `sync-docs.sh` (writes `preview/docs/`).

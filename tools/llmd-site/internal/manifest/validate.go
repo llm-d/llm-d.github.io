@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// Validate checks manifest invariants for Phase 1.
+// Validate checks manifest invariants.
 func (m *Manifest) Validate() error {
 	if m.Version != CurrentVersion {
 		return fmt.Errorf("unsupported manifest version %d (expected %d)", m.Version, CurrentVersion)
@@ -17,7 +17,6 @@ func (m *Manifest) Validate() error {
 		return fmt.Errorf("sources.llm-d.remote.docs_root is required")
 	}
 
-	seenTo := map[string]int{}
 	for i, c := range m.Copies {
 		if c.From == "" {
 			return fmt.Errorf("copies[%d]: from is required", i)
@@ -25,10 +24,6 @@ func (m *Manifest) Validate() error {
 		if c.To == "" {
 			return fmt.Errorf("copies[%d]: to is required", i)
 		}
-		if prev, ok := seenTo[c.To]; ok && c.When == "" && m.Copies[prev].When == "" {
-			return fmt.Errorf("duplicate copy destination %q at copies[%d] and copies[%d]", c.To, prev, i)
-		}
-		seenTo[c.To] = i
 	}
 
 	for i, s := range m.Slugs {
@@ -46,21 +41,10 @@ func (m *Manifest) Validate() error {
 		}
 	}
 
-	for i, g := range m.TransformRules {
-		if g.Scope == "" {
-			return fmt.Errorf("transform_rules[%d]: scope is required", i)
-		}
-		for j, r := range g.Rules {
-			if r.Pattern == "" {
-				return fmt.Errorf("transform_rules[%d].rules[%d]: pattern is required", i, j)
-			}
-		}
-	}
-
 	return nil
 }
 
-// SourceMap returns local preview/docs path -> upstream path for link checker use.
+// SourceMap returns local docs/ path -> upstream path for link checker use.
 func (m *Manifest) SourceMap() map[string]string {
 	out := make(map[string]string, len(m.Copies)+len(m.EditURLs))
 	for _, c := range m.Copies {
@@ -73,7 +57,7 @@ func (m *Manifest) SourceMap() map[string]string {
 		if e.Match == "" || e.Upstream == "" {
 			continue
 		}
-		key := strings.TrimPrefix(e.Match, "preview/docs/")
+		key := strings.TrimPrefix(e.Match, "docs/")
 		out[key] = e.Upstream
 	}
 	return out

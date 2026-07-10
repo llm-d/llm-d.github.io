@@ -8,7 +8,10 @@ import (
 
 func benchDocContent(tb testing.TB) string {
 	tb.Helper()
-	data, err := os.ReadFile("../../../preview/docs/architecture/index.md")
+	data, err := os.ReadFile("../../../docs/architecture/index.md")
+	if err != nil {
+		data, err = os.ReadFile("../../../versioned_docs/version-0.8/architecture/index.md")
+	}
 	if err != nil {
 		return strings.Repeat("# Architecture\n\nSee [guide](../guides/foo.md) and ![img](../../assets/x.png).\n", 200)
 	}
