@@ -1,0 +1,231 @@
+# Transformation Test Document
+
+This document contains examples of all markdown transformations that should occur during the sync process.
+
+## 1. GitHub Callouts Test
+
+> [!NOTE]
+> This is a note callout that should transform to `:::note`.
+
+> [!TIP]
+> This is a tip callout that should transform to `:::tip`.
+
+> [!IMPORTANT]
+> This is an important callout that should transform to `:::important`.
+
+> [!WARNING]
+> This is a warning callout that should transform to `:::warning`.
+
+> [!CAUTION]
+> This is a caution callout that should transform to `:::caution`.
+
+## 2. Multi-line Callout Test
+
+> [!NOTE]
+> This is a multi-line note callout.
+> It spans multiple lines.
+> All lines should be included in the transformation.
+
+## 3. Custom Tabs Test
+
+<!-- TABS:START -->
+
+<!-- TAB:First Tab:default -->
+### First Tab Content
+
+This is the content of the first tab.
+It should be marked as default.
+
+```bash
+echo "First tab code block"
+```
+
+<!-- TAB:Second Tab -->
+### Second Tab Content
+
+This is the content of the second tab.
+
+- List item 1
+- List item 2
+- List item 3
+
+<!-- TAB:Third Tab (Complex Name) -->
+### Third Tab with Complex Name
+
+This tab has parentheses and spaces in the label.
+The value should be `third-tab-complex-name`.
+
+<!-- TABS:END -->
+
+## 4. Nested Content in Tabs Test
+
+<!-- TABS:START -->
+
+<!-- TAB:AWS EKS:default -->
+#### Deploy on AWS
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-service
+```
+
+See [documentation](./link.md) for more details.
+
+> [!NOTE]
+> This note is inside a tab!
+
+<!-- TAB:Google GKE -->
+#### Deploy on GKE
+
+```bash
+gcloud container clusters create my-cluster
+```
+
+<!-- TABS:END -->
+
+## 5. Image Path Test
+
+Images with relative paths should be transformed:
+
+![Test Image](../assets/test-image.svg)
+![Another Image](../../assets/nested/another-image.png)
+
+## 6. MDX Escape Test
+
+This should escape arrows: <->
+
+## 6b. Autolink Test
+
+Bare HTTPS autolink: <https://github.com/llm-d/llm-d/issues/680>
+
+Bare HTTP autolink: <http://example.com/path/to/page>
+
+A link already in markdown format should be unchanged: [llm-d](https://github.com/llm-d)
+
+## 7. HTML Image Tag Test
+
+Images with unquoted attributes should be quoted for MDX:
+
+<p align="center">
+  <img alt="Test" src="../assets/test.svg" width=95%>
+</p>
+
+<img src="../assets/another.png" height=200>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)">
+    <img alt="Test Arch" src="../assets/arch.svg" width=90%>
+  </picture>
+</p>
+
+## 8. HTML Comment Test
+
+<!-- This is a regular HTML comment that should be converted to MDX -->
+
+Some text here.
+
+<!-- Another comment with special chars: <, >, &, etc. -->
+
+## 9. Regular Markdown Test
+
+This section tests that regular markdown is NOT transformed:
+
+**Bold text** should remain bold.
+
+*Italic text* should remain italic.
+
+- Unordered lists
+- Should work fine
+
+1. Ordered lists
+2. Should also work
+
+```javascript
+// Code blocks should not be touched
+const test = "value";
+```
+
+## 9. Edge Cases
+
+### Empty Tab
+
+<!-- TABS:START -->
+
+<!-- TAB:Empty Tab:default -->
+
+<!-- TABS:END -->
+
+### Single Tab
+
+<!-- TABS:START -->
+
+<!-- TAB:Only Tab:default -->
+This is the only tab.
+
+<!-- TABS:END -->
+
+### Tab with Special Characters
+
+<!-- TABS:START -->
+
+<!-- TAB:GKE (H100/H200):default -->
+Content for H100/H200 GPUs.
+
+<!-- TAB:CoreWeave @ US-East -->
+Content with @ symbol.
+
+<!-- TABS:END -->
+
+## 10. Well-Lit Paths Link Transformations
+
+Test that well-lit-paths links are transformed correctly:
+
+Single level up:
+[Optimized Baseline](../well-lit-paths/optimized-baseline.md)
+
+Two levels up:
+[PD Disaggregation](../../well-lit-paths/pd-disaggregation.md)
+
+Index/README:
+[All Guides](../../well-lit-paths/README.md)
+
+With any number of parent directories:
+[Guide Link](../../../well-lit-paths/flow-control.md)
+
+New subdirectory layout (capabilities/):
+[Tiered Cache](../well-lit-paths/capabilities/tiered-prefix-cache.md)
+
+New subdirectory layout (operations/):
+[Flow Control](../../well-lit-paths/operations/flow-control.md)
+
+New subdirectory layout (workloads/batch-serving/):
+[Batch Gateway](../well-lit-paths/workloads/batch-serving/batch-gateway.md)
+
+New subdirectory layout (workloads/):
+[Agentic Serving](../well-lit-paths/workloads/agentic-serving.md)
+
+## 11. README.md Link Transformations
+
+Test that README links are transformed correctly:
+
+Link to accelerators README:
+[Accelerators](../../accelerators/README.md)
+
+Link to architecture router epp README:
+[EPP](../architecture/core/router/epp/README.md)
+
+Link to KV management README:
+[KV Management](../../architecture/advanced/kv-management/README.md)
+
+Synced upstream guide (precise-prefix-cache-routing):
+[Precise Routing](../../../../../guides/precise-prefix-cache-routing/README.md)
+
+Synced upstream guide under old name (precise-prefix-cache-aware → routing):
+[Precise Routing Aware](../../../../../guides/precise-prefix-cache-aware/README.md)
+
+Non-synced upstream guide (multimodal → GitHub):
+[Multimodal Guide](../../guides/multimodal/optimized-baseline/README.md)
+
