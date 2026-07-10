@@ -2,28 +2,19 @@
 /**
  * bake-docs.mjs — apply the build-time Markdown preprocessor to docs/ IN PLACE.
  *
- * The dev docs/ are kept pristine and fixed up at render time by
+ * LEGACY: manual release prep only. Dev docs/ are fixed up at render time by
  * scripts/lib/preprocess.mjs (wired as markdown.preprocessor). Versioned
  * snapshots under versioned_docs/ are NOT run through that preprocessor, so
- * before cutting a version we "bake" the same fixups into the source files:
- * relative doc links stay relative (Docusaurus resolves them within the
- * version), guide links point to GitHub, <img> srcs point at /img/docs/<rel>,
- * and MDX braces are escaped. Run this on docs/ right before `docusaurus
- * docs:version <v>` so the frozen version renders with correct links/assets.
+ * before cutting a version we "bake" the same fixups into the source files.
  *
- *   node scripts/bake-docs.mjs [docsDir] [--img-base <base>]
- *
- * --img-base rebases the /img/docs/ image URLs the preprocessor emits (default
- * "/img/docs/"). For a versioned cut pass e.g. --img-base /img/versioned/0.8/
- * so the frozen version's <img> srcs point at that version's committed images
- * (static/img/versioned/0.8/…) instead of the synced dev images.
+ *   node legacy/scripts/bake-docs.mjs [docsDir] [--img-base <base>]
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { makeDocsPreprocessor } from './lib/preprocess.mjs';
+import { makeDocsPreprocessor } from '../../scripts/lib/preprocess.mjs';
 
-const siteDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const siteDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const args = process.argv.slice(2);
 let imgBase = '/img/docs/';
 const positional = [];

@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 /**
- * validate-menu-config.mjs — check menu-config.json against docs/ tree.
+ * validate-menu-config.mjs — check docs/menu-config.json against docs/ tree.
+ *
+ * LEGACY: manual validation only (not run in CI). Build-time sidebar wiring
+ * lives in scripts/lib/sidebar.mjs via docusaurus.config.js.
  */
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadMenuConfig, validateMenuConfig } from './lib/sidebar.mjs';
 
-const websiteDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const config = loadMenuConfig(path.join(websiteDir, 'menu-config.json'));
+const websiteDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const config = loadMenuConfig(path.join(websiteDir, 'docs', 'menu-config.json'));
 const docsDir = path.join(websiteDir, 'docs');
 
 /** @type {string[]} */

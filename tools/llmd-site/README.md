@@ -23,6 +23,7 @@ cd tools/llmd-site && go build -o ../../bin/llmd-site ./cmd/llmd-site
 | `llmd-site check links` | Crawl built site, validate links, write report |
 | `llmd-site check images` | Verify images load via HTTP |
 | `llmd-site ci [branch]` | Sync + build + link check |
+| `llmd-site version cut <x.y>` | Freeze dev docs as a released version (bake + `docs:version` + resync) |
 | `llmd-site blog stamp [files...]` | Set blog frontmatter `date` on publish |
 
 ## Typical workflow

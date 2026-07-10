@@ -1,4 +1,4 @@
-.PHONY: llmd-site test-llmd-site validate-manifest sync-docs build build-all check-links check-images ci golden-capture golden-verify
+.PHONY: llmd-site test-llmd-site validate-manifest sync-docs build build-all check-links check-images ci golden-capture golden-verify version-cut
 
 LLMD_SITE_DIR := tools/llmd-site
 LLMD_SITE_BIN := bin/llmd-site
@@ -38,3 +38,6 @@ check-images: llmd-site
 
 ci: llmd-site
 	./$(LLMD_SITE_BIN) ci main
+
+version-cut: llmd-site
+	./$(LLMD_SITE_BIN) version cut $(VERSION)

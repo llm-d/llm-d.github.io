@@ -12,7 +12,7 @@ const GITHUB_REPO = 'https://github.com/llm-d/llm-d';
 // Self-adjusting versioning: derive the version map from versions.json (which
 // docusaurus writes newest-first). The newest release is served at /docs and the
 // rest at /docs/<version>; the committed dev docs/ are the unreleased "dev"
-// version at /docs/dev. Reading the file lets `npm run version:cut` recreate
+// version at /docs/dev. Reading the file lets `llmd-site version cut` recreate
 // versioned_docs/ without the config hard-coding a version that may be absent.
 const siteDir = path.dirname(fileURLToPath(import.meta.url));
 // menu-config.json is authored in llm-d/llm-d (docs/menu-config.json) and synced

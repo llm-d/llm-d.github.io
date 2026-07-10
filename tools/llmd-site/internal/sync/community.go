@@ -16,7 +16,7 @@ import (
 // Community mirror pages. Each entry in docs-sync.yaml community: mirrors an
 // upstream repo-root file into community/, wrapped with frontmatter + a "source"
 // admonition. Unlike docs/, community/ is NOT processed by preprocess.mjs, so
-// links are rewritten here (via the same semantics as scripts/lib/rewrite.mjs).
+// links are rewritten here (ported from legacy/scripts/lib/rewrite.mjs).
 
 var reLeadingH1 = regexp.MustCompile(`^\s*#\s+.*\n`)
 
@@ -99,7 +99,7 @@ func jsonString(s string) string {
 	return strings.TrimRight(buf.String(), "\n")
 }
 
-// rewriter ports scripts/lib/rewrite.mjs createRewriter (relativeDocLinks:false).
+// rewriter ports legacy/scripts/lib/rewrite.mjs createRewriter (relativeDocLinks:false).
 type rewriter struct {
 	repo    string // upstream repo root (for existence checks)
 	pathMap map[string]string
@@ -232,7 +232,7 @@ func (r *rewriter) isDir(repoRel string) bool {
 }
 
 // toSiteDocURL maps a repo-relative doc path to its absolute site URL
-// (/docs/… or /docs/guides/…), matching rewrite.mjs toSiteDocUrl.
+// (/docs/… or /docs/guides/…), matching legacy rewrite.mjs toSiteDocUrl.
 func (r *rewriter) toSiteDocURL(repoRel string) string {
 	var rel string
 	if strings.HasPrefix(repoRel, "guides/") {

@@ -19,11 +19,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createRewriter } from '../../scripts/lib/rewrite.mjs';
+import { createRewriter } from './lib/rewrite.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const WEBSITE = path.resolve(__dirname, '..');
-const REPO = path.resolve(WEBSITE, '..');
+const WEBSITE = path.resolve(__dirname, '../..');
+const REPO = process.env.LLMD_REPO
+  ? path.resolve(process.env.LLMD_REPO)
+  : path.resolve(WEBSITE, '..', 'llm-d');
 const OUT = path.join(WEBSITE, 'community');
 
 const PAGES = [

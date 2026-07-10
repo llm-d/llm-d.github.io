@@ -3,6 +3,7 @@
 
 # Production build output
 /build
+/preview 
 
 # llmd-site CLI
 /bin

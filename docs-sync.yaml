@@ -23,7 +23,6 @@ community:
       title: Contributing to llm-d
       sidebar_label: Contributing
       sidebar_position: 3
-      hide_sidebar: true
     - from: CODE_OF_CONDUCT.md
       to: community/code-of-conduct.md
       title: Code of Conduct
