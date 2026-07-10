@@ -114,20 +114,6 @@ div[class*='announcementBar_'] button[class*='closeButton'] {
   opacity: 0.75;
 }
 
-/* Contributing is a standalone doc (no left sidebar — `displayed_sidebar: null`).
-   Without a sidebar, Docusaurus applies its "enhanced" layout, which widens the
-   article and pulls it to the far-left edge. Re-align it to the normal doc
-   content column so its margins/position match docs and other community pages:
-   reserve the sidebar's width as left space and cap the main container at the
-   same width a sidebar page uses. Only ≥997px (below that all doc pages are
-   full-width already; the sidebar is a drawer). */
-@media (min-width: 997px) {
-  html.docs-doc-id-contribute [class*='docMainContainer'] {
-    margin-left: var(--doc-sidebar-width);
-    max-width: calc(100% - var(--doc-sidebar-width));
-  }
-}
-
 .header-slack-link {
   display: inline-flex;
   align-items: center;
