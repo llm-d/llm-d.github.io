@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// Community mirror pages. These reproduce legacy/scripts/sync-community.mjs: the
+// Community mirror pages. These reproduce scripts/sync-community.mjs: the
 // contributing / code-of-conduct / security / SIGs pages mirror the canonical
 // source files at the llm-d repo root, wrapped with frontmatter + a "source"
 // admonition. Unlike docs/, community/ is NOT processed by preprocess.mjs, so
@@ -26,7 +26,7 @@ type communityPage struct {
 }
 
 var communityPages = []communityPage{
-	{Src: "CONTRIBUTING.md", Out: "contribute.md", Title: "Contributing to llm-d", Label: "Contributing", Position: 3},
+	{Src: "CONTRIBUTING.md", Out: "contribute.md", Title: "Contributing to llm-d", Label: "Contributing", Position: 3, HideSidebar: true},
 	{Src: "CODE_OF_CONDUCT.md", Out: "code-of-conduct.md", Title: "Code of Conduct", Label: "Code of Conduct", Position: 4},
 	{Src: "SECURITY.md", Out: "security.md", Title: "Security Policy", Label: "Security", Position: 5},
 	{Src: "SIGS.md", Out: "sigs.md", Title: "Special Interest Groups (SIGs)", Label: "SIGs", Position: 6},
