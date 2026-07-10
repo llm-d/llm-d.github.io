@@ -23,9 +23,8 @@ const REPO = path.resolve(WEBSITE, '..');
 const OUT = path.join(WEBSITE, 'community');
 
 const PAGES = [
-  // Contributing is also a top-level navbar section and renders as a standalone
-  // page, so it hides the community left sidebar (displayed_sidebar: null).
-  { src: 'CONTRIBUTING.md', out: 'contribute.md', title: 'Contributing to llm-d', label: 'Contributing', position: 3, hideSidebar: true },
+  // Contributing lives inside the Contributing (community) section sidebar.
+  { src: 'CONTRIBUTING.md', out: 'contribute.md', title: 'Contributing to llm-d', label: 'Contributing', position: 3 },
   { src: 'CODE_OF_CONDUCT.md', out: 'code-of-conduct.md', title: 'Code of Conduct', label: 'Code of Conduct', position: 4 },
   { src: 'SECURITY.md', out: 'security.md', title: 'Security Policy', label: 'Security', position: 5 },
   { src: 'SIGS.md', out: 'sigs.md', title: 'Special Interest Groups (SIGs)', label: 'SIGs', position: 6 },

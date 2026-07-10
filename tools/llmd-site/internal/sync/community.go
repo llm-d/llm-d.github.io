@@ -26,7 +26,7 @@ type communityPage struct {
 }
 
 var communityPages = []communityPage{
-	{Src: "CONTRIBUTING.md", Out: "contribute.md", Title: "Contributing to llm-d", Label: "Contributing", Position: 3, HideSidebar: true},
+	{Src: "CONTRIBUTING.md", Out: "contribute.md", Title: "Contributing to llm-d", Label: "Contributing", Position: 3},
 	{Src: "CODE_OF_CONDUCT.md", Out: "code-of-conduct.md", Title: "Code of Conduct", Label: "Code of Conduct", Position: 4},
 	{Src: "SECURITY.md", Out: "security.md", Title: "Security Policy", Label: "Security", Position: 5},
 	{Src: "SIGS.md", Out: "sigs.md", Title: "Special Interest Groups (SIGs)", Label: "SIGs", Position: 6},
