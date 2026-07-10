@@ -16,7 +16,7 @@ The following diagram visualizes how the `InferencePool` resource is involved in
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)">
-    <img src="https://github.com/llm-d/llm-d/raw/main/assets/gateway-design.svg"  alt="InferencePool">
+    <img src="/img/versioned/0.7/assets/gateway-design.svg"  alt="InferencePool">
   </picture>
 </p>
 

@@ -46,9 +46,11 @@ func startStaticServer(cfg Config) (*Server, error) {
 			return
 		}
 		notFound := filepath.Join(buildDir, "404.html")
-		if _, err := os.Stat(notFound); err == nil {
+		if f, err := os.Open(notFound); err == nil {
+			defer f.Close()
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.WriteHeader(http.StatusNotFound)
-			http.ServeFile(w, r, notFound)
+			_, _ = io.Copy(w, f)
 			return
 		}
 		http.NotFound(w, r)
