@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// Community mirror pages. These reproduce scripts/sync-community.mjs: the
+// Community mirror pages. These reproduce legacy/scripts/sync-community.mjs: the
 // contributing / code-of-conduct / security / SIGs pages mirror the canonical
 // source files at the llm-d repo root, wrapped with frontmatter + a "source"
 // admonition. Unlike docs/, community/ is NOT processed by preprocess.mjs, so

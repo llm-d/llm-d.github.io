@@ -10,12 +10,16 @@
  * everything else to GitHub; the four files cross-link to each other under
  * /community via pathMap).
  *
- * Output pages are generated and git-ignored; regenerated on every build.
+ * Output pages are generated and git-ignored.
+ *
+ * LEGACY: no longer part of the build. The Go tool (tools/llmd-site, see
+ * internal/sync/community.go) generates these pages now via
+ * `./bin/llmd-site sync`. Kept here for reference only.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createRewriter } from './lib/rewrite.mjs';
+import { createRewriter } from '../../scripts/lib/rewrite.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WEBSITE = path.resolve(__dirname, '..');

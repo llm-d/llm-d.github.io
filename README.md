@@ -57,7 +57,7 @@ website/
 - **Markdown fixups** run at build time (`scripts/lib/preprocess.mjs`) so source files stay
   clean: out-of-tree links → GitHub, relative `<img>` → `/img/docs/…`, and so on.
 - **Community** `contribute` / `code-of-conduct` / `security` / `sigs` pages are generated
-  from repo-root files (`CONTRIBUTING.md`, …) by `node scripts/sync-community.mjs`.
+  from repo-root files (`CONTRIBUTING.md`, …) by `./bin/llmd-site sync main` or `./bin/llmd-site sync-docs`.
 
 ## Editing content
 
