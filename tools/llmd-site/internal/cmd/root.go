@@ -21,6 +21,11 @@ func NewRoot() *cobra.Command {
 		Long: `Native orchestrator for llm-d.github.io CI/CD.
 
 Sync, build, check, and ci commands replace the legacy bash/Node scripts.`,
+		// App/runtime failures should return clean errors without dumping command
+		// usage; Cobra still shows usage for explicit help requests.
+		SilenceUsage: true,
+		// main() owns final error rendering/exit behavior.
+		SilenceErrors: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			if rootDir != "" {
 				return nil
