@@ -23,6 +23,11 @@ sync-report.json
 /community/security.md
 /community/sigs.md
 
+# Legacy preview subsite generated artifacts (archived; no longer part of active build/deploy).
+/preview/node_modules
+/preview/build
+/preview/docs
+
 # Generated Docusaurus files
 .docusaurus
 .cache-loader
