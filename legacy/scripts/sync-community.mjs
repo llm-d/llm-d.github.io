@@ -10,12 +10,16 @@
  * everything else to GitHub; the four files cross-link to each other under
  * /community via pathMap).
  *
- * Output pages are generated and git-ignored; regenerated on every build.
+ * Output pages are generated and git-ignored.
+ *
+ * LEGACY: no longer part of the build. The Go tool (tools/llmd-site, see
+ * internal/sync/community.go) generates these pages now via
+ * `./bin/llmd-site sync`. Kept here for reference only.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createRewriter } from './lib/rewrite.mjs';
+import { createRewriter } from '../../scripts/lib/rewrite.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WEBSITE = path.resolve(__dirname, '..');
@@ -23,9 +27,8 @@ const REPO = path.resolve(WEBSITE, '..');
 const OUT = path.join(WEBSITE, 'community');
 
 const PAGES = [
-  // Contributing is also a top-level navbar section and renders as a standalone
-  // page, so it hides the community left sidebar (displayed_sidebar: null).
-  { src: 'CONTRIBUTING.md', out: 'contribute.md', title: 'Contributing to llm-d', label: 'Contributing', position: 3, hideSidebar: true },
+  // Contributing lives inside the Contributing (community) section sidebar.
+  { src: 'CONTRIBUTING.md', out: 'contribute.md', title: 'Contributing to llm-d', label: 'Contributing', position: 3 },
   { src: 'CODE_OF_CONDUCT.md', out: 'code-of-conduct.md', title: 'Code of Conduct', label: 'Code of Conduct', position: 4 },
   { src: 'SECURITY.md', out: 'security.md', title: 'Security Policy', label: 'Security', position: 5 },
   { src: 'SIGS.md', out: 'sigs.md', title: 'Special Interest Groups (SIGs)', label: 'SIGs', position: 6 },
