@@ -45,11 +45,11 @@ The common thread is that llm-d's value was *coupled to its platform*. The intel
 
 To see what has to be abstracted, start with how discovery works today. The Endpoint Picker (EPP), the routing engine inside the llm-d router, watches a Kubernetes `InferencePool` object and the pods it selects. As pods come and go, the EPP's internal datastore is updated automatically through the controller-runtime manager.
 
-That machinery requires a live Kubernetes API server, an `InferencePool` CRD, and the RBAC to watch it. On a Slurm allocation or inside a Ray job, none of that exists - and crucially, none of it has anything to do with *how the router scores and picks endpoints*. It is purely about learning which endpoints are out there. That separation is the seam to cut along.
+That machinery requires a live Kubernetes API server, an `InferencePool` CRD, and the RBAC to watch it. On a Slurm allocation or inside a Ray job, none of that exists - and crucially, none of it has anything to do with *how the router scores and picks endpoints*. It is purely about learning which endpoints are out there. That separation is the boundary that the new `EndpointDiscovery` plugin interface formalizes.
 
-## The EndpointDiscovery abstraction
+## The EndpointDiscovery interface
 
-So we cut there. The llm-d EPP now defines a general `EndpointDiscovery` plugin interface: anything that can enumerate endpoints and stream upsert/delete events satisfies it - a file on disk, Consul, etcd, a cloud provider's service-discovery API, or the Kubernetes watch itself.
+The llm-d EPP now defines a general `EndpointDiscovery` plugin interface: anything that can enumerate endpoints and stream upsert/delete events satisfies it - a file on disk, Consul, etcd, a cloud provider's service-discovery API, or the Kubernetes watch itself.
 
 The interface is deliberately small ([`pkg/epp/framework/interface/datalayer/discovery.go`](https://github.com/llm-d/llm-d-router/blob/main/pkg/epp/framework/interface/datalayer/discovery.go)):
 
@@ -82,7 +82,7 @@ The first plugin built on the interface is the simplest possible source of truth
 
 When this plugin is in use, **the EPP has no dependency on any Kubernetes service or object** - no API server, no watchers, no controller manager, no `InferencePool` CRD, no RBAC, no `kubeconfig`. **It runs on a host with no cluster in sight.**
 
-And because the plugin sits below the interface seam, everything above it is unchanged. KV-cache-utilization scoring, prefix-cache affinity, saturation-based admission, FlowControl, and Prometheus metrics all behave exactly as they do on Kubernetes. The router does not know, and does not care, that its endpoints came from a file.
+And because the plugin sits below the interface, everything above it is unchanged. KV-cache-utilization scoring, prefix-cache affinity, saturation-based admission, FlowControl, and Prometheus metrics all behave exactly as they do on Kubernetes. The router does not know, and does not care, that its endpoints came from a file.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/running-llm-d-without-kubernetes/no-kubernetes-deployment.svg" alt="llm-d file-discovery architecture" style={{width: '75%', height: 'auto', border: '1px solid #888', padding: '4px'}} />
@@ -136,7 +136,7 @@ These patterns all keep a file in the loop. For the most dynamic pools we are ex
 
 ## One routing stack, every platform
 
-Because the discovery seam sits below the scheduler, file-discovery mode does not get a *subset* of llm-d - it gets the whole router, unchanged. KV-cache-utilization scoring, prefix-cache affinity, saturation-based admission, FlowControl, and the Prometheus metrics surface all behave exactly as they do on Kubernetes, because none of them ever learn where the endpoints came from. Crucially, this holds for capabilities that do not exist yet: any scoring, filtering, or flow-control logic added above the seam lands once and runs everywhere. There is no "Kubernetes llm-d" and "non-Kubernetes llm-d" to keep in sync - there is one routing stack, and it is platform-invariant by construction. That is the shape Figure 1 sketched at the top: one router underneath, every platform above.
+Because the discovery interface sits below the scheduler, file-discovery mode does not get a *subset* of llm-d - it gets the whole router, unchanged. KV-cache-utilization scoring, prefix-cache affinity, saturation-based admission, FlowControl, and the Prometheus metrics surface all behave exactly as they do on Kubernetes, because none of them ever learn where the endpoints came from. Crucially, this holds for capabilities that do not exist yet: any scoring, filtering, or flow-control logic added above the interface lands once and runs everywhere. There is no "Kubernetes llm-d" and "non-Kubernetes llm-d" to keep in sync - there is one routing stack, and it is platform-invariant by construction. That is the shape Figure 1 sketched at the top: one router underneath, every platform above.
 
 Two things still differ, and both are about *inputs* rather than routing logic. A few features are still configured through Kubernetes CRDs - per-request priority from `InferenceObjective`, and `InferenceModelRewrite`-driven model-name rewriting - so outside Kubernetes they fall back to static configuration or are not yet available; the plan is to move them behind the same plugin pattern as discovery. And *ownership of endpoint lifecycle* changes: on Kubernetes a dying pod leaves the `InferencePool` automatically, while with file discovery detecting a failed worker and rewriting the file is the surrounding orchestrator's job (Ray, Slurm, a custom controller) - in production usually a small health-monitoring agent that drops unavailable workers from the file.
 
