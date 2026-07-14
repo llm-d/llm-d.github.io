@@ -94,7 +94,7 @@ The crossover sits near 2K tokens and the advantage grows with prefix length
 - at 16K the pull is 3.3x faster than recomputing. This is what motivates the
 2048-token producer threshold.
 
-![Pull versus recompute prefill latency by prefix length](/img/blogs/p2p-kv-cache/crossover.png)
+![Pull versus recompute prefill latency by prefix length](../static/img/blogs/p2p-kv-cache/crossover.png)
 *Single-request prefill latency, recompute versus P2P pull, warm mesh. The pull
 costs a near-constant transfer while recompute grows with length; past ~2K
 tokens the pull wins, 3.3x at 16K.*
@@ -109,7 +109,7 @@ tail-latency win. P2P adds nothing on top for a single persistent prefix
 is to make load-balanced routing safe for prefixes that do not fit
 everywhere, which the next scenario measures.
 
-![Hot prefix: request placement and its latency cost](/img/blogs/p2p-kv-cache/hotspot.png)
+![Hot prefix: request placement and its latency cost](../static/img/blogs/p2p-kv-cache/hotspot.png)
 *One hot 16K prefix at 24 req/s. Affinity sends all 5,040 requests to the
 prefix owner and saturates it; load-balanced routing spreads them evenly and
 cuts p50 latency 11x.*
@@ -138,7 +138,7 @@ P2P wins at every rate and the gap grows with load: at 8 req/s, 43% lower
 p50 and 42% lower p95, with TTFT 25-30% lower - the prefix arrives over RDMA
 instead of being recomputed.
 
-![Pool workload latency, P2P versus no-P2P](/img/blogs/p2p-kv-cache/pool-latency.png)
+![Pool workload latency, P2P versus no-P2P](../static/img/blogs/p2p-kv-cache/pool-latency.png)
 *Successful-request latency on the pool workload, identical routing in both
 arms. The only difference is pulling the 16K prefix versus recomputing it; the
 gap widens as recompute pressure builds.*
@@ -164,7 +164,7 @@ GPUs run out either way - but the pull path buys the fleet a fifth of extra
 capacity and a far gentler degradation curve on a workload whose working set
 no single pod can cache.
 
-![Saturation behavior across the three routing arms](/img/blogs/p2p-kv-cache/saturation.png)
+![Saturation behavior across the three routing arms](../static/img/blogs/p2p-kv-cache/saturation.png)
 *Left: achieved versus offered rate. Affinity tracks the offered line (its
 best-case pool); recompute saturates near 10 req/s; P2P holds ~12.6. Right:
 median latency on a log scale - the band between the recompute and P2P curves
