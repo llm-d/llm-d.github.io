@@ -149,16 +149,6 @@ GPUs run out either way - but the pull path buys the fleet a fifth of extra
 capacity and a far gentler degradation curve on a workload whose working set
 no single pod can cache.
 
-### Robustness
-
-Sustained concurrent pull load surfaced three defects in the pull path's
-failure handling - a session-teardown path that stranded in-flight lookups,
-a lookup retry livelock, and an unbounded wait on blocks whose tier write
-never completes. All three are fixed with bounded-wait fallbacks (a stalled
-pull degrades to a local recompute) and validated under the benchmark
-workloads; the write-ups, deterministic reproducer, and patches are in
-[the findings bundle](https://github.com/nilig/llm-d-router/tree/p2p-findings/test/p2p-findings).
-
 ### Future scenarios
 
 * **Session handoff.** Multi-turn conversations with forced pod switches mid-session; measures TTFT for the first turn after a switch, where P2P should convert a full-prefix recompute into a pull.
