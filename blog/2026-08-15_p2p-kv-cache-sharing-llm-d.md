@@ -10,7 +10,8 @@ draft: true
 
 authors:
   - niliguy
-  # TODO: confirm co-authors (connector: liranschour; others?)
+  - liranschour
+  # TODO: third co-author TBD
 
 tags: [blog, kv-cache]
 # TODO: consider adding a dedicated p2p tag to tags.yml
