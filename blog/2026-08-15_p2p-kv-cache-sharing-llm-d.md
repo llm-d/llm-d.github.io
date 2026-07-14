@@ -170,24 +170,35 @@ best-case pool); recompute saturates near 10 req/s; P2P holds ~12.6. Right:
 median latency on a log scale - the band between the recompute and P2P curves
 is the pull's value under overload.*
 
+### Prefill placement under P/D
+
+The same question under P/D disaggregation: 4 prefill + 1 decode
+Llama-3.1-8B, NIXL carrying KV between the legs, same pool workload, three
+prefill-placement arms that differ only in how the prefill worker is chosen.
+Prefix-affinity placement saturates at ~15.7 req/s - on this topology the
+single decode pod's KV intake, not prefill placement, is the ceiling.
+Load-aware placement without P2P saturates at ~11.3 req/s: every cross-pod
+prefill recomputes 16K tokens, and p50 latency reaches 33s. Adding the P2P
+pull recovers the affinity ceiling: ~14.7 req/s, +30% over recompute, with
+p50 5.6s versus 12.2s at 16 req/s. The pull is what makes load-aware prefill
+placement viable under P/D, at a 0.2-0.5s TTFT premium at low rates where
+affinity's pure cache hits win. Zero failures and zero restarts across all
+three arms (15,123 requests).
+
+![P/D prefill placement, three arms](../static/img/blogs/p2p-kv-cache/pd-placement.png)
+*Three prefill-placement strategies on the P/D topology. Without the pull,
+load-aware placement is recompute-bound at 11.3 req/s; with it, throughput
+returns to the decode-bound affinity ceiling.*
+
 ### Future scenarios
 
+* **Prefill placement under skew.** The pool above is uniformly popular -
+  affinity's best case. Under a skewed prefix distribution affinity
+  concentrates prefill on the hot prefix's owner; load-aware placement plus
+  the pull should win latency as well as balance. Measures per-worker
+  prefill load balance and p99 TTFT.
 * **Session handoff.** Multi-turn conversations with forced pod switches mid-session; measures TTFT for the first turn after a switch, where P2P should convert a full-prefix recompute into a pull.
 * **Scale-out warmup.** Add a cold replica under steady shared-prefix load; measure its TTFT and external prefix cache hit rate over time versus baseline.
-* **Prefill placement under P/D (first measurement done).** On a 4-prefill +
-  1-decode Llama-3.1-8B deployment (NIXL between the legs, same pool
-  workload), three prefill-placement arms: prefix-affinity, load-aware
-  without P2P, and load-aware plus a P2P pull. Affinity saturates at ~15.7
-  req/s (the single decode pod's KV intake is this topology's ceiling).
-  Load-aware placement without the pull saturates at ~11.3 req/s - every
-  cross-pod prefill recomputes 16K tokens - with p50 latency reaching 33s.
-  Adding the pull recovers the affinity ceiling: ~14.7 req/s (+30% over
-  recompute) with p50 5.6s versus 12.2s at 16 req/s. The pull is what makes
-  load-aware prefill placement viable under P/D, at a 0.2-0.5s TTFT premium
-  at low rates where affinity's pure cache hits win. Zero failures and zero
-  restarts across all three arms (15,123 requests). The skewed-load variant,
-  where affinity concentrates and load-aware placement should also win
-  latency, is the follow-up.
 
 ## Summary and Next Steps
 
