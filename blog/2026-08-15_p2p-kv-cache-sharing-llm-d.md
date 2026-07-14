@@ -66,7 +66,7 @@ This is a small, opt-in scheduling step, off by default. Because it reuses the e
 
 We evaluated P2P KV cache sharing with the llm-d benchmarking framework
 (inference-perf) on an aggregated deployment: 4x Llama-3.1-8B-Instruct, one
-H100 each, KV transfers over NIXL/UCX (RDMA), a 32 GiB CPU offload tier per
+H200 each, KV transfers over NIXL/UCX (RDMA), a 32 GiB CPU offload tier per
 pod, vLLM block size 64. Routing uses the llm-d inference gateway with the
 precise (KV-event-fed) prefix index; the P2P arms add the
 `kv-cache-source-producer` with a 2048-token minimum advantage threshold, so
