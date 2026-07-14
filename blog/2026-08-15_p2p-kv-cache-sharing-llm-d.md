@@ -64,39 +64,105 @@ This is a small, opt-in scheduling step, off by default. Because it reuses the e
 
 ## Benchmarks
 
-{/* TODO: everything in this section is a placeholder - fill in once the
-   benchmark runs are done. Proposed plan below; trim to what we run. */}
-
-We evaluate P2P KV cache sharing with the llm-d benchmarking framework (inference-perf), comparing three configurations on identical hardware and workloads:
-
-1. **Baseline**: prefix-aware routing only (no transfer; misses recompute).
-2. **P2P**: prefix-aware routing plus the `kv-cache-source-producer` and the P2P connector.
-3. **Reference**: single warm pod (upper bound on cache-hit behavior).
-
-The P/D-disaggregated configurations build on the llm-d [P/D disaggregation guide](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation)'s published benchmark - the same model, inference-perf workload template, and serving topology - so P2P is measured as a layer on the established P/D baseline rather than through a fresh harness, and the numbers stay comparable to the guide's.
+We evaluated P2P KV cache sharing with the llm-d benchmarking framework
+(inference-perf) on an aggregated deployment: 4x Llama-3.1-8B-Instruct, one
+H100 each, KV transfers over NIXL/UCX (RDMA), a 32 GiB CPU offload tier per
+pod, vLLM block size 64. Routing uses the llm-d inference gateway with the
+precise (KV-event-fed) prefix index; the P2P arms add the
+`kv-cache-source-producer` with a 2048-token minimum advantage threshold, so
+a pull is only requested when a peer holds at least that many more cached
+prefix tokens than the scheduled pod. {/* Setup: kermit/CoreWeave,
+vLLM nightly + P2P connector branch + the lookup/pending-wait robustness
+fixes; workload = inference-perf shared_prefix. */}
 
 One deployment prerequisite applies to every P2P configuration: vLLM seeds its KV block hashes per process, so all peers must run with the same `PYTHONHASHSEED`. Without it, block hashes never match across pods and P2P silently degrades to zero matches - the protocol runs, but every lookup misses and every prefix is recomputed locally. The external prefix cache hit rate metric is the quickest way to catch this: it stays at zero.
 
-Proposed scenarios:
+### Pull versus recompute (single request)
+
+Prefill latency for a fully cached prefix, recompute versus P2P pull from a
+peer's CPU tier, warm mesh:
+
+| prefix tokens | recompute | P2P pull | delta |
+|---|---|---|---|
+| 1,024 | 30 ms | 34 ms | +11% |
+| 4,096 | 99 ms | 59 ms | -41% |
+| 8,192 | 236 ms | 88 ms | -63% |
+| 16,384 | 503 ms | 155 ms | -69% |
+
+The crossover sits near 2K tokens and the advantage grows with prefix length
+- at 16K the pull is 3.3x faster than recomputing. This is what motivates the
+2048-token producer threshold.
+
+### One hot prefix: routing is the win, P2P is the enabler
+
+With a single hot 16K prefix ramped to 24 req/s, cache-affinity routing
+concentrates all requests on the prefix owner and saturates it (p50 latency
+6.1s at rate 24), while load-balanced routing keeps p50 at 0.53s - an 11x
+tail-latency win. P2P adds nothing on top for a single persistent prefix
+(each pod recomputes it once and it stays resident); its role in this regime
+is to make load-balanced routing safe for prefixes that do not fit
+everywhere, which the next scenario measures.
+
+### Shared-prefix pool: P2P makes load-balancing viable
+
+The headline workload: 64 distinct 16K-token system prompts (a 128 GiB KV
+pool - far more than any single pod caches), 256-token questions, 64 output
+tokens, constant-rate stages. Every request landing on a pod that does not
+hold its prefix must recompute 16K tokens (no P2P) or pull them from the
+holder (P2P). Same load-balanced routing in both arms; cache-affinity
+routing as the reference (64 uniformly popular prefixes spread evenly, so
+affinity balances well here - its best case).
+
+At moderate rates (2-8 req/s), successful-request latency, no-P2P versus
+P2P:
+
+| rate | no-P2P p50 / p95 | P2P p50 / p95 | P2P TTFT p50 vs no-P2P |
+|---|---|---|---|
+| 2 req/s | 0.94s / 2.38s | 0.93s / 1.65s | 0.40s vs 0.57s |
+| 4 req/s | 1.12s / 2.76s | 0.93s / 2.14s | 0.42s vs 0.57s |
+| 6 req/s | 1.53s / 4.62s | 1.07s / 2.62s | 0.56s vs 0.59s |
+| 8 req/s | 2.49s / 6.41s | 1.41s / 3.72s | 0.59s vs 0.79s |
+
+P2P wins at every rate and the gap grows with load: at 8 req/s, 43% lower
+p50 and 42% lower p95, with TTFT 25-30% lower - the prefix arrives over RDMA
+instead of being recomputed.
+
+At high rates the difference is structural. Without P2P, load-balanced
+routing collapses on this pool: recompute demand saturates the fleet near 10
+req/s aggregate, and p50 latency climbs to 44s at rate 24 (TTFT p50 37s).
+Affinity routing stays flat (~0.5-0.6s p50) because this pool is its best
+case. With P2P, load-balanced routing holds:
+
+| offered rate | no-P2P achieved / p50 lat | P2P achieved / p50 lat |
+|---|---|---|
+| 12 req/s | 9.9 req/s / 12.2s | 11.6 req/s / 2.1s |
+| 16 req/s | 10.3 req/s / 21.3s | 12.6 req/s / 7.8s |
+| 20 req/s | 10.1 req/s / 34.3s | 11.6 req/s / 24.6s |
+| 24 req/s | 10.4 req/s / 44.1s | 11.3 req/s / 36.4s |
+
+P2P raises the saturation ceiling by ~22% (12.6 versus 10.3 req/s achieved)
+and delivers up to 83% lower p50 in the 12-16 req/s band where no-P2P has
+already collapsed but P2P still keeps pace, with 30% higher peak token
+throughput (3,184 versus 2,420 tok/s). Both arms eventually saturate - the
+GPUs run out either way - but the pull path buys the fleet a fifth of extra
+capacity and a far gentler degradation curve on a workload whose working set
+no single pod can cache.
+
+### Robustness
+
+Sustained concurrent pull load surfaced three defects in the pull path's
+failure handling - a session-teardown path that stranded in-flight lookups,
+a lookup retry livelock, and an unbounded wait on blocks whose tier write
+never completes. All three are fixed with bounded-wait fallbacks (a stalled
+pull degrades to a local recompute) and validated under the benchmark
+workloads; the write-ups, deterministic reproducer, and patches are in
+[the findings bundle](https://github.com/nilig/llm-d-router/tree/p2p-findings/test/p2p-findings).
+
+### Future scenarios
 
 * **Session handoff.** Multi-turn conversations with forced pod switches mid-session; measures TTFT for the first turn after a switch, where P2P should convert a full-prefix recompute into a pull.
 * **Scale-out warmup.** Add a cold replica under steady shared-prefix load; measure its TTFT and external prefix cache hit rate over time versus baseline.
-* **Shared system prompt fan-out.** Many users sharing a long system prompt (2K-8K tokens) spread across N replicas; measures aggregate throughput and mean/p99 TTFT as the prefix is pulled instead of recomputed per pod.
-* **Prefill placement under P/D.** With P/D disaggregation and a skewed shared-prefix load, vary only the prefill selection strategy: prefix-affinity routing (prefill lands on the pod that already caches the prefix) versus load-aware routing plus a P2P pull (prefill lands on the least-loaded worker, which pulls the prefix from a peer). Affinity concentrates a hot prefix's prefill work onto one worker; the pull lets load-aware placement spread that work while preserving cache reuse. Measures per-worker prefill load balance, p99 TTFT, and throughput at a fixed SLO, with the external prefix cache hit rate held roughly constant across both strategies.
-* **Pull versus recompute crossover.** Single-request TTFT as prefix length grows, P2P pull versus local prefill, to characterize the prompt-length threshold where pulling wins and inform `minCachedBlockDelta` tuning.
-
-Metrics: TTFT (mean/p99), output throughput, external prefix cache hit rate, per-worker prefill load balance, prefill GPU-seconds saved, and transfer time per pulled block.
-
-{/* Setup TODO: match the P/D guide's benchmark - openai/gpt-oss-120b, prefill
-   at TP=1 and decode at TP=4 (the guide's base topology is 8 prefill + 2 decode
-   = 16 GPUs / 2 H200 nodes; a down-scaled 4 prefill + 1 decode ~8-GPU single-node
-   run is enough for the prefill-placement comparison). Record GPUs, node count,
-   interconnect (TCP vs RDMA), vLLM version, CPU offload tier size. */}
-
-<div style={{textAlign: 'center', margin: '20px 0'}}>
-  {/* TODO: Figure 1 - session handoff TTFT, baseline vs P2P */}
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 1: TODO</em></p>
-</div>
+* **Prefill placement under P/D.** With P/D disaggregation and a skewed shared-prefix load, vary only the prefill selection strategy: prefix-affinity routing versus load-aware routing plus a P2P pull, reusing the llm-d [P/D disaggregation guide](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation)'s inference-perf harness and workload methodology. Measures per-worker prefill load balance, p99 TTFT, and throughput at a fixed SLO.
 
 ## Summary and Next Steps
 
