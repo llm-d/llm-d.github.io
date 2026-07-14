@@ -174,7 +174,18 @@ is the pull's value under overload.*
 
 * **Session handoff.** Multi-turn conversations with forced pod switches mid-session; measures TTFT for the first turn after a switch, where P2P should convert a full-prefix recompute into a pull.
 * **Scale-out warmup.** Add a cold replica under steady shared-prefix load; measure its TTFT and external prefix cache hit rate over time versus baseline.
-* **Prefill placement under P/D.** With P/D disaggregation and a skewed shared-prefix load, vary only the prefill selection strategy: prefix-affinity routing versus load-aware routing plus a P2P pull, reusing the llm-d [P/D disaggregation guide](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation)'s inference-perf harness and workload methodology. Measures per-worker prefill load balance, p99 TTFT, and throughput at a fixed SLO.
+* **Prefill placement under P/D (first measurement done).** On a 4-prefill +
+  1-decode Llama-3.1-8B deployment (NIXL between the legs, same pool
+  workload), we varied only the prefill selection strategy: prefix-affinity
+  versus load-aware placement plus a P2P pull. Both strategies saturate at
+  the same ~15 req/s - on this topology the single decode pod's KV intake is
+  the shared ceiling, not prefill placement - with the pull arm tracking
+  affinity's throughput within ~2% up to 20 req/s at a 0.2-0.5s TTFT premium
+  (0.43-0.72s versus ~0.25s medians at moderate rates), zero failures and
+  zero restarts across 10,082 requests in both arms. As in the aggregated
+  results, uniformly popular prefixes are affinity's best case; the pull's
+  payoff is placement freedom when prefill load skews - the skewed-load
+  variant and per-worker balance measurement are the follow-up.
 
 ## Summary and Next Steps
 
