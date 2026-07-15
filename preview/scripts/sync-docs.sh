@@ -125,6 +125,14 @@ if [[ -f "$WIP/getting-started/README.mdx" ]]; then
 else
   cp_doc "$WIP/getting-started/README.md"     "$DOCS_DIR/getting-started/index.md"
 fi
+# Upstream's README.mdx sets `slug: /`, claiming this site's root route. But
+# src/pages/index.tsx already owns "/" everywhere (a <Redirect> to
+# /getting-started, baseUrl-aware), so the two collide and "/" ends up
+# rendering neither — an empty, unhydratable shell in every build. Force
+# this doc back to its natural /getting-started slug so the pages-plugin
+# homepage redirect keeps working as designed.
+set_doc_slug "$DOCS_DIR/getting-started/index.mdx" "/getting-started"
+set_doc_slug "$DOCS_DIR/getting-started/index.md" "/getting-started"
 cp_doc "$WIP/getting-started/quickstart.md"   "$DOCS_DIR/getting-started/quickstart.md"
 cp_doc "$WIP/getting-started/feature-matrix.md" "$DOCS_DIR/getting-started/feature-matrix.md"
 cp_doc "$WIP/getting-started/accelerators.md" "$DOCS_DIR/getting-started/accelerators.md"
