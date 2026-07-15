@@ -12,6 +12,7 @@ test-llmd-site:
 validate-manifest: llmd-site
 	./$(LLMD_SITE_BIN) validate
 
+sync: sync-docs
 sync-docs: llmd-site
 	./$(LLMD_SITE_BIN) sync main
 

@@ -102,13 +102,22 @@ func Resolve(m *manifest.Manifest, opts Options) (*Source, error) {
 
 	if isGitRepo(dest) {
 		if err := gitFetchReset(dest, branch); err != nil {
-			return nil, err
+			fmt.Fprintf(os.Stderr, "    ! cached upstream clone unusable, re-cloning: %v\n", err)
+			_ = os.RemoveAll(dest)
+		} else {
+			return &Source{Root: dest, Branch: branch, Temp: false}, nil
 		}
-		return &Source{Root: dest, Branch: branch, Temp: false}, nil
+	} else if dirExists(dest) {
+		_ = os.RemoveAll(dest)
 	}
 
-	_ = os.RemoveAll(dest)
-	url := m.Sources.LLMD.Remote.URL
+	return cloneUpstream(m, branch, "", dest)
+}
+
+func cloneUpstream(m *manifest.Manifest, branch, url, dest string) (*Source, error) {
+	if url == "" {
+		url = m.Sources.LLMD.Remote.URL
+	}
 	if !strings.HasSuffix(url, ".git") {
 		url += ".git"
 	}
@@ -121,9 +130,15 @@ func Resolve(m *manifest.Manifest, opts Options) (*Source, error) {
 	return &Source{Root: dest, Branch: branch, Temp: false}, nil
 }
 
+func dirExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
+}
+
 func isGitRepo(path string) bool {
-	_, err := os.Stat(filepath.Join(path, ".git"))
-	return err == nil
+	cmd := exec.Command("git", "-C", path, "rev-parse", "--git-dir")
+	cmd.Stderr = nil
+	return cmd.Run() == nil
 }
 
 type localOverrides struct {
