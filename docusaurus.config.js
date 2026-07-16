@@ -232,42 +232,106 @@ const config = {
       },
       footer: {
         style: 'dark',
+        logo: {
+          alt: 'llm-d Logo',
+          src: 'img/cncf-color.svg',
+          srcDark: 'img/cncf-white.png',
+          href: 'https://cncf.io',
+          target: '_blank',
+          width: 240,
+          className: 'footer-logo',
+          style: {
+            marginRight: '10px',
+          },
+        },
         links: [
           {
-            title: 'Docs',
+            title: 'Documentation',
             items: [
-              { label: 'Getting Started', to: '/docs' },
-              { label: 'Architecture', to: '/docs/architecture' },
-              { label: 'Well-Lit Paths', to: '/docs/well-lit-paths' },
-              { label: 'API Reference', to: '/docs/api-reference' },
+              {
+                html: '<a href="/docs" class="footer__link-item">Getting Started</a>',
+              },
+              {
+                html: '<a href="/docs/architecture" class="footer__link-item">Architecture</a>',
+              },
+              {
+                html: '<a href="/docs/well-lit-paths" class="footer__link-item">Well-Lit Paths</a>',
+              },
             ],
           },
           {
             title: 'Community',
             items: [
-              { label: 'Welcome', to: '/community' },
-              { label: 'Contributing', to: '/community/contribute' },
-              { label: 'Events', to: '/community/events' },
-              { label: 'Code of Conduct', to: '/community/code-of-conduct' },
+              {
+                html: '<a href="/community" class="footer__link-item">Contact us</a>',
+              },
+              {
+                html: '<a href="/community/contribute" class="footer__link-item">Contributing</a>',
+              },
+              {
+                html: '<a href="/community/code-of-conduct" class="footer__link-item">Code of Conduct</a>',
+              },
             ],
           },
           {
             title: 'More',
             items: [
-              { label: 'Blog', to: '/blog' },
-              { label: 'GitHub', href: GITHUB_REPO },
-              { label: 'Slack', href: 'https://llm-d.slack.com' },
-              { label: 'X / Twitter', href: 'https://x.com/_llm_d_' },
+              {
+                html: '<a href="/blog" class="footer__link-item">Blog</a>',
+              },
+              {
+                label: 'Privacy Policy',
+                href: 'https://www.redhat.com/en/about/privacy-policy',
+              },
+            ],
+          },
+          {
+            title: 'Social',
+            items: [
+              {
+                html: `
+                <div class="footer-socials" role="navigation" aria-label="Social links">
+                  <div class="footer-socials-row">
+                    <a href="https://github.com/llm-d/" target="_blank" rel="noreferrer noopener" aria-label="GitHub">
+                      <img src="/img/new-social/github-mark-white.png" alt="GitHub" />
+                    </a>
+                    <a href="https://linkedin.com/company/llm-d" target="_blank" rel="noreferrer noopener" aria-label="LinkedIn">
+                      <img src="/img/new-social/linkedin-mark-white.png" alt="LinkedIn" />
+                    </a>
+                    <a href="https://llm-d.slack.com" target="_blank" rel="noreferrer noopener" aria-label="Slack">
+                      <img src="/img/new-social/slack-mark-white.png" alt="Slack" />
+                    </a>
+                    <a href="https://www.reddit.com/r/llm_d/" target="_blank" rel="noreferrer noopener" aria-label="Reddit">
+                      <img src="/img/new-social/reddit-mark-white.png" alt="Reddit" />
+                    </a>
+                    <a href="https://bsky.app/profile/llm-d.ai" target="_blank" rel="noreferrer noopener" aria-label="Bluesky">
+                      <img src="/img/new-social/bluesky-mark-white.svg" alt="Bluesky" />
+                    </a>
+                    <a href="https://x.com/_llm_d_" target="_blank" rel="noreferrer noopener" aria-label="X / Twitter">
+                      <img src="/img/new-social/x-mark-white.png" alt="X / Twitter" />
+                    </a>
+                    <a href="https://www.youtube.com/@llm-d-project" target="_blank" rel="noreferrer noopener" aria-label="YouTube">
+                      <img src="/img/new-social/youtube-mark-white.svg" alt="YouTube" />
+                    </a>
+                  </div>
+                  <div class="footer-cncf">
+                    <img class="footer-cncf-logo" src="/img/CNCF-logo.svg" alt="CNCF" />
+                    <span>llm-d is a CNCF Sandbox project</span>
+                  </div>
+                  <div class="footer-socials-cta">
+                    <a href="/slack" target="_self" rel="noreferrer noopener" aria-label="Join our Slack">
+                      <span class="button-link">Join our Slack</span>
+                    </a>
+                  </div>
+                </div>
+              `,
+              },
             ],
           },
         ],
-        logo: {
-          alt: 'Cloud Native Computing Foundation',
-          src: 'img/cncf-white.png',
-          href: 'https://cncf.io',
-          width: 130,
-        },
-        copyright: `Copyright © ${new Date().getFullYear()} llm-d Authors. Apache 2.0 License.<br/>llm-d is a Cloud Native Computing Foundation Sandbox project.`,
+        copyright: `Copyright llm-d a Series of LF Projects, LLC. Apache 2.0 License.<br />\
+        We are a Cloud Native Computing Foundation sandbox project.<br />\
+        For website terms of use, trademark policy and other project policies please see <a href="https://lfprojects.org/policies/" target="_blank" rel="noreferrer noopener">https://lfprojects.org/policies/</a>`,
       },
       prism: {
         theme: prismThemes.oneLight,

@@ -155,11 +155,105 @@ div[class*='announcementBar_'] button[class*='closeButton'] {
   }
 }
 
-/* Footer CNCF logo — smaller, with breathing room from the copyright text */
-.footer__logo {
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
-  max-width: 130px;
+/* Footer follows the color scheme (white in light mode, black in dark mode)
+   instead of Infima's always-dark `--footer--dark` styling. */
+.footer--dark {
+  --ifm-footer-background-color: #ffffff !important;
+  --ifm-footer-color: #000000 !important;
+  --ifm-footer-link-color: #000000 !important;
+  --ifm-footer-title-color: #000000 !important;
+  border-top: 1px solid #000000;
+}
+[data-theme='dark'] .footer--dark {
+  --ifm-footer-background-color: #000000 !important;
+  --ifm-footer-color: #ffffff !important;
+  --ifm-footer-link-color: #ffffff !important;
+  --ifm-footer-title-color: #ffffff !important;
+  border-top: 1px solid #ffffff;
+}
+
+/* All footer text at 14px — column titles, link items, copyright, CNCF
+   mention, Slack CTA label. */
+.footer,
+.footer__title,
+.footer__link-item,
+.footer__items,
+.footer__copyright,
+.footer-socials,
+.footer-cncf,
+.footer-socials-cta {
+  font-size: 0.875rem;
+}
+
+.button-link,
+.button-link:hover {
+  text-decoration: none;
+  color: #fff;
+}
+
+/* Footer social links (Social column's `html` link block) */
+.footer-socials {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.footer-socials-row {
+  display: grid;
+  grid-template-columns: repeat(7, 26px);
+  gap: 10px;
+  align-items: center;
+  justify-content: start;
+}
+@media screen and (max-width: 996px) {
+  .footer-socials-row {
+    grid-template-columns: repeat(4, 28px);
+    gap: 12px;
+    justify-content: start;
+  }
+  .footer-socials img {
+    width: 28px;
+    height: 28px;
+  }
+}
+.footer-socials-cta {
+  margin-top: 4px;
+}
+.footer-socials a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+.footer-socials img {
+  width: 26px;
+  height: 26px;
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+.footer-socials img:hover {
+  transform: scale(1.1);
+}
+/* Footer background is white in light mode; make the white icon PNGs visible. */
+html:not([data-theme='dark']) .footer-socials img {
+  filter: brightness(0);
+}
+
+/* CNCF Sandbox mention shown in the Social footer column */
+.footer-cncf {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 12px;
+  font-size: 0.875rem;
+}
+.footer-cncf-logo {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  filter: brightness(0);
+}
+[data-theme='dark'] .footer-cncf-logo {
+  filter: brightness(0) invert(1);
 }
 
 /* ---------------------------------------------------------------------------
