@@ -6,12 +6,12 @@ import Frame48 from "./Frame156";
  * (shimmer on purple headline spans, fade-up on section blocks, hover
  * transitions). The `.llmd-frame` wrapper scopes the generated Tailwind
  * utilities (landing.tailwind.css) so nothing leaks into the rest of the site;
- * `body.llmd-landing` scopes the landing-only navbar/footer chrome.
+ * `body.llmd-landing` scopes the landing-only navbar chrome.
  */
 export default function LandingApp() {
   const frameRef = useRef<HTMLDivElement>(null);
 
-  // Landing-only body class (navbar color + hide Docusaurus footer).
+  // Landing-only body class (navbar color).
   useEffect(() => {
     document.body.classList.add("llmd-landing");
     return () => document.body.classList.remove("llmd-landing");

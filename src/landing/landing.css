@@ -51,65 +51,12 @@
 
 /* Landing-only page chrome (scoped to the `llmd-landing` body class LandingApp
    toggles). Navbar matches the first section; the divider matches the prototype's
-   light #dde1e6 line; the design's own (dark) footer replaces the Docusaurus one. */
+   light #dde1e6 line. The standard Docusaurus footer (themeConfig.footer) is
+   used on every page, including the landing page. */
 body.llmd-landing {
   background-color: #ffffff;
   --ifm-navbar-background-color: #f2f4f8;
   --ifm-navbar-shadow: 0 1px 0 0 #dde1e6;
-}
-/* Site-wide footer (swizzled @theme/Footer — see src/theme/Footer). It renders
-   the landing footer content (LandingFooterContent) on every page inside a
-   full-width dark band with a centered content column. Being `.llmd-frame`, it
-   inherits the same footer styling as the landing (incl. dark-mode logo
-   lightening); these rules just neutralize the landing wrapper's fallback
-   height/background and add the standalone band + responsive behavior. The
-   landing page renders its own footer inline, so the swizzled Footer returns
-   null there (no duplicate). */
-.llmd-frame.llmd-site-footer,
-html[data-theme='dark'] .llmd-frame.llmd-site-footer {
-  min-height: 0;
-  background-color: #121619;
-  width: 100%;
-}
-.llmd-frame.llmd-site-footer .llmd-site-footer__inner {
-  max-width: 1140px;
-  margin: 0 auto;
-  padding: 64px 24px;
-}
-@media (max-width: 767px) {
-  .llmd-frame.llmd-site-footer .llmd-site-footer__inner {
-    padding: 48px 20px;
-  }
-  /* CNCF founders logos: wrap and center instead of overflowing the row. */
-  .llmd-frame.llmd-site-footer .llmd-grid-cncf {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 20px 28px;
-  }
-  /* Footer link columns: wrap two-up instead of four-across. */
-  .llmd-frame.llmd-site-footer .llmd-grid-footer {
-    flex-wrap: wrap;
-    gap: 32px 24px;
-  }
-  .llmd-frame.llmd-site-footer .llmd-grid-footer > * {
-    flex: 1 0 40%;
-  }
-  /* "founded by:" centered; social icons wrap to two lines (same as landing). */
-  .llmd-frame.llmd-site-footer .llmd-founded-by {
-    align-self: center;
-  }
-  .llmd-frame.llmd-site-footer .llmd-socials {
-    flex-wrap: wrap;
-  }
-}
-
-/* Footer social icons. */
-.llmd-frame .llmd-socials a {
-  color: #c1c7cd;
-  transition: color 0.2s ease;
-}
-.llmd-frame .llmd-socials a:hover {
-  color: #ffffff;
 }
 
 /* Release-updates logo uses the header logo asset (light/dark variants).
@@ -363,33 +310,6 @@ html[data-theme='dark'] .llmd-frame .llmd-release-option:hover {
 .llmd-frame.llmd-mobile .llmd-grid-paths > * {
   height: auto;
   min-height: 168px;
-}
-
-/* Footer link columns: 2×2 instead of 4-across. */
-.llmd-frame.llmd-mobile .llmd-grid-footer {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 32px 24px;
-}
-/* CNCF "founded by" logos: wrap and center instead of overflowing the row. */
-.llmd-frame.llmd-mobile .llmd-grid-cncf {
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 16px 32px;
-}
-.llmd-frame.llmd-mobile .llmd-grid-cncf > * {
-  padding-top: 0;
-  padding-bottom: 0;
-}
-/* "CNCF sandbox project founded by:" — centered on mobile (its row lives in a
-   flex column with items-start, so align-self centers it). */
-.llmd-frame.llmd-mobile .llmd-founded-by {
-  align-self: center;
-}
-/* Footer social icons wrap onto two lines instead of overflowing the narrow
-   social column. */
-.llmd-frame.llmd-mobile .llmd-socials {
-  flex-wrap: wrap;
 }
 
 /* --- Hero: centered, with stacked CTAs ----------------------------------- */
