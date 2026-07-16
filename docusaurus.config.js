@@ -249,13 +249,13 @@ const config = {
             title: 'Documentation',
             items: [
               {
-                html: '<a href="/docs/getting-started" class="footer__link-item">Getting Started</a>',
+                html: '<a href="/docs" class="footer__link-item">Getting Started</a>',
               },
               {
                 html: '<a href="/docs/architecture" class="footer__link-item">Architecture</a>',
               },
               {
-                html: '<a href="/docs/guides" class="footer__link-item">Guides</a>',
+                html: '<a href="/docs/well-lit-paths" class="footer__link-item">Well-Lit Paths</a>',
               },
             ],
           },
