@@ -104,12 +104,17 @@ fresh prefix seeded on one pod, measured on a cold pod, 5-rep medians:
 The pull wins at every measured length and the gap grows with the prefix:
 at 48K - a large document - the pull delivers the prefix 3x faster than
 gpt-oss's fast MoE prefill (~29K tokens/s) can recompute it. The
-small-model testbed shows the same shape (crossover near 2K tokens, -69%
-at 16K on Llama-8B), so the economics are a property of the mechanism, not
-of one model. The smallest winning length is where the router's 2048-token
-producer threshold comes from.
+measurement is a single source-consumer pod pair, so it is independent of
+fleet size. The small-model testbed shows the same scaling: on Llama-8B
+the lines cross near 2K tokens (below it recompute wins, +11% at 1K) and
+the pull leads -69% at 16K; on gpt-oss the pull already wins at 2K because
+its KV is compact (41.5 KB/token) relative to its prefill speed. Where the
+lines cross depends on the model's KV-size-to-prefill-speed ratio; the
+economics are a property of the mechanism. The router's 2048-token
+producer threshold is the smallest length at which the pull wins on both
+models.
 
-![Pull versus recompute prefill latency by prefix length](../static/img/blogs/p2p-kv-cache/crossover-gptoss.png)
+![Line chart: prefill latency versus prefix length for recompute and P2P pull on gpt-oss-120b; the pull is lower at every length, 551 ms versus 1,695 ms at 48K tokens (-68%)](../static/img/blogs/p2p-kv-cache/crossover-gptoss.png)
 *Single-request prefill latency, recompute versus P2P pull, gpt-oss-120b.
 The pull costs a near-flat transfer while recompute grows with length; the
 gap reaches -68% at 48K tokens.*
@@ -134,7 +139,7 @@ errors and zero restarts. TTFT p50 / p95 / p99 in seconds, and throughput:
 | 1 | 4.1 / 41.0 / 80.5; 5.98 turns/s | 4.5 / 13.0 / 20.9; 7.02 turns/s |
 | 2 (order reversed) | 4.2 / 17.3 / 37.2; 7.66 turns/s | 3.9 / 12.5 / 26.7; 7.76 turns/s |
 
-![Document Q&A, precise routing versus load-aware + P2P](../static/img/blogs/p2p-kv-cache/docqa.png)
+![Bar charts: document Q&A TTFT percentiles and throughput across two order-alternated runs; medians equal, load-aware + P2P p99 21-27 s versus 37-81 s for precise routing, throughput up to +17%](../static/img/blogs/p2p-kv-cache/docqa.png)
 *192 documents x 48K tokens, 6 Q&A turns each, 128 concurrent. Medians are
 equal; the arms separate on tails and on stability.*
 
@@ -165,9 +170,10 @@ concentrates all requests on the prefix owner and saturates it (p50 latency
 tail-latency win. P2P adds nothing on top for a single persistent prefix
 (each pod recomputes it once and it stays resident); its role in this regime
 is to make load-balanced routing safe for prefixes that do not fit
-everywhere, which the next scenario measures.
+everywhere - the next scenario measures that at small scale, and the
+document Q&A benchmark above is the same effect at fleet scale.
 
-![Hot prefix: request placement and its latency cost](../static/img/blogs/p2p-kv-cache/hotspot.png)
+![Bar charts: one hot 16K prefix at 24 req/s; affinity sends all 5,040 requests to one pod, load-balanced routing spreads ~1,260 per pod and cuts p50 latency from 6.07 s to 0.53 s](../static/img/blogs/p2p-kv-cache/hotspot.png)
 *One hot 16K prefix at 24 req/s. Affinity sends all 5,040 requests to the
 prefix owner and saturates it; load-balanced routing spreads them evenly and
 cuts p50 latency 11x.*
@@ -196,7 +202,7 @@ P2P wins at every rate and the gap grows with load: at 8 req/s, 43% lower
 p50 and 42% lower p95, with TTFT 25-30% lower - the prefix arrives over RDMA
 instead of being recomputed.
 
-![Pool workload latency, P2P versus no-P2P](../static/img/blogs/p2p-kv-cache/pool-latency.png)
+![Bar charts: p50 and p95 request latency at 2-8 req/s on the 64x16K pool; P2P lower at every rate, p95 3.72 s versus 6.41 s at 8 req/s](../static/img/blogs/p2p-kv-cache/pool-latency.png)
 *Successful-request latency on the pool workload, identical routing in both
 arms. The only difference is pulling the 16K prefix versus recomputing it; the
 gap widens as recompute pressure builds.*
@@ -222,7 +228,7 @@ GPUs run out either way - but the pull path buys the fleet a fifth of extra
 capacity and a far gentler degradation curve on a workload whose working set
 no single pod can cache.
 
-![Saturation behavior across the three routing arms](../static/img/blogs/p2p-kv-cache/saturation.png)
+![Line charts: achieved rate and p50 latency versus offered rate for affinity, load-balanced without P2P, and load-balanced with P2P; without the pull throughput saturates at 10.3 req/s, with it 12.6](../static/img/blogs/p2p-kv-cache/saturation.png)
 *Left: achieved versus offered rate. Affinity tracks the offered line (its
 best-case pool); recompute saturates near 10 req/s; P2P holds ~12.6. Right:
 median latency on a log scale - the band between the recompute and P2P curves
@@ -237,13 +243,14 @@ Prefix-affinity placement saturates at ~15.7 req/s - on this topology the
 single decode pod's KV intake, not prefill placement, is the ceiling.
 Load-aware placement without P2P saturates at ~11.3 req/s: every cross-pod
 prefill recomputes 16K tokens, and p50 latency reaches 33s. Adding the P2P
-pull recovers the affinity ceiling: ~14.7 req/s, +30% over recompute, with
-p50 5.6s versus 12.2s at 16 req/s. The pull is what makes load-aware prefill
+pull recovers the affinity ceiling: ~14.7 req/s, +30% over recompute,
+converging on the same decode-bound limit, with p50 5.6s versus 12.2s at
+16 req/s. The pull is what makes load-aware prefill
 placement viable under P/D, at a 0.2-0.5s TTFT premium at low rates where
 affinity's pure cache hits win. Zero failures and zero restarts across all
 three arms (15,123 requests).
 
-![P/D prefill placement, three arms](../static/img/blogs/p2p-kv-cache/pd-placement.png)
+![Line charts: P/D prefill placement arms; load-aware without P2P saturates at 11.3 req/s, adding the pull recovers 14.7 req/s near the decode-bound affinity ceiling of 15.7](../static/img/blogs/p2p-kv-cache/pd-placement.png)
 *Three prefill-placement strategies on the P/D topology. Without the pull,
 load-aware placement is recompute-bound at 11.3 req/s; with it, throughput
 returns to the decode-bound affinity ceiling.*
@@ -266,10 +273,10 @@ working set fits in the fleet's GPU caches, prefix-aware routing alone is
 the right tool - a local hit is free and nothing beats it. When long
 prefixes oversubscribe the cache - large documents, deep sessions, wide
 prefix pools - placement by cache location starts paying in queues and
-recomputes, and that is where load-aware placement plus the pull wins:
-3x faster prefix delivery per miss at 48K tokens, and on the document-Q&A
-benchmark 2-4x lower p99 TTFT with up to +17% throughput over precise
-prefix routing.
+recomputes, and that is where load-aware placement plus the pull wins.
+The crossover measurement prices each miss; the document-Q&A benchmark
+above shows what that pricing compounds into at fleet scale, on the tail
+latencies users actually feel.
 
 The natural follow-up is agentic workloads. In real Claude Code traces (the [Weka trace corpus](https://www.semianalysis.com/) published by SemiAnalysis), over half of all model requests arrive through sub-agent bursts - a median of seven per group, 51 at p90 - each inheriting the parent session's context as a verbatim prefix, with no advance signal to the serving layer. A burst that spills across pods today recomputes that repository-scale prefix once per pod; with P2P, the pod that already holds it computes nothing and everyone else pulls. A follow-up post will replay these traces (inference-perf's `weka_trace_replay`) against a P2P-enabled deployment to measure that directly - sub-agent fan-out, session handoff, and think-time gaps included. {/* TODO: fix the corpus link to the exact trace release, and link the agentic-serving GLM post once published */}
 
