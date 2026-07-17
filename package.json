@@ -28,9 +28,9 @@
     "help": "make llmd-site && ./bin/llmd-site -h"
   },
   "dependencies": {
-    "@docusaurus/core": "3.10.1",
-    "@docusaurus/preset-classic": "3.10.1",
-    "@docusaurus/theme-mermaid": "3.10.1",
+    "@docusaurus/core": "3.10.2",
+    "@docusaurus/preset-classic": "3.10.2",
+    "@docusaurus/theme-mermaid": "3.10.2",
     "@easyops-cn/docusaurus-search-local": "^0.52.1",
     "@fontsource/fredoka": "^5.2.10",
     "@fontsource/ibm-plex-sans": "^5.2.8",
@@ -41,8 +41,8 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "3.10.1",
-    "@docusaurus/types": "3.10.1",
+    "@docusaurus/module-type-aliases": "3.10.2",
+    "@docusaurus/types": "3.10.2",
     "@tailwindcss/cli": "^4.3.2",
     "postcss-prefix-selector": "^2.1.1",
     "tailwindcss": "^4.3.2"
