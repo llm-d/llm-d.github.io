@@ -59,9 +59,9 @@ jobs:
           fi
 
           git commit -m "$(cat <<EOF
-chore(blog): stamp publish date on new posts (${PUBLISH_DATE})
+          chore(blog): stamp publish date on new posts (${PUBLISH_DATE})
 
-Auto-updated by llmd-site blog stamp on merge to main.
-EOF
-)"
+          Auto-updated by llmd-site blog stamp on merge to main.
+          EOF
+          )"
           git push origin main
