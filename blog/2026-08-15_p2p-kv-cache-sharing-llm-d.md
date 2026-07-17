@@ -66,38 +66,96 @@ This is a small, opt-in scheduling step, off by default. Because it reuses the e
 ## Benchmarks
 
 We evaluated P2P KV cache sharing with the llm-d benchmarking framework
-(inference-perf) on an aggregated deployment: 4x Llama-3.1-8B-Instruct, one
-H200 each, KV transfers over NIXL/UCX (RDMA), a 32 GiB CPU offload tier per
-pod, vLLM block size 64. Routing uses the llm-d inference gateway with the
-precise (KV-event-fed) prefix index; the P2P arms add the
-`kv-cache-source-producer` with a 2048-token minimum advantage threshold, so
-a pull is only requested when a peer holds at least that many more cached
-prefix tokens than the scheduled pod. {/* Setup: kermit/CoreWeave,
-vLLM nightly + P2P connector branch + the lookup/pending-wait robustness
-fixes; workload = inference-perf shared_prefix. */}
+(inference-perf) on two aggregated testbeds:
+
+* **Scale:** 14x `openai/gpt-oss-120b` (MXFP4), one H200 per pod (TP=1),
+  ~0.48M tokens of GPU KV per pod, an 88 GiB CPU offload tier per pod
+  (4.4x the GPU cache), vLLM block size 64.
+* **Small model:** 4x Llama-3.1-8B-Instruct, one H200 each, a 32 GiB CPU
+  offload tier per pod - the same mechanics at a size anyone can rerun on
+  four GPUs.
+
+KV transfers go over NIXL, and routing uses the llm-d inference gateway
+with the precise (KV-event-fed) prefix index. The P2P arms add the
+`p2p-source-producer` with a 2048-token minimum advantage threshold, so a
+pull is only requested when a peer holds at least that many more cached
+prefix tokens than the scheduled pod. The exact workload profiles and EPP
+configurations for every run ship with the guide, so each result below is
+reproducible the same way the other llm-d guides' benchmarks are.
+{/* Setup: kermit/CoreWeave, vLLM nightly + P2P connector branch +
+robustness fixes; full tables in the p2p-findings RESULTS.md. */}
 
 One deployment prerequisite applies to every P2P configuration: vLLM seeds its KV block hashes per process, so all peers must run with the same `PYTHONHASHSEED`. Without it, block hashes never match across pods and P2P silently degrades to zero matches - the protocol runs, but every lookup misses and every prefix is recomputed locally. The external prefix cache hit rate metric is the quickest way to catch this: it stays at zero.
 
 ### Pull versus recompute (single request)
 
-Prefill latency for a fully cached prefix, recompute versus P2P pull from a
-peer's CPU tier, warm mesh:
+The physics everything else builds on: prefill latency for a fully cached
+prefix, recompute versus P2P pull from a peer's CPU tier. gpt-oss-120b,
+fresh prefix seeded on one pod, measured on a cold pod, 5-rep medians:
 
 | prefix tokens | recompute | P2P pull | delta |
 |---|---|---|---|
-| 1,024 | 30 ms | 34 ms | +11% |
-| 4,096 | 99 ms | 59 ms | -41% |
-| 8,192 | 236 ms | 88 ms | -63% |
-| 16,384 | 503 ms | 155 ms | -69% |
+| 2,048 | 71 ms | 49 ms | -31% |
+| 8,192 | 205 ms | 120 ms | -42% |
+| 16,384 | 426 ms | 196 ms | -54% |
+| 32,768 | 983 ms | 376 ms | -62% |
+| 49,152 | 1,695 ms | 551 ms | -68% |
 
-The crossover sits near 2K tokens and the advantage grows with prefix length
-- at 16K the pull is 3.3x faster than recomputing. This is what motivates the
-2048-token producer threshold.
+The pull wins at every measured length and the gap grows with the prefix:
+at 48K - a large document - the pull delivers the prefix 3x faster than
+gpt-oss's fast MoE prefill (~29K tokens/s) can recompute it. The
+small-model testbed shows the same shape (crossover near 2K tokens, -69%
+at 16K on Llama-8B), so the economics are a property of the mechanism, not
+of one model. The smallest winning length is where the router's 2048-token
+producer threshold comes from.
 
-![Pull versus recompute prefill latency by prefix length](../static/img/blogs/p2p-kv-cache/crossover.png)
-*Single-request prefill latency, recompute versus P2P pull, warm mesh. The pull
-costs a near-constant transfer while recompute grows with length; past ~2K
-tokens the pull wins, 3.3x at 16K.*
+![Pull versus recompute prefill latency by prefix length](../static/img/blogs/p2p-kv-cache/crossover-gptoss.png)
+*Single-request prefill latency, recompute versus P2P pull, gpt-oss-120b.
+The pull costs a near-flat transfer while recompute grows with length; the
+gap reaches -68% at 48K tokens.*
+
+### Document Q&A at scale: the headline result
+
+The workload where the pull changes what users feel: 192 distinct
+48K-token documents (about 100 pages each), each queried through 6 short
+questions with 256-token answers, 128 conversations in flight - the
+enterprise document-assistant shape, where time to first token dominates
+the experience. The working set oversubscribes the fleet's GPU cache, so
+where a request lands decides whether its document is a cache hit, a
+recompute, or a wait in line.
+
+Two arms: the precise prefix-cache routing configuration (prefix-first
+placement), and load-aware placement with the P2P pull. Two full runs with
+arm order alternated; all four runs completed 1,152/1,152 turns with zero
+errors and zero restarts. TTFT p50 / p95 / p99 in seconds, and throughput:
+
+| run | Precise prefix routing | Load-aware + P2P |
+|---|---|---|
+| 1 | 4.1 / 41.0 / 80.5; 5.98 turns/s | 4.5 / 13.0 / 20.9; 7.02 turns/s |
+| 2 (order reversed) | 4.2 / 17.3 / 37.2; 7.66 turns/s | 3.9 / 12.5 / 26.7; 7.76 turns/s |
+
+![Document Q&A, precise routing versus load-aware + P2P](../static/img/blogs/p2p-kv-cache/docqa.png)
+*192 documents x 48K tokens, 6 Q&A turns each, 128 concurrent. Medians are
+equal; the arms separate on tails and on stability.*
+
+Medians are equal - a session answering from its warm cache is fast either
+way. The separation is in the tails and the variance: **p99 TTFT of 21-27s
+versus 37-81s (2-4x lower), up to +17% throughput, and a 10% run-to-run
+spread versus 28%**. The mechanism: prefix-first placement sends every
+question to the pod that owns its document, and under contention the queue
+on that pod becomes the p99 - while displaced questions recompute 48K
+tokens. Load-aware placement sends the question wherever there is
+capacity, and the pull makes the resulting miss cost ~0.6s instead of a
+~2s recompute or a multi-second wait. The tier counters agree: the P2P arm
+moved 30-32M tokens between pods per run.
+
+The stability column matters as much as the speed: the prefix-first arm's
+numbers swing with whatever cache state the fleet happens to inherit,
+while load-aware + P2P placement does not depend on where KV already
+lives - so its results barely move between runs.
+
+The remaining scenarios run on the small-model testbed (4x Llama-3.1-8B) -
+the same mechanics at a scale that reruns on four GPUs.
 
 ### One hot prefix: routing is the win, P2P is the enabler
 
@@ -116,7 +174,7 @@ cuts p50 latency 11x.*
 
 ### Shared-prefix pool: P2P makes load-balancing viable
 
-The headline workload: 64 distinct 16K-token system prompts (a 128 GiB KV
+A shared-prefix pool: 64 distinct 16K-token system prompts (a 128 GiB KV
 pool - far more than any single pod caches), 256-token questions, 64 output
 tokens, constant-rate stages. Every request landing on a pod that does not
 hold its prefix must recompute 16K tokens (no P2P) or pull them from the
@@ -197,12 +255,21 @@ returns to the decode-bound affinity ceiling.*
   concentrates prefill on the hot prefix's owner; load-aware placement plus
   the pull should win latency as well as balance. Measures per-worker
   prefill load balance and p99 TTFT.
-* **Session handoff.** Multi-turn conversations with forced pod switches mid-session; measures TTFT for the first turn after a switch, where P2P should convert a full-prefix recompute into a pull.
 * **Scale-out warmup.** Add a cold replica under steady shared-prefix load; measure its TTFT and external prefix cache hit rate over time versus baseline.
 
 ## Summary and Next Steps
 
 P2P KV cache sharing turns llm-d's per-pod prefix caches into a fleet-wide resource. The EPP's existing per-request prefix knowledge picks the source, a single header carries the decision, and the connector moves the blocks peer to peer - best-effort, asynchronous, and off the request's failure path. It composes with prefix-aware routing (which minimizes how often a pull is needed), with P/D disaggregation (prefill workers pull prefixes too), and with the storage tier (which adds persistence and capacity beyond what peers hold).
+
+The measurements give a simple rule for when to reach for it. When the
+working set fits in the fleet's GPU caches, prefix-aware routing alone is
+the right tool - a local hit is free and nothing beats it. When long
+prefixes oversubscribe the cache - large documents, deep sessions, wide
+prefix pools - placement by cache location starts paying in queues and
+recomputes, and that is where load-aware placement plus the pull wins:
+3x faster prefix delivery per miss at 48K tokens, and on the document-Q&A
+benchmark 2-4x lower p99 TTFT with up to +17% throughput over precise
+prefix routing.
 
 The natural follow-up is agentic workloads. In real Claude Code traces (the [Weka trace corpus](https://www.semianalysis.com/) published by SemiAnalysis), over half of all model requests arrive through sub-agent bursts - a median of seven per group, 51 at p90 - each inheriting the parent session's context as a verbatim prefix, with no advance signal to the serving layer. A burst that spills across pods today recomputes that repository-scale prefix once per pod; with P2P, the pod that already holds it computes nothing and everyone else pulls. A follow-up post will replay these traces (inference-perf's `weka_trace_replay`) against a P2P-enabled deployment to measure exactly that - sub-agent fan-out, session handoff, and think-time gaps included. {/* TODO: fix the corpus link to the exact trace release, and link the agentic-serving GLM post once published */}
 
