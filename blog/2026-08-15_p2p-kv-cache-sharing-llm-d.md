@@ -38,7 +38,7 @@ But routing alone cannot make a cold pod warm, and shared storage introduces an 
 
 ## How P2P Works
 
-The P2P connector generalizes the prefill/decode (P/D) disaggregation connector into a symmetric peer-to-peer mode. It reuses the same building blocks - CPU KV cache in a canonical layout, a NIXL data path, a ZMQ control path - but drops the hard prefiller/decoder role split. Every vLLM instance is a peer; for any given request a peer plays one of two roles:
+The P2P connector generalizes the prefill/decode (P/D) disaggregation connector into a symmetric peer-to-peer mode. It reuses the same building blocks - CPU KV cache in a canonical layout, a NIXL (NVIDIA's inference transfer library) data path for the block movement, a ZMQ message-queue control path for the lookup handshake - but drops the hard prefiller/decoder role split. Every vLLM instance is a peer; for any given request a peer plays one of two roles:
 
 * **Consumer**: pulls KV blocks for the request from a remote peer's CPU cache instead of computing them locally.
 * **Producer**: serves KV blocks from its CPU cache when a remote consumer asks for them.
@@ -75,7 +75,9 @@ We evaluated P2P KV cache sharing with the llm-d benchmarking framework
   offload tier per pod - the same mechanics at a size anyone can rerun on
   four GPUs.
 
-KV transfers go over NIXL, and routing uses the llm-d inference gateway
+KV transfers go over NIXL - the transport abstraction, running on the
+testbed's RDMA-capable network here; latencies depend on the underlying
+fabric - and routing uses the llm-d inference gateway
 with the precise (KV-event-fed) prefix index. The P2P arms add the
 `p2p-source-producer` with a 2048-token minimum advantage threshold, so a
 pull is only requested when a peer holds at least that many more cached
@@ -110,14 +112,15 @@ the lines cross near 2K tokens (below it recompute wins, +11% at 1K) and
 the pull leads -69% at 16K; on gpt-oss the pull already wins at 2K because
 its KV is compact (41.5 KB/token) relative to its prefill speed. Where the
 lines cross depends on the model's KV-size-to-prefill-speed ratio; the
-economics are a property of the mechanism. The router's 2048-token
-producer threshold is the smallest length at which the pull wins on both
-models.
+economics are a property of the mechanism. The router's 2048-token pull
+threshold - the minimum extra cached-prefix tokens a peer must hold beyond
+the scheduled pod before a pull is requested - is set to the smallest
+length at which the pull wins on both models.
 
 ![Line chart: prefill latency versus prefix length for recompute and P2P pull on gpt-oss-120b; the pull is lower at every length, 551 ms versus 1,695 ms at 48K tokens (-68%)](../static/img/blogs/p2p-kv-cache/crossover-gptoss.png)
 *Single-request prefill latency, recompute versus P2P pull, gpt-oss-120b.
-The pull costs a near-flat transfer while recompute grows with length; the
-gap reaches -68% at 48K tokens.*
+the pull's latency grows far slower than recompute's as the prefix
+lengthens; the gap reaches -68% at 48K tokens.*
 
 ### Document Q&A at scale: the headline result
 
@@ -134,10 +137,12 @@ placement), and load-aware placement with the P2P pull. Two full runs with
 arm order alternated; all four runs completed 1,152/1,152 turns with zero
 errors and zero restarts. TTFT p50 / p95 / p99 in seconds, and throughput:
 
-| run | Precise prefix routing | Load-aware + P2P |
-|---|---|---|
-| 1 | 4.1 / 41.0 / 80.5; 5.98 turns/s | 4.5 / 13.0 / 20.9; 7.02 turns/s |
-| 2 (order reversed) | 4.2 / 17.3 / 37.2; 7.66 turns/s | 3.9 / 12.5 / 26.7; 7.76 turns/s |
+| Configuration | run | TTFT p50 | TTFT p95 | TTFT p99 | Throughput |
+|---|---|---|---|---|---|
+| Precise prefix routing | 1 | 4.1s | 41.0s | 80.5s | 5.98 turns/s |
+| Precise prefix routing | 2 (order reversed) | 4.2s | 17.3s | 37.2s | 7.66 turns/s |
+| Load-aware + P2P | 1 | 4.5s | 13.0s | 20.9s | 7.02 turns/s |
+| Load-aware + P2P | 2 (order reversed) | 3.9s | 12.5s | 26.7s | 7.76 turns/s |
 
 ![Bar charts: document Q&A TTFT percentiles and throughput across two order-alternated runs; medians equal, load-aware + P2P p99 21-27 s versus 37-81 s for precise routing, throughput up to +17%](../static/img/blogs/p2p-kv-cache/docqa.png)
 *192 documents x 48K tokens, 6 Q&A turns each, 128 concurrent. Medians are
@@ -145,8 +150,9 @@ equal; the arms separate on tails and on stability.*
 
 Medians are equal - a session answering from its warm cache is fast either
 way. The separation is in the tails and the variance: **p99 TTFT of 21-27s
-versus 37-81s (2-4x lower), up to +17% throughput, and a 10% run-to-run
-spread versus 28%**. The mechanism: prefix-first placement sends every
+with P2P versus 37-81s with prefix-first routing - a 28-74% reduction, up
+to 3.9x lower - alongside up to +17% throughput and a 10% run-to-run spread
+versus 28%**. The mechanism: prefix-first placement sends every
 question to the pod that owns its document, and under contention the queue
 on that pod becomes the p99 - while displaced questions recompute 48K
 tokens. Load-aware placement sends the question wherever there is
@@ -154,10 +160,14 @@ capacity, and the pull makes the resulting miss cost ~0.6s instead of a
 ~2s recompute or a multi-second wait. The tier counters agree: the P2P arm
 moved 30-32M tokens between pods per run.
 
-The stability column matters as much as the speed: the prefix-first arm's
-numbers swing with whatever cache state the fleet happens to inherit,
-while load-aware + P2P placement does not depend on where KV already
-lives - so its results barely move between runs.
+The consistency across the two runs matters as much as the speed: the
+prefix-first arm's numbers swing with whatever cache state the fleet
+happens to inherit (the two runs deliberately alternate arm order, so each
+arm serves once from a cold fleet and once from one warmed by the other
+arm), while load-aware + P2P placement does not depend on where KV already
+lives - so its results moved little between these two runs. A stronger
+stability claim would want more repetitions; this is the behavior observed
+across the alternated pair.
 
 The remaining scenarios run on the small-model testbed (4x Llama-3.1-8B) -
 the same mechanics at a scale that reruns on four GPUs.
@@ -167,7 +177,7 @@ the same mechanics at a scale that reruns on four GPUs.
 With a single hot 16K prefix ramped to 24 req/s, cache-affinity routing
 concentrates all requests on the prefix owner and saturates it (p50 latency
 6.1s at rate 24), while load-balanced routing keeps p50 at 0.53s - an 11x
-tail-latency win. P2P adds nothing on top for a single persistent prefix
+lower median latency. P2P adds nothing on top for a single persistent prefix
 (each pod recomputes it once and it stays resident); its role in this regime
 is to make load-balanced routing safe for prefixes that do not fit
 everywhere - the next scenario measures that at small scale, and the
@@ -199,8 +209,9 @@ P2P:
 | 8 req/s | 2.49s / 6.41s | 1.41s / 3.72s | 0.59s vs 0.79s |
 
 P2P wins at every rate and the gap grows with load: at 8 req/s, 43% lower
-p50 and 42% lower p95, with TTFT 25-30% lower - the prefix arrives over RDMA
-instead of being recomputed.
+p50 and 42% lower p95, with TTFT 5-30% lower across the measured rates
+(25% at 8 req/s) - the prefix arrives over the network instead of being
+recomputed.
 
 ![Bar charts: p50 and p95 request latency at 2-8 req/s on the 64x16K pool; P2P lower at every rate, p95 3.72 s versus 6.41 s at 8 req/s](../static/img/blogs/p2p-kv-cache/pool-latency.png)
 *Successful-request latency on the pool workload, identical routing in both
@@ -243,7 +254,8 @@ Prefix-affinity placement saturates at ~15.7 req/s - on this topology the
 single decode pod's KV intake, not prefill placement, is the ceiling.
 Load-aware placement without P2P saturates at ~11.3 req/s: every cross-pod
 prefill recomputes 16K tokens, and p50 latency reaches 33s. Adding the P2P
-pull recovers the affinity ceiling: ~14.7 req/s, +30% over recompute,
+pull nearly recovers the affinity ceiling: ~14.7 req/s (within 6% of 15.7),
++30% over recompute,
 converging on the same decode-bound limit, with p50 5.6s versus 12.2s at
 16 req/s. The pull is what makes load-aware prefill
 placement viable under P/D, at a 0.2-0.5s TTFT premium at low rates where
@@ -278,4 +290,4 @@ The crossover measurement prices each miss; the document-Q&A benchmark
 above shows what that pricing compounds into at fleet scale, on the tail
 latencies users actually feel.
 
-The natural follow-up is agentic workloads. In real Claude Code traces (the [Weka trace corpus](https://www.semianalysis.com/) published by SemiAnalysis), over half of all model requests arrive through sub-agent bursts - a median of seven per group, 51 at p90 - each inheriting the parent session's context as a verbatim prefix, with no advance signal to the serving layer. A burst that spills across pods today recomputes that repository-scale prefix once per pod; with P2P, the pod that already holds it computes nothing and everyone else pulls. A follow-up post will replay these traces (inference-perf's `weka_trace_replay`) against a P2P-enabled deployment to measure that directly - sub-agent fan-out, session handoff, and think-time gaps included. {/* TODO: fix the corpus link to the exact trace release, and link the agentic-serving GLM post once published */}
+The natural follow-up is agentic workloads. In real Claude Code traces (the [Weka trace corpus](https://www.semianalysis.com/) published by SemiAnalysis), over half of all model requests arrive through sub-agent bursts - a median of seven per group, 51 at p90 - each inheriting the parent session's context as a verbatim prefix, with no advance signal to the serving layer. A burst that spills across pods today recomputes that repository-scale prefix once per pod; with P2P, the pod that already holds the prefix becomes the source while the others pull the cached blocks instead of recomputing them. A follow-up post will replay these traces (inference-perf's `weka_trace_replay`) against a P2P-enabled deployment to measure that directly - sub-agent fan-out, session handoff, and think-time gaps included. {/* TODO: fix the corpus link to the exact trace release, and link the agentic-serving GLM post once published */}
