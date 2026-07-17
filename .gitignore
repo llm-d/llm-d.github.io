@@ -11,9 +11,14 @@ bin/llmd-site
 
 # Link checker
 link-checker.config.json
+sync-report.json
 broken-links-report.md
 sync-report.json
 broken-links-report.md
+
+# llmd-site local config and build output
+llmd-site.local.yaml
+bin/llmd-site
 
 # llmd-site local config and build output
 llmd-site.local.yaml
