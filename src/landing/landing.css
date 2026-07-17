@@ -231,6 +231,12 @@ html[data-theme='dark'] .llmd-frame .llmd-release-option:hover {
 /* Column back into flow at full width — overrides the absolute/centered desktop
    rules and the design's hardcoded 922px widths (content column, section copy,
    release panel). */
+/* With the column back in flow the frame auto-heights to its content, so drop
+   the desktop `min-height: 4400px` pre-hydration fallback — otherwise it leaves
+   a tall empty band between the last section and the footer on mobile. */
+.llmd-frame.llmd-mobile {
+  min-height: 0;
+}
 .llmd-frame.llmd-mobile .llmd-content {
   position: relative;
   left: 0;
@@ -260,6 +266,13 @@ html[data-theme='dark'] .llmd-frame .llmd-release-option:hover {
   box-sizing: border-box;
   padding-left: clamp(20px, 5vw, 56px);
   padding-right: clamp(20px, 5vw, 56px);
+}
+
+/* "Join the community" is the last section before the footer. Its full 88px
+   bottom padding leaves an oversized empty gap above the footer on mobile;
+   tighten it so the footer follows closely. Desktop keeps the 88px rhythm. */
+.llmd-frame.llmd-mobile .llmd-community-section {
+  padding-bottom: 32px;
 }
 
 /* --- Card grids: 4-across flex rows become 2-wide grids ------------------ */

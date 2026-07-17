@@ -2781,7 +2781,7 @@ function Frame105() {
 function Frame85() {
   return (
     <div className="col-1 justify-self-stretch relative row-4 self-stretch shrink-0">
-      <div className="content-stretch flex flex-col gap-[48px] items-start py-[88px] relative size-full">
+      <div className="llmd-community-section content-stretch flex flex-col gap-[48px] items-start py-[88px] relative size-full">
         <Frame86 />
         <Frame105 />
       </div>
