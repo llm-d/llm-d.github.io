@@ -1,0 +1,36 @@
+name: Verify website images
+
+# PR check: build the site (with synced docs) and verify every image loads.
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: ci-website-images-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify-images:
+    name: Verify website images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-llmd-site
+        with:
+          npm-command: npm ci
+
+      - name: Sync docs and build site
+        run: |
+          ./bin/llmd-site sync main
+          ./bin/llmd-site build
+
+      - name: Verify images
+        run: ./bin/llmd-site check images

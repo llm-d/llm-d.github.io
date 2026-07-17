@@ -1,8 +1,0 @@
-# llm-d.ai robots.txt
-# Guide search engine crawlers
-
-User-agent: *
-Allow: /
-
-# Sitemap location
-Sitemap: https://llm-d.ai/sitemap.xml

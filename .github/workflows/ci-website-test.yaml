@@ -1,0 +1,52 @@
+name: Test website build
+
+# PR check: sync docs from llm-d/llm-d, build the site, and validate links.
+# llmd-site ci = sync (main) -> build (landing:css + docusaurus build) -> check links.
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: ci-website-test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  test-website:
+    name: Test website build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-llmd-site
+        with:
+          npm-command: npm ci
+
+      - name: Build site and check links (llmd-site ci)
+        run: ./bin/llmd-site ci --warn-on-broken-links
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add broken links to job summary
+        if: always()
+        run: |
+          if [ -f broken-links-report.md ]; then
+            cat broken-links-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "⚠️ Link check produced no report" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload broken links report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: broken-links-report
+          path: broken-links-report.md
+          if-no-files-found: ignore

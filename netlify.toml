@@ -1,26 +1,10 @@
+# Netlify is used for PR deploy previews (production deploys go to GitHub Pages via
+# .github/workflows/deploy.yml). The build syncs docs from llm-d/llm-d, then builds
+# the single Docusaurus site. Remove this file if the repo is no longer on Netlify.
 [build]
-  command = "npm run build:all"
+  command = "npm ci && make llmd-site && ./bin/llmd-site sync main && ./bin/llmd-site build"
   publish = "build"
 
-# Slack invite redirect
-[[redirects]]
-  from = "/slack"
-  to = "https://join.slack.com/t/llm-d/shared_invite/zt-3vjxmypf9-63gI5wHRhn6D60zzad67Bw"
-  status = 302
-
-# Redirect old /preview/* to /docs/* (backward compatibility)
-[[redirects]]
-  from = "/preview/*"
-  to = "/docs/:splat"
-  status = 301
-
-# SPA redirect for /docs/* routes
-[[redirects]]
-  from = "/docs"
-  to = "/docs/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/docs/*"
-  to = "/docs/index.html"
-  status = 200
+[build.environment]
+  GO_VERSION = "1.22"
+  NODE_VERSION = "20.18.1"

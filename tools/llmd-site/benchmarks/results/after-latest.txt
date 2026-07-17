@@ -1,0 +1,52 @@
+llmd-site benchmarks (after)
+timestamp: 20260709T143548Z
+go: go version go1.26.4 darwin/arm64
+
+goos: darwin
+goarch: arm64
+pkg: github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/transform
+cpu: Apple M2 Max
+BenchmarkApplyRules-12            	    4042	    305932 ns/op	  254196 B/op	     411 allocs/op
+BenchmarkApplyRules-12            	    4035	    302015 ns/op	  254543 B/op	     411 allocs/op
+BenchmarkApplyRules-12            	    4095	    298967 ns/op	  254367 B/op	     411 allocs/op
+BenchmarkApplyRules-12            	    4142	    313169 ns/op	  254327 B/op	     411 allocs/op
+BenchmarkApplyRules-12            	    4028	    299440 ns/op	  254394 B/op	     411 allocs/op
+BenchmarkApplyCompiledRules-12    	    4275	    285190 ns/op	  225523 B/op	     229 allocs/op
+BenchmarkApplyCompiledRules-12    	    4358	    278749 ns/op	  225654 B/op	     229 allocs/op
+BenchmarkApplyCompiledRules-12    	    4239	    285473 ns/op	  225568 B/op	     229 allocs/op
+BenchmarkApplyCompiledRules-12    	    4348	    280202 ns/op	  225620 B/op	     229 allocs/op
+BenchmarkApplyCompiledRules-12    	    4350	    281977 ns/op	  225599 B/op	     229 allocs/op
+BenchmarkApplySharedContent-12    	     357	   3367053 ns/op	 1409266 B/op	     350 allocs/op
+BenchmarkApplySharedContent-12    	     351	   3377170 ns/op	 1409595 B/op	     351 allocs/op
+BenchmarkApplySharedContent-12    	     354	   3430433 ns/op	 1410761 B/op	     351 allocs/op
+BenchmarkApplySharedContent-12    	     343	   3444121 ns/op	 1409738 B/op	     351 allocs/op
+BenchmarkApplySharedContent-12    	     351	   3446517 ns/op	 1409515 B/op	     350 allocs/op
+PASS
+ok  	github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/transform	20.511s
+goos: darwin
+goarch: arm64
+pkg: github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/sync
+cpu: Apple M2 Max
+BenchmarkPostprocess-12    	      19	  53860840 ns/op	195956725 B/op	   63354 allocs/op
+BenchmarkPostprocess-12    	      22	  53691064 ns/op	194863348 B/op	   62912 allocs/op
+BenchmarkPostprocess-12    	      22	  52356305 ns/op	194886368 B/op	   62804 allocs/op
+BenchmarkPostprocess-12    	      22	  61834157 ns/op	195103224 B/op	   62907 allocs/op
+BenchmarkPostprocess-12    	      24	  53533142 ns/op	195413695 B/op	   63075 allocs/op
+PASS
+ok  	github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/sync	8.559s
+goos: darwin
+goarch: arm64
+pkg: github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/check
+cpu: Apple M2 Max
+BenchmarkCrawlPage-12    	   27061	     46902 ns/op	    7435 B/op	      80 allocs/op
+BenchmarkCrawlPage-12    	   25030	     44421 ns/op	    7475 B/op	      80 allocs/op
+BenchmarkCrawlPage-12    	   27511	     44897 ns/op	    7513 B/op	      80 allocs/op
+BenchmarkCrawlPage-12    	   23515	     43518 ns/op	    7489 B/op	      80 allocs/op
+BenchmarkCrawlPage-12    	   27205	     45918 ns/op	    7524 B/op	      80 allocs/op
+BenchmarkCrawlBFS-12     	     614	   2097963 ns/op	  320675 B/op	    3147 allocs/op
+BenchmarkCrawlBFS-12     	     553	   2333910 ns/op	  318374 B/op	    3144 allocs/op
+BenchmarkCrawlBFS-12     	     583	   1843688 ns/op	  317836 B/op	    3143 allocs/op
+BenchmarkCrawlBFS-12     	     612	   1838040 ns/op	  319894 B/op	    3144 allocs/op
+BenchmarkCrawlBFS-12     	     654	   1859791 ns/op	  318629 B/op	    3144 allocs/op
+PASS
+ok  	github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/check	17.591s

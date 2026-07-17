@@ -1,0 +1,370 @@
+/* Landing-page fonts, wrapper base, section backgrounds, and page chrome.
+ *
+ * Tailwind utilities for the landing live in landing.tailwind.css (generated,
+ * scoped under .llmd-frame). This file adds the Fredoka face (IBM Plex Sans is
+ * already loaded globally in custom.css), styles the wrapper, and replaces the
+ * design's fixed background bands with full-bleed section backgrounds that track
+ * the content. */
+@import '@fontsource/fredoka/400.css';
+
+.llmd-frame {
+  width: 100%;
+  /* Content column is absolutely positioned, so the wrapper needs a height.
+     LandingApp measures the real content height and sets min-height inline;
+     this is only the pre-hydration fallback (kept generous to avoid overlap). */
+  min-height: 4400px;
+  overflow-x: clip;
+  background: #ffffff;
+}
+
+/* Center the absolutely-positioned content column. */
+.llmd-frame .llmd-content {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* CTA link wrappers: `display: contents` so wrapping a Figma button/card in a
+   <Link>/<a> adds navigation without changing layout or the hover styles that
+   target the inner div. */
+.llmd-frame .llmd-cta {
+  display: contents;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Full-bleed section backgrounds (replace the design's fixed background bands so
+   the colors track the content instead of hardcoded pixel offsets). The section
+   keeps the 922px content width; the color extends to the full viewport width. */
+.llmd-frame .llmd-bleed-light,
+.llmd-frame .llmd-bleed-dark {
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  padding-left: calc(50vw - 50%);
+  padding-right: calc(50vw - 50%);
+}
+.llmd-frame .llmd-bleed-light {
+  background-color: #f2f4f8;
+}
+.llmd-frame .llmd-bleed-dark {
+  background-color: #121619;
+}
+
+/* Landing-only page chrome (scoped to the `llmd-landing` body class LandingApp
+   toggles). Navbar matches the first section; the divider matches the prototype's
+   light #dde1e6 line. The standard Docusaurus footer (themeConfig.footer) is
+   used on every page, including the landing page. */
+body.llmd-landing {
+  background-color: #ffffff;
+  --ifm-navbar-background-color: #f2f4f8;
+  --ifm-navbar-shadow: 0 1px 0 0 #dde1e6;
+}
+
+/* Release-updates logo uses the header logo asset (light/dark variants).
+   NOTE: the display toggle lives on the .llmd-logo-* class rules (not the `img`
+   type rule) — an `img`-typed rule is more specific than a lone class, so
+   setting `display:block` there would beat `.llmd-logo-dark { display:none }`
+   and render BOTH variants (the "double logo"). */
+.llmd-frame .llmd-header-logo img {
+  height: 32px;
+  width: auto;
+}
+.llmd-frame .llmd-header-logo .llmd-logo-light {
+  display: block;
+}
+.llmd-frame .llmd-header-logo .llmd-logo-dark {
+  display: none;
+}
+html[data-theme='dark'] .llmd-frame .llmd-header-logo .llmd-logo-light {
+  display: none;
+}
+html[data-theme='dark'] .llmd-frame .llmd-header-logo .llmd-logo-dark {
+  display: block;
+}
+
+/* Dark mode — palette from the designer's dark-mode tokens. The footer /
+   "Portability" band (#121619) is intentionally dark in both themes, so its
+   surfaces and text are deliberately not remapped here. Header follows the
+   first (light) section. */
+html[data-theme='dark'] body.llmd-landing {
+  --ifm-navbar-background-color: #21272a;
+  --ifm-navbar-shadow: 0 1px 0 0 #343a3f;
+}
+html[data-theme='dark'] .llmd-frame {
+  background-color: #000000;
+}
+html[data-theme='dark'] .llmd-frame .llmd-bleed-light {
+  background-color: #21272a;
+}
+html[data-theme='dark'] .llmd-frame .bg-\[\#f2f4f8\] {
+  background-color: #262626;
+}
+html[data-theme='dark'] .llmd-frame .bg-\[\#dde1e6\] {
+  background-color: #343a3f;
+}
+html[data-theme='dark'] .llmd-frame .bg-white {
+  background-color: #000000;
+}
+html[data-theme='dark'] .llmd-frame .text-black,
+html[data-theme='dark'] .llmd-frame .text-\[\#121619\],
+html[data-theme='dark'] .llmd-frame .text-\[\#21272a\] {
+  color: #f2f4f8;
+}
+html[data-theme='dark'] .llmd-frame .text-\[\#343a3f\],
+html[data-theme='dark'] .llmd-frame .text-\[\#4d4d4d\] {
+  color: #dde1e6;
+}
+html[data-theme='dark'] .llmd-frame .text-\[\#7f317f\],
+html[data-theme='dark'] .llmd-frame .text-\[\#813281\] {
+  color: #ca77ca;
+}
+/* Accent borders (e.g. the outlined "Explore the performance data" button) track
+   the dark-mode accent so they match the accent text. */
+html[data-theme='dark'] .llmd-frame .border-\[\#7f317f\] {
+  border-color: #ca77ca;
+}
+html[data-theme='dark'] .llmd-frame .border-\[\#dde1e6\],
+html[data-theme='dark'] .llmd-frame .border-\[\#f2f4f8\] {
+  border-color: #343a3f;
+}
+/* Release-updates contributor avatars use an inline #DDE1E6 stroke; in dark mode
+   it should be #343A3F. `border-color !important` overrides the inline border. */
+html[data-theme='dark'] .llmd-frame .llmd-contributors img {
+  border-color: #343a3f !important;
+}
+/* Founder + card-icon SVG logos: swap the two dark greys per the design tokens
+   (#697077 -> #343a3f, #343a3f -> #697077). Substring + case-insensitive matching
+   also catches the Figma `var(--fill-0, #...)` form; CSS `fill` overrides the SVG
+   presentation attribute. */
+html[data-theme='dark'] .llmd-frame svg [fill*='697077' i] {
+  fill: #343a3f;
+}
+html[data-theme='dark'] .llmd-frame svg [fill*='343a3f' i] {
+  fill: #697077;
+}
+
+/* Card hover states in dark mode. */
+html[data-theme='dark'] .llmd-frame div.bg-\[\#f2f4f8\].rounded-\[8px\]:hover {
+  background-color: #343a3f;
+}
+html[data-theme='dark'] .llmd-frame div.bg-\[\#f2f4f8\].rounded-\[8px\]:hover > div.border-\[\#dde1e6\] {
+  border-color: #343a3f;
+}
+/* Release-updates card keeps its own dark surface (no hover flip); its base rule
+   pins the light #f2f4f8 with !important. */
+html[data-theme='dark'] .llmd-frame div.llmd-release-card,
+html[data-theme='dark'] .llmd-frame div.llmd-release-card:hover {
+  background-color: #2a2a2a !important;
+}
+
+/* Release-updates version dropdown options (theme-aware). */
+.llmd-frame .llmd-release-option {
+  color: #343a3f;
+}
+.llmd-frame .llmd-release-option[data-selected='true'] {
+  color: #7f317f;
+  font-weight: 500;
+}
+.llmd-frame .llmd-release-option:hover {
+  background-color: #f2f4f8;
+}
+html[data-theme='dark'] .llmd-frame .llmd-release-option {
+  color: #c6c6c6;
+}
+html[data-theme='dark'] .llmd-frame .llmd-release-option[data-selected='true'] {
+  color: #ca77ca;
+}
+html[data-theme='dark'] .llmd-frame .llmd-release-option:hover {
+  background-color: #343a3f;
+}
+
+/* Release-updates commit list: each entry is a single truncated line (no wrap,
+   no horizontal scrollbar) at every breakpoint. The text ellipsizes; the PR
+   number stays intact on the right. `--llmd-stats-overhang` is unrelated. */
+.llmd-frame .llmd-commit-scroll {
+  overflow-x: hidden;
+}
+.llmd-frame .llmd-commit-entry {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  width: 100%;
+  min-width: 0;
+  flex-shrink: 0;
+}
+.llmd-frame .llmd-commit-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.llmd-frame .llmd-commit-entry a {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* Hero grey band ends at the vertical midpoint of the use-case (stat) cards so
+   the cards straddle the grey→white boundary. LandingApp measures the stat row
+   and sets `--llmd-stats-overhang` (half its height; 0 on mobile). Desktop only:
+   drop the hero's bottom padding, pull the card row down by the overhang, and
+   pad the following section's top so it clears the cards' overhanging halves. */
+.llmd-frame:not(.llmd-mobile) .llmd-hero-section {
+  padding-bottom: 0;
+}
+.llmd-frame:not(.llmd-mobile) .llmd-grid-stats {
+  margin-bottom: calc(-1 * var(--llmd-stats-overhang, 0px));
+  position: relative;
+  z-index: 1;
+}
+.llmd-frame:not(.llmd-mobile) .llmd-after-hero {
+  padding-top: calc(88px + var(--llmd-stats-overhang, 0px));
+}
+
+/* ===========================================================================
+   Responsive reflow (< 940px). LandingApp toggles `.llmd-mobile` on the frame.
+   Rather than scaling the fixed 922px design down (which made all text tiny),
+   the column is returned to normal flow at full width and each section reflows
+   to a single-column, mobile-legible layout: 2-wide card grids, larger type,
+   centered CTAs, and a uniform side inset so nothing touches the screen edge.
+   =========================================================================== */
+
+/* Column back into flow at full width — overrides the absolute/centered desktop
+   rules and the design's hardcoded 922px widths (content column, section copy,
+   release panel). */
+.llmd-frame.llmd-mobile .llmd-content {
+  position: relative;
+  left: 0;
+  transform: none;
+  width: 100%;
+  max-width: 100%;
+}
+.llmd-frame.llmd-mobile .w-\[922px\] {
+  width: 100% !important;
+  max-width: 100%;
+}
+/* Copy blocks with a fixed height would clip once they wrap on narrow widths. */
+.llmd-frame.llmd-mobile .h-\[60px\] {
+  height: auto;
+}
+
+/* Full-bleed sections: drop the negative margins (backgrounds already span the
+   full width once the column does) and give every section the same side inset.
+   Padding on the section keeps its background edge-to-edge while insetting the
+   content. */
+.llmd-frame.llmd-mobile .llmd-bleed-light,
+.llmd-frame.llmd-mobile .llmd-bleed-dark {
+  margin-left: 0;
+  margin-right: 0;
+}
+.llmd-frame.llmd-mobile .llmd-content > * {
+  box-sizing: border-box;
+  padding-left: clamp(20px, 5vw, 56px);
+  padding-right: clamp(20px, 5vw, 56px);
+}
+
+/* --- Card grids: 4-across flex rows become 2-wide grids ------------------ */
+.llmd-frame.llmd-mobile .llmd-grid-stats,
+.llmd-frame.llmd-mobile .llmd-grid-hardware,
+.llmd-frame.llmd-mobile .llmd-grid-community,
+.llmd-frame.llmd-mobile .llmd-grid-paths {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+/* The two path rows are each a 2×2 grid, stacking into the requested 2×4. The
+   wrapper between them keeps the same 16px gap as within each grid. */
+.llmd-frame.llmd-mobile .llmd-paths-stack {
+  gap: 16px;
+}
+/* Hardware row is a wide-short strip on desktop; let it grow for stacked rows. */
+.llmd-frame.llmd-mobile .llmd-grid-hardware {
+  aspect-ratio: auto;
+}
+/* Cards collapse borders with negative margins in the 4-across design; reset so
+   the grid gap controls spacing. Stat cards drop their tall 3:4 ratio to a
+   compact content height. */
+.llmd-frame.llmd-mobile .llmd-grid-stats > *,
+.llmd-frame.llmd-mobile .llmd-grid-hardware > * {
+  margin-right: 0;
+}
+/* Use-case (stat) cards share the well-lit-path cards' box on mobile: same
+   auto-height + min-height, so both card rows look consistent. Make the card a
+   flex column and have each nested wrapper fill its parent, so the innermost
+   metric/logo flex (justify-between) spans the full card height — metric pinned
+   to the top, company logo pinned to the bottom. `flex: 1 1 auto; min-height:0`
+   lets a wrapper both grow into a grid-stretched card and shrink rather than
+   overflow the border. */
+.llmd-frame.llmd-mobile .llmd-grid-stats > * {
+  aspect-ratio: auto;
+  height: auto;
+  min-height: 168px;
+  display: flex;
+  flex-direction: column;
+}
+.llmd-frame.llmd-mobile .llmd-grid-stats > * > div:not([aria-hidden]),
+.llmd-frame.llmd-mobile .llmd-grid-stats > * > div:not([aria-hidden]) > div {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+/* Well-lit path cards: grow to fit the wrapped title instead of clipping. */
+.llmd-frame.llmd-mobile .llmd-grid-paths > * {
+  height: auto;
+  min-height: 168px;
+}
+
+/* --- Hero: centered, with stacked CTAs ----------------------------------- */
+/* Hero is left-aligned on mobile (title, message, and CTAs). */
+.llmd-frame.llmd-mobile .llmd-hero {
+  align-items: flex-start;
+  text-align: left;
+}
+.llmd-frame.llmd-mobile .llmd-hero-ctas {
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  max-width: 420px;
+}
+.llmd-frame.llmd-mobile .llmd-hero-ctas > .llmd-cta > div {
+  width: 100%;
+}
+/* All CTA buttons go full-width on mobile. Section CTAs ("See all Well-Lit
+   paths", "View all supported accelerators") stretch their inner button (the
+   .llmd-cta wrapper is display:contents, so the button div is the flex child). */
+.llmd-frame.llmd-mobile .llmd-section-cta {
+  justify-content: center;
+  width: 100%;
+}
+.llmd-frame.llmd-mobile .llmd-section-cta > .llmd-cta > div {
+  width: 100%;
+}
+
+/* --- Release panel ------------------------------------------------------- */
+/* Hide the "Release updates" title text on mobile (the llm-d logo beside it
+   stays); the version dropdown gets the freed width. */
+.llmd-frame.llmd-mobile .llmd-release-title {
+  display: none;
+}
+/* Shrink the contributor avatars so the overlapping row fits a phone width. */
+.llmd-frame.llmd-mobile .llmd-contributors .size-\[48px\] {
+  width: 36px;
+  height: 36px;
+}
+
+/* --- Type scale (phones only) -------------------------------------------- */
+/* In flow the design's native sizes are already large; only phones need them
+   toned down so the hero title and body copy fit comfortably. Tablets keep the
+   native sizes (with the wider side inset above). */
+@media (max-width: 640px) {
+  .llmd-frame.llmd-mobile .text-\[56px\] {
+    font-size: 40px;
+  }
+  .llmd-frame.llmd-mobile .text-\[32px\] {
+    font-size: 26px;
+  }
+  .llmd-frame.llmd-mobile .text-\[24px\] {
+    font-size: 18px;
+  }
+  .llmd-frame.llmd-mobile .text-\[22px\] {
+    font-size: 18px;
+  }
+}

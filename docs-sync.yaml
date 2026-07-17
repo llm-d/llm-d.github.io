@@ -1,0 +1,40 @@
+# Generated/maintained by llmd-site. See tools/llmd-site/README.md.
+#
+# Single-site near-identity mirror: upstream llm-d/llm-d docs/** are copied
+# verbatim into this repo's docs/** (README.md kept as-is — Docusaurus treats it
+# as the folder index — plus .mdx, docs/menu-config.json, and docs/assets/**
+# images). Doc images are also mirrored into static/img/docs/ so the build-time
+# <img src> rewrites resolve. No link/image rewriting happens here; that is done
+# at Docusaurus build time by scripts/lib/preprocess.mjs. The community pages
+# below mirror the upstream repo-root files (wrapped with frontmatter + a source
+# admonition) since they live outside docs/ and are not preprocessed.
+version: 1
+sources:
+    llm-d:
+        remote:
+            url: https://github.com/llm-d/llm-d
+            default_branch: main
+            docs_root: docs
+        local:
+            path: ~/repos/llm-d
+community:
+    - from: CONTRIBUTING.md
+      to: community/contribute.md
+      title: Contributing to llm-d
+      sidebar_label: Contributing
+      sidebar_position: 3
+    - from: CODE_OF_CONDUCT.md
+      to: community/code-of-conduct.md
+      title: Code of Conduct
+      sidebar_label: Code of Conduct
+      sidebar_position: 4
+    - from: SECURITY.md
+      to: community/security.md
+      title: Security Policy
+      sidebar_label: Security
+      sidebar_position: 5
+    - from: SIGS.md
+      to: community/sigs.md
+      title: Special Interest Groups (SIGs)
+      sidebar_label: SIGs
+      sidebar_position: 6

@@ -100,7 +100,7 @@ If you are having trouble with the DCO process, please see some [troubleshooting
 
 | Content Type | Location | How to Edit |
 |--------------|----------|-------------|
-| **Main Documentation** | Architecture, guides, API reference | Edit in llm-d/llm-d (synced via `preview/scripts/sync-docs.sh`) |
+| **Main Documentation** | Architecture, guides, API reference | Edit in llm-d/llm-d (synced via `./bin/llmd-site sync` / `docs-sync.yaml`) |
 | **Community Documentation** | Contributing, Code of Conduct, Security, SIGs | Edit in llm-d/llm-d (synced via `remote-content/`) |
 | **Local Content** | Blog posts, landing pages, website config | Edit in this repository |
 
@@ -116,7 +116,7 @@ Main documentation (architecture, guides, API reference, resources) is synced fr
 3. Submit a PR to llm-d/llm-d
 4. Once merged, changes will appear on the website after the next deployment
 
-**Files synced via `preview/scripts/sync-docs.sh`:**
+**Files synced via [`docs-sync.yaml`](docs-sync.yaml):**
 - Architecture documentation
 - User guides
 - API reference
@@ -184,21 +184,16 @@ To add new architecture, guide, or API documentation:
    - API reference: `docs/api-reference/`
    - Resources: `docs/resources/`
 
-2. **Update sync-docs.sh** to copy the new file:
-   ```bash
-   # Edit preview/scripts/sync-docs.sh
-   # Add a new cp_doc line in the appropriate section
-   cp_doc "$WIP/path/to/newfile.md" "$DOCS_DIR/destination/newfile.md"
-   ```
+2. **Update `docs-sync.yaml`** to copy the new file (add an entry under `copies:`)
 
 3. **Test the sync locally:**
    ```bash
-   cd preview
-   ./scripts/sync-docs.sh
-   npm run build
+   make llmd-site
+   ./bin/llmd-site sync main --local   # or set LLMD_REPO=~/repos/llm-d
+   cd preview && npm run build
    ```
 
-4. **Submit PR to this repository** with the sync-docs.sh changes
+4. **Submit PR to this repository** with the `docs-sync.yaml` changes
 
 ### Adding Community Documentation
 
@@ -297,7 +292,7 @@ Every PR automatically gets a Netlify preview deployment. Check the PR for the p
 | **Content not syncing** | Verify file exists in llm-d/llm-d main branch |
 | **Preview not updating** | Netlify builds can take 5-10 minutes; check build logs |
 | **Links broken** | Ensure links use proper Docusaurus paths or full GitHub URLs |
-| **Images not showing** | Verify image paths in `preview/scripts/sync-docs.sh` |
+| **Images not showing** | Verify image paths in `docs-sync.yaml` sync mappings |
 
 ## 📚 Additional Resources
 
