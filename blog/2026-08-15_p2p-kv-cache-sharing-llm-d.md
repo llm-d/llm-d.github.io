@@ -87,7 +87,19 @@ reproducible the same way the other llm-d guides' benchmarks are.
 {/* Setup: kermit/CoreWeave, vLLM nightly + P2P connector branch +
 robustness fixes; full tables in the p2p-findings RESULTS.md. */}
 
-One deployment prerequisite applies to every P2P configuration: vLLM seeds its KV block hashes per process, so all peers must run with the same `PYTHONHASHSEED`. Without it, block hashes never match across pods and P2P silently degrades to zero matches - the protocol runs, but every lookup misses and every prefix is recomputed locally. The external prefix cache hit rate metric is the quickest way to catch this: it stays at zero.
+Two deployment prerequisites apply to every P2P configuration. First,
+block hashes must agree across the fleet: vLLM seeds them per process, so
+all peers need the same `PYTHONHASHSEED` and an identical `--block-size`.
+Without either, hashes never match across pods and P2P silently degrades
+to zero matches - the protocol runs, but every lookup misses and every
+prefix is recomputed locally. The external prefix cache hit rate metric is
+the quickest way to catch this: it stays at zero. Second, the CPU offload
+tier peers serve from must be considerably larger than the pod's GPU KV
+cache (we run 2x) - its value is the KV that GPU evicts and CPU retains.
+Compute that ratio from the engine's reported KV capacity rather than
+per-GPU intuition: weights are paid once per pod while KV memory scales
+with the tensor-parallel degree, so a tier that doubles the GPU cache at
+TP=1 can be a fraction of it at TP=4.
 
 ### Pull versus recompute (single request)
 
