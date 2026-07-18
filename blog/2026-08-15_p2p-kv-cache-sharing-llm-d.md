@@ -247,9 +247,18 @@ is the pull's value under overload.*
 
 ### Prefill placement under P/D
 
-The same question under P/D disaggregation: 4 prefill + 1 decode
-Llama-3.1-8B, NIXL carrying KV between the legs, same pool workload, three
-prefill-placement arms that differ only in how the prefill worker is chosen.
+Under P/D disaggregation the pull applies to the **prefill leg only**: the
+prefill worker computes the prompt's KV and streams it to the decoder, so
+that is the leg where recomputing a cached prefix is wasted work. The EPP
+sets the KV-cache-source header against the prefill target, and the sidecar
+injects `kv_transfer_params.p2p` onto the prefill leg (the decode leg
+already receives the full KV over NIXL and has nothing to pull). A prefill
+worker placed off the prefix owner therefore pulls the cached prefix from a
+peer and computes only the remainder.
+
+The measurement: 4 prefill + 1 decode Llama-3.1-8B, NIXL carrying KV between
+the legs, same pool workload, three prefill-placement arms that differ only
+in how the prefill worker is chosen.
 Prefix-affinity placement saturates at ~15.7 req/s - on this topology the
 single decode pod's KV intake, not prefill placement, is the ceiling.
 Load-aware placement without P2P saturates at ~11.3 req/s: every cross-pod
