@@ -42,7 +42,7 @@ The P2P connector generalizes the prefill/decode (P/D) disaggregation connector 
 * **Consumer**: pulls KV blocks for the request from a remote peer's CPU cache instead of computing them locally.
 * **Producer**: serves KV blocks from its CPU cache when a remote consumer asks for them.
 
-A single peer can be a consumer for some requests and a producer for others at the same time, over the same session.
+A single peer can be a consumer for one request and a producer for another concurrently; the roles are per-request, not per-pod.
 
 The transfer itself is best-effort. The consumer sends the producer the block hashes it needs; the producer matches them against its local CPU cache and answers with the hits; the consumer allocates CPU slots for the hits and the producer pushes the blocks over NIXL. The pull sits on the request's latency path - prefill proceeds once the blocks land or the lookup misses - but never on its failure path: hits load into the GPU as normal cache hits, and misses are recomputed by the engine, so a partial or failed transfer degrades to today's behavior rather than failing the request.
 
@@ -172,8 +172,8 @@ errors and zero restarts. TTFT p50 / p95 / p99 in seconds, and throughput:
 Medians are equal - a session answering from its warm cache is fast either
 way. The separation is in the tails and the variance: **p99 TTFT of 21-27s
 with P2P versus 37-81s with prefix-first routing - a 28-74% reduction -
-alongside up to +17% throughput and a 10% run-to-run spread
-versus 28%**. The mechanism: prefix-first placement sends every
+alongside up to +17% throughput, which varied 10% between P2P runs
+versus 28% between prefix-routing runs**. The mechanism: prefix-first placement sends every
 question to the pod that owns its document, and under contention the queue
 on that pod becomes the p99 - while displaced questions recompute 48K
 tokens. Load-aware placement sends the question wherever there is
@@ -326,7 +326,7 @@ win.
   <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Turn 0 pays the cold prefill; every later turn's history arrives by pull.</em></p>
 </div>
 
-### Agentic sessions: where the pull pays most
+### Agentic sessions: where the stack pays most
 
 Agentic serving concentrates everything the pull is for: contexts of
 10-100K tokens, sessions of many turns, and tool-call gaps during which a
@@ -350,8 +350,10 @@ topology: Qwen3-30B-A3B-Thinking on 6x H200 (2 prefill + 4 decode, TP=1),
   <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>A second arm-B sample reproduced the result (p50 1.06 s, 237 s).</em></p>
 </div>
 
-4.8x median TTFT and +33% throughput, with 1.23M tokens of session history
-pulled instead of recomputed in the 229-second run. The p99 is unchanged
+The stack delivers 4.8x median TTFT and +33% throughput; the 1.23M tokens
+of session history pulled instead of recomputed in the 229-second run are
+the pull's share of the work, though this comparison does not isolate the
+tier's contribution from the pull's. The p99 is unchanged
 by design: both arms' worst case is the cold first prefill of a
 100K-token context, and the pull removes *re*-computation, not the first
 computation. Two deviations from the scenario, applied to both arms:
