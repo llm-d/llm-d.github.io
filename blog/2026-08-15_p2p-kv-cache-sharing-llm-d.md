@@ -1,7 +1,6 @@
 ---
-# DRAFT — feature not yet merged. Date, authors, tags, and all benchmark
-# numbers are placeholders. Remove `draft: true` and this comment block
-# before publishing.
+# DRAFT — feature not yet merged. Date, authors, and tags are placeholders.
+# Remove `draft: true` and this comment block before publishing.
 title: "Peer-to-Peer KV Cache Sharing in llm-d"
 description: "llm-d's P2P connector lets any vLLM instance pull cached prefix KV blocks directly from a peer's CPU cache instead of recomputing them - turning per-pod prefix caches into a fleet-wide cache without shared storage."
 slug: p2p-kv-cache-sharing-llm-d
@@ -66,15 +65,20 @@ This is a small, opt-in scheduling step, off by default. Because it reuses the e
 ## Benchmarks
 
 We evaluated P2P KV cache sharing with the llm-d benchmarking framework
-(inference-perf) on two aggregated testbeds, and then on P/D-disaggregated
-topologies (each described with its measurement below):
+(inference-perf) across three models, first on aggregated testbeds and
+then on P/D-disaggregated topologies:
 
-* **Scale:** 14x `openai/gpt-oss-120b` (MXFP4), one H200 per pod (TP=1),
-  ~0.48M tokens of GPU KV per pod, an 88 GiB CPU offload tier per pod
-  (4.4x the GPU cache), vLLM block size 64.
-* **Small model:** 4x Llama-3.1-8B-Instruct, one H200 each, a 32 GiB CPU
-  offload tier per pod - the same mechanics at a size anyone can rerun on
-  four GPUs.
+* **Scale:** `openai/gpt-oss-120b` (MXFP4), one H200 per pod (TP=1) -
+  aggregated on 14 pods (~0.48M tokens of GPU KV per pod, an 88 GiB CPU
+  offload tier per pod, 4.4x the GPU cache, vLLM block size 64), and on
+  the pd-disaggregation guide topology (8 prefill + 8 decode).
+* **Small model:** Llama-3.1-8B-Instruct, one H200 each - aggregated on 4
+  pods (32 GiB CPU tier; the same mechanics at a size anyone can rerun on
+  four GPUs), and on a 4 prefill + 4 decode P/D pair for the multi-turn
+  pull measurement.
+* **Agentic:** `Qwen/Qwen3-30B-A3B-Thinking-2507` - the agentic-serving
+  guide's benchmark model - on 2 prefill + 4 decode (6x H200, TP=1, 128
+  GiB CPU tier per pod against 65.3 GiB of measured GPU KV).
 
 KV transfers go over NIXL - the transport abstraction, running on the
 testbed's RDMA-capable network here; latencies depend on the underlying
@@ -305,7 +309,7 @@ change.
 Measured on Llama-3.1-8B chat multi-turn (4 prefill + 4 decode, 48
 conversations x 8 turns): 477K tokens of session history moved
 decoder-to-prefiller in one run, and per-turn TTFT holds at 0.1-0.2 s
-while prompts grow from 7K to 24K tokens. At 2 prefill workers and
+while prompts grow from 5K to 20K tokens. At 2 prefill workers and
 concurrency 96 the same run pulls 1.65M tokens. On a model this small the
 recompute it replaces is also cheap, so the benefit is prefill capacity
 rather than visible latency - the sizing signal for where the pull pays:
@@ -349,26 +353,24 @@ pods).
 ### When pulling pays: calibrating the threshold
 
 The `minCachedTokenDelta` threshold from the scheduling step above is a
-crossover, and it is measurable per model in minutes on a live pod pair:
-time a warm pull of N tokens against a fresh recompute of N tokens at two
-sizes, and the fixed pull overhead and per-token rates fall out. Measured
-on H200:
+crossover: below it, the transfer's fixed cost outweighs the recompute it
+saves, and the threshold keeps the scheduler from ever issuing a losing
+pull. The single-request sweep earlier in this post prices it for
+gpt-oss-120b and Llama-8B (both cross near or below 2K tokens, hence the
+2048 threshold on those testbeds). For a new model, a two-point check on
+a live pod pair takes minutes and gives the same answer: time a warm pull
+and a fresh recompute at a small and a large size, and the pull's fixed
+overhead and both per-token rates fall out. On Qwen3-30B-A3B that check
+gives a ~30 ms pull overhead, an 8K-token pull in 74 ms against roughly
+360 ms of steady-state recompute, and a crossover near 760 tokens - so
+the agentic testbed runs a 1024 threshold, and the pull's advantage
+widens from there with size, on histories that run 10-100K tokens.
 
-| model | pull 8K tokens | recompute 8K tokens | crossover | threshold |
-|---|---|---|---|---|
-| Qwen3-30B-A3B | 74 ms | 1.21 s | ~760 tokens | 1024 |
-| Llama-3.1-8B | ~100 ms | ~300 ms | ~900 tokens | 1024 |
-| gpt-oss-120b | ~100 ms | ~3.3 s | ~300 tokens | 2048 |
-
-Above the crossover the pull wins and the gap widens with size - 16x at
-8K tokens on Qwen3-30B, and agentic histories run 10-100K. Below it,
-recomputing is cheaper than the transfer's fixed cost, and the threshold
-keeps the scheduler from ever issuing a losing pull. Sizing the tier that
-serves the pulls follows the same measure-first rule: read the engine's
-KV capacity from its startup log and provision the CPU tier at about
-twice that (the value of the tier is the KV that GPU evicts and CPU
-retains), with `/dev/shm` above the tier size and the pod memory limit
-above both.
+Sizing the tier that serves the pulls follows the same measure-first
+rule: read the engine's KV capacity from its startup log and provision
+the CPU tier at about twice that (the value of the tier is the KV that
+GPU evicts and CPU retains), with `/dev/shm` above the tier size and the
+pod memory limit above both.
 
 Two boundaries define where these numbers apply. Pulling a *generated*
 turn requires the next request to reproduce the same token IDs, which
