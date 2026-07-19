@@ -190,80 +190,32 @@ lives - so its results moved little between these two runs. A stronger
 stability claim would want more repetitions; this is the behavior observed
 across the alternated pair.
 
-The remaining scenarios run on the small-model testbed (4x Llama-3.1-8B) -
-the same mechanics at a scale that reruns on four GPUs.
+### Aggregated serving under load: the pull raises the ceiling
 
-### One hot prefix: routing is the win, P2P is the enabler
-
-With a single hot 16K prefix ramped to 24 req/s, cache-affinity routing
-concentrates all requests on the prefix owner and saturates it (p50 latency
-6.1s at rate 24), while load-balanced routing keeps p50 at 0.53s - an 11x
-lower median latency. P2P adds nothing on top for a single persistent prefix
-(each pod recomputes it once and it stays resident); its role in this regime
-is to make load-balanced routing safe for prefixes that do not fit
-everywhere - the next scenario measures that at small scale, and the
-document Q&A benchmark above is the same effect at fleet scale.
-
-<div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/p2p-kv-cache/hotspot.png" alt="Bar charts: one hot 16K prefix at 24 req/s; affinity sends all 5,040 requests to one pod, load-balanced routing spreads ~1,260 per pod and cuts p50 latency from 6.07 s to 0.53 s" style={{width: '100%', height: 'auto'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>One hot 16K prefix at 24 req/s. Affinity sends all 5,040 requests to the prefix owner and saturates it; load-balanced routing spreads them evenly and cuts p50 latency 11x.</em></p>
-</div>
-
-### Shared-prefix pool: P2P makes load-balancing viable
-
-A shared-prefix pool: 64 distinct 16K-token system prompts (a 128 GiB KV
-pool - far more than any single pod caches), 256-token questions, 64 output
-tokens, constant-rate stages. Every request landing on a pod that does not
-hold its prefix must recompute 16K tokens (no P2P) or pull them from the
-holder (P2P). Same load-balanced routing in both arms; cache-affinity
-routing as the reference (64 uniformly popular prefixes spread evenly, so
-affinity balances well here - its best case).
-
-At moderate rates (2-8 req/s), successful-request latency, no-P2P versus
-P2P:
-
-| rate | no-P2P p50 / p95 | P2P p50 / p95 | P2P TTFT p50 vs no-P2P |
-|---|---|---|---|
-| 2 req/s | 0.94s / 2.38s | 0.93s / 1.65s | 0.40s vs 0.57s |
-| 4 req/s | 1.12s / 2.76s | 0.93s / 2.14s | 0.42s vs 0.57s |
-| 6 req/s | 1.53s / 4.62s | 1.07s / 2.62s | 0.56s vs 0.59s |
-| 8 req/s | 2.49s / 6.41s | 1.41s / 3.72s | 0.59s vs 0.79s |
-
-P2P wins at every rate and the gap grows with load: at 8 req/s, 43% lower
-p50 and 42% lower p95, with TTFT 5-30% lower across the measured rates
-(25% at 8 req/s) - the prefix arrives over the network instead of being
-recomputed.
-
-<div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/p2p-kv-cache/pool-latency.png" alt="Bar charts: p50 and p95 request latency at 2-8 req/s on the 64x16K pool; P2P lower at every rate, p95 3.72 s versus 6.41 s at 8 req/s" style={{width: '100%', height: 'auto'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Successful-request latency on the pool workload, identical routing in both arms. The only difference is pulling the 16K prefix versus recomputing it; the gap widens as recompute pressure builds.</em></p>
-</div>
-
-At high rates the difference is structural. Without P2P, load-balanced
-routing collapses on this pool: recompute demand saturates the fleet near 10
-req/s aggregate, and p50 latency climbs to 44s at rate 24 (TTFT p50 37s).
-Affinity routing stays flat (~0.5-0.6s p50) because this pool is its best
-case. With P2P, load-balanced routing holds:
-
-| offered rate | no-P2P achieved / p50 lat | P2P achieved / p50 lat |
-|---|---|---|
-| 12 req/s | 9.9 req/s / 12.2s | 11.6 req/s / 2.1s |
-| 16 req/s | 10.3 req/s / 21.3s | 12.6 req/s / 7.8s |
-| 20 req/s | 10.1 req/s / 34.3s | 11.6 req/s / 24.6s |
-| 24 req/s | 10.4 req/s / 44.1s | 11.3 req/s / 36.4s |
-
-P2P raises the saturation ceiling by ~22% (12.6 versus 10.3 req/s achieved)
-and delivers up to 83% lower p50 in the 12-16 req/s band where no-P2P has
-already collapsed but P2P still keeps pace, with 30% higher peak token
-throughput (3,184 versus 2,420 tok/s). Both arms eventually saturate - the
-GPUs run out either way - but the pull path buys the fleet a fifth of extra
-capacity and a far gentler degradation curve on a workload whose working set
-no single pod can cache.
+Two experiments on the small-model testbed (4x Llama-3.1-8B - the same
+mechanics at a scale that reruns on four GPUs) bound the aggregated
+regimes. A single hot 16K prefix is routing's problem, not P2P's: cache-affinity
+concentrates every request on the prefix owner and saturates it (p50
+6.1s at 24 req/s) while load-balanced routing holds 0.53s - 11x lower -
+and the pull adds nothing for a prefix that is resident everywhere after
+one recompute per pod. P2P's role is to make that load-balanced
+placement safe when prefixes do not fit everywhere. On a 64x16K-token
+shared-prefix pool (a 128 GiB KV pool, far larger than any pod's cache)
+with identical load-balanced routing in both arms, the pull beats
+recompute at every measured rate and the gap grows with load: 43% lower
+p50 and 42% lower p95 at 8 req/s, and at high rates the difference is
+structural - recompute demand saturates the fleet near 10.3 req/s while
+the P2P arm holds 12.6 (+22% ceiling, 30% higher peak token throughput,
+up to 83% lower p50 in the 12-16 req/s band where the recompute arm has
+already collapsed):
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/p2p-kv-cache/saturation.png" alt="Line charts: achieved rate and p50 latency versus offered rate for affinity, load-balanced without P2P, and load-balanced with P2P; without the pull throughput saturates at 10.3 req/s, with it 12.6" style={{width: '100%', height: 'auto'}} />
   <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Left: achieved versus offered rate. Affinity tracks the offered line (its best-case pool); recompute saturates near 10 req/s; P2P holds ~12.6. Right: median latency on a log scale - the band between the recompute and P2P curves is the pull's value under overload.</em></p>
 </div>
+
+Per-rate tables for the hot-prefix and pool experiments are in the
+[guide's benchmark report](https://github.com/llm-d/llm-d/tree/main/guides/p2p-kv-cache-sharing/benchmark-results).
 
 ### P/D disaggregation: adding the stack is strictly better
 
@@ -276,31 +228,20 @@ already receives the full KV over NIXL and has nothing to pull). A prefill
 worker placed off the prefix owner therefore pulls the cached prefix from a
 peer and computes only the remainder.
 
-The first measurement is the composability check: the
+The composability check: the
 [pd-disaggregation guide](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation)
 exactly as shipped, versus the same deployment plus the P2P stack
-(offload tier + pull), and nothing else changed. gpt-oss-120b on 16x H200
-(8 prefill + 8 decode, TP=1), the document-Q&A workload at concurrency
-192, both arms completing 1,152 of 1,152 requests:
-
-| | P/D guide | P/D guide + P2P stack |
-|---|---|---|
-| TTFT p50 | 11.94 s | **1.16 s** |
-| TTFT p95 | 71.6 s | 55.2 s |
-| TTFT p99 | 106.1 s | **80.0 s** |
-| throughput | 5.68 turns/s | **7.96 turns/s** |
-
-<div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/p2p-kv-cache/pd-guide-docqa.png" alt="Grouped bars: TTFT p50/p95/p99 for the P/D guide with and without the P2P stack; p50 11.9s to 1.16s, p99 106s to 80s, +40% throughput" style={{width: '100%', height: 'auto'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>The guide with and without the P2P stack, same day, fresh fleet per arm.</em></p>
-</div>
-
-At this operating point the win comes from the stack's CPU offload tier:
-turn N+1's history re-prefill is served from cache (52M externally served
-tokens in the run) instead of recomputed under 192-deep queues. The pull
-itself stays quiet under the guide's prefix-affine placement and activates
-when placement diverges - which the next two measurements exercise
-directly.
+(offload tier + pull), and nothing else changed - gpt-oss-120b on 16x
+H200 (8 prefill + 8 decode, TP=1), the document-Q&A workload at
+concurrency 192, both arms completing 1,152 of 1,152 requests. The stack
+is strictly better under load: TTFT p50 falls from 11.9s to 1.16s, p99
+from 106s to 80s, and throughput rises 40% (5.68 to 7.96 turns/s). At
+this operating point the win comes from the stack's CPU offload tier -
+turn N+1's history re-prefill is served from cache (52M externally
+served tokens in the run) instead of recomputed under 192-deep queues -
+while the pull itself stays quiet under the guide's prefix-affine
+placement and activates when placement diverges, which the next two
+measurements exercise directly.
 
 ### The prefiller pulls from the decoder
 
