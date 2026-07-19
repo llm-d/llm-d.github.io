@@ -382,7 +382,10 @@ reuse. And TP-mismatched peers are supported only for
 non-hybrid-attention models on the V1 model runner (force it with
 `VLLM_USE_V2_MODEL_RUNNER=0` where V2 is the default); hybrid models like
 gpt-oss require matched TP, and the P/D topologies here run matched TP
-throughout.
+throughout. In-review upstream work stores offloaded KV in a canonical,
+parallelism-free layout
+([vllm#48414](https://github.com/vllm-project/vllm/pull/48414)), removing
+the TP coupling from the stored blocks themselves.
 
 ### Future scenarios
 
