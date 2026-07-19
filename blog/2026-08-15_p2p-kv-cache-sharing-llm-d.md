@@ -46,8 +46,10 @@ A single peer can be a consumer for some requests and a producer for others at t
 
 The transfer itself is best-effort and asynchronous. The consumer sends the producer the block hashes it needs; the producer matches them against its local CPU cache and answers with the hits; the consumer allocates CPU slots for the hits and the producer pushes the blocks over NIXL. Hits load into the GPU as normal cache hits; misses are recomputed by the engine, so a partial or failed transfer degrades to today's behavior rather than failing the request.
 
-![Architecture: the EPP picks the destination pod and source peer and sends the consumer a KV-cache-source header; the consumer's routing sidecar injects the P2P transfer params; a ZMQ control exchange carries block hashes and matches between the pods; NIXL moves the matched blocks from the producer's CPU offload tier to the consumer's CPU tier without touching either GPU; hits load into the consumer's GPU KV cache and unmatched blocks fall back to a recompute](../static/img/blogs/p2p-kv-cache/architecture.png)
-*Anatomy of a pull. The EPP decides, the sidecar injects, and the engines work peer to peer: a ZMQ control exchange settles which blocks the peer holds, and NIXL moves them CPU tier to CPU tier - neither GPU spends time on the transfer.*
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/p2p-kv-cache/architecture.png" alt="Architecture: the EPP picks the destination pod and source peer and sends the consumer a KV-cache-source header; the consumer's routing sidecar injects the P2P transfer params; a ZMQ control exchange carries block hashes and matches between the pods; NIXL moves the matched blocks from the producer's CPU offload tier to the consumer's CPU tier without touching either GPU; hits load into the consumer's GPU KV cache and unmatched blocks fall back to a recompute" style={{width: '75%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Anatomy of a pull. The EPP decides, the sidecar injects, and the engines work peer to peer: a ZMQ control exchange settles which blocks the peer holds, and NIXL moves them CPU tier to CPU tier - neither GPU spends time on the transfer.</em></p>
+</div>
 
 ## How llm-d Decides When to Pull
 
@@ -134,10 +136,10 @@ threshold - the minimum extra cached-prefix tokens a peer must hold beyond
 the scheduled pod before a pull is requested - is set to the smallest
 length at which the pull wins on both models.
 
-![Line chart: prefill latency versus prefix length for recompute and P2P pull on gpt-oss-120b; the pull is lower at every length, 551 ms versus 1,695 ms at 48K tokens (-68%)](../static/img/blogs/p2p-kv-cache/crossover-gptoss.png)
-*Single-request prefill latency, recompute versus P2P pull, gpt-oss-120b.
-the pull's latency grows far slower than recompute's as the prefix
-lengthens; the gap reaches -68% at 48K tokens.*
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/p2p-kv-cache/crossover-gptoss.png" alt="Line chart: prefill latency versus prefix length for recompute and P2P pull on gpt-oss-120b; the pull is lower at every length, 551 ms versus 1,695 ms at 48K tokens (-68%)" style={{width: '75%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Single-request prefill latency, recompute versus P2P pull, gpt-oss-120b. The pull's latency grows far slower than recompute's as the prefix lengthens; the gap reaches -68% at 48K tokens.</em></p>
+</div>
 
 ### Document Q&A at scale: the headline result
 
@@ -161,9 +163,10 @@ errors and zero restarts. TTFT p50 / p95 / p99 in seconds, and throughput:
 | Load-aware + P2P | 1 | 4.5s | 13.0s | 20.9s | 7.02 turns/s |
 | Load-aware + P2P | 2 (order reversed) | 3.9s | 12.5s | 26.7s | 7.76 turns/s |
 
-![Bar charts: document Q&A TTFT percentiles and throughput across two order-alternated runs; medians equal, load-aware + P2P p99 21-27 s versus 37-81 s for precise routing, throughput up to +17%](../static/img/blogs/p2p-kv-cache/docqa.png)
-*192 documents x 48K tokens, 6 Q&A turns each, 128 concurrent. Medians are
-equal; the arms separate on tails and on stability.*
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/p2p-kv-cache/docqa.png" alt="Bar charts: document Q&A TTFT percentiles and throughput across two order-alternated runs; medians equal, load-aware + P2P p99 21-27 s versus 37-81 s for precise routing, throughput up to +17%" style={{width: '85%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>192 documents x 48K tokens, 6 Q&A turns each, 128 concurrent. Medians are equal; the arms separate on tails and on stability.</em></p>
+</div>
 
 Medians are equal - a session answering from its warm cache is fast either
 way. The separation is in the tails and the variance: **p99 TTFT of 21-27s
@@ -200,10 +203,10 @@ is to make load-balanced routing safe for prefixes that do not fit
 everywhere - the next scenario measures that at small scale, and the
 document Q&A benchmark above is the same effect at fleet scale.
 
-![Bar charts: one hot 16K prefix at 24 req/s; affinity sends all 5,040 requests to one pod, load-balanced routing spreads ~1,260 per pod and cuts p50 latency from 6.07 s to 0.53 s](../static/img/blogs/p2p-kv-cache/hotspot.png)
-*One hot 16K prefix at 24 req/s. Affinity sends all 5,040 requests to the
-prefix owner and saturates it; load-balanced routing spreads them evenly and
-cuts p50 latency 11x.*
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/p2p-kv-cache/hotspot.png" alt="Bar charts: one hot 16K prefix at 24 req/s; affinity sends all 5,040 requests to one pod, load-balanced routing spreads ~1,260 per pod and cuts p50 latency from 6.07 s to 0.53 s" style={{width: '75%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>One hot 16K prefix at 24 req/s. Affinity sends all 5,040 requests to the prefix owner and saturates it; load-balanced routing spreads them evenly and cuts p50 latency 11x.</em></p>
+</div>
 
 ### Shared-prefix pool: P2P makes load-balancing viable
 
@@ -230,10 +233,10 @@ p50 and 42% lower p95, with TTFT 5-30% lower across the measured rates
 (25% at 8 req/s) - the prefix arrives over the network instead of being
 recomputed.
 
-![Bar charts: p50 and p95 request latency at 2-8 req/s on the 64x16K pool; P2P lower at every rate, p95 3.72 s versus 6.41 s at 8 req/s](../static/img/blogs/p2p-kv-cache/pool-latency.png)
-*Successful-request latency on the pool workload, identical routing in both
-arms. The only difference is pulling the 16K prefix versus recomputing it; the
-gap widens as recompute pressure builds.*
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/p2p-kv-cache/pool-latency.png" alt="Bar charts: p50 and p95 request latency at 2-8 req/s on the 64x16K pool; P2P lower at every rate, p95 3.72 s versus 6.41 s at 8 req/s" style={{width: '75%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Successful-request latency on the pool workload, identical routing in both arms. The only difference is pulling the 16K prefix versus recomputing it; the gap widens as recompute pressure builds.</em></p>
+</div>
 
 At high rates the difference is structural. Without P2P, load-balanced
 routing collapses on this pool: recompute demand saturates the fleet near 10
@@ -256,11 +259,10 @@ GPUs run out either way - but the pull path buys the fleet a fifth of extra
 capacity and a far gentler degradation curve on a workload whose working set
 no single pod can cache.
 
-![Line charts: achieved rate and p50 latency versus offered rate for affinity, load-balanced without P2P, and load-balanced with P2P; without the pull throughput saturates at 10.3 req/s, with it 12.6](../static/img/blogs/p2p-kv-cache/saturation.png)
-*Left: achieved versus offered rate. Affinity tracks the offered line (its
-best-case pool); recompute saturates near 10 req/s; P2P holds ~12.6. Right:
-median latency on a log scale - the band between the recompute and P2P curves
-is the pull's value under overload.*
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/p2p-kv-cache/saturation.png" alt="Line charts: achieved rate and p50 latency versus offered rate for affinity, load-balanced without P2P, and load-balanced with P2P; without the pull throughput saturates at 10.3 req/s, with it 12.6" style={{width: '85%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Left: achieved versus offered rate. Affinity tracks the offered line (its best-case pool); recompute saturates near 10 req/s; P2P holds ~12.6. Right: median latency on a log scale - the band between the recompute and P2P curves is the pull's value under overload.</em></p>
+</div>
 
 ### P/D disaggregation: adding the stack is strictly better
 
@@ -287,8 +289,10 @@ exactly as shipped, versus the same deployment plus the P2P stack
 | TTFT p99 | 106.1 s | **80.0 s** |
 | throughput | 5.68 turns/s | **7.96 turns/s** |
 
-![Grouped bars: TTFT p50/p95/p99 for the P/D guide with and without the P2P stack; p50 11.9s to 1.16s, p99 106s to 80s, +40% throughput](../static/img/blogs/p2p-kv-cache/pd-guide-docqa.png)
-*The guide with and without the P2P stack, same day, fresh fleet per arm.*
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/p2p-kv-cache/pd-guide-docqa.png" alt="Grouped bars: TTFT p50/p95/p99 for the P/D guide with and without the P2P stack; p50 11.9s to 1.16s, p99 106s to 80s, +40% throughput" style={{width: '75%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>The guide with and without the P2P stack, same day, fresh fleet per arm.</em></p>
+</div>
 
 At this operating point the win comes from the stack's CPU offload tier:
 turn N+1's history re-prefill is served from cache (52M externally served
@@ -316,8 +320,10 @@ rather than visible latency - the sizing signal for where the pull pays:
 the larger the history and the slower the model's prefill, the larger the
 win.
 
-![Line chart: per-turn TTFT p50 and p95 flat at 0.1-0.2s across 8 turns while prompt length grows from 7K to 24K tokens](../static/img/blogs/p2p-kv-cache/pd-chat-turns.png)
-*Turn 0 pays the cold prefill; every later turn's history arrives by pull.*
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/p2p-kv-cache/pd-chat-turns.png" alt="Line chart: per-turn TTFT p50 and p95 flat at 0.1-0.2s across 8 turns while prompt length grows from 7K to 24K tokens" style={{width: '75%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Turn 0 pays the cold prefill; every later turn's history arrives by pull.</em></p>
+</div>
 
 ### Agentic sessions: where the pull pays most
 
@@ -338,8 +344,10 @@ topology: Qwen3-30B-A3B-Thinking on 6x H200 (2 prefill + 4 decode, TP=1),
 | TTFT p99 | 30.29 s | 29.98 s |
 | run time | 304 s | **229 s** |
 
-![Grouped bars: agentic sessions on P/D; TTFT p50 5.22s to 1.09s, p95 -38%, p99 parity, +33% throughput](../static/img/blogs/p2p-kv-cache/agentic-pd.png)
-*A second arm-B sample reproduced the result (p50 1.06 s, 237 s).*
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/p2p-kv-cache/agentic-pd.png" alt="Grouped bars: agentic sessions on P/D; TTFT p50 5.22s to 1.09s, p95 -38%, p99 parity, +33% throughput" style={{width: '75%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>A second arm-B sample reproduced the result (p50 1.06 s, 237 s).</em></p>
+</div>
 
 4.8x median TTFT and +33% throughput, with 1.23M tokens of session history
 pulled instead of recomputed in the 229-second run. The p99 is unchanged
