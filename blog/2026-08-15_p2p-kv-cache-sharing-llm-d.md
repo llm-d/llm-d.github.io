@@ -2,7 +2,7 @@
 # DRAFT — feature not yet merged. Date, authors, and tags are placeholders.
 # Remove `draft: true` and this comment block before publishing.
 title: "Peer-to-Peer KV Cache Sharing in llm-d"
-description: "llm-d's P2P connector lets any vLLM instance pull cached prefix KV blocks directly from a peer's CPU cache instead of recomputing them - turning per-pod prefix caches into a fleet-wide cache without shared storage."
+description: "llm-d's P2P connector lets any vLLM instance pull cached prefix KV blocks directly from a peer's CPU cache instead of recomputing them - turning per-pod prefix caches into a fleet-wide resource without shared storage."
 slug: p2p-kv-cache-sharing-llm-d
 date: 2026-08-15T09:00
 draft: true
@@ -44,7 +44,7 @@ The P2P connector generalizes the prefill/decode (P/D) disaggregation connector 
 
 A single peer can be a consumer for some requests and a producer for others at the same time, over the same session.
 
-The transfer itself is best-effort and asynchronous. The consumer sends the producer the block hashes it needs; the producer matches them against its local CPU cache and answers with the hits; the consumer allocates CPU slots for the hits and the producer pushes the blocks over NIXL. Hits load into the GPU as normal cache hits; misses are recomputed by the engine, so a partial or failed transfer degrades to today's behavior rather than failing the request.
+The transfer itself is best-effort. The consumer sends the producer the block hashes it needs; the producer matches them against its local CPU cache and answers with the hits; the consumer allocates CPU slots for the hits and the producer pushes the blocks over NIXL. The pull sits on the request's latency path - prefill proceeds once the blocks land or the lookup misses - but never on its failure path: hits load into the GPU as normal cache hits, and misses are recomputed by the engine, so a partial or failed transfer degrades to today's behavior rather than failing the request.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/p2p-kv-cache/architecture.png" alt="Architecture: the EPP picks the destination pod and source peer and sends the consumer a KV-cache-source header; the consumer's routing sidecar injects the P2P transfer params; a ZMQ control exchange carries block hashes and matches between the pods; NIXL moves the matched blocks from the producer's CPU offload tier to the consumer's CPU tier without touching either GPU; hits load into the consumer's GPU KV cache and unmatched blocks fall back to a recompute" style={{width: '75%', height: 'auto'}} />
@@ -61,7 +61,7 @@ This is a small, opt-in scheduling step, off by default. Because it reuses the e
 
 * **Session mobility without cache loss.** A multi-turn conversation rebalanced to a different pod pulls its history from the previous pod instead of recomputing it.
 * **Fast warmup on scale-out.** A new replica serves cache hits from day zero by pulling hot shared prefixes from established peers.
-* **Fleet-wide reuse of shared prefixes.** A long system prompt is prefilled once in the cluster, not once per pod.
+* **Fleet-wide reuse of shared prefixes.** A long system prompt prefilled on one pod seeds its peers by pull instead of every pod paying its own prefill.
 * **No storage dependency.** Transfers go peer to peer at CPU-memory and network speed; no shared filesystem or object store is required. For deployments that want persistence and effectively unlimited capacity, P2P complements rather than replaces the storage tier.
 
 ## Benchmarks
@@ -102,7 +102,8 @@ to zero matches - the protocol runs, but every lookup misses and every
 prefix is recomputed locally. The external prefix cache hit rate metric is
 the quickest way to catch this: it stays at zero. Second, the CPU offload
 tier peers serve from must be considerably larger than the pod's GPU KV
-cache (we run 2x) - its value is the KV that GPU evicts and CPU retains.
+cache (at least 2x as the working default; the aggregated testbed here
+runs 4.4x) - its value is the KV that GPU evicts and CPU retains.
 Compute that ratio from the engine's reported KV capacity rather than
 per-GPU intuition: weights are paid once per pod while KV memory scales
 with the tensor-parallel degree, so a tier that doubles the GPU cache at
@@ -170,8 +171,8 @@ errors and zero restarts. TTFT p50 / p95 / p99 in seconds, and throughput:
 
 Medians are equal - a session answering from its warm cache is fast either
 way. The separation is in the tails and the variance: **p99 TTFT of 21-27s
-with P2P versus 37-81s with prefix-first routing - a 28-74% reduction, up
-to 3.9x lower - alongside up to +17% throughput and a 10% run-to-run spread
+with P2P versus 37-81s with prefix-first routing - a 28-74% reduction -
+alongside up to +17% throughput and a 10% run-to-run spread
 versus 28%**. The mechanism: prefix-first placement sends every
 question to the pod that owns its document, and under contention the queue
 on that pod becomes the p99 - while displaced questions recompute 48K
@@ -282,7 +283,7 @@ exactly as shipped, versus the same deployment plus the P2P stack
 (8 prefill + 8 decode, TP=1), the document-Q&A workload at concurrency
 192, both arms completing 1,152 of 1,152 requests:
 
-| | P/D guide | P/D guide + P2P |
+| | P/D guide | P/D guide + P2P stack |
 |---|---|---|
 | TTFT p50 | 11.94 s | **1.16 s** |
 | TTFT p95 | 71.6 s | 55.2 s |
@@ -337,7 +338,7 @@ benchmark shapes (its model, block size, and generation settings; contexts
 topology: Qwen3-30B-A3B-Thinking on 6x H200 (2 prefill + 4 decode, TP=1),
 288 requests at concurrency 16, both arms 288 of 288, fresh fleet per arm:
 
-| | P/D guide | P/D guide + P2P |
+| | P/D guide | P/D guide + P2P stack |
 |---|---|---|
 | TTFT p50 | 5.22 s | **1.09 s** |
 | TTFT p95 | 18.94 s | **11.77 s** |
@@ -362,8 +363,10 @@ pods).
 
 The `minCachedTokenDelta` threshold from the scheduling step above is a
 crossover: below it, the transfer's fixed cost outweighs the recompute it
-saves, and the threshold keeps the scheduler from ever issuing a losing
-pull. The single-request sweep earlier in this post prices it for
+saves. The threshold keeps the scheduler from issuing pulls below the
+crossover measured for that model and testbed; the crossover itself moves
+with fabric contention and producer load, so production deployments
+should leave margin for network and load variance. The single-request sweep earlier in this post prices it for
 gpt-oss-120b and Llama-8B (both cross near or below 2K tokens, hence the
 2048 threshold on those testbeds). For a new model, a two-point check on
 a live pod pair takes minutes and gives the same answer: time a warm pull
@@ -376,9 +379,9 @@ widens from there with size, on histories that run 10-100K tokens.
 
 Sizing the tier that serves the pulls follows the same measure-first
 rule: read the engine's KV capacity from its startup log and provision
-the CPU tier at about twice that (the value of the tier is the KV that
-GPU evicts and CPU retains), with `/dev/shm` above the tier size and the
-pod memory limit above both.
+the CPU tier at the 2x working default (the value of the tier is the KV
+that GPU evicts and CPU retains), with `/dev/shm` above the tier size and
+the pod memory limit above both.
 
 Two boundaries define where these numbers apply. Pulling a *generated*
 turn requires the next request to reproduce the same token IDs, which
@@ -406,7 +409,7 @@ the TP coupling from the stored blocks themselves.
 
 ## Summary and Next Steps
 
-P2P KV cache sharing turns llm-d's per-pod prefix caches into a fleet-wide resource. The EPP's existing per-request prefix knowledge picks the source, a single header carries the decision, and the connector moves the blocks peer to peer - best-effort, asynchronous, and off the request's failure path. It composes with prefix-aware routing (which minimizes how often a pull is needed), with P/D disaggregation (prefill workers pull prefixes too), and with the storage tier (which adds persistence and capacity beyond what peers hold).
+P2P KV cache sharing turns llm-d's per-pod prefix caches into a fleet-wide resource. The EPP's existing per-request prefix knowledge picks the source, a single header carries the decision, and the connector moves the blocks peer to peer - best-effort, and off the request's failure path. It composes with prefix-aware routing (which minimizes how often a pull is needed), with P/D disaggregation (prefill workers pull prefixes too), and with the storage tier (which adds persistence and capacity beyond what peers hold).
 
 The measurements give a simple rule for when to reach for it. When the
 working set fits in the fleet's GPU caches, prefix-aware routing alone is
