@@ -378,9 +378,11 @@ chat-templated APIs do for models whose templates re-render assistant
 turns verbatim (the Llama measurement above); models that drop reasoning
 segments on re-render (gpt-oss, Qwen3-Thinking) expose only their input
 context and re-prefilled history for pulling - still the bulk of agentic
-reuse. And peers must run the same tensor-parallel degree: KV block
-identity is TP-dependent in the connector, so the P/D topologies here run
-prefill and decode at matched TP.
+reuse. And TP-mismatched peers are supported only for
+non-hybrid-attention models on the V1 model runner (force it with
+`VLLM_USE_V2_MODEL_RUNNER=0` where V2 is the default); hybrid models like
+gpt-oss require matched TP, and the P/D topologies here run matched TP
+throughout.
 
 ### Future scenarios
 
