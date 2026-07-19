@@ -66,7 +66,8 @@ This is a small, opt-in scheduling step, off by default. Because it reuses the e
 ## Benchmarks
 
 We evaluated P2P KV cache sharing with the llm-d benchmarking framework
-(inference-perf) on two aggregated testbeds:
+(inference-perf) on two aggregated testbeds, and then on P/D-disaggregated
+topologies (each described with its measurement below):
 
 * **Scale:** 14x `openai/gpt-oss-120b` (MXFP4), one H200 per pod (TP=1),
   ~0.48M tokens of GPU KV per pod, an 88 GiB CPU offload tier per pod
@@ -257,7 +258,7 @@ best-case pool); recompute saturates near 10 req/s; P2P holds ~12.6. Right:
 median latency on a log scale - the band between the recompute and P2P curves
 is the pull's value under overload.*
 
-### Prefill placement under P/D
+### P/D disaggregation: adding the stack is strictly better
 
 Under P/D disaggregation the pull applies to the **prefill leg only**: the
 prefill worker computes the prompt's KV and streams it to the decoder, so
@@ -268,25 +269,116 @@ already receives the full KV over NIXL and has nothing to pull). A prefill
 worker placed off the prefix owner therefore pulls the cached prefix from a
 peer and computes only the remainder.
 
-The measurement: 4 prefill + 1 decode Llama-3.1-8B, NIXL carrying KV between
-the legs, same pool workload, three prefill-placement arms that differ only
-in how the prefill worker is chosen.
-Prefix-affinity placement saturates at ~15.7 req/s - on this topology the
-single decode pod's KV intake, not prefill placement, is the ceiling.
-Load-aware placement without P2P saturates at ~11.3 req/s: every cross-pod
-prefill recomputes 16K tokens, and p50 latency reaches 33s. Adding the P2P
-pull nearly recovers the affinity ceiling: ~14.7 req/s (within 6% of 15.7),
-+30% over recompute,
-converging on the same decode-bound limit, with p50 5.6s versus 12.2s at
-16 req/s. The pull is what makes load-aware prefill
-placement viable under P/D, at a 0.2-0.5s TTFT premium at low rates where
-affinity's pure cache hits win. Zero failures and zero restarts across all
-three arms (15,123 requests).
+The first measurement is the composability check: the
+[pd-disaggregation guide](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation)
+exactly as shipped, versus the same deployment plus the P2P stack
+(offload tier + pull), and nothing else changed. gpt-oss-120b on 16x H200
+(8 prefill + 8 decode, TP=1), the document-Q&A workload at concurrency
+192, both arms completing 1,152 of 1,152 requests:
 
-![Line charts: P/D prefill placement arms; load-aware without P2P saturates at 11.3 req/s, adding the pull recovers 14.7 req/s near the decode-bound affinity ceiling of 15.7](../static/img/blogs/p2p-kv-cache/pd-placement.png)
-*Three prefill-placement strategies on the P/D topology. Without the pull,
-load-aware placement is recompute-bound at 11.3 req/s; with it, throughput
-returns to the decode-bound affinity ceiling.*
+| | P/D guide | P/D guide + P2P |
+|---|---|---|
+| TTFT p50 | 11.94 s | **1.16 s** |
+| TTFT p95 | 71.6 s | 55.2 s |
+| TTFT p99 | 106.1 s | **80.0 s** |
+| throughput | 5.68 turns/s | **7.96 turns/s** |
+
+![Grouped bars: TTFT p50/p95/p99 for the P/D guide with and without the P2P stack; p50 11.9s to 1.16s, p99 106s to 80s, +40% throughput](../static/img/blogs/p2p-kv-cache/pd-guide-docqa.png)
+*The guide with and without the P2P stack, same day, fresh fleet per arm.*
+
+At this operating point the win comes from the stack's CPU offload tier:
+turn N+1's history re-prefill is served from cache (52M externally served
+tokens in the run) instead of recomputed under 192-deep queues. The pull
+itself stays quiet under the guide's prefix-affine placement and activates
+when placement diverges - which the next two measurements exercise
+directly.
+
+### The prefiller pulls from the decoder
+
+In a multi-turn conversation the newest KV lives on the decode worker: it
+received the prompt over NIXL and generated the answer. When the next turn
+arrives, the scheduled prefill worker is missing that history, the
+EPP's index (fed by both roles' cache events) sees the decoder holding it,
+and the pull fires - per turn, decided by the router, no application
+change.
+
+Measured on Llama-3.1-8B chat multi-turn (4 prefill + 4 decode, 48
+conversations x 8 turns): 477K tokens of session history moved
+decoder-to-prefiller in one run, and per-turn TTFT holds at 0.1-0.2 s
+while prompts grow from 7K to 24K tokens. At 2 prefill workers and
+concurrency 96 the same run pulls 1.65M tokens. On a model this small the
+recompute it replaces is also cheap, so the benefit is prefill capacity
+rather than visible latency - the sizing signal for where the pull pays:
+the larger the history and the slower the model's prefill, the larger the
+win.
+
+![Line chart: per-turn TTFT p50 and p95 flat at 0.1-0.2s across 8 turns while prompt length grows from 7K to 24K tokens](../static/img/blogs/p2p-kv-cache/pd-chat-turns.png)
+*Turn 0 pays the cold prefill; every later turn's history arrives by pull.*
+
+### Agentic sessions: where the pull pays most
+
+Agentic serving concentrates everything the pull is for: contexts of
+10-100K tokens, sessions of many turns, and tool-call gaps during which a
+session's KV is evicted from GPU memory - so re-engagement is exactly the
+pull-versus-recompute choice. The
+[agentic-serving guide's](https://github.com/llm-d/llm-d/tree/main/guides/agentic-serving)
+benchmark shapes (its model, block size, and generation settings; contexts
+10-100K tokens, 4-40 turns, tool-call gaps of 1-20 s), served on the P/D
+topology: Qwen3-30B-A3B-Thinking on 6x H200 (2 prefill + 4 decode, TP=1),
+288 requests at concurrency 16, both arms 288 of 288, fresh fleet per arm:
+
+| | P/D guide | P/D guide + P2P |
+|---|---|---|
+| TTFT p50 | 5.22 s | **1.09 s** |
+| TTFT p95 | 18.94 s | **11.77 s** |
+| TTFT p99 | 30.29 s | 29.98 s |
+| run time | 304 s | **229 s** |
+
+![Grouped bars: agentic sessions on P/D; TTFT p50 5.22s to 1.09s, p95 -38%, p99 parity, +33% throughput](../static/img/blogs/p2p-kv-cache/agentic-pd.png)
+*A second arm-B sample reproduced the result (p50 1.06 s, 237 s).*
+
+4.8x median TTFT and +33% throughput, with 1.23M tokens of session history
+pulled instead of recomputed in the 229-second run. The p99 is unchanged
+by design: both arms' worst case is the cold first prefill of a
+100K-token context, and the pull removes *re*-computation, not the first
+computation. Two deviations from the scenario, applied to both arms:
+prefix caching is enabled (the scenario disables it; reuse is the subject
+here), and the topology is P/D (the scenario deploys two aggregated
+pods).
+
+### When pulling pays: calibrating the threshold
+
+The `minCachedTokenDelta` threshold from the scheduling step above is a
+crossover, and it is measurable per model in minutes on a live pod pair:
+time a warm pull of N tokens against a fresh recompute of N tokens at two
+sizes, and the fixed pull overhead and per-token rates fall out. Measured
+on H200:
+
+| model | pull 8K tokens | recompute 8K tokens | crossover | threshold |
+|---|---|---|---|---|
+| Qwen3-30B-A3B | 74 ms | 1.21 s | ~760 tokens | 1024 |
+| Llama-3.1-8B | ~100 ms | ~300 ms | ~900 tokens | 1024 |
+| gpt-oss-120b | ~100 ms | ~3.3 s | ~300 tokens | 2048 |
+
+Above the crossover the pull wins and the gap widens with size - 16x at
+8K tokens on Qwen3-30B, and agentic histories run 10-100K. Below it,
+recomputing is cheaper than the transfer's fixed cost, and the threshold
+keeps the scheduler from ever issuing a losing pull. Sizing the tier that
+serves the pulls follows the same measure-first rule: read the engine's
+KV capacity from its startup log and provision the CPU tier at about
+twice that (the value of the tier is the KV that GPU evicts and CPU
+retains), with `/dev/shm` above the tier size and the pod memory limit
+above both.
+
+Two boundaries define where these numbers apply. Pulling a *generated*
+turn requires the next request to reproduce the same token IDs, which
+chat-templated APIs do for models whose templates re-render assistant
+turns verbatim (the Llama measurement above); models that drop reasoning
+segments on re-render (gpt-oss, Qwen3-Thinking) expose only their input
+context and re-prefilled history for pulling - still the bulk of agentic
+reuse. And peers must run the same tensor-parallel degree: KV block
+identity is TP-dependent in the connector, so the P/D topologies here run
+prefill and decode at matched TP.
 
 ### Future scenarios
 
@@ -311,4 +403,4 @@ The crossover measurement prices each miss; the document-Q&A benchmark
 above shows what that pricing compounds into at fleet scale, on the tail
 latencies users actually feel.
 
-The natural follow-up is agentic workloads. In real Claude Code traces (the [Weka trace corpus](https://www.semianalysis.com/) published by SemiAnalysis), over half of all model requests arrive through sub-agent bursts - a median of seven per group, 51 at p90 - each inheriting the parent session's context as a verbatim prefix, with no advance signal to the serving layer. A burst that spills across pods today recomputes that repository-scale prefix once per pod; with P2P, the pod that already holds the prefix becomes the source while the others pull the cached blocks instead of recomputing them. A follow-up post will replay these traces (inference-perf's `weka_trace_replay`) against a P2P-enabled deployment to measure that directly - sub-agent fan-out, session handoff, and think-time gaps included. {/* TODO: fix the corpus link to the exact trace release, and link the agentic-serving GLM post once published */}
+The agentic measurement above uses the guide's synthetic session shapes; the follow-up is real traces. In recorded Claude Code sessions (the [Weka trace corpus](https://www.semianalysis.com/) published by SemiAnalysis), over half of all model requests arrive through sub-agent bursts - a median of seven per group, 51 at p90 - each inheriting the parent session's context as a verbatim prefix, with no advance signal to the serving layer. A burst that spills across pods today recomputes that repository-scale prefix once per pod; with P2P, the pod that already holds the prefix becomes the source while the others pull the cached blocks instead of recomputing them. A follow-up post will replay these traces (inference-perf's `weka_trace_replay`) against a P2P-enabled deployment to measure that directly - sub-agent fan-out, session handoff, and think-time gaps included. {/* TODO: fix the corpus link to the exact trace release, and link the agentic-serving GLM post once published */}
