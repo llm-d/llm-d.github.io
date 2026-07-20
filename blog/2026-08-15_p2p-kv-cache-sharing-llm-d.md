@@ -67,30 +67,20 @@ This is a small, opt-in scheduling step, off by default. Because it reuses the e
 ## Benchmarks
 
 We evaluated P2P KV cache sharing with the llm-d benchmarking framework
-(inference-perf) across three models, first on aggregated testbeds and
-then on P/D-disaggregated topologies:
+(inference-perf) across three models, first on aggregated testbeds and then
+on P/D-disaggregated topologies. Each subsection below opens with its own
+setup - topology, memory tiers, and the arms compared.
 
-* **Scale:** `openai/gpt-oss-120b` (MXFP4), one H200 per pod (TP=1) -
-  aggregated on 14 pods (~0.48M tokens of GPU KV per pod, an 88 GiB CPU
-  offload tier per pod, 4.4x the GPU cache, vLLM block size 64), and on
-  the pd-disaggregation guide topology (8 prefill + 8 decode).
-* **Small model:** Llama-3.1-8B-Instruct, one H200 each - aggregated on 4
-  pods (32 GiB CPU tier; the same mechanics at a size anyone can rerun on
-  four GPUs), and on a 4 prefill + 4 decode P/D pair for the multi-turn
-  pull measurement.
-* **Agentic:** `Qwen/Qwen3-30B-A3B-Thinking-2507` - the agentic-serving
-  guide's benchmark model - on 2 prefill + 4 decode (6x H200, TP=1, 128
-  GiB CPU tier per pod against 65.3 GiB of measured GPU KV).
-
-KV transfers go over NIXL - the transport abstraction, running on the
-testbed's RDMA-capable network here; latencies depend on the underlying
-fabric - and routing uses the llm-d inference gateway
-with the precise (KV-event-fed) prefix index. The P2P arms add the
-`p2p-source-producer` with a 2048-token minimum advantage threshold, so a
-pull is only requested when a peer holds at least that many more cached
-prefix tokens than the scheduled pod. The exact workload profiles and EPP
-configurations for every run ship with the guide, so each result below is
-reproducible the same way the other llm-d guides' benchmarks are.
+All runs use vLLM block size 64, a pinned fleet-wide `PYTHONHASHSEED`, and a
+CPU offload tier at least 2x the GPU KV cache. The aggregated comparisons
+swap only the EPP routing config - the arm configs ship in the guide's
+`benchmarking/` directory; the P/D and agentic sections instead add the P2P
+stack (CPU offload tier plus the pull) on top of the guide's placement. KV
+transfers go over NIXL - the transport abstraction, running on the testbed's
+RDMA-capable network here; latencies depend on the underlying fabric. The
+exact workload profiles and EPP configs for every run ship with the guide,
+so each result below is reproducible the same way the other llm-d guides'
+benchmarks are.
 {/* Setup: kermit/CoreWeave, vLLM nightly + P2P connector branch +
 robustness fixes; full tables in the p2p-findings RESULTS.md. */}
 
@@ -110,6 +100,12 @@ with the tensor-parallel degree, so a tier that doubles the GPU cache at
 TP=1 can be a fraction of it at TP=4.
 
 ### Pull versus recompute (single request)
+
+| Setup | |
+|---|---|
+| Measurement | single source->consumer pod pair, fresh prefix, 5-rep medians (fleet-size-independent) |
+| Models | `gpt-oss-120b` (MXFP4) and `Llama-3.1-8B` at the engine's default memory split (gpt-oss ~1.38M tok/pod) |
+| Compared | local recompute vs P2P pull from a peer's CPU tier |
 
 The physics everything else builds on: prefill latency for a fully cached
 prefix, recompute versus P2P pull from a peer's CPU tier. gpt-oss-120b,
@@ -144,6 +140,12 @@ length at which the pull wins on both models.
 
 ### Document Q&A at scale: the headline result
 
+| Setup | |
+|---|---|
+| Topology | `gpt-oss-120b` (MXFP4), 16x H200 aggregated (TP=1), ~0.48M GPU KV / 88 GiB CPU per pod (4.4x) |
+| Guide baseline | `prefix-cache` 3 / `queue` 2 / `kv-util` 2 / `no-hit-lru` 2, `max-score` - `epp-affinity.yaml` |
+| Load + P2P | `queue` 3 / `kv-util` 2, `weighted-random`, no prefix score; pull `minCachedTokenDelta` 2048 - `epp-load-p2p.yaml` |
+
 The workload where the pull changes what users feel: 192 distinct
 48K-token documents (about 100 pages each), each queried through 6 short
 questions with 256-token answers, 128 conversations in flight - the
@@ -152,72 +154,87 @@ the experience. The working set oversubscribes the fleet's GPU cache, so
 request placement decides whether a document is a cache hit, a recompute,
 or a wait in line.
 
-Two arms: the precise prefix-cache routing configuration (prefix-first
-placement), and load-aware placement with the P2P pull. Two full runs with
-arm order alternated; all four runs completed 1,152/1,152 turns with zero
-errors and zero restarts. TTFT p50 / p95 / p99 in seconds, and throughput:
+Both arms build the same precise prefix index; the Guide baseline scores
+placement on it, Load + P2P uses it only to pick pull sources (load-only
+placement, the pull covering the misses that spreading creates). Two full
+runs with arm order alternated; all four runs completed 1,152/1,152 turns
+with zero errors and zero restarts. TTFT p50 / p95 / p99 in seconds, and
+throughput:
 
 | Configuration | run | TTFT p50 | TTFT p95 | TTFT p99 | Throughput |
 |---|---|---|---|---|---|
-| Precise prefix routing | 1 | 4.1s | 41.0s | 80.5s | 5.98 turns/s |
-| Precise prefix routing | 2 (order reversed) | 4.2s | 17.3s | 37.2s | 7.66 turns/s |
-| Load-aware + P2P | 1 | 4.5s | 13.0s | 20.9s | 7.02 turns/s |
-| Load-aware + P2P | 2 (order reversed) | 3.9s | 12.5s | 26.7s | 7.76 turns/s |
+| Guide baseline | 1 | 4.1s | 41.0s | 80.5s | 5.98 turns/s |
+| Guide baseline | 2 (order reversed) | 4.2s | 17.3s | 37.2s | 7.66 turns/s |
+| Load + P2P | 1 | 4.5s | 13.0s | 20.9s | 7.02 turns/s |
+| Load + P2P | 2 (order reversed) | 3.9s | 12.5s | 26.7s | 7.76 turns/s |
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/p2p-kv-cache/docqa.png" alt="Bar charts: document Q&A TTFT percentiles and throughput across two order-alternated runs; medians equal, load-aware + P2P p99 21-27 s versus 37-81 s for precise routing, throughput up to +17%" style={{width: '100%', height: 'auto'}} />
+  <img src="/img/blogs/p2p-kv-cache/docqa.png" alt="Bar charts: document Q&A TTFT percentiles and throughput across two order-alternated runs; medians equal, Load + P2P p99 21-27 s versus 37-81 s for the Guide baseline, throughput up to +17%" style={{width: '100%', height: 'auto'}} />
   <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>192 documents x 48K tokens, 6 Q&A turns each, 128 concurrent. Medians are equal; the arms separate on tails and on stability.</em></p>
 </div>
 
 Medians are equal - a session answering from its warm cache is fast either
 way. The separation is in the tails and the variance: **p99 TTFT of 21-27s
-with P2P versus 37-81s with prefix-first routing - a 28-74% reduction -
-alongside up to +17% throughput, which varied 10% between P2P runs
-versus 28% between prefix-routing runs**. The mechanism: prefix-first placement sends every
-question to the pod that owns its document, and under contention the queue
-on that pod becomes the p99 - while displaced questions recompute 48K
-tokens. Load-aware placement sends the question wherever there is
-capacity, and the pull makes the resulting miss cost ~0.6s instead of a
-~2s recompute or a multi-second wait. The tier counters agree: the P2P arm
-moved 30-32M tokens between pods per run.
+with Load + P2P versus 37-81s with the Guide baseline - a 28-74% reduction -
+alongside up to +17% throughput, which varied 10% between Load + P2P runs
+versus 28% between Guide baseline runs**. The mechanism: the Guide baseline
+sends every question to the pod that owns its document, and under contention
+the queue on that pod becomes the p99 - while displaced questions recompute
+48K tokens. Load + P2P sends the question wherever there is capacity, and the
+pull makes the resulting miss cost ~0.6s instead of a ~2s recompute or a
+multi-second wait. The tier counters agree: Load + P2P moved 30-32M tokens
+between pods per run.
 
 The consistency across the two runs matters as much as the speed: the
-prefix-first arm's numbers swing with whatever cache state the fleet
+Guide baseline's numbers swing with whatever cache state the fleet
 happens to inherit (the two runs deliberately alternate arm order, so each
 arm serves once from a cold fleet and once from one warmed by the other
-arm), while load-aware + P2P placement does not depend on where KV already
+arm), while Load + P2P does not depend on where KV already
 lives - so its results moved little between these two runs. A stronger
 stability claim would want more repetitions; this is the behavior observed
 across the alternated pair.
 
 ### Aggregated serving under load: the pull raises the ceiling
 
+| Setup | |
+|---|---|
+| Topology | `Llama-3.1-8B`, 4x H200 aggregated (TP=1), ~0.5M GPU KV / 32 GiB CPU per pod (~2x) |
+| Guide baseline | prefix-first placement - `epp-affinity.yaml` |
+| Load | `queue` 3 / `kv-util` 2, `weighted-random`, no prefix score - `epp-load.yaml` |
+| Load + P2P | Load placement + `p2p-source-producer`, `minCachedTokenDelta` 2048 - `epp-load-p2p.yaml` |
+
 Two experiments on the small-model testbed (4x Llama-3.1-8B - the same
 mechanics at a scale that reruns on four GPUs) bound the aggregated
-regimes. A single hot 16K prefix is routing's problem, not P2P's: cache-affinity
-concentrates every request on the prefix owner and saturates it (p50
-6.1s at 24 req/s) while load-balanced routing holds 0.53s - 11x lower -
-and the pull adds nothing for a prefix that is resident everywhere after
-one recompute per pod. P2P's role is to make that load-balanced
-placement safe when prefixes do not fit everywhere. On a 64x16K-token
-shared-prefix pool (a 128 GiB KV pool, far larger than any pod's cache)
-with identical load-balanced routing in both arms, the pull beats
-recompute at every measured rate and the gap grows with load: 43% lower
-p50 and 42% lower p95 at 8 req/s, and at high rates the difference is
-structural - recompute demand saturates the fleet near 10.3 req/s while
-the P2P arm holds 12.6 (+22% ceiling, 30% higher peak token throughput,
-up to 83% lower p50 in the 12-16 req/s band where the recompute arm has
-already collapsed):
+regimes. A single hot 16K prefix is routing's problem, not P2P's: the Guide
+baseline concentrates every request on the prefix owner and saturates it
+(p50 6.1s at 24 req/s) while load-balanced placement holds 0.53s - 11x lower
+- and the pull adds nothing for a prefix that is resident everywhere after
+one recompute per pod. P2P's role is to make that load-balanced placement
+safe when prefixes do not fit everywhere. On a 64x16K-token shared-prefix
+pool (a 128 GiB KV pool, far larger than any pod's cache), Load and Load +
+P2P place identically and differ only in whether a cross-pod miss recomputes
+or pulls; the pull beats recompute at every measured rate and the gap grows
+with load: 43% lower p50 and 42% lower p95 at 8 req/s, and at high rates the
+difference is structural - the Load arm saturates the fleet near 10.3 req/s
+while Load + P2P holds 12.6 (+22% ceiling, 30% higher peak token throughput,
+up to 83% lower p50 in the 12-16 req/s band where the Load arm has already
+collapsed):
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/p2p-kv-cache/saturation.png" alt="Line charts: achieved rate and p50 latency versus offered rate for affinity, load-balanced without P2P, and load-balanced with P2P; without the pull throughput saturates at 10.3 req/s, with it 12.6" style={{width: '100%', height: 'auto'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Left: achieved versus offered rate. Affinity tracks the offered line (its best-case pool); recompute saturates near 10 req/s; P2P holds ~12.6. Right: median latency on a log scale - the band between the recompute and P2P curves is the pull's value under overload.</em></p>
+  <img src="/img/blogs/p2p-kv-cache/saturation.png" alt="Line charts: achieved rate and p50 latency versus offered rate for Guide baseline, Load, and Load + P2P; without the pull throughput saturates at 10.3 req/s, with it 12.6" style={{width: '100%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Left: achieved versus offered rate. The Guide baseline tracks the offered line (its best-case pool); Load saturates near 10 req/s; Load + P2P holds ~12.6. Right: median latency on a log scale - the band between the Load and Load + P2P curves is the pull's value under overload.</em></p>
 </div>
 
 Per-rate tables for the hot-prefix and pool experiments are in the
 [guide's benchmark report](https://github.com/llm-d/llm-d/tree/main/guides/p2p-kv-cache-sharing/benchmark-results).
 
 ### P/D disaggregation: adding the stack is strictly better
+
+| Setup | |
+|---|---|
+| Topology | `gpt-oss-120b` (MXFP4), 16x H200 P/D (8 prefill + 8 decode, TP=1), ~1.38M GPU KV / 128 GiB CPU per pod (~2.3x) |
+| Guide | pd-disaggregation guide as shipped, plain `NixlConnector` |
+| Guide + P2P stack | guide + CPU offload tier + `p2p-source-producer`, `minCachedTokenDelta` 2048 |
 
 Under P/D disaggregation the pull applies to the **prefill leg only**: the
 prefill worker computes the prompt's KV and streams it to the decoder, so
@@ -245,6 +262,12 @@ measurements exercise directly.
 
 ### The prefiller pulls from the decoder
 
+| Setup | |
+|---|---|
+| Topology | `Llama-3.1-8B`, 8x H200 P/D (4 prefill + 4 decode; 2 prefill + 4 decode at concurrency 96) |
+| Arm A | precise placement, no pull - `epp-llama-a.yaml` |
+| Arm B | precise placement + `p2p-source-producer`, `minCachedTokenDelta` 1024 - `epp-llama-b.yaml` |
+
 In a multi-turn conversation the newest KV lives on the decode worker: it
 received the prompt over NIXL and generated the answer. When the next turn
 arrives, the scheduled prefill worker is missing that history, the
@@ -268,6 +291,12 @@ win.
 </div>
 
 ### Agentic sessions: where the stack pays most
+
+| Setup | |
+|---|---|
+| Topology | `Qwen3-30B-A3B-Thinking-2507`, 6x H200 P/D (2 prefill + 4 decode, TP=1), 65.3 GiB GPU KV / 128 GiB CPU per pod (1.96x) |
+| Guide | agentic-serving guide as shipped, plain NIXL |
+| Guide + P2P stack | guide + CPU offload tier + `p2p-source-producer`, `minCachedTokenDelta` 1024 |
 
 Agentic serving concentrates everything the pull is for: contexts of
 10-100K tokens, sessions of many turns, and tool-call gaps during which a
@@ -345,10 +374,10 @@ the TP coupling from the stored blocks themselves.
 ### Future scenarios
 
 * **Prefill placement under skew.** The pool above is uniformly popular -
-  affinity's best case. Under a skewed prefix distribution affinity
-  concentrates prefill on the hot prefix's owner; load-aware placement plus
-  the pull should win latency as well as balance. Measures per-worker
-  prefill load balance and p99 TTFT.
+  the Guide baseline's best case. Under a skewed prefix distribution it
+  concentrates prefill on the hot prefix's owner; Load + P2P should win
+  latency as well as balance. Measures per-worker prefill load balance and
+  p99 TTFT.
 * **Scale-out warmup.** Add a cold replica under steady shared-prefix load; measure its TTFT and external prefix cache hit rate over time versus baseline.
 
 ## Summary and Next Steps
