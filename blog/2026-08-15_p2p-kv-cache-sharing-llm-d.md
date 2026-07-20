@@ -31,7 +31,7 @@ When the same prefix appears repeatedly - shared system prompts, common document
 llm-d already attacks this problem from two directions:
 
 * **Prefix-aware routing.** The EPP tracks which pods hold which prefix blocks (approximately, from routing history, or precisely, from KV events) and scores candidates accordingly, so requests land where their cache lives.
-* **KV cache offloading.** vLLM's Offloading Connector spills KV blocks from GPU HBM to a much larger CPU memory tier, and llm-d's [filesystem backend](https://llm-d.ai/blog/native-kv-cache-offloading-to-any-file-system-with-llm-d) extends that to shared storage for cluster-wide reuse and persistence.
+* **KV cache offloading.** vLLM's Offloading Connector copies completed KV blocks to a much larger CPU memory tier as they are produced - not on eviction - so a block the GPU later evicts still has a copy one tier down; llm-d's [filesystem backend](https://llm-d.ai/blog/native-kv-cache-offloading-to-any-file-system-with-llm-d) extends that to shared storage for cluster-wide reuse and persistence.
 
 But routing alone cannot make a cold pod warm, and shared storage introduces an infrastructure dependency plus a storage-speed data path. There is a middle option: the blocks the request needs are often sitting in a peer pod's CPU offload tier, one network hop away, at memory speed. P2P KV cache sharing uses that path.
 
@@ -263,7 +263,7 @@ the larger the history and the slower the model's prefill, the larger the
 win.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/p2p-kv-cache/pd-chat-turns.png" alt="Line chart: per-turn TTFT p50 and p95 flat at 0.1-0.2s across 8 turns while prompt length grows from 7K to 24K tokens" style={{width: '100%', height: 'auto'}} />
+  <img src="/img/blogs/p2p-kv-cache/pd-chat-turns.png" alt="Line chart: per-turn TTFT p50 and p95 flat at 0.1-0.2s across 8 turns while prompt length grows from 5K to 20K tokens" style={{width: '100%', height: 'auto'}} />
   <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Turn 0 pays the cold prefill; every later turn's history arrives by pull.</em></p>
 </div>
 
@@ -315,10 +315,11 @@ gpt-oss-120b and Llama-8B (both cross near or below 2K tokens, hence the
 a live pod pair takes minutes and gives the same answer: time a warm pull
 and a fresh recompute at a small and a large size, and the pull's fixed
 overhead and both per-token rates fall out. On Qwen3-30B-A3B that check
-gives a ~30 ms pull overhead, an 8K-token pull in 74 ms against roughly
-360 ms of steady-state recompute, and a crossover near 760 tokens - so
-the agentic testbed runs a 1024 threshold, and the pull's advantage
-widens from there with size, on histories that run 10-100K tokens.
+gives a ~30 ms pull overhead, an 8K-token pull in 74 ms against ~1.2 s of
+recompute - a 16x advantage at that length - and a crossover near 760
+tokens, so the agentic testbed runs a 1024 threshold, and the pull's
+advantage widens from there with size, on histories that run 10-100K
+tokens.
 
 Sizing the tier that serves the pulls follows the same measure-first
 rule: read the engine's KV capacity from its startup log and provision
