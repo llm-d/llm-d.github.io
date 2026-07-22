@@ -85,14 +85,18 @@ robustness fixes; full tables in the p2p-findings RESULTS.md. */}
 
 | Setup | |
 |---|---|
-| Measurement | single source->consumer pod pair, fresh prefix, 5-rep medians (fleet-size-independent) |
-| Models | `gpt-oss-120b` (MXFP4) and `Llama-3.1-8B` at the engine's default memory split (gpt-oss ~1.38M tok/pod) |
-| Wide-EP extension | `GLM-5.2-FP8` (753B MoE), warmed pod pair on the wide-EP testbed below, single rep per point |
+| Measurement | single source->consumer pod pair (fleet-size-independent), fresh prefix, warmed transfer mesh |
 | Compared | local recompute vs P2P pull from a peer's CPU tier |
 
-The physics everything else builds on: prefill latency for a fully cached
-prefix, recompute versus P2P pull from a peer's CPU tier. gpt-oss-120b,
-fresh prefix seeded on one pod, measured on a cold pod, 5-rep medians:
+The measurement that sets each model's pull threshold: seed a fresh prefix
+on one pod, request it on a cold peer, time recompute versus pull across
+lengths. Recompute grows with prefix length; the pull is nearly flat -
+where the curves cross is the smallest prefix worth pulling, and
+`minCachedTokenDelta` is set just above that crossover: **2,048** for
+gpt-oss-120b and Llama-8B (both cross near or below 2K; Qwen3-30B crosses
+near 760, so **1,024** there).
+
+gpt-oss-120b, 5-rep medians:
 
 | prefix tokens | recompute | P2P pull | delta |
 |---|---|---|---|
@@ -102,24 +106,14 @@ fresh prefix seeded on one pod, measured on a cold pod, 5-rep medians:
 | 32,768 | 983 ms | 376 ms | -62% |
 | 49,152 | 1,695 ms | 551 ms | -68% |
 
-The pull wins at every measured length and the gap grows with the prefix:
-at 48K - a large document - the pull delivers the prefix 3x faster than
-gpt-oss's fast MoE prefill (~29K tokens/s) can recompute it. The
-measurement is a single source-consumer pod pair, so it is independent of
-fleet size. The small-model testbed shows the same scaling: on Llama-8B
-the lines cross near 2K tokens (below it recompute wins, +11% at 1K) and
-the pull leads -69% at 16K; on gpt-oss the pull already wins at 2K because
-its KV is compact (41.5 KB/token) relative to its prefill speed. Where the
-lines cross depends on the model's KV-size-to-prefill-speed ratio; the
-economics are a property of the mechanism. The router's pull threshold
-(`minCachedTokenDelta`) - the minimum extra cached-prefix tokens a peer
-must hold beyond the scheduled pod before a pull is requested - is
-therefore set per model, to the crossover measured on its testbed: 2,048
-tokens on both of these models.
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/p2p-kv-cache/crossover-gptoss.png" alt="Line chart: prefill latency versus prefix length for recompute and P2P pull on gpt-oss-120b; the pull is lower at every length, 551 ms versus 1,695 ms at 48K tokens (-68%)" style={{width: '100%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Single-request prefill latency, recompute versus P2P pull, gpt-oss-120b. The pull's latency grows far slower than recompute's; the gap reaches -68% at 48K tokens.</em></p>
+</div>
 
-The same sweep at the other end of the scale - `GLM-5.2-FP8`, a 753B MoE
-on the wide-EP testbed described below (~93 KB of KV per token) - shows
-the same two curves with the crossover shifted right:
+The same sweep on the 753B wide-EP testbed (`GLM-5.2-FP8`, ~93 KB of KV
+per token) shows the same two curves with the crossover shifted right - a
+dead tie at 13,648 tokens, hence a **16,384** threshold there:
 
 | prefix tokens | recompute | P2P pull | delta |
 |---|---|---|---|
@@ -128,17 +122,8 @@ the same two curves with the crossover shifted right:
 | 21,617 | 2.76 s | 1.80 s | -35% |
 | 98,220 | 13.75 s | 2.29 s | -83% |
 
-The pull's latency is nearly flat (~1.7-2.3 s at ~4.5 GB/s effective)
-while recompute pays ~130-144 us for every token, so past the tie the gap
-widens without bound. The pull's fixed per-request cost is larger on this
-testbed, which moves the tie to ~13.6K tokens - hence a 16,384 threshold
-there - but the shape of the curves, and the rule for setting the
-threshold, are the same on every model measured.
-
-<div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/p2p-kv-cache/crossover-gptoss.png" alt="Line chart: prefill latency versus prefix length for recompute and P2P pull on gpt-oss-120b; the pull is lower at every length, 551 ms versus 1,695 ms at 48K tokens (-68%)" style={{width: '100%', height: 'auto'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Single-request prefill latency, recompute versus P2P pull, gpt-oss-120b. The pull's latency grows far slower than recompute's as the prefix lengthens; the gap reaches -68% at 48K tokens.</em></p>
-</div>
+The pull holds ~1.7-2.3 s nearly flat while recompute pays ~140 us per
+token, so past the tie the gap widens without bound.
 
 ### Use case 1: displaced requests at document scale (the headline)
 
