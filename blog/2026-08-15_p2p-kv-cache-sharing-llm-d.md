@@ -66,51 +66,20 @@ This is a small, opt-in scheduling step, off by default. Because it reuses the e
 
 ## Benchmarks
 
-We evaluated P2P KV cache sharing with the llm-d benchmarking framework
-(inference-perf; the wide-EP testbed replays recorded agentic traces with
-aiperf) across four models - from an 8B dense to a 753B wide-EP MoE - first
-on aggregated testbeds, then on P/D-disaggregated and wide-EP topologies.
-Each subsection below opens with its own setup - topology, memory tiers, and
-the arms compared.
-
-All runs use vLLM block size 64, a pinned fleet-wide `PYTHONHASHSEED`, and a
-CPU offload tier at least 2x the GPU KV cache. The aggregated and wide-EP
-comparisons swap only the EPP routing config - the arm configs ship in the
-guide's `benchmarking/` directory; the P/D and agentic sections instead add
-the P2P stack (CPU offload tier plus the pull) on top of the guide's
-placement. KV
-transfers go over NIXL - the transport abstraction, running on the testbed's
-RDMA-capable network here; latencies depend on the underlying fabric. The
-exact workload profiles and EPP configs for every run ship with the guide,
-so each result below is reproducible the same way the other llm-d guides'
-benchmarks are.
+We evaluated P2P KV cache sharing across four models - an 8B dense to a
+753B wide-EP MoE - on aggregated and P/D-disaggregated testbeds, using the
+llm-d benchmarking framework (the wide-EP testbed replays recorded agentic
+traces). Each use case below opens with its own setup and names its
+baseline: the aggregated and wide-EP comparisons swap only the EPP routing
+config, while the P/D ones add the P2P stack on top of the shipped guide.
+All runs pin the two fleet-wide prerequisites - identical `--block-size`
+and `PYTHONHASHSEED` (mismatched hashes silently degrade P2P to zero
+matches) - and run a CPU offload tier at least 2x the GPU KV cache, sized
+from the engine's reported KV capacity. The exact workload profiles and
+EPP configs for every run ship with the guide, so each result below is
+reproducible the same way the other llm-d guides' benchmarks are.
 {/* Setup: kermit/CoreWeave, vLLM nightly + P2P connector branch +
 robustness fixes; full tables in the p2p-findings RESULTS.md. */}
-
-Two deployment prerequisites apply to every P2P configuration. First,
-block hashes must agree across the fleet: vLLM seeds them per process, so
-all peers need the same `PYTHONHASHSEED` and an identical `--block-size`.
-Without either, hashes never match across pods and P2P silently degrades
-to zero matches - the protocol runs, but every lookup misses and every
-prefix is recomputed locally. The external prefix cache hit rate metric is
-the quickest way to catch this: it stays at zero. Second, the CPU offload
-tier peers serve from must be considerably larger than the pod's GPU KV
-cache (at least 2x as the working default; the aggregated testbed here
-runs 4.4x) - its value is the KV that GPU evicts and CPU retains.
-Compute that ratio from the engine's reported KV capacity rather than
-per-GPU intuition: weights are paid once per pod while KV memory scales
-with the tensor-parallel degree, so a tier that doubles the GPU cache at
-TP=1 can be a fraction of it at TP=4.
-
-After the per-model crossover that prices each miss, the results are six
-use cases, each measured against its shipped baseline:
-
-1. **Displaced requests at document scale** (gpt-oss, 16x H200) - tails 2-4x lower.
-2. **Working sets bigger than any pod's cache** (Llama, gpt-oss pools) - up to +78% sustained rate.
-3. **P/D disaggregation: the prefill leg** (gpt-oss 8P+8D vs the shipped guide) - 10x median TTFT.
-4. **Session history across roles** (Llama 4P+4D) - the prefiller pulls the decoder's generated history.
-5. **Agentic re-engagement after tool-call gaps** (Qwen3-30B, 2P+4D) - 4.8x median TTFT.
-6. **Affinity rescue at wide-EP scale** (GLM-5.2 753B, 32x H200) - -45% TTFT p90.
 
 ### Pull versus recompute (single request)
 
