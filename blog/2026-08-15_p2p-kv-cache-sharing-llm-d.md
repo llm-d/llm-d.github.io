@@ -47,8 +47,8 @@ A single peer can be a consumer for one request and a producer for another concu
 The transfer itself is best-effort. The consumer sends the producer the block hashes it needs; the producer matches them against its local CPU cache and answers with the hits; the consumer allocates CPU slots for the hits and the producer pushes the blocks over NIXL. The pull sits on the request's latency path - prefill proceeds once the blocks land or the lookup misses - but never on its failure path: hits load into the GPU as normal cache hits, and misses are recomputed by the engine, so a partial or failed transfer degrades to today's behavior rather than failing the request.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/p2p-kv-cache/architecture.png" alt="Architecture: the EPP picks the destination pod and source peer and sends the consumer a KV-cache-source header; the consumer's routing sidecar injects the P2P transfer params; a ZMQ control exchange carries block hashes and matches between the pods; NIXL moves the matched blocks from the producer's CPU offload tier to the consumer's CPU tier without touching either GPU; hits load into the consumer's GPU KV cache and unmatched blocks fall back to a recompute" style={{width: '100%', height: 'auto'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Anatomy of a pull. The EPP decides, the sidecar injects, and the engines work peer to peer: a ZMQ control exchange settles which blocks the peer holds, and NIXL moves them CPU tier to CPU tier - neither GPU spends time on the transfer.</em></p>
+  <img src="/img/blogs/p2p-kv-cache/architecture.png" alt="Architecture, aggregated serving shown: the EPP picks the destination pod and source peer and sends the consumer a KV-cache-source header; the consumer's routing sidecar injects the P2P transfer params; a ZMQ control exchange carries block hashes and matches between the pods; NIXL moves the matched blocks from the producer's CPU offload tier to the consumer's CPU tier without touching either GPU; hits load into the consumer's GPU KV cache and unmatched blocks fall back to a recompute" style={{width: '100%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Anatomy of a pull, shown for aggregated serving, where the pod answering the request is the consumer. The EPP decides, the sidecar injects, and the engines work peer to peer: a ZMQ control exchange settles which blocks the peer holds, and NIXL moves them CPU tier to CPU tier - neither GPU spends time on the transfer. Under P/D disaggregation the consumer is the prefill worker instead, and the decode pod's routing sidecar carries the EPP's source decision onto the prefill leg - detailed in the P/D section below.</em></p>
 </div>
 
 ## How llm-d Decides When to Pull
@@ -59,10 +59,10 @@ This is a small, opt-in scheduling step, off by default. Because it reuses the e
 
 ## What This Enables
 
-* **Session mobility without cache loss.** A multi-turn conversation rebalanced to a different pod pulls its history from the previous pod instead of recomputing it.
-* **Fast warmup on scale-out.** A new replica serves cache hits from day zero by pulling hot shared prefixes from established peers.
-* **Fleet-wide reuse of shared prefixes.** A long system prompt prefilled on one pod seeds its peers by pull instead of every pod paying its own prefill.
-* **No storage dependency.** Transfers go peer to peer at CPU-memory and network speed; no shared filesystem or object store is required. For deployments that want persistence and effectively unlimited capacity, P2P complements rather than replaces the storage tier.
+* **Session mobility without cache loss.** A multi-turn conversation rebalanced to a different pod pulls its history from the previous pod instead of recomputing it. Measured below in document Q&A, the prefiller-pulls-from-the-decoder run, and both agentic sections.
+* **Fleet-wide reuse of shared prefixes.** A long system prompt prefilled on one pod seeds its peers by pull instead of every pod paying its own prefill. Measured below on the shared-prefix pool.
+* **Fast warmup on scale-out.** A new replica serves cache hits from day zero by pulling hot shared prefixes from established peers - the same pull the sections below measure, aimed at a cold pod; the dedicated scale-out benchmark is future work (see future scenarios).
+* **No storage dependency.** Transfers go peer to peer at CPU-memory and network speed; no shared filesystem or object store is required - every benchmark in this post runs storage-free. For deployments that want persistence and effectively unlimited capacity, P2P complements rather than replaces the storage tier.
 
 ## Benchmarks
 
@@ -262,8 +262,9 @@ Per-rate tables for the hot-prefix and pool experiments are in the
 Under P/D disaggregation the pull applies to the **prefill leg only**: the
 prefill worker computes the prompt's KV and streams it to the decoder, so
 that is the leg where recomputing a cached prefix is wasted work. The EPP
-sets the KV-cache-source header against the prefill target, and the sidecar
-injects `kv_transfer_params.p2p` onto the prefill leg (the decode leg
+sets the KV-cache-source header against the prefill target, and the decode
+pod's routing sidecar - which issues the prefill-leg request - injects
+`kv_transfer_params.p2p` onto that leg (the decode leg
 already receives the full KV over NIXL and has nothing to pull). A prefill
 worker placed off the prefix owner therefore pulls the cached prefix from a
 peer and computes only the remainder.
