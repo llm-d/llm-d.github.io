@@ -264,7 +264,7 @@ prefill worker computes the prompt's KV and streams it to the decoder, so
 that is the leg where recomputing a cached prefix is wasted work. The EPP
 sets the KV-cache-source header against the prefill target, and the decode
 pod's routing sidecar - which issues the prefill-leg request - injects
-`kv_transfer_params.p2p` onto that leg (the decode leg
+`kv_transfer_params.remote_kv_peer` onto that leg (the decode leg
 already receives the full KV over NIXL and has nothing to pull). A prefill
 worker placed off the prefix owner therefore pulls the cached prefix from a
 peer and computes only the remainder.
