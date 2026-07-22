@@ -55,7 +55,7 @@ The transfer itself is best-effort. The consumer sends the producer the block ha
 
 llm-d's scheduler already estimates, for every request, how much of the prompt's prefix each candidate pod has cached - the same signal that powers prefix-aware routing. P2P adds one decision on top: it compares the best-cached pod against the pod that will actually compute the prefix, and when that peer holds enough more of the prefix to be worth a transfer, it marks the request - through a header the routing sidecar reads - to pull the missing blocks from that peer.
 
-This is a small, opt-in scheduling step, off by default. Because it reuses the existing prefix-cache signal, it works with both prefix-aware routing modes and composes with P/D disaggregation: a prefill worker can pull a cached prefix from a peer, compute only the remainder, and still serve its own blocks to the decoder. Without disaggregation, the decode pod pulls the prefix directly. A tie or a self-match never triggers a pull - there is nothing to gain - and deployments that leave the feature off are unaffected.
+This is a small, opt-in scheduling step, off by default. Because it reuses the existing prefix-cache signal, it works with both prefix-aware routing modes - the source decision consumes the approximate index (hash-estimated, no KV events required) and the precise index (KV-event-fed) interchangeably, and the wide-EP measurement below shows pulls firing from each - and composes with P/D disaggregation: a prefill worker can pull a cached prefix from a peer, compute only the remainder, and still serve its own blocks to the decoder. Without disaggregation, the decode pod pulls the prefix directly. A tie or a self-match never triggers a pull - there is nothing to gain - and deployments that leave the feature off are unaffected.
 
 ## What This Enables
 
@@ -67,15 +67,18 @@ This is a small, opt-in scheduling step, off by default. Because it reuses the e
 ## Benchmarks
 
 We evaluated P2P KV cache sharing with the llm-d benchmarking framework
-(inference-perf) across three models, first on aggregated testbeds and then
-on P/D-disaggregated topologies. Each subsection below opens with its own
-setup - topology, memory tiers, and the arms compared.
+(inference-perf; the wide-EP testbed replays recorded agentic traces with
+aiperf) across four models - from an 8B dense to a 753B wide-EP MoE - first
+on aggregated testbeds, then on P/D-disaggregated and wide-EP topologies.
+Each subsection below opens with its own setup - topology, memory tiers, and
+the arms compared.
 
 All runs use vLLM block size 64, a pinned fleet-wide `PYTHONHASHSEED`, and a
-CPU offload tier at least 2x the GPU KV cache. The aggregated comparisons
-swap only the EPP routing config - the arm configs ship in the guide's
-`benchmarking/` directory; the P/D and agentic sections instead add the P2P
-stack (CPU offload tier plus the pull) on top of the guide's placement. KV
+CPU offload tier at least 2x the GPU KV cache. The aggregated and wide-EP
+comparisons swap only the EPP routing config - the arm configs ship in the
+guide's `benchmarking/` directory; the P/D and agentic sections instead add
+the P2P stack (CPU offload tier plus the pull) on top of the guide's
+placement. KV
 transfers go over NIXL - the transport abstraction, running on the testbed's
 RDMA-capable network here; latencies depend on the underlying fabric. The
 exact workload profiles and EPP configs for every run ship with the guide,
@@ -105,6 +108,7 @@ TP=1 can be a fraction of it at TP=4.
 |---|---|
 | Measurement | single source->consumer pod pair, fresh prefix, 5-rep medians (fleet-size-independent) |
 | Models | `gpt-oss-120b` (MXFP4) and `Llama-3.1-8B` at the engine's default memory split (gpt-oss ~1.38M tok/pod) |
+| Wide-EP extension | `GLM-5.2-FP8` (753B MoE), warmed pod pair on the wide-EP testbed below, single rep per point |
 | Compared | local recompute vs P2P pull from a peer's CPU tier |
 
 The physics everything else builds on: prefill latency for a fully cached
@@ -128,10 +132,29 @@ the lines cross near 2K tokens (below it recompute wins, +11% at 1K) and
 the pull leads -69% at 16K; on gpt-oss the pull already wins at 2K because
 its KV is compact (41.5 KB/token) relative to its prefill speed. Where the
 lines cross depends on the model's KV-size-to-prefill-speed ratio; the
-economics are a property of the mechanism. The router's 2048-token pull
-threshold - the minimum extra cached-prefix tokens a peer must hold beyond
-the scheduled pod before a pull is requested - is set to the smallest
-length at which the pull wins on both models.
+economics are a property of the mechanism. The router's pull threshold
+(`minCachedTokenDelta`) - the minimum extra cached-prefix tokens a peer
+must hold beyond the scheduled pod before a pull is requested - is
+therefore set per model, to the crossover measured on its testbed: 2,048
+tokens on both of these models.
+
+The same sweep at the other end of the scale - `GLM-5.2-FP8`, a 753B MoE
+on the wide-EP testbed described below (~93 KB of KV per token) - shows
+the same two curves with the crossover shifted right:
+
+| prefix tokens | recompute | P2P pull | delta |
+|---|---|---|---|
+| 8,070 | 1.00 s | 1.69 s | +69% |
+| 13,648 | 1.74 s | 1.76 s | tie |
+| 21,617 | 2.76 s | 1.80 s | -35% |
+| 98,220 | 13.75 s | 2.29 s | -83% |
+
+The pull's latency is nearly flat (~1.7-2.3 s at ~4.5 GB/s effective)
+while recompute pays ~130-144 us for every token, so past the tie the gap
+widens without bound. The pull's fixed per-request cost is larger on this
+testbed, which moves the tie to ~13.6K tokens - hence a 16,384 threshold
+there - but the shape of the curves, and the rule for setting the
+threshold, are the same on every model measured.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/p2p-kv-cache/crossover-gptoss.png" alt="Line chart: prefill latency versus prefix length for recompute and P2P pull on gpt-oss-120b; the pull is lower at every length, 551 ms versus 1,695 ms at 48K tokens (-68%)" style={{width: '100%', height: 'auto'}} />
@@ -331,6 +354,39 @@ prefix caching is enabled (the scenario disables it; reuse is the subject
 here), and the topology is P/D (the scenario deploys two aggregated
 pods).
 
+### 753B wide-EP: the pull is affinity's safety net
+
+| Setup | |
+|---|---|
+| Topology | `GLM-5.2-FP8` (753B MoE), 1 prefill + 1 decode, wide-EP (16-way data/expert parallel per role) on 32x H200; ~520K GPU KV tokens and a 100 GiB CPU tier per rank |
+| Precise affinity | precise `prefix-cache` 5 / `queue` 3 / `active-request` 1, no pull |
+| + P2P | same placement + `p2p-source-producer`, `minCachedTokenDelta` 16384 |
+| Workload | recorded agentic traces (the SemiAnalysis Weka corpus, agent chains included), replayed at concurrency 32 |
+
+Does the mechanism survive the largest deployment shape - a 753B MoE
+spread 16 ways per role? Here the arms answer a different question than
+document Q&A did: both place by precise prefix affinity (the guide-style
+default), and the only change is adding the pull. On agentic traces,
+affinity concentrates sessions on the ranks that hold their cache, and the
+queues on those ranks become the latency; the pull lets the picker place
+on a less-loaded rank and fetch the session's prefix there:
+
+| | Precise affinity | + P2P pull |
+|---|---|---|
+| TTFT p50 | 2.27 s | **1.65 s (-27%)** |
+| TTFT p90 | 7.56 s | **4.14 s (-45%)** |
+| TTFT p99 | 14.7 s | 15.2 s (within single-run noise) |
+
+41 GB of KV (~440K tokens) crossed engines in the 15-minute run, zero
+errors, and with the pull the affinity arm matches load-balanced placement
+measured on the same ladder - the pull erases the concentration penalty
+without changing the routing policy. The source index is also
+interchangeable at this scale: the same producer pointed at the
+approximate (hash-estimate) index instead of the precise one drove 34 GB
+of pulls at higher concurrency, so the pull does not require the KV-event
+pipeline to be deployed. Single run per cell; the full four-arm grid
+across the concurrency ladder ships with the guide's benchmark report.
+
 ### When pulling pays: calibrating the threshold
 
 The `minCachedTokenDelta` threshold from the scheduling step above is a
@@ -338,9 +394,10 @@ crossover: below it, the transfer's fixed cost outweighs the recompute it
 saves. The threshold keeps the scheduler from issuing pulls below the
 crossover measured for that model and testbed; the crossover itself moves
 with fabric contention and producer load, so production deployments
-should leave margin for network and load variance. The single-request sweep earlier in this post prices it for
+should leave margin for network and load variance. The single-request sweeps earlier in this post price it for
 gpt-oss-120b and Llama-8B (both cross near or below 2K tokens, hence the
-2048 threshold on those testbeds). For a new model, a two-point check on
+2048 threshold on those testbeds) and for GLM-5.2 (tie measured at 13.6K,
+hence 16384 there). For a new model, a two-point check on
 a live pod pair takes minutes and gives the same answer: time a warm pull
 and a fresh recompute at a small and a large size, and the pull's fixed
 overhead and both per-token rates fall out. On Qwen3-30B-A3B that check
@@ -348,7 +405,10 @@ gives a ~30 ms pull overhead, an 8K-token pull in 74 ms against ~1.2 s of
 recompute - a 16x advantage at that length - and a crossover near 760
 tokens, so the agentic testbed runs a 1024 threshold, and the pull's
 advantage widens from there with size, on histories that run 10-100K
-tokens.
+tokens. One measurement caveat: calibrate on a *warmed* pod pair - the
+first pull between two peers pays a one-time session-establishment cost
+(~6 s measured on the wide-EP testbed) that steady-state pulls never see,
+so a single cold probe reads the transient, not the pull.
 
 Sizing the tier that serves the pulls follows the same measure-first
 rule: read the engine's KV capacity from its startup log and provision
@@ -360,9 +420,9 @@ Two boundaries define where these numbers apply. Pulling a *generated*
 turn requires the next request to reproduce the same token IDs, which
 chat-templated APIs do for models whose templates re-render assistant
 turns verbatim (the Llama measurement above); models that drop reasoning
-segments on re-render (gpt-oss, Qwen3-Thinking) expose only their input
-context and re-prefilled history for pulling - still the bulk of agentic
-reuse. And TP-mismatched peers are supported only for
+segments on re-render (gpt-oss, Qwen3-Thinking, GLM-5.2) expose only their
+input context and re-prefilled history for pulling - still the bulk of
+agentic reuse. And TP-mismatched peers are supported only for
 non-hybrid-attention models on the V1 model runner (force it with
 `VLLM_USE_V2_MODEL_RUNNER=0` where V2 is the default); hybrid models like
 gpt-oss require matched TP, and the P/D topologies here run matched TP
@@ -394,4 +454,4 @@ The crossover measurement prices each miss; the document-Q&A benchmark
 above shows what that pricing compounds into at fleet scale, on the tail
 latencies users actually feel.
 
-The agentic measurement above uses the guide's synthetic session shapes; the follow-up is real traces. In recorded Claude Code sessions (the [Weka trace corpus](https://huggingface.co/datasets/semianalysisai/cc-traces-weka-with-subagents-051926) published by SemiAnalysis), over half of all model requests arrive through sub-agent bursts - a median of seven per group, 51 at p90 - each inheriting the parent session's context as a verbatim prefix, with no advance signal to the serving layer. A burst that spills across pods today recomputes that repository-scale prefix once per pod; with P2P, the pod that already holds the prefix becomes the source while the others pull the cached blocks instead of recomputing them. A follow-up post will replay these traces against a P2P-enabled deployment to measure that directly - sub-agent fan-out, session handoff, and think-time gaps included. {/* TODO: link the agentic-serving GLM post once published */}
+The Qwen agentic measurement above uses the guide's synthetic session shapes; the wide-EP measurement replays real ones. In recorded Claude Code sessions (the [Weka trace corpus](https://huggingface.co/datasets/semianalysisai/cc-traces-weka-with-subagents-051926) published by SemiAnalysis - the corpus the 753B testbed replays), over half of all model requests arrive through sub-agent bursts - a median of seven per group, 51 at p90 - each inheriting the parent session's context as a verbatim prefix, with no advance signal to the serving layer. A burst that spills across pods today recomputes that repository-scale prefix once per pod; with P2P, the pod that already holds the prefix becomes the source while the others pull the cached blocks instead of recomputing them. A follow-up post will study that fan-out directly - burst-level source selection, session handoff, and think-time gaps included. {/* TODO: link the agentic-serving GLM post once published */}
