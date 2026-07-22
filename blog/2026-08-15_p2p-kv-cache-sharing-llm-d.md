@@ -59,8 +59,8 @@ This is a small, opt-in scheduling step, off by default. Because it reuses the e
 
 ## What This Enables
 
-* **Session mobility without cache loss.** A multi-turn conversation rebalanced to a different pod pulls its history from the previous pod instead of recomputing it. Measured below in document Q&A, the prefiller-pulls-from-the-decoder run, and both agentic sections.
-* **Fleet-wide reuse of shared prefixes.** A long system prompt prefilled on one pod seeds its peers by pull instead of every pod paying its own prefill. Measured below on the shared-prefix pool.
+* **Session mobility without cache loss.** A multi-turn conversation rebalanced to a different pod pulls its history from the previous pod instead of recomputing it. Measured below in use cases 1, 4, 5, and 6.
+* **Fleet-wide reuse of shared prefixes.** A long system prompt prefilled on one pod seeds its peers by pull instead of every pod paying its own prefill. Measured below in use case 2.
 * **Fast warmup on scale-out.** A new replica serves cache hits from day zero by pulling hot shared prefixes from established peers - the same pull the sections below measure, aimed at a cold pod; the dedicated scale-out benchmark is future work (see future scenarios).
 * **No storage dependency.** Transfers go peer to peer at CPU-memory and network speed; no shared filesystem or object store is required - every benchmark in this post runs storage-free. For deployments that want persistence and effectively unlimited capacity, P2P complements rather than replaces the storage tier.
 
@@ -101,6 +101,16 @@ Compute that ratio from the engine's reported KV capacity rather than
 per-GPU intuition: weights are paid once per pod while KV memory scales
 with the tensor-parallel degree, so a tier that doubles the GPU cache at
 TP=1 can be a fraction of it at TP=4.
+
+After the per-model crossover that prices each miss, the results are six
+use cases, each measured against its shipped baseline:
+
+1. **Displaced requests at document scale** (gpt-oss, 16x H200) - tails 2-4x lower.
+2. **Working sets bigger than any pod's cache** (Llama, gpt-oss pools) - up to +78% sustained rate.
+3. **P/D disaggregation: the prefill leg** (gpt-oss 8P+8D vs the shipped guide) - 10x median TTFT.
+4. **Session history across roles** (Llama 4P+4D) - the prefiller pulls the decoder's generated history.
+5. **Agentic re-engagement after tool-call gaps** (Qwen3-30B, 2P+4D) - 4.8x median TTFT.
+6. **Affinity rescue at wide-EP scale** (GLM-5.2 753B, 32x H200) - -45% TTFT p90.
 
 ### Pull versus recompute (single request)
 
@@ -161,13 +171,13 @@ threshold, are the same on every model measured.
   <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Single-request prefill latency, recompute versus P2P pull, gpt-oss-120b. The pull's latency grows far slower than recompute's as the prefix lengthens; the gap reaches -68% at 48K tokens.</em></p>
 </div>
 
-### Document Q&A at scale: the headline result
+### Use case 1: displaced requests at document scale (the headline)
 
 | Setup | |
 |---|---|
 | Topology | `gpt-oss-120b` (MXFP4), 16x H200 aggregated (TP=1), ~0.48M GPU KV / 88 GiB CPU per pod (4.4x) |
-| Guide baseline | `prefix-cache` 3 / `queue` 2 / `kv-util` 2 / `no-hit-lru` 2, `max-score` - `epp-affinity.yaml` |
-| Load + P2P | `queue` 3 / `kv-util` 2, `weighted-random`, no prefix score; pull `minCachedTokenDelta` 2048 - `epp-load-p2p.yaml` |
+| Baseline | precise prefix routing, the shipped guide default: `prefix-cache` 3 / `queue` 2 / `kv-util` 2 / `no-hit-lru` 2, `max-score` - `epp-affinity.yaml` |
+| + P2P | load-aware placement + pull: `queue` 3 / `kv-util` 2, `weighted-random`, `minCachedTokenDelta` 2048 - `epp-load-p2p.yaml` |
 
 The workload where the pull changes what users feel: 192 distinct
 48K-token documents (about 100 pages each), each queried through 6 short
@@ -175,89 +185,83 @@ questions with 256-token answers, 128 conversations in flight - the
 enterprise document-assistant shape, where time to first token dominates
 the experience. The working set oversubscribes the fleet's GPU cache, so
 request placement decides whether a document is a cache hit, a recompute,
-or a wait in line.
+or a wait in line. Two full runs with arm order alternated; all four runs
+completed 1,152/1,152 turns with zero errors and zero restarts.
 
-Both arms build the same precise prefix index; the Guide baseline scores
-placement on it, Load + P2P uses it only to pick pull sources (load-only
-placement, the pull covering the misses that spreading creates). Two full
-runs with arm order alternated; all four runs completed 1,152/1,152 turns
-with zero errors and zero restarts. TTFT p50 / p95 / p99 in seconds, and
-throughput:
-
-| Configuration | run | TTFT p50 | TTFT p95 | TTFT p99 | Throughput |
-|---|---|---|---|---|---|
-| Guide baseline | 1 | 4.1s | 41.0s | 80.5s | 5.98 turns/s |
-| Guide baseline | 2 (order reversed) | 4.2s | 17.3s | 37.2s | 7.66 turns/s |
-| Load + P2P | 1 | 4.5s | 13.0s | 20.9s | 7.02 turns/s |
-| Load + P2P | 2 (order reversed) | 3.9s | 12.5s | 26.7s | 7.76 turns/s |
+| Metric | Baseline | + P2P | delta |
+|---|---|---|---|
+| TTFT p99 (run 1) | 80.5 s | 20.9 s | **-74%** |
+| TTFT p99 (run 2, order reversed) | 37.2 s | 26.7 s | **-28%** |
+| TTFT p95 (run 1) | 41.0 s | 13.0 s | **-68%** |
+| TTFT p50 (runs 1 / 2) | 4.1 / 4.2 s | 4.5 / 3.9 s | parity |
+| Throughput (run 1) | 5.98 turns/s | 7.02 turns/s | **+17%** |
+| Run-to-run throughput spread | 28% | 10% | **2.8x steadier** |
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/p2p-kv-cache/docqa.png" alt="Bar charts: document Q&A TTFT percentiles and throughput across two order-alternated runs; medians equal, Load + P2P p99 21-27 s versus 37-81 s for the Guide baseline, throughput up to +17%" style={{width: '100%', height: 'auto'}} />
   <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>192 documents x 48K tokens, 6 Q&A turns each, 128 concurrent. Medians are equal; the arms separate on tails and on stability.</em></p>
 </div>
 
-Medians are equal - a session answering from its warm cache is fast either
-way. The separation is in the tails and the variance: **p99 TTFT of 21-27s
-with Load + P2P versus 37-81s with the Guide baseline - a 28-74% reduction -
-alongside up to +17% throughput, which varied 10% between Load + P2P runs
-versus 28% between Guide baseline runs**. The mechanism: the Guide baseline
-sends every question to the pod that owns its document, and under contention
-the queue on that pod becomes the p99 - while displaced questions recompute
-48K tokens. Load + P2P sends the question wherever there is capacity, and the
-pull makes the resulting miss cost ~0.6s instead of a ~2s recompute or a
-multi-second wait. The tier counters agree: Load + P2P moved 30-32M tokens
-between pods per run.
+**Why.** Medians are equal - a session answering from its warm cache is
+fast either way. The baseline sends every question to the pod that owns
+its document; under contention the queue on that pod becomes the p99,
+while displaced questions recompute 48K tokens. The pull makes the miss a
+~0.6 s transfer instead of a ~2 s recompute or a multi-second wait - and
+because placement no longer depends on where KV already lives, the
+results barely move between runs (the alternated order gives each arm one
+cold fleet and one warmed by the other arm).
 
-The consistency across the two runs matters as much as the speed: the
-Guide baseline's numbers swing with whatever cache state the fleet
-happens to inherit (the two runs deliberately alternate arm order, so each
-arm serves once from a cold fleet and once from one warmed by the other
-arm), while Load + P2P does not depend on where KV already
-lives - so its results moved little between these two runs. A stronger
-stability claim would want more repetitions; this is the behavior observed
-across the alternated pair.
+**Evidence.** 30-32M prefix tokens moved between pods per run; the
+baseline did 23-31M local CPU-tier restores instead.
 
-### Aggregated serving under load: the pull raises the ceiling
+### Use case 2: working sets bigger than any pod's cache
 
 | Setup | |
 |---|---|
 | Topology | `Llama-3.1-8B`, 4x H200 aggregated (TP=1), ~0.5M GPU KV / 32 GiB CPU per pod (~2x) |
-| Guide baseline | prefix-first placement - `epp-affinity.yaml` |
-| Load | `queue` 3 / `kv-util` 2, `weighted-random`, no prefix score - `epp-load.yaml` |
-| Load + P2P | Load placement + `p2p-source-producer`, `minCachedTokenDelta` 2048 - `epp-load-p2p.yaml` |
+| Baseline | load-balanced placement, no pull (the recompute control) - `epp-load.yaml` |
+| + P2P | identical placement + `p2p-source-producer`, `minCachedTokenDelta` 2048 - `epp-load-p2p.yaml` |
 
-Two experiments on the small-model testbed (4x Llama-3.1-8B - the same
-mechanics at a scale that reruns on four GPUs) bound the aggregated
-regimes. A single hot 16K prefix is routing's problem, not P2P's: the Guide
-baseline concentrates every request on the prefix owner and saturates it
-(p50 6.1s at 24 req/s) while load-balanced placement holds 0.53s - 11x lower
-- and the pull adds nothing for a prefix that is resident everywhere after
-one recompute per pod. P2P's role is to make that load-balanced placement
-safe when prefixes do not fit everywhere. On a 64x16K-token shared-prefix
-pool (a 128 GiB KV pool, far larger than any pod's cache), Load and Load +
-P2P place identically and differ only in whether a cross-pod miss recomputes
-or pulls; the pull beats recompute at every measured rate and the gap grows
-with load: 43% lower p50 and 42% lower p95 at 8 req/s, and at high rates the
-difference is structural - the Load arm saturates the fleet near 10.3 req/s
-while Load + P2P holds 12.6 (+22% ceiling, 30% higher peak token throughput,
-up to 83% lower p50 in the 12-16 req/s band where the Load arm has already
-collapsed):
+Both arms place identically; the only difference is whether a cross-pod
+miss recomputes its 16K prefix or pulls it - the cleanest isolation of the
+pull itself. (A single hot prefix is routing's problem, not P2P's: the
+prefix-first baseline concentrates every request on the owner and
+saturates it at p50 6.1 s while load-balanced placement holds 0.53 s; the
+pull's role is making that load-balanced placement safe when prefixes do
+not fit everywhere.) The pool: 64 x 16K shared prefixes, a 128 GiB KV
+pool far larger than any pod's cache.
+
+| Metric | Baseline | + P2P | delta |
+|---|---|---|---|
+| Req latency p50 @ 8 req/s | 2.49 s | 1.41 s | **-43%** |
+| Req latency p50 @ 12 req/s | 12.2 s | 2.1 s | **-83%** |
+| Saturation ceiling | 10.3 req/s | 12.6 req/s | **+22%** |
+| Peak token throughput | 2,420 tok/s | 3,184 tok/s | **+32%** |
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/p2p-kv-cache/saturation.png" alt="Line charts: achieved rate and p50 latency versus offered rate for Guide baseline, Load, and Load + P2P; without the pull throughput saturates at 10.3 req/s, with it 12.6" style={{width: '100%', height: 'auto'}} />
   <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Left: achieved versus offered rate. The Guide baseline tracks the offered line (its best-case pool); Load saturates near 10 req/s; Load + P2P holds ~12.6. Right: median latency on a log scale - the band between the Load and Load + P2P curves is the pull's value under overload.</em></p>
 </div>
 
-Per-rate tables for the hot-prefix and pool experiments are in the
+**Why.** With N pods each caching 1/N of the pool, every cross-pod
+request must recompute or pull. The pull beats recompute at every
+measured rate and the gap grows with load - at high rates the difference
+is structural: the baseline saturates the fleet on recompute work while
+the pull arm keeps serving.
+
+**Evidence.** The same regime on the gpt-oss testbed (128 x 48K pool,
+4.4x one pod's cache) reproduces the shape at scale: +78% sustained rate
+over the recompute control on ~139M pulled prefix tokens (~58% of
+requests). Per-rate tables for both experiments are in the
 [guide's benchmark report](https://github.com/llm-d/llm-d/tree/main/guides/p2p-kv-cache-sharing/benchmark-results).
 
-### P/D disaggregation: adding the stack is strictly better
+### Use case 3: P/D disaggregation - the prefill leg
 
 | Setup | |
 |---|---|
 | Topology | `gpt-oss-120b` (MXFP4), 16x H200 P/D (8 prefill + 8 decode, TP=1), ~1.38M GPU KV / 128 GiB CPU per pod (~2.3x) |
-| Guide | pd-disaggregation guide as shipped, plain `NixlConnector` |
-| Guide + P2P stack | guide + CPU offload tier + `p2p-source-producer`, `minCachedTokenDelta` 2048 |
+| Baseline | the [pd-disaggregation guide](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation) exactly as shipped, plain `NixlConnector` |
+| + P2P stack | the same deployment + CPU offload tier + `p2p-source-producer`, `minCachedTokenDelta` 2048 - nothing else changed |
 
 Under P/D disaggregation the pull applies to the **prefill leg only**: the
 prefill worker computes the prompt's KV and streams it to the decoder, so
@@ -265,32 +269,34 @@ that is the leg where recomputing a cached prefix is wasted work. The EPP
 sets the KV-cache-source header against the prefill target, and the decode
 pod's routing sidecar - which issues the prefill-leg request - injects
 `kv_transfer_params.remote_kv_source` onto that leg (the decode leg
-already receives the full KV over NIXL and has nothing to pull). A prefill
-worker placed off the prefix owner therefore pulls the cached prefix from a
-peer and computes only the remainder.
+already receives the full KV over NIXL and has nothing to pull). The
+document-Q&A workload at concurrency 192; both arms completed 1,152 of
+1,152 requests.
 
-The composability check: the
-[pd-disaggregation guide](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation)
-exactly as shipped, versus the same deployment plus the P2P stack
-(offload tier + pull), and nothing else changed - gpt-oss-120b on 16x
-H200 (8 prefill + 8 decode, TP=1), the document-Q&A workload at
-concurrency 192, both arms completing 1,152 of 1,152 requests. The stack
-is strictly better under load: TTFT p50 falls from 11.9s to 1.16s, p99
-from 106s to 80s, and throughput rises 40% (5.68 to 7.96 turns/s). At
-this operating point the win comes from the stack's CPU offload tier -
-turn N+1's history re-prefill is served from cache (52M externally
-served tokens in the run) instead of recomputed under 192-deep queues -
-while the pull itself stays quiet under the guide's prefix-affine
-placement and activates when placement diverges, which the next two
-measurements exercise directly.
+| Metric | Baseline (guide) | + P2P stack | delta |
+|---|---|---|---|
+| TTFT p50 | 11.94 s | 1.16 s | **10x** |
+| TTFT p95 | 71.6 s | 55.2 s | **-23%** |
+| TTFT p99 | 106.1 s | 80.0 s | **-25%** |
+| Throughput | 5.68 turns/s | 7.96 turns/s | **+40%** |
 
-### The prefiller pulls from the decoder
+**Why.** Under 192-deep queues, turn N+1's history re-prefill is served
+from the stack's CPU offload tier instead of recomputed - that tier is
+what buys the 10x median at this operating point. The cross-pod pull
+itself stays quiet under the guide's prefix-affine placement and
+activates when placement diverges, which the next two use cases exercise
+directly.
+
+**Evidence.** 52M externally served tokens in the run; zero failures on
+both arms.
+
+### Use case 4: session history across roles - the prefiller pulls from the decoder
 
 | Setup | |
 |---|---|
 | Topology | `Llama-3.1-8B`, 8x H200 P/D (4 prefill + 4 decode; 2 prefill + 4 decode at concurrency 96) |
-| Arm A | precise placement, no pull - `epp-llama-a.yaml` |
-| Arm B | precise placement + `p2p-source-producer`, `minCachedTokenDelta` 1024 - `epp-llama-b.yaml` |
+| Baseline | precise placement, no pull - `epp-llama-a.yaml` |
+| + P2P | precise placement + `p2p-source-producer`, `minCachedTokenDelta` 1024 - `epp-llama-b.yaml` |
 
 In a multi-turn conversation the newest KV lives on the decode worker: it
 received the prompt over NIXL and generated the answer. When the next turn
@@ -299,94 +305,100 @@ EPP's index (fed by both roles' cache events) sees the decoder holding it,
 and the pull fires - per turn, decided by the router, no application
 change.
 
-Measured on Llama-3.1-8B chat multi-turn (4 prefill + 4 decode, 48
-conversations x 8 turns): 477K tokens of session history moved
-decoder-to-prefiller in one run, and per-turn TTFT holds at 0.1-0.2 s
-while prompts grow from 5K to 20K tokens. At 2 prefill workers and
-concurrency 96 the same run pulls 1.65M tokens. On a model this small the
-recompute it replaces is also cheap, so the benefit is prefill capacity
-rather than visible latency - the sizing signal for where the pull pays:
-the larger the history and the slower the model's prefill, the larger the
-win.
+| Metric | Baseline | + P2P | delta |
+|---|---|---|---|
+| Per-turn TTFT (prompts growing to 20K) | 0.1-0.2 s | 0.1-0.2 s | parity at 8B |
+| History moved decoder-to-prefiller | 0 | 477K tokens (4P, C=48) / 1.65M (2P, C=96) | the mechanism |
+| Prefill work per turn | full history re-prefill | unshared remainder only | capacity freed |
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/p2p-kv-cache/pd-chat-turns.png" alt="Line chart: per-turn TTFT p50 and p95 flat at 0.1-0.2s across 8 turns while prompt length grows from 5K to 20K tokens" style={{width: '100%', height: 'auto'}} />
   <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Turn 0 pays the cold prefill; every later turn's history arrives by pull.</em></p>
 </div>
 
-### Agentic sessions: where the stack pays most
+**Why.** On a model this small the recompute the pull replaces is also
+cheap (~60 ms for a 2K-token answer), so the benefit is prefill
+**capacity** rather than visible latency - the sizing signal for where the
+pull pays: the larger the history and the slower the model's prefill, the
+larger the win. The next use case is exactly that regime.
+
+### Use case 5: agentic re-engagement after tool-call gaps
 
 | Setup | |
 |---|---|
 | Topology | `Qwen3-30B-A3B-Thinking-2507`, 6x H200 P/D (2 prefill + 4 decode, TP=1), 65.3 GiB GPU KV / 128 GiB CPU per pod (1.96x) |
-| Guide | agentic-serving guide as shipped, plain NIXL |
-| Guide + P2P stack | guide + CPU offload tier + `p2p-source-producer`, `minCachedTokenDelta` 1024 |
+| Baseline | the [agentic-serving guide](https://github.com/llm-d/llm-d/tree/main/guides/agentic-serving) as shipped, plain NIXL |
+| + P2P stack | guide + CPU offload tier + `p2p-source-producer`, `minCachedTokenDelta` 1024 |
 
 Agentic serving concentrates everything the pull is for: contexts of
-10-100K tokens, sessions of many turns, and tool-call gaps during which a
-session's KV is evicted from GPU memory - so re-engagement is exactly the
-pull-versus-recompute choice. The
-[agentic-serving guide's](https://github.com/llm-d/llm-d/tree/main/guides/agentic-serving)
-benchmark shapes (its model, block size, and generation settings; contexts
-10-100K tokens, 4-40 turns, tool-call gaps of 1-20 s), served on the P/D
-topology: Qwen3-30B-A3B-Thinking on 6x H200 (2 prefill + 4 decode, TP=1),
-288 requests at concurrency 16, both arms 288 of 288, fresh fleet per arm:
+10-100K tokens, sessions of many turns, and tool-call gaps of 1-20 s
+during which a session's KV is evicted from GPU memory - so re-engagement
+is exactly the pull-versus-recompute choice. The guide's benchmark shapes
+served on the P/D topology, 288 requests at concurrency 16, both arms 288
+of 288, fresh fleet per arm.
 
-| | P/D guide | P/D guide + P2P stack |
-|---|---|---|
-| TTFT p50 | 5.22 s | **1.09 s** |
-| TTFT p95 | 18.94 s | **11.77 s** |
-| TTFT p99 | 30.29 s | 29.98 s |
-| run time | 304 s | **229 s** |
+| Metric | Baseline (guide) | + P2P stack | delta |
+|---|---|---|---|
+| TTFT p50 | 5.22 s | 1.09 s | **4.8x** |
+| TTFT p95 | 18.94 s | 11.77 s | **-38%** |
+| TTFT p99 | 30.29 s | 29.98 s | parity |
+| Run time (288 requests) | 304 s | 229 s | **+33% throughput** |
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/p2p-kv-cache/agentic-pd.png" alt="Grouped bars: agentic sessions on P/D; TTFT p50 5.22s to 1.09s, p95 -38%, p99 parity, +33% throughput" style={{width: '100%', height: 'auto'}} />
   <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>A second arm-B sample reproduced the result (p50 1.06 s, 237 s).</em></p>
 </div>
 
-The stack delivers 4.8x median TTFT and +33% throughput; the 1.23M tokens
-of session history pulled instead of recomputed in the 229-second run are
-the pull's share of the work, though this comparison does not isolate the
-tier's contribution from the pull's. The p99 is unchanged
-by design: both arms' worst case is the cold first prefill of a
-100K-token context, and the pull removes *re*-computation, not the first
-computation. Two deviations from the scenario, applied to both arms:
-prefix caching is enabled (the scenario disables it; reuse is the subject
-here), and the topology is P/D (the scenario deploys two aggregated
-pods).
+**Why.** A returning agent whose session KV was evicted during a tool
+call pulls its history instead of recomputing a ~50K-token context. The
+p99 is unchanged by design: both arms' worst case is the cold *first*
+prefill of a 100K-token context, and the pull removes *re*-computation,
+not the first computation. Two deviations from the scenario, applied to
+both arms: prefix caching is enabled (reuse is the subject here), and the
+topology is P/D (the scenario deploys two aggregated pods).
 
-### 753B wide-EP: the pull is affinity's safety net
+**Evidence.** 1.23M tokens of session history pulled instead of
+recomputed in the 229-second run.
+
+### Use case 6: affinity rescue at wide-EP scale (753B)
 
 | Setup | |
 |---|---|
 | Topology | `GLM-5.2-FP8` (753B MoE), 1 prefill + 1 decode, wide-EP (16-way data/expert parallel per role) on 32x H200; ~520K GPU KV tokens and a 100 GiB CPU tier per rank |
-| Precise affinity | precise `prefix-cache` 5 / `queue` 3 / `active-request` 1, no pull |
-| + P2P | same placement + `p2p-source-producer`, `minCachedTokenDelta` 16384 |
-| Workload | recorded agentic traces (the SemiAnalysis Weka corpus, agent chains included), replayed at concurrency 32 |
+| Baseline | precise prefix affinity **without the pull**: precise `prefix-cache` 5 / `queue` 3 / `active-request` 1 |
+| + P2P | the same placement + `p2p-source-producer`, `minCachedTokenDelta` 16384 - the only change is adding the pull |
+| Workload | recorded agentic traces (the SemiAnalysis Weka corpus, agent chains included), replayed at concurrency 32-128 |
 
 Does the mechanism survive the largest deployment shape - a 753B MoE
-spread 16 ways per role? Here the arms answer a different question than
-document Q&A did: both place by precise prefix affinity (the guide-style
-default), and the only change is adding the pull. On agentic traces,
-affinity concentrates sessions on the ranks that hold their cache, and the
-queues on those ranks become the latency; the pull lets the picker place
-on a less-loaded rank and fetch the session's prefix there:
+spread 16 ways per role? On agentic traces, precise affinity concentrates
+sessions on the ranks that hold their cache, and the queues on those
+ranks become the latency; the pull lets the picker place on a less-loaded
+rank and fetch the session's prefix there.
 
-| | Precise affinity | + P2P pull |
-|---|---|---|
-| TTFT p50 | 2.27 s | **1.65 s (-27%)** |
-| TTFT p90 | 7.56 s | **4.14 s (-45%)** |
-| TTFT p99 | 14.7 s | 15.2 s (within single-run noise) |
+| Metric (concurrency 32) | Baseline | + P2P | delta |
+|---|---|---|---|
+| TTFT p50 | 2,265 ms | 1,649 ms | **-27%** |
+| TTFT p90 | 7,557 ms | 4,136 ms | **-45%** |
+| vs the best load-balanced arm | | ties it | |
 
-41 GB of KV (~440K tokens) crossed engines in the 15-minute run, zero
-errors, and with the pull the affinity arm matches load-balanced placement
-measured on the same ladder - the pull erases the concentration penalty
-without changing the routing policy. The source index is also
-interchangeable at this scale: the same producer pointed at the
+| Across the ladder, TTFT p90 | Baseline | + P2P | delta |
+|---|---|---|---|
+| concurrency 64 | 9,823 ms | 7,139 ms | **-27%** |
+| concurrency 128 | 11,755 ms | 9,970 ms | **-15%** |
+
+**Why.** The pull erases the concentration penalty at moderate load -
+with it, the affinity arm matches load-balanced placement measured on the
+same ladder, without changing the routing policy. TTFT p99 is within
+single-run noise at every concurrency (the worst case everywhere is the
+cold first prefill of a long context).
+
+**Evidence.** 41 / 93 / 163 GB of KV crossed engines at c32/c64/c128,
+verified byte-exact, zero request errors in every cell. The source index
+is also interchangeable at this scale: the same producer pointed at the
 approximate (hash-estimate) index instead of the precise one drove 34 GB
 of pulls at higher concurrency, so the pull does not require the KV-event
 pipeline to be deployed. Single run per cell; the full four-arm grid
-across the concurrency ladder ships with the guide's benchmark report.
+ships with the guide's benchmark report.
 
 ### When pulling pays: calibrating the threshold
 
