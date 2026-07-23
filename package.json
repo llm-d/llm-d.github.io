@@ -31,7 +31,7 @@
     "@docusaurus/core": "3.10.2",
     "@docusaurus/preset-classic": "3.10.2",
     "@docusaurus/theme-mermaid": "3.10.2",
-    "@easyops-cn/docusaurus-search-local": "^0.52.1",
+    "@easyops-cn/docusaurus-search-local": "^0.55.2",
     "@fontsource/fredoka": "^5.2.10",
     "@fontsource/ibm-plex-sans": "^5.2.8",
     "@mdx-js/react": "^3.1.0",
