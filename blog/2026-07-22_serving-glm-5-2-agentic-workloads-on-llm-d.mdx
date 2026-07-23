@@ -276,7 +276,7 @@ The matched MTP comparison uses one DEP16 prefill instance and one DEP16 decoder
   src="/img/blogs/glm52-agentic-serving/matched-frontier.png"
   alt="Matched 32-GPU topology comparing baseline, CPU offloading, and MTP with CPU offloading"
 >
-  1P1D topology, 32 GPUs: one DEP16 prefill instance and one DEP16 decoder. Read the plot up and to the right: right is higher end-to-end output per user, and up is more output per decode GPU. Baseline versus CPU offloading isolates CPU offloading; CPU offloading versus MTP + CPU offloading isolates MTP.
+  1P1D topology, 32 GPUs: one DEP16 prefill instance and one DEP16 decoder. Farther right is higher end-to-end output per user; higher is more output per decode GPU. Baseline versus CPU offloading isolates CPU offloading; CPU offloading versus MTP + CPU offloading isolates MTP.
 </Figure>
 
 The acceptance counters match a workload suited to speculation: mean acceptance length 2.94 to 3.00 of a maximum 4, about 65% of draft tokens accepted, 80/63/50% by draft position, flat across a 16x load swing. The measured speedup is consistent with this arithmetic: roughly 2.95 output tokens per step against a roughly 1.3x per-step verify cost. The comparisons with CPU offloading enabled or disabled show that it does not materially change the time between output tokens under the tested load.
@@ -293,7 +293,7 @@ Complete matched stages on the same topology and workload compare the baseline, 
   src="/img/blogs/glm52-agentic-serving/full-frontier.png"
   alt="All complete configuration stages, including MTP and CPU offloading width sweep"
 >
-  The export contains 18 configuration keys. Read the plot up and to the right: right is higher end-to-end output per user, and up is more output per decode GPU. The figure includes stages with complete benchmark-duration, request-start, and response-end metadata; the highlighted width sweep is the matched comparison used in the text.
+  The export contains 18 configuration keys. Farther right is higher end-to-end output per user; higher is more output per decode GPU. The figure includes stages with complete benchmark-duration, request-start, and response-end metadata; the highlighted width sweep is the matched comparison used in the text.
 </Figure>
 
 Tool-call validity remains unquantified. Multi-token deltas can break streaming parsers that expect one token at a time, with related reports for other model/parser combinations in vLLM #42400 on GLM-5.1 and #41967 on Gemma4. The decode and aggregate servers use the GLM parser pair recommended by vLLM. The decode configuration includes:
@@ -324,7 +324,7 @@ At matched 3P concurrency 128, 3P2D raises output from 4,353 to 5,604 tok/s, up 
   src="/img/blogs/glm52-agentic-serving/full-isl.png"
   alt="Full-ISL DEP16 runs showing user-visible speed against per-GPU output and input throughput"
 >
-  Full-ISL DEP16 runs. X is end-to-end output throughput per user. Left: output throughput normalized by decode GPUs. Right: input throughput normalized by prefill GPUs. In both panels, farther right means higher end-to-end output per user and higher means more throughput per GPU. The 1D series stop earlier, so concurrency 256 is a 2D operating point rather than a matched 1D-vs-2D delta.
+  Full-ISL DEP16 runs. The x-axis is end-to-end output throughput per user. Left: output throughput normalized by decode GPUs. Right: input throughput normalized by prefill GPUs. In both panels, farther right means higher end-to-end output per user and higher means more throughput per GPU. The 1D series stop earlier, so concurrency 256 is a 2D operating point rather than a matched 1D-vs-2D delta.
 </Figure>
 
 ## 32, 48, or 64 GPUs?
@@ -337,7 +337,7 @@ Decode stays fixed at DEP16 while prefill grows from one to three DEP16 instance
   src="/img/blogs/glm52-agentic-serving/width-efficiency.png"
   alt="Output per GPU versus user-visible speed for 1P1D, 2P1D, and 3P1D"
 >
-  MTP and CPU-offloading width-sweep stages with median TTFT under 10 s. Read the plot up and to the right: right is higher end-to-end output per user, and up is more output per GPU. The 3P1D topology, 64 GPUs, provides the highest aggregate output; the 1P1D topology, 32 GPUs, provides the best output per GPU; at concurrency 256, 2P1D reaches 95% of 3P1D output with 25% fewer GPUs.
+  MTP and CPU-offloading width-sweep stages with median TTFT under 10 s. Farther right is higher end-to-end output per user; higher is more output per GPU. The 3P1D topology, 64 GPUs, provides the highest aggregate output; the 1P1D topology, 32 GPUs, provides the best output per GPU; at concurrency 256, 2P1D reaches 95% of 3P1D output with 25% fewer GPUs.
 </Figure>
 
 The mixed-width 2P1D topology addresses a different constraint from the 48-GPU width sweep. It keeps the total GPU count at 32 by using two DEP8 prefill instances with one DEP16 decoder; each prefill rank holds about 220K KV tokens, versus roughly 650K under DEP16. CPU memory retains the session working set beyond those smaller GPU caches. Its paused-conversation results are not combined with the width sweep because the load pattern and completion length differ.
