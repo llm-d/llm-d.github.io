@@ -109,6 +109,22 @@ tylersmith:
   socials:
     linkedin: tyler-michael-smith-017b28102
 
+yuchenfama:
+  name: Yuchen Fama
+  title: ML/AI R&D and Product Leader, Red Hat
+  image_url: /img/blogs/yuchenfama.jpeg
+  socials:
+    linkedin: yuchen-fama
+    github: https://github.com/cemigo114
+
+elvircrncevic:
+  name: Elvir Crncevic
+  title: Machine Learning Engineer (vLLM), Red Hat
+  image_url: /img/blogs/elvircrncevic.jpeg
+  socials:
+    linkedin: elvir-crncevic-99a17960
+    github: https://github.com/elvircrn
+
 kellenswain:
   name: Kellen Swain
   title: Software Engineer, Google
