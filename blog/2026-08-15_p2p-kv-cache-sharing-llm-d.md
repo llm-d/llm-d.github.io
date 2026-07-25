@@ -129,7 +129,7 @@ token, so past the tie the gap widens without bound.
 
 | Setup | |
 |---|---|
-| Topology | `gpt-oss-120b` (MXFP4), 16x H200 aggregated (TP=1), ~0.48M GPU KV / 88 GiB CPU per pod (4.4x) |
+| Topology | `gpt-oss-120b` (MXFP4), 16x H200 aggregated (TP=1), ~1.22M GPU KV / 88 GiB CPU per pod (1.8x) |
 | Baseline | precise prefix routing, the shipped guide default: `prefix-cache` 3 / `queue` 2 / `kv-util` 2 / `no-hit-lru` 2, `max-score` - `epp-affinity.yaml` |
 | + P2P | load-aware placement + pull: `queue` 3 / `kv-util` 2, `weighted-random`, `minCachedTokenDelta` 2048 - `epp-load-p2p.yaml` |
 
@@ -137,10 +137,12 @@ The workload where the pull changes what users feel: 192 distinct
 48K-token documents (about 100 pages each), each queried through 6 short
 questions with 256-token answers, 128 conversations in flight - the
 enterprise document-assistant shape, where time to first token dominates
-the experience. The working set oversubscribes the fleet's GPU cache, so
-request placement decides whether a document is a cache hit, a recompute,
-or a wait in line. Two full runs with arm order alternated; all four runs
-completed 1,152/1,152 turns with zero errors and zero restarts.
+the experience. With 192 documents spread across 16 owner pods (~12
+documents per pod on average) and 128 sessions concurrently active,
+request placement - not cache capacity - decides whether a document is a
+cache hit, a recompute, or a wait in line. Two full runs with arm order
+alternated; all four runs completed 1,152/1,152 turns with zero errors
+and zero restarts.
 
 | Metric | Baseline | + P2P | delta |
 |---|---|---|---|
@@ -204,7 +206,7 @@ is structural: the baseline saturates the fleet on recompute work while
 the pull arm keeps serving.
 
 **Evidence.** The same regime on the gpt-oss testbed (128 x 48K pool,
-4.4x one pod's cache) reproduces the shape at scale: +78% sustained rate
+~5x one pod's cache) reproduces the shape at scale: +78% sustained rate
 over the recompute control on ~139M pulled prefix tokens (~58% of
 requests). Per-rate tables for both experiments are in the
 [guide's benchmark report](https://github.com/llm-d/llm-d/tree/main/guides/p2p-kv-cache-sharing/benchmark-results).
@@ -412,13 +414,18 @@ the TP coupling from the stored blocks themselves.
 P2P KV cache sharing turns llm-d's per-pod prefix caches into a fleet-wide resource. The EPP's existing per-request prefix knowledge picks the source, a single header carries the decision, and the connector moves the blocks peer to peer - best-effort, and off the request's failure path. It composes with prefix-aware routing (which minimizes how often a pull is needed), with P/D disaggregation (prefill workers pull prefixes too), and with the storage tier (which adds persistence and capacity beyond what peers hold).
 
 The measurements give a simple rule for when to reach for it. When the
-working set fits in the fleet's GPU caches, prefix-aware routing alone is
-the right tool - a local hit is free and nothing beats it. When long
-prefixes oversubscribe the cache - large documents, deep sessions, wide
-prefix pools - placement by cache location starts paying in queues and
-recomputes, and that is where load-aware placement plus the pull wins.
-The crossover measurement prices each miss; the document-Q&A benchmark
-above shows what that pricing compounds into at fleet scale, on the tail
-latencies users actually feel.
+working set fits in the fleet's GPU caches and request placement can
+track it cleanly, prefix-aware routing alone is the right tool - a local
+hit is free and nothing beats it. Two things break that: a working set
+that does not fit in any single pod's cache (use case 2 above), where
+cross-pod misses are structural regardless of load; and high-concurrency
+placement under a fixed per-document ownership rule (the document-Q&A
+benchmark above), where a burst of traffic across many owner pods
+produces queueing waits and cold recomputes even with room to spare in
+the fleet's aggregate capacity. Both are where load-aware placement plus
+the pull wins - not because the pull creates capacity, but because it
+decouples placement from cache locality. The crossover measurement prices
+each miss; the document-Q&A benchmark above shows what that pricing
+compounds into at fleet scale, on the tail latencies users actually feel.
 
 The Qwen agentic measurement above uses the guide's synthetic session shapes; the wide-EP measurement replays real ones. In recorded Claude Code sessions (the [Weka trace corpus](https://huggingface.co/datasets/semianalysisai/cc-traces-weka-with-subagents-051926) published by SemiAnalysis - the corpus the 753B testbed replays), over half of all model requests arrive through sub-agent bursts - a median of seven per group, 51 at p90 - each inheriting the parent session's context as a verbatim prefix, with no advance signal to the serving layer. A burst that spills across pods today recomputes that repository-scale prefix once per pod; with P2P, the pod that already holds the prefix becomes the source while the others pull the cached blocks instead of recomputing them. A follow-up post will study that fan-out directly - burst-level source selection, session handoff, and think-time gaps included. {/* TODO: link the agentic-serving GLM post once published */}
