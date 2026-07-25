@@ -125,6 +125,14 @@ if [[ -f "$WIP/getting-started/README.mdx" ]]; then
 else
   cp_doc "$WIP/getting-started/README.md"     "$DOCS_DIR/getting-started/index.md"
 fi
+# Upstream's README.mdx sets `slug: /`, claiming this site's root route. But
+# src/pages/index.tsx already owns "/" everywhere (a <Redirect> to
+# /getting-started, baseUrl-aware), so the two collide and "/" ends up
+# rendering neither — an empty, unhydratable shell in every build. Force
+# this doc back to its natural /getting-started slug so the pages-plugin
+# homepage redirect keeps working as designed.
+set_doc_slug "$DOCS_DIR/getting-started/index.mdx" "/getting-started"
+set_doc_slug "$DOCS_DIR/getting-started/index.md" "/getting-started"
 cp_doc "$WIP/getting-started/quickstart.md"   "$DOCS_DIR/getting-started/quickstart.md"
 cp_doc "$WIP/getting-started/feature-matrix.md" "$DOCS_DIR/getting-started/feature-matrix.md"
 cp_doc "$WIP/getting-started/accelerators.md" "$DOCS_DIR/getting-started/accelerators.md"
@@ -194,6 +202,7 @@ fi
 cp_doc "$WIP/well-lit-paths/README.md"                      "$DOCS_DIR/guides/index.md"
 cp_doc "$WLP/optimized-baseline.md"                         "$DOCS_DIR/guides/optimized-baseline.md"
 cp_doc "$WIP/well-lit-paths/workloads/multimodal-serving.md"             "$DOCS_DIR/guides/multimodal-serving.md"
+cp_doc "$WLP/multi-model-routing.md"                         "$DOCS_DIR/guides/multi-model-routing.md"
 cp_doc "$WLP/precise-prefix-cache-routing.md"               "$DOCS_DIR/guides/precise-prefix-cache-routing.md"
 cp_doc "$WLP/tiered-prefix-cache.md"                        "$DOCS_DIR/guides/tiered-prefix-cache.md"
 cp_doc "$WIP/well-lit-paths/workloads/batch-serving/asynchronous-processing.md" "$DOCS_DIR/guides/asynchronous-processing.md"
@@ -204,6 +213,16 @@ cp_doc "$WLP/wide-expert-parallelism.md"                    "$DOCS_DIR/guides/wi
 cp_doc "$WA_SRC"                                            "$DOCS_DIR/guides/workload-autoscaling.md"
 cp_doc "$WIP/infrastructure/no-kubernetes-deployment.md"                 "$DOCS_DIR/guides/no-kubernetes-deployment.md"
 cp_doc "$WIP/well-lit-paths/workloads/batch-serving/batch-gateway.md"    "$DOCS_DIR/guides/batch-gateway.md"
+# "Serve Batch Workloads" section landing page (batch-serving/README.md ->
+# "Batch Serving"). Wired as the "Serve Batch Workloads" sidebar category link.
+# Its two relative links point at the sibling batch guides; repoint to site URLs.
+cp_doc "$WIP/well-lit-paths/workloads/batch-serving/README.md"           "$DOCS_DIR/guides/batch-serving.md"
+if [[ -f "$DOCS_DIR/guides/batch-serving.md" ]]; then
+    sed_inplace \
+        -e 's|\](batch-gateway\.md)|\](/well-lit-paths/batch-gateway)|g' \
+        -e 's|\](asynchronous-processing\.md)|\](/well-lit-paths/asynchronous-processing)|g' \
+        "$DOCS_DIR/guides/batch-serving.md"
+fi
 # Agentic Serving overview lives at well-lit-paths/workloads/agentic-serving.md; synced
 # as a directory doc (index.md) so the editUrl branch resolves correctly.
 cp_doc "$WIP/well-lit-paths/workloads/agentic-serving.md"                "$DOCS_DIR/guides/agentic-serving/index.md"
@@ -227,6 +246,7 @@ for _sec in capabilities workloads; do
         -e 's|\](wide-expert-parallelism\.md)|\](/well-lit-paths/wide-expert-parallelism)|g' \
         -e 's|\](flow-control\.md)|\](/well-lit-paths/flow-control)|g' \
         -e 's|\](workload-autoscaling\.md)|\](/well-lit-paths/workload-autoscaling)|g' \
+        -e 's|\](multi-model-routing\.md)|\](/well-lit-paths/multi-model-routing)|g' \
         -e 's|\](multimodal-serving\.md)|\](/well-lit-paths/multimodal-serving)|g' \
         -e 's|\](agentic-serving\.md)|\](/well-lit-paths/agentic-serving)|g' \
         -e 's|\](batch-serving/README\.md)|\](/well-lit-paths/asynchronous-processing)|g' \
@@ -265,6 +285,7 @@ sed_inplace \
 set_doc_slug "$DOCS_DIR/guides/index.md" "/well-lit-paths"
 set_doc_slug "$DOCS_DIR/guides/optimized-baseline.md" "/well-lit-paths/optimized-baseline"
 set_doc_slug "$DOCS_DIR/guides/multimodal-serving.md" "/well-lit-paths/multimodal-serving"
+set_doc_slug "$DOCS_DIR/guides/multi-model-routing.md" "/well-lit-paths/multi-model-routing"
 set_doc_slug "$DOCS_DIR/guides/precise-prefix-cache-routing.md" "/well-lit-paths/precise-prefix-cache-routing"
 set_doc_slug "$DOCS_DIR/guides/tiered-prefix-cache.md" "/well-lit-paths/tiered-prefix-cache"
 set_doc_slug "$DOCS_DIR/guides/asynchronous-processing.md" "/well-lit-paths/asynchronous-processing"
@@ -275,6 +296,7 @@ set_doc_slug "$DOCS_DIR/guides/wide-expert-parallelism.md" "/well-lit-paths/wide
 set_doc_slug "$DOCS_DIR/guides/workload-autoscaling.md" "/well-lit-paths/workload-autoscaling"
 set_doc_slug "$DOCS_DIR/guides/no-kubernetes-deployment.md" "/well-lit-paths/no-kubernetes-deployment"
 set_doc_slug "$DOCS_DIR/guides/batch-gateway.md" "/well-lit-paths/batch-gateway"
+set_doc_slug "$DOCS_DIR/guides/batch-serving.md" "/well-lit-paths/batch-serving"
 set_doc_slug "$DOCS_DIR/guides/agentic-serving/index.md" "/well-lit-paths/agentic-serving"
 
 # Patch agentic-serving internal links (sibling well-lit-paths -> site URLs; full guide -> upstream).
@@ -344,6 +366,7 @@ cp_doc "$WIP/operations/observability/setup.md"   "$DOCS_DIR/resources/observabi
 cp_doc "$WIP/operations/observability/metrics.md" "$DOCS_DIR/resources/observability/metrics.md"
 cp_doc "$WIP/operations/observability/tracing.md" "$DOCS_DIR/resources/observability/tracing.md"
 cp_doc "$WIP/operations/observability/promql.md"  "$DOCS_DIR/resources/observability/promql.md"
+cp_doc "$WIP/operations/observability/alerting.md" "$DOCS_DIR/resources/observability/alerting.md"
 
 # === Resources / Gateway ===
 cp_doc "$WIP/infrastructure/gateway/README.md"         "$DOCS_DIR/resources/gateway/index.md"
@@ -361,6 +384,21 @@ cp_doc "$WIP/operations/readiness-probes.md"                "$DOCS_DIR/resources
 cp_doc "$WIP/operations/rollouts/README.md"                 "$DOCS_DIR/resources/operations/rollouts/index.md"
 cp_doc "$WIP/operations/rollouts/adapter-rollout.md"        "$DOCS_DIR/resources/operations/rollouts/adapter-rollout.md"
 cp_doc "$WIP/operations/rollouts/blue-green-update.md"      "$DOCS_DIR/resources/operations/rollouts/blue-green-update.md"
+
+# Operations & Monitoring section landing page (docs/operations/README.md ->
+# "Operational Excellence"). Wired as the "Operations & Monitoring" sidebar
+# category link so clicking the section header renders this overview. Its
+# relative links point at sibling operations/ pages; repoint to site URLs.
+cp_doc "$WIP/operations/README.md"                          "$DOCS_DIR/resources/operations/index.md"
+if [[ -f "$DOCS_DIR/resources/operations/index.md" ]]; then
+    sed_inplace \
+        -e 's|\](../well-lit-paths/README\.md)|\](/well-lit-paths)|g' \
+        -e 's|\](observability/README\.md)|\](/resources/observability)|g' \
+        -e 's|\](rollouts/README\.md)|\](/resources/operations/rollouts)|g' \
+        -e 's|\](readiness-probes\.md)|\](/resources/operations/readiness-probes)|g' \
+        -e 's|\](router\.md)|\](/resources/operations/router)|g' \
+        "$DOCS_DIR/resources/operations/index.md"
+fi
 
 # Fix cross-references in operations/rollouts pages. These files are synced from
 # docs/operations/rollouts/ but placed at resources/operations/rollouts/, so all
@@ -553,6 +591,10 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](../../../getting-started/quickstart\.md)|\](/getting-started/quickstart)|g' \
         -e 's|\](../../getting-started/quickstart\.md)|\](/getting-started/quickstart)|g' \
         -e 's|\](../../architecture/advanced/batch/batch-gateway\.md)|\](/architecture/advanced/batch/batch-gateway)|g' \
+        -e 's|\](\.\./architecture/advanced/inference-payload-processing/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/inference-payload-processing/README.md)|g' \
+        -e 's|\](\./architecture/advanced/inference-payload-processing/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/inference-payload-processing/README.md)|g' \
+        -e 's|\](/architecture/advanced/inference-payload-processing/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/inference-payload-processing/README.md)|g' \
+        -e 's|\](/docs/architecture/advanced/inference-payload-processing/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/inference-payload-processing/README.md)|g' \
         -e 's|llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/profile)|llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/profilehandler)|g' \
         -e 's|\](../../guides/optimized-baseline)|\](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline)|g' \
         -e 's|\](../../guides/multimodal/optimized-baseline/README\.md)|\](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/optimized-baseline)|g' \
@@ -749,6 +791,7 @@ find "$DOCS_DIR/guides" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         -e 's|\](/docs/optimized-baseline)|\](/docs/guides/optimized-baseline)|g' \
         -e 's|\](../optimized-baseline/README\.md#2-deploy-the-model-server)|\](/guides/optimized-baseline#2-deploy-the-model-server)|g' \
         -e 's|\](../optimized-baseline/README\.md#3-enable-monitoring-optional)|\](/guides/optimized-baseline#3-enable-monitoring-optional)|g' \
+        -e 's|\](../architecture/advanced/inference-payload-processing/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/inference-payload-processing/README.md)|g' \
         "$file"
 done
 
@@ -778,13 +821,14 @@ fi
 
 # === Fix observability doc links ===
 # Link to github for repo-only paths; rewrite in-site cross-links under /resources/observability/
-for obs_file in index.md setup.md metrics.md tracing.md promql.md; do
+for obs_file in index.md setup.md metrics.md tracing.md promql.md alerting.md; do
     if [[ -f "$DOCS_DIR/resources/observability/$obs_file" ]]; then
         sed_inplace \
             -e 's|\](./setup\.md)|\](/resources/observability/setup)|g' \
             -e 's|\](./metrics\.md)|\](/resources/observability/metrics)|g' \
             -e 's|\](./tracing\.md)|\](/resources/observability/tracing)|g' \
             -e 's|\](./promql\.md)|\](/resources/observability/promql)|g' \
+            -e 's|\](./alerting\.md)|\](/resources/observability/alerting)|g' \
             -e 's|\](../../getting-started/quickstart\.md)|\](/getting-started/quickstart)|g' \
             -e 's|\](../../../guides/recipes/modelserver/components/monitoring/)|\](https://github.com/llm-d/llm-d/tree/main/guides/recipes/modelserver/components/monitoring)|g' \
             -e 's|\`](../../../guides/recipes/modelserver/components/monitoring/)|\`](https://github.com/llm-d/llm-d/tree/main/guides/recipes/modelserver/components/monitoring)|g' \
@@ -927,6 +971,20 @@ find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
         "$file"
 done
 
+# === Final safety-net: normalize stale IPP README links ===
+# Some upstream files still reference inference-payload-processing/README.md as
+# a local site path, which resolves to /docs/dev/.../README.md and 404s.
+# Force all known variants to the canonical upstream GitHub source URL.
+echo "    Normalizing stale IPP README links..."
+find "$DOCS_DIR" \( -name "*.md" -o -name "*.mdx" \) -print0 | while IFS= read -r -d '' file; do
+    sed_inplace \
+        -e 's|\](../architecture/advanced/inference-payload-processing/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/inference-payload-processing/README.md)|g' \
+        -e 's|\](./architecture/advanced/inference-payload-processing/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/inference-payload-processing/README.md)|g' \
+        -e 's|\](/architecture/advanced/inference-payload-processing/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/inference-payload-processing/README.md)|g' \
+        -e 's|\](/docs/architecture/advanced/inference-payload-processing/README\.md)|\](https://github.com/llm-d/llm-d/blob/main/docs/architecture/advanced/inference-payload-processing/README.md)|g' \
+        "$file"
+done
+
 # === MDX hygiene: void tags + bare email/URL autolinks ===
 echo "    Normalizing bare HTML void tags + autolinks for MDX..."
 find "$DOCS_DIR" -name "*.md" -print0 | while IFS= read -r -d '' file; do
@@ -1005,6 +1063,7 @@ generate_stub "$DOCS_DIR/resources/observability/setup.md" "Observability Setup"
 generate_stub "$DOCS_DIR/resources/observability/metrics.md" "Metrics" "Prometheus metrics collection and configuration"
 generate_stub "$DOCS_DIR/resources/observability/tracing.md" "Distributed Tracing" "Setting up distributed tracing with OpenTelemetry"
 generate_stub "$DOCS_DIR/resources/observability/promql.md" "PromQL Query Reference" "Ready-to-use PromQL queries for llm-d deployments"
+generate_stub "$DOCS_DIR/resources/observability/alerting.md" "Alerting" "Default Prometheus alerting rules for llm-d observability."
 generate_stub "$DOCS_DIR/resources/rdma/rdma-configuration.md" "RDMA Configuration" "RDMA network configuration"
 
 # Infrastructure Providers stubs
@@ -1019,6 +1078,8 @@ generate_stub "$DOCS_DIR/resources/infra-providers/openshift-aws.md" "OpenShift 
 # Guides stubs
 generate_stub "$DOCS_DIR/guides/multimodal-serving.md" "Multimodal Serving" "Multimodal serving guide"
 set_doc_slug "$DOCS_DIR/guides/multimodal-serving.md" "/well-lit-paths/multimodal-serving"
+generate_stub "$DOCS_DIR/guides/multi-model-routing.md" "Multi-Model Routing" "Route requests across multiple models and adapters through a single endpoint."
+set_doc_slug "$DOCS_DIR/guides/multi-model-routing.md" "/well-lit-paths/multi-model-routing"
 
 TOTAL=$(find "$DOCS_DIR" -name "*.md" | wc -l | tr -d ' ')
 echo "==> Done. $TOTAL docs synced from llm-d/llm-d @ $BRANCH"

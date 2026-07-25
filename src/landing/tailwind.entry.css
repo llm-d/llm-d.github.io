@@ -1,0 +1,12 @@
+/* Tailwind input for the landing page ONLY.
+ *
+ * The landing page (src/landing/Frame156.tsx) is a Figma Make export built with
+ * Tailwind v4 utility classes. Docusaurus itself does not use Tailwind, so we
+ * compile just the utilities the landing uses and scope them under `.llmd-frame`
+ * (see scripts/build-landing-css.mjs) so they can never affect the docs/blog.
+ *
+ * `source(none)` disables Tailwind's project-wide scan; we point it only at the
+ * landing component. Regenerate with `npm run landing:css` after editing it.
+ */
+@import "tailwindcss" source(none);
+@source "./Frame156.tsx";

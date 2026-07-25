@@ -1,0 +1,5 @@
+# Personal overrides for llmd-site --local mode (copy to llmd-site.local.yaml)
+sources:
+  llm-d:
+    path: ~/repos/llm-d
+    fetch: false

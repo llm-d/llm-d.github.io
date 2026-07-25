@@ -50,6 +50,7 @@ const sidebars: SidebarsConfig = {
               type: 'category',
               label: 'Serve Batch Workloads',
               collapsed: true,
+              link: {type: 'doc', id: 'guides/batch-serving'},
               items: [
                 {type: 'doc', id: 'guides/asynchronous-processing', label: 'Asynchronous Processing'},
                 {type: 'doc', id: 'guides/batch-gateway', label: 'Batch Gateway'},
@@ -151,6 +152,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Operations & Monitoring',
       collapsed: true,
+      link: {type: 'doc', id: 'resources/operations/index'},
       items: [
         {type: 'doc', id: 'resources/observability/metrics', label: 'Monitoring & Metrics'},
         {type: 'doc', id: 'resources/observability/tracing', label: 'Tracing'},

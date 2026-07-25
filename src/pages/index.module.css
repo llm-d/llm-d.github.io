@@ -1,23 +1,62 @@
-/**
- * CSS files with the .module.css suffix will be treated as CSS modules
- * and scoped locally.
- */
-
-.heroBanner {
-  padding: 4rem 0;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - var(--ifm-navbar-height));
+  padding: 4rem 1rem;
+  background: radial-gradient(
+    ellipse at top,
+    rgba(127, 49, 127, 0.08),
+    transparent 60%
+  );
 }
 
-@media screen and (max-width: 996px) {
-  .heroBanner {
-    padding: 2rem;
-  }
+.heroInner {
+  max-width: 820px;
+  text-align: center;
+}
+
+.wip {
+  display: inline-block;
+  margin-bottom: 1.75rem;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ifm-color-primary);
+  background: var(--ifm-color-emphasis-100);
+  border: 1px dashed var(--ifm-color-primary-lighter);
+  border-radius: 999px;
+}
+
+.logo {
+  display: block;
+  height: 60px;
+  width: auto;
+  max-width: 100%;
+  margin: 0 auto 2rem;
+}
+
+.title {
+  font-size: clamp(1.9rem, 4.5vw, 3rem);
+  line-height: 1.12;
+  margin-bottom: 1.5rem;
+}
+
+.lede {
+  font-size: 1.2rem;
+  line-height: 1.65;
+  color: var(--ifm-color-emphasis-700);
+  max-width: 680px;
+  margin: 0 auto 2.25rem;
 }
 
 .buttons {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.85rem;
   justify-content: center;
+}
+
+.button {
+  min-width: 170px;
 }

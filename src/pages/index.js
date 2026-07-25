@@ -1,18 +1,21 @@
-import { useEffect } from 'react';
-import Head from '@docusaurus/Head';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import Layout from '@theme/Layout';
 
-// Hard redirect rather than React Router <Redirect/>: /docs/* is a separate
-// Docusaurus build mounted as static files, so a client-side SPA push from
-// the main app's router can't resolve it (it shows 404 until the user
-// refreshes and the browser does a real HTTP GET). The meta-refresh + JS
-// pair gives us a real page navigation on both SSR and CSR.
+import LandingApp from '@site/src/landing/LandingApp';
+// Scoped Tailwind utilities for the landing (generated; see npm run landing:css)
+// followed by the landing fonts + wrapper base. Both are scoped to .llmd-frame.
+import '@site/src/landing/landing.tailwind.css';
+import '@site/src/landing/landing.css';
+
+/**
+ * Home / landing page. Renders the ported design (LandingApp) inside the
+ * standard Docusaurus Layout (navbar + footer).
+ */
 export default function Home() {
-  useEffect(() => {
-    window.location.replace('/docs/getting-started');
-  }, []);
+  const { siteConfig } = useDocusaurusContext();
   return (
-    <Head>
-      <meta httpEquiv="refresh" content="0; url=/docs/getting-started" />
-    </Head>
+    <Layout title="llm-d" description={siteConfig.tagline}>
+      <LandingApp />
+    </Layout>
   );
 }

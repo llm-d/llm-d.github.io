@@ -98,3 +98,27 @@ inference:
   label: Inference
   permalink: /inference
   description: LLM inference serving and optimization
+hma:
+  label: HMA
+  permalink: /hma
+  description: Hybrid Memory Allocator and serving hybrid models
+
+networking:
+  label: Networking
+  permalink: /networking
+  description: Networking, transports, and KV Cache transfers for distributed inference
+
+nixl:
+  label: NIXL
+  permalink: /nixl
+  description: NVIDIA Inference Xfer Library (NIXL) backends and integration
+
+uccl:
+  label: UCCL
+  permalink: /uccl
+  description: Unified Collective Communication Library (UCCL) backend
+
+ucx:
+  label: UCX
+  permalink: /ucx
+  description: Unified Communication X (UCX) backend

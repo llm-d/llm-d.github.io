@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 400" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif">
+  <rect width="700" height="400" fill="white"/>
+
+  <!-- Title -->
+  <text x="400" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#1a1a2e">Admission control: latency under increasing load</text>
+  <text x="400" y="50" text-anchor="middle" font-size="12" fill="#555">Critical-tier TTFT p90 — Qwen3-14B on 4× H100-SXM-80GB</text>
+
+  <!-- Axes -->
+  <line x1="80" y1="330" x2="650" y2="330" stroke="#333" stroke-width="1.5"/>
+  <line x1="80" y1="330" x2="80" y2="70" stroke="#333" stroke-width="1.5"/>
+
+  <!-- X-axis label -->
+  <text x="365" y="365" text-anchor="middle" font-size="13" fill="#333">Offered load (QPS)</text>
+
+  <!-- Y-axis label -->
+  <text x="30" y="200" text-anchor="middle" font-size="13" fill="#333" transform="rotate(-90, 30, 200)">TTFT p90 (s)</text>
+
+  <!-- X-axis ticks -->
+  <line x1="175" y1="330" x2="175" y2="336" stroke="#333" stroke-width="1"/>
+  <text x="175" y="350" text-anchor="middle" font-size="11" fill="#555">low</text>
+  <line x1="365" y1="330" x2="365" y2="336" stroke="#333" stroke-width="1"/>
+  <text x="365" y="350" text-anchor="middle" font-size="11" fill="#555">moderate</text>
+  <line x1="555" y1="330" x2="555" y2="336" stroke="#333" stroke-width="1"/>
+  <text x="555" y="350" text-anchor="middle" font-size="11" fill="#555">overloaded</text>
+
+  <!-- Y-axis ticks -->
+  <line x1="74" y1="265" x2="80" y2="265" stroke="#333" stroke-width="1"/>
+  <line x1="74" y1="200" x2="80" y2="200" stroke="#333" stroke-width="1"/>
+  <line x1="74" y1="135" x2="80" y2="135" stroke="#333" stroke-width="1"/>
+
+  <!-- Grid lines (subtle) -->
+  <line x1="80" y1="265" x2="650" y2="265" stroke="#e0e0e0" stroke-width="0.5"/>
+  <line x1="80" y1="200" x2="650" y2="200" stroke="#e0e0e0" stroke-width="0.5"/>
+  <line x1="80" y1="135" x2="650" y2="135" stroke="#e0e0e0" stroke-width="0.5"/>
+
+  <!-- SLO boundary -->
+  <line x1="80" y1="200" x2="650" y2="200" stroke="#888" stroke-width="1" stroke-dasharray="8,4"/>
+  <text x="655" y="204" text-anchor="start" font-size="10" fill="#888">SLO target</text>
+
+  <!-- Default hard-shed curve (red): flat then sharp cliff -->
+  <path d="M 100 310 C 200 308, 300 305, 380 300 C 420 295, 450 280, 480 240 C 510 190, 530 130, 560 95 C 580 80, 600 78, 630 76" fill="none" stroke="#DC2626" stroke-width="2.5"/>
+
+  <!-- Probabilistic admitter curve (green): gradual smooth rise -->
+  <path d="M 100 315 C 200 312, 300 305, 400 290 C 450 278, 500 260, 550 240 C 580 228, 610 218, 630 212" fill="none" stroke="#16A34A" stroke-width="2.5"/>
+
+  <!-- Cliff annotation -->
+  <line x1="520" y1="120" x2="545" y2="105" stroke="#DC2626" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="548" y="103" text-anchor="start" font-size="11" font-weight="600" fill="#DC2626">latency cliff</text>
+
+  <!-- Legend -->
+  <rect x="120" y="80" width="230" height="52" rx="2" fill="white" stroke="#ddd" stroke-width="1"/>
+  <line x1="132" y1="100" x2="162" y2="100" stroke="#DC2626" stroke-width="2.5"/>
+  <text x="170" y="104" font-size="12" fill="#1a1a2e">Default hard-shed</text>
+  <line x1="132" y1="120" x2="162" y2="120" stroke="#16A34A" stroke-width="2.5"/>
+  <text x="170" y="124" font-size="12" fill="#1a1a2e">Probabilistic admitter</text>
+</svg>

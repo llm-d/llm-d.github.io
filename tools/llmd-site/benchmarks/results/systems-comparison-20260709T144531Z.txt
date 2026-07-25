@@ -1,0 +1,14 @@
+llm-d.github.io build system comparison
+timestamp: 20260709T144531Z
+machine: Darwin 25.5.0 arm64
+go: go version go1.26.4 darwin/arm64
+node: v24.15.0
+branch under test: feat/consolidate-build
+upstream branch: main
+LLMD_REPO: (not set — both sync paths may clone from GitHub)
+timed runs per step: 3
+
+== Building Go CLI ==
+
+== Doc sync: legacy bash (main-style) ==
+command: cd preview && bash /Users/davidgs/github.com/llm-d.github.io/legacy/preview/scripts/sync-docs.sh main
