@@ -5,8 +5,7 @@ import Link from '@docusaurus/Link';
 // /slack — host-agnostic redirect to the llm-d Slack invite (replaces the
 // upstream Netlify redirect so it also works under `docusaurus serve` and
 // any other host).
-const SLACK_INVITE =
-  'https://join.slack.com/t/llm-d/shared_invite/zt-44lb4d8o4-uFFmE9ZOyJIOy6lkiMUf6Q';
+const SLACK_INVITE = 'https://inviter.co/llm-d-slack';
 
 export default function Slack() {
   useEffect(() => {
