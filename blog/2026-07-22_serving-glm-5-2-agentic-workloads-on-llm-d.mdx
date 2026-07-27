@@ -24,38 +24,45 @@ export const Figure = ({src, alt, children}) => (
 
 # Serving GLM-5.2 for Agentic Workloads on llm-d
 
-The llm-d project provides a series of well-lit paths: tested, benchmarked recipes for serving large language models in production. Most paths teach a single capability. [Agentic serving](https://github.com/llm-d/llm-d/blob/main/docs/well-lit-paths/workloads/agentic-serving.md) is a workload-centric path: it starts from the workload and composes those capabilities into the recommended deployment for serving it, realized per accelerator in the [agentic-serving guides](https://github.com/llm-d/llm-d/tree/main/guides/agentic-serving). This post covers GLM-5.2-FP8 on H200, with the workload replayed using the [Weka trace corpus](https://huggingface.co/datasets/semianalysisai/cc-traces-weka-with-subagents-051926) published by SemiAnalysis, which contains 219 production Claude Code sessions.
+llm-d’s [well-lit paths](https://github.com/llm-d/llm-d/tree/main/guides) are tested, benchmarked recipes for serving large language models in production. The [agentic-serving path](https://github.com/llm-d/llm-d/blob/main/docs/well-lit-paths/workloads/agentic-serving.md) starts with the workload and combines the capabilities it needs into a deployment for each accelerator. This post applies that pattern to GLM-5.2-FP8 on H200, using the 219 production Claude Code sessions in SemiAnalysis’s Weka trace corpus.
 
-At roughly 28 end-to-end output tokens per second per user, a 48-GPU llm-d deployment implies $0.07 per million input tokens and $2.53 per million output tokens at an H200 rental rate of $2.71 per GPU-hour. Z.ai lists $1.40 input and $4.40 output; Claude Opus 4.8 lists $5 input and $25 output. These are sustained-load GPU-rental conversions, with prefill rental assigned to input and decode rental to output, not production TCO or API-equivalent pricing.
+At roughly 28 end-to-end output tokens per second per user, a 48-GPU llm-d deployment implies $0.07 per million input tokens and $2.53 per million output tokens at an H200 rental rate of $2.71 per GPU-hour. Z.ai's public GLM-5.2 row lists $1.40 input and $4.40 output; Claude Opus 4.8 lists $5 input and $25 output. These are sustained-load GPU-rental conversions, with prefill rental assigned to input and decode rental to output, not production TCO or API-equivalent pricing.
 
 <!-- truncate -->
 
-## TL;DR
+**TL;DR**
 
-- The workload is mostly reading. Across 219 production Claude Code sessions, the median main-agent request carries 195K input tokens and returns 317 output tokens. Among main-agent turns, 96% reuse at least 90% of their input, and more than half of all requests belong to sub-agent groups.
-- The serving path composes the mechanisms this workload needs. GLM-5.2-FP8 on H200 uses MLA, wide expert parallelism, prefix-aware routing, CPU KV offloading, separate prefill and decode pools, and optional MTP. Every component is open source and Kubernetes-native.
-- Throughput scales while generation remains steady. On the 64-GPU reference with three prefill instances and one decoder, output rises from 1,399 to 4,262 tok/s between concurrency 64 and 256 while median time between output tokens moves from 41 to 49 ms. Input accounts for 98.6% of served tokens, so input processing is the capacity being bought.
-- Routing avoids redundant prefill. Prefix-aware routing captures 96-97% of the reuse the workload makes available. In a separate paused-conversation run, turns with a cached prefix reach first token 2.8x faster than first turns without one.
-- CPU offloading trades low-load TTFT for a higher capacity ceiling. On the 32-GPU configuration with one prefill instance and one decoder, baseline is faster through concurrency 128 and saturates at 192. Offloading continues to 512 and reaches 3,994 tok/s, 27% above the baseline peak, while median time between output tokens remains 42-46 ms.
-- MTP moves the frontier; prefill width recovers interactivity. With CPU offloading held constant on the 32-GPU configuration, MTP delivers 1.8-2.0x aggregate output and 1.6-1.9x end-to-end output per user through concurrency 64. At concurrency 256, the 48-GPU configuration reaches 95% of the 64-GPU configuration's output and completes the median turn in 20.8 seconds versus 19.4 seconds.
-- At about 28 end-to-end output tok/s/user, the 48-GPU configuration implies approximately $0.07/M input and $2.53/M output at $2.71 per GPU-hour. Z.ai lists $1.40/M input and $4.40/M output; Claude Opus 4.8 lists $5/M and $25/M. These are sustained-load GPU-rental conversions, with prefill rental assigned to input and decode rental to output, not production TCO or API-equivalent pricing.
-- Run it. The [GLM-5.2 agentic-serving guide](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/glm-5.2-h200.md) provides the serving configuration and composable MTP, CPU-offloading, and context-length components.
+* **The workload is mostly reading.** Across 219 production Claude Code sessions, the median main-agent request carries 195K input tokens and returns 317 output tokens. Among main-agent turns, 96% reuse at least 90% of their input, and more than half of all requests belong to sub-agent groups.
+
+* **Serving this workload** requires MLA to compress KV, wide expert parallelism to make room for it, prefix-aware routing to find it again, CPU offloading to keep more of it, separate prefill and decode pools to specialize differently, and optional MTP to reduce decode steps. All six are open in the llm-d stack.
+
+* **More concurrent requests increase total output without materially slowing an active stream.** On the 64-GPU reference with three prefill instances and one decoder, output rises from 1,399 to 4,262 tok/s between concurrency 64 and 256 while median time between output tokens moves from 41 to 49 ms. Input makes up 98.6% of all tokens served. The queueing results show that prefill capacity is the limit.
+
+* **Routing avoids redundant prefill.** Prefix-aware routing captures 96-97% of the reuse the workload makes available. In a separate paused-conversation run, turns with a cached prefix reach first token 2.8x faster than first turns without one.
+
+* **CPU offloading keeps active prefixes reusable after HBM fills.** On the 24-GPU 1P1D DEP8/DEP16 layout at concurrency 32, it raises output 13%, cuts median time to first token 32%, and cuts median turn completion 27%, while median time between output tokens is unchanged. At concurrency 128, baseline output remains near 951 tok/s while offloading reaches 2,776 tok/s.
+
+* **MTP moves the frontier; prefill width recovers interactivity.** With CPU offloading held constant on the 32-GPU 1P1D DEP16 topology, MTP delivers 1.7-2.0x aggregate output and 1.7-1.8x end-to-end output per user through concurrency 64. At concurrency 256, the 48-GPU 2P1D DEP16 configuration reaches 95% of the 64-GPU 3P1D DEP16 configuration's output and completes the median turn in 20.8 seconds versus 19.4 seconds.
+
+* **At about 28 end-to-end output tok/s/user, the 48-GPU configuration implies approximately $0.07/M input and $2.53/M output at $2.71 per GPU-hour.**
+
+* **Run it.** The [agentic-serving guides](https://github.com/llm-d/llm-d/tree/main/guides/agentic-serving) provide the serving pattern and composable MTP, CPU-offloading, and context-length components.
 
 ## The shape of agentic traffic
 
-A coding agent's turn is mostly reading: a repository-scale context in, a tool call or a short diff out, then the whole context again next turn, slightly longer. The Weka trace corpus published by SemiAnalysis contains 219 production Claude Code sessions and 78,099 model requests. Each session captures interactive repository work: a main agent grows and reuses a working context across tool calls, pauses while tools run, and delegates work to Task-tool sub-agents that execute concurrently. The corpus preserves request timing, input and output lengths, per-request KV-block hashes, and the original sub-agent fan-out. It does not publish prompts or repository identities, so it characterizes the serving workload rather than the underlying coding-task categories. These distributions define the workload:
+A coding agent's turn is mostly reading: a repository-scale context in, a tool call or a short diff out, then the whole context again next turn, slightly longer. The [Weka trace corpus](https://huggingface.co/datasets/semianalysisai/cc-traces-weka-with-subagents-051926) published by SemiAnalysis contains 219 production Claude Code sessions and 78,099 model requests. Each session captures interactive repository work: a main agent grows and reuses a working context across tool calls, pauses while tools run, and delegates work to Task-tool sub-agents that execute concurrently. The corpus preserves request timing, input and output lengths, per-request KV-block hashes, and the original sub-agent fan-out. It does not publish prompts or repository identities, so it characterizes the serving workload rather than the underlying coding-task categories.
+
+Read the percentiles across each row, not down the column: the p90 input length and p90 pause do not belong to the same request or session. The wall-clock gap is the time between main-agent calls, not generation latency. Input-length growth is the increase from the previous main-agent turn, not a cache miss.
 
 | Main-agent metric | p50 | p90 | p99 |
-| --- | ---: | ---: | ---: |
+| :---- | :---- | :---- | :---- |
 | Input tokens per request | 195K | 521K | 849K |
 | Output tokens per response | 317 | 1,705 | 7,551 |
 | Input-length growth from prior turn | 632 | 3,735 | 148K |
 | Wall-clock gap between turns | 2 s | 24 s | 11.4 min |
 | Turns per session | 107 | 354 | 992 |
 
-> Each row is a separate distribution; values in the same percentile column do not describe the same request or session. The 11.4-minute value is the wall-clock gap after one main-agent response ends and before the next request starts, not generation latency. Input-length growth reports only increases in request length from the prior main-agent turn; it is not a cache-miss measure.
-
-> A note on token counts: the two columns use different tokenizers. Input counts come from the o200k tokenizer, which the corpus uses to compute per-request KV block hashes; output counts are the values Anthropic's API reported. The raw table ratio of 195K to 317, about 615:1, therefore mixes units. A same-tokenizer input-to-output ratio is not reported here because Anthropic's production tokenizer is not public and this study did not calibrate one tokenizer against the other.
+*Token counts use different tokenizers. Input counts come from the o200k tokenizer, which the corpus uses to compute per-request KV block hashes; output counts are the values Anthropic's API reported. The raw table ratio of 195K to 317, about 615:1, therefore mixes units. A same-tokenizer input-to-output ratio is not reported here because Anthropic's production tokenizer is not public and this study did not calibrate one tokenizer against the other.*
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/token-distributions.png"
@@ -64,18 +71,18 @@ A coding agent's turn is mostly reading: a repository-scale context in, a tool c
   Left: input and output token distributions across 37.7K main-agent requests. Center: cumulative share of turns by prefix overlap with their best recent predecessor. Right: wall-clock gaps between consecutive main-agent requests.
 </Figure>
 
-Reading dominates. The median main-agent request carries 195K input tokens and 317 output tokens; the token-count note above explains why their ratio is not a same-tokenizer measure. GPU time concentrates in prefill, and decode arrives as short bursts between tool calls. Interactivity for this workload is set by how fast a turn's context is processed and how steadily its short completion streams.
+**Most GPU work happens before the first output token.** The median main-agent request carries 195K input tokens and returns 317 output tokens, so serving is dominated by processing context. Output then arrives in short bursts between tool calls. Responsiveness depends on processing each context quickly and streaming its response steadily.
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/model-call-vs-user-output.png"
-  alt="One user-visible answer can contain many internal model calls, tool executions, and sub-agent requests"
+  alt="One user-visible result can contain many model calls, tool executions, and sub-agent requests"
 >
-  The 317-token median measures one model call inside the loop, not the complete sequence a user waits through. The y-axis is input tokens; higher points are larger contexts.
+  The 317-token median covers one model call. A result the user sees may require many such calls, plus tool calls and sub-agent runs, before the final response appears. The y-axis is input tokens; higher points are larger contexts.
 </Figure>
 
-Nearly everything has been read before. The median main-agent request is 632 tokens longer than its predecessor. Matched against its best predecessor among the previous turns, 96% of turns reuse at least 90% of their input as a verbatim prefix, with median reuse at 99.6%. Recomputed, that prefix costs full prefill; served from cache, it costs a lookup. Anthropic prices cache-read input tokens at one-tenth of base input tokens, consistent with the same reuse economics.
+**Nearly everything has been read before.** A main-agent request is only 632 tokens longer than the preceding request at the median. When each request is matched to its best earlier turn, 96% reuse at least 90% of their input as a verbatim prefix; median reuse is 99.6%. A GPU cache hit avoids both recomputation and transfer. CPU or remote hits still have to move KV back to the GPU. Anthropic’s one-tenth price for cache-read input reflects the same reuse economics.
 
-Sessions pause, then burst. The median wall-clock gap between main-agent calls is two seconds and the p99 reaches eleven minutes, over sessions that run an hour at the median. Cached state has to survive those gaps to be worth anything. And 40,367 of the 78,099 requests arrive through sub-agent groups, with a median seven requests per group and 51 at p90, multiplying concurrency with no advance signal to the serving layer.
+**Sessions pause, then burst.** Main-agent calls are two seconds apart at the median and eleven minutes apart at p99, while the median session lasts an hour. Cached state must survive those gaps to remain useful. Sub-agents add a second pressure: 40,367 of 78,099 requests arrive in groups, with seven requests per group at the median and 51 at p90. The serving layer receives that concurrency without advance notice.
 
 One production session combines all three properties:
 
@@ -86,172 +93,221 @@ One production session combines all three properties:
   A continuous 151.7-minute segment from one production session: 38 streaming main-agent requests and 5,527 sub-agent requests. The main-agent context grows to 754K tokens, while sub-agent work spans the full segment.
 </Figure>
 
-Prefix resets, where a turn shares less than half its input with any of its previous eight main-agent turns, occur on 2.8% of turns corpus-wide. Context compactions, where a context above 500K tokens returns below 30K, occur on 0.03% of turns. These breaks, together with sub-agent divergence and cache eviction under load, explain why fleet-level reuse falls below the per-session ceiling and why routing on a single session-level prefix is insufficient.
+Prefix resets, where a turn shares less than half its input with any of its previous eight main-agent turns, occur on 2.8% of turns corpus-wide. Context compactions, where a context above 500K tokens returns below 30K, occur on 0.03% of turns. These are expected production pressures alongside sub-agent divergence and cache eviction under load. In the load benchmarks, measured reuse is governed by the admitted request distribution and cache churn, so routing on a single session-level prefix is insufficient.
 
-The serving requirements follow from these distributions: hold repository-scale contexts in memory, reuse them across turns, and keep prefill away from sessions that are streaming. The deployment addresses each in order.
+The deployment has three jobs: keep repository-scale contexts in memory, reuse them on the next turn, and prevent long prefills from interrupting requests that are already streaming.
 
 ## Deployment architecture
 
-Every component is open source and Kubernetes-native. The measured deployment uses CoreWeave CKS with InfiniBand:
+The measured software stack is open source and runs on Kubernetes. The deployment uses CoreWeave CKS with InfiniBand:
 
 | Layer | Component | Role |
-| --- | --- | --- |
+| :---- | :---- | :---- |
 | Model server | vLLM | FP8 inference, MLA KV cache, agentic parsers |
 | Routing | llm-d EPP | prefix-cache-aware routing, P/D scheduling |
 | KV transfer | NIXL | NIXL KV movement between prefill and decode; deployment network: InfiniBand |
 | Tiered prefix cache | CPU DRAM cache + NVMe storage evictor | CPU-backed KV capacity below HBM; NVMe provisioned but inactive in these measurements |
 | MoE compute | DeepEP + deep_gemm | expert parallelism across GPUs |
 | Attention | FlashMLA Sparse | attention backend |
-| Multi-node pods | LeaderWorkerSet | groups each multi-node replica into one schedulable unit |
-| Benchmarking | AIPerf | increasing-load tests against the gateway |
+| Multi-node pods | LeaderWorkerSet | keeps the pods in each multi-node replica together so Kubernetes manages them as one unit |
+| Benchmarking | AIPerf | load sweeps against the gateway |
 
-The cookbook combines four llm-d capabilities: wide expert parallelism, optimized-baseline routing, a prefix cache backed by CPU memory, and separate prefill and decode pools. It ships a disaggregated wide-EP layout for the measured agentic workload and an aggregate TP=8 LeaderWorkerSet used only for the memory-profile check. Performance measurements use the disaggregated layout on CoreWeave CKS with InfiniBand.
+The deployment combines four llm-d capabilities: wide expert parallelism, locality- and load-aware routing, a CPU-backed prefix cache, and separate prefill and decode pools. The topology chooses the number of prefill and decode instances. Configuration components enable CPU offloading, MTP, and longer context limits. Benchmarks run these disaggregated layouts on CoreWeave CKS with InfiniBand. Aggregate TP=8 appears only in the memory-profile check.
+
+Each request moves through the same stack. MLA and wide expert parallelism determine how much context fits in HBM. Routing and CPU memory determine whether a saved prefix can be reused. Separate prefill and decode pools handle reading and generation. MTP reduces decode steps, while the number of prefill instances sets how much concurrent input work the deployment can absorb.
+
+### Topology notation
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/topology-layouts.png"
-  alt="Measured prefill/decode topologies and their DEP notation"
+  alt="Measured prefill and decode topologies with DEP notation"
 >
-  Topology key. xPyD means x prefill and y decode instances. DEP16 means a TP=1, DP=16 layout with expert parallelism enabled, or 16 GPUs per instance; DEP8 is the corresponding 8-GPU layout. In the primary width sweep, every instance is DEP16: 1P1D uses 32 GPUs, 2P1D uses 48, and 3P1D uses 64. The compact offloading comparison uses 1P1D DEP8. The paused-conversation comparison uses a distinct mixed-width 2P1D layout: two DEP8 prefill instances and one DEP16 decoder.
+  Measured prefill and decode topologies and their naming.
 </Figure>
 
-The benchmark filters out requests whose tokenized context exceeds each configuration's max-model-len; the main DEP16 comparisons use a 131,072-token limit. The full-corpus statistics characterize demand, while the performance results describe the trace-derived workload admitted by that limit. The increasing-load test uses completions near the corpus median, about 317 output tokens. The paused-conversation test uses shorter completions across 100-400 ongoing conversations that send a turn, pause for an interval measured from production traces, and resume with accumulated context. Absolute tok/s is comparable only within the same test. End-to-end turn completion time measures request latency from submission through the final output token.
+Topology names count instances: xPyD means x prefill instances and y decode instances. DEP16 means each instance uses 16 GPUs in a TP=1, DP=16, expert-parallel layout; DEP8 uses 8 GPUs.
 
-Each request follows the same path: MLA and wide expert parallelism determine how much KV fits in HBM; the router finds reusable prefixes; CPU memory retains prefixes that leave HBM; separate prefill and decode pools specialize for the phases; MTP reduces decode steps; and prefill width sets the operating point.
+The full-input-length sweep uses DEP16 throughout: 1P1D uses 32 GPUs, 2P2D and 3P1D each use 64, and 3P2D uses 80. The two 64-GPU layouts allocate the same budget differently: 2P2D adds decode capacity, while 3P1D adds prefill capacity.
 
-## Fitting 100K-token sessions in memory
+The limited-input-length sweep moves through four layouts: 1P1D with DEP8 prefill and decode (16 GPUs), 1P1D with DEP8 prefill and DEP16 decode (24 GPUs), 1P1D with DEP16 prefill and decode (32 GPUs), and 2P1D with DEP16 throughout (48 GPUs). The paused-conversation test is another 2P1D layout with two DEP8 prefill instances and one DEP16 decoder, also 32 GPUs. The name counts instances; the width determines the GPU total.
 
-**Multi-head Latent Attention compresses the KV state stored for each token, making long contexts practical in GPU memory.** Multi-head Latent Attention cuts GLM-5.2's KV cache to about 44 KB per token, which is how 31M tokens of prefill cache and 12.6M of decode cache fit beside a 753B model's weights. The mechanism stores 576 FP8 elements per layer per token: a 512-element latent plus 64 RoPE elements. Across 78 layers, that is 0.045 GB per 1K tokens. A counterfactual with 64 KV heads and 256-dimensional keys and values would use about 57x more KV memory; eight KV heads at those dimensions would use about 7x more.
+### Benchmark scope
+
+Each benchmark admits only requests below its admission cap. The limited-input-length runs filter the trace at 142,000 tokens; the full-input-length runs admit longer contexts. The server sets max-model-len automatically in both, with GPU-memory utilization at 93.5% for prefill and 95% for decode. Corpus statistics describe the full production workload; performance results describe the trace-derived requests admitted by each test. In AIPerf, concurrency is the number of simulated clients, each keeping one request active. tok/s/user is throughput per simulated client, not per person or full agent task.
+
+Each test answers a different question. The load sweep increases concurrency with completions near the corpus median, about 317 output tokens. The offload A/B holds matched 16- and 32-GPU topologies constant and switches CPU offloading on or off. The paused-conversation run uses shorter completions and production-measured pauses across 100–400 ongoing conversations.
+
+The cache-limit test isolates restore versus recompute. The dedicated offloading width sweep varies DEP16 prefill count with one fixed DEP16 decoder. The limited-input-length sizing sweep widens decode and then prefill with MTP and CPU offloading enabled. The full-input-length sweep varies DEP16 prefill and decode replica count. Compare absolute tok/s only within the same test. End-to-end turn completion covers queueing, processing, and generation from request submission through the final output token.
+
+## Fitting repository-scale sessions in memory
+
+Multi-head Latent Attention stores about 44 KB of KV state per token for GLM-5.2. In the measured 64-GPU 3P1D layout, measured capacity totals about 47.2M prefill-cache tokens and 17.3M decode-cache tokens beside the 753B model's weights. MLA stores 576 FP8 elements per layer per token: a 512-element latent plus 64 RoPE elements. Across 78 layers, that is 0.045 GB per 1K tokens. A counterfactual with 64 KV heads and 256-dimensional keys and values would use about 57x more KV memory; eight KV heads at those dimensions would use about 7x more.
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/kv-footprint.png"
   alt="GLM-5.2 MLA KV footprint compared with GQA and MHA counterfactuals"
 >
-  Per-token KV footprint from the architecture math (FP8, 78 layers): MLA's 576 stored elements per layer, compared with counterfactual GQA using 8 KV heads and MHA using 64 KV heads, both with 256-dimensional keys and values. Lower bars mean less KV per token.
+  Per-token KV footprint from the architecture math (FP8, 78 layers): MLA’s 576 stored elements per layer, compared with counterfactual GQA using 8 KV heads and MHA using 64 KV heads, both with 256-dimensional keys and values.
 </Figure>
 
-For sessions that routinely hold 100K+ tokens, compression at this ratio is what lets a multi-million-token working set, and the prefix cache built from it, stay resident: the disaggregated sweep carries 12.3 million tokens in flight at concurrency 256, a floor on live KV occupancy.
+For repository-scale sessions, MLA makes a multi-million-token working set practical. At concurrency 256, the 64-GPU 3P1D full-input-length run carries 25.5M logical tokens in flight, indicating the live request demand the cache must serve.
 
-KV is managed in 64-token blocks. At 0.80 memory utilization, a prefill rank allocates roughly 650,000 to 674,000 KV tokens, about 27 GiB and varying a few percent with per-rank free VRAM, and a decode rank allocates about 786,000, about 33 GiB: about 12.6M tokens across the decode pool and 31M across the three prefill instances. Enabling speculation spends into the same budget: with the native MTP head loaded, measured allocation drops to about 600K tokens per prefill rank and 681,664 per decode rank, an 8% and 13% KV cost.
+KV is allocated in 64-token blocks. Full-input-length runs set gpu-memory-utilization to 93.5% on prefill and 95% on decode. Depending on topology, each DEP16 prefill rank holds about 958K-990K KV tokens; each decoder rank holds about 1.078M. Across the 64-GPU 3P1D layout, that is about 47.2M prefill-cache tokens and 17.3M decode-cache tokens. These measured allocations include the three-token MTP head.
 
 ## Wide expert parallelism
 
-**Wide expert parallelism spreads the model's experts across GPUs, reducing per-GPU weight memory and leaving more HBM for KV cache.** Expert sharding distributes the 753B model at 65 GiB of weights per GPU, leaving 28-33 GiB of HBM per GPU for KV cache. The deployment serves GLM-5.2's mixture of experts through the [wide expert parallelism](https://github.com/llm-d/llm-d/blob/main/guides/wide-ep-lws/README.md) path, sharded across GPUs at TP=1. The guide's default layouts run prefill as single-node DEP8 instances and decode as a wide DEP16 pool spanning two nodes, on LeaderWorkerSets with DP-aware scheduling; the measured 3P1D reference uses two-node DEP16 prefill instances. Each GPU holds a slice of the experts and serves its own share of traffic, with DeepEP moving tokens to their experts over NVLink and InfiniBand, and deep_gemm running the expert compute. Sharding the experts cuts the per-GPU weight footprint, and the freed HBM goes to KV cache, compounding MLA's compression for long sessions. The width of the shard sets the budget: a single-node DEP8 rank carries twice the expert weights of a DEP16 rank and keeps about 220K tokens of KV against about 650K, a factor that decides when the CPU-backed prefix cache starts to matter.
+Wide expert parallelism splits GLM-5.2's experts across GPUs at TP=1. Each GPU holds about 65 GiB of weights. In the full-input-length runs, KV uses about 40-41 GiB on each prefill GPU and 45 GiB on each decode GPU. The rest of HBM is used by the runtime and communication buffers.
+
+The [guide’s default layouts](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/glm-5.2-h200.md) use single-node DEP8 prefill instances and a two-node DEP16 decode pool, with LeaderWorkerSets and DP-aware scheduling. The measured 3P1D reference uses two-node DEP16 prefill instances. DeepEP sends tokens to the GPUs holding their experts over NVLink and InfiniBand, and deep_gemm runs the expert computation.
+
+Width determines how much KV remains on each rank. In the limited-input-length sweep, the DEP8 prefill rank holds about 214K KV tokens and DEP16 about 990K. The narrower layout therefore reaches the CPU-backed cache sooner.
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/tokens-in-flight.png"
   alt="Logical tokens in active requests at concurrency 64 and 256"
 >
-  Logical tokens in active requests: 3.4M at concurrency 64 and 12.3M at 256, with p90 reaching 14.4M. The metric excludes idle cached prefixes and should not be read as physical KV occupancy.
+  Logical tokens in active requests: 7.1M at concurrency 64 and 25.5M at 256 on the 64-GPU 3P1D full-input-length run. The metric excludes idle cached prefixes and should not be read as physical KV occupancy.
 </Figure>
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/hbm-breakdown.png"
-  alt="Measured per-GPU HBM accounting by topology"
+  alt="Measured per-GPU HBM allocation by topology"
 >
   Per-GPU HBM accounting by topology. Total device memory is measured; weights and KV allocation come from the serving configuration, and the remainder groups runtime and communication allocations.
 </Figure>
 
-The aggregate TP=8 topology prioritizes interactivity over cache capacity. The memory profile above comes from a configuration check, not an agentic-workload benchmark. In the measured configuration, with decode-context parallelism disabled, vLLM replicated the MLA cache across all eight ranks: 598K logical tokens at 25 GiB per rank, roughly 200 GiB of physical KV allocation per node. Expert weights land at 89.5 GiB per GPU against the wide layout's 65.1. Node for node, the aggregate holds 598K KV tokens where a single-node DEP8 holds 1.77M and a DEP16 node-share about 5.2M, a 3x to 9x session-capacity gap on identical silicon. In exchange, the aggregate topology avoids the NVSHMEM heap and all-to-all communication over the fabric, and it fits in a single-node scheduling unit.
+The aggregate TP=8 topology fits in one node and avoids the wide-EP communication buffers, but it gives up KV capacity. The memory profile below is a configuration check, not an agentic-workload benchmark.
+
+With decode-context parallelism disabled, vLLM copies the same MLA cache onto all eight ranks: 598K logical tokens with a 25 GiB copy per rank, or roughly 200 GiB of physical KV per node. Expert weights use 89.5 GiB per GPU, versus 65.1 GiB in the wide layout.
+
+On the same hardware, aggregate TP=8 holds 598K KV tokens per node; DEP8 holds 1.77M, and a DEP16 node-share holds about 5.2M. The aggregate layout trades that 3× to 9× session-capacity gap for a single-node scheduling unit without the NVSHMEM heap or all-to-all fabric traffic.
 
 ## Routing turns back to their cache
 
-**Prefix-aware routing sends each turn to the prefill replica that already holds its reusable context, avoiding redundant prefill.** The prefill pool found 90.5-91.4% of reusable prefixes in GPU memory, reaching 96-97% of the workload's maximum possible reuse; later turns with a cached prefix reached first token 2.8x faster than first turns with no cached prefix. A multi-turn session resends its growing context every turn, and landing on an arbitrary replica means recomputing it. The llm-d Router uses separate scheduling rules for prefill and decode:
+Prefix-aware routing sends each turn to the prefill replica that already holds its growing context. **The prefill pool found 90.5-91.4% of reusable prefixes in GPU memory, capturing 96-97% of the reuse available in the workload.** Later turns with a cached prefix reached first token 2.8x faster than first turns without one. The llm-d Router schedules prefill and decode differently:
 
-- Prefill placement checks both GPU and CPU caches, gives more weight to GPU memory, and uses load to break ties. A turn therefore lands where its context already sits unless that destination is too busy.
-- Decode placement balances active requests across the pool.
+* Prefill placement looks at how much of a request's prefix is already in GPU or CPU memory, how many requests are queued, and how full the KV cache is. It sends the turn to the replica that offers the best balance of cache reuse and load.
 
-The configuration uses optimized-baseline routing with prefill and decode filters, and the router can see prefixes cached in both GPU and CPU memory. In the corpus, 96% of turns share at least 90% of their prefix with a recent predecessor. Measured in the increasing-load test, whose inputs match the corpus's overlap structure at shorter absolute lengths, GPU memory supplied 91.4% of reusable prefill prefixes at concurrency 64 and 90.5% at 256: 96% to 97% of the maximum possible reuse. Decode-local reuse falls with churn by design because decode receives its KV over NIXL. In the paused-conversation test, first turns with no cached prefix took 7.46 s median time to first token at about 20K tokens, while later turns with a cached prefix took 2.68 s on inputs up to four times longer, a 2.8x improvement.
+* Decode placement balances GPU and CPU cache locality against the number of active requests.
 
-MTP increases cache pressure. On the 1P1D MTP configuration, GPU memory supplies 92-93% of reusable prefixes through concurrency 64 while the workload's maximum possible reuse stays near 94%; the share falls to 86.5% at 128 and 34% at 256 as GPU KV fills. The prompt-source counter reports 87% effective locality at concurrency 256, but it also includes NIXL traffic between prefill and decode and cannot isolate the CPU-memory share. Through concurrency 64, routing reaches 96-98% of the maximum possible reuse.
+The optimized-baseline configuration applies separate prefill and decode filters, and the router sees prefixes in both GPU and CPU memory. The load sweep keeps the corpus’s overlap pattern but uses shorter inputs, around 50K tokens at the median. Because each new suffix is a larger fraction of the request, at most 93.9–94.1% of the input can be reused.
+
+GPU memory supplies 91.4% of reusable prefill prefixes at concurrency 64 and 90.5% at 256. That captures 96–97% of the reuse available in the test. Decode-local reuse falls as expected because NIXL moves KV from prefill to decode.
+
+The paused-conversation run shows the latency effect: first turns without a cached prefix take 7.46 s median time to first token at about 20K input tokens; later turns with a cached prefix take 2.68 s on inputs up to four times longer. This is an observed workload result, not a matched cache-only control.
+
+MTP puts more pressure on the same KV budget. On the 1P1D MTP configuration, GPU memory still supplies 92-93% of reusable prefixes through concurrency 64, while the workload's maximum possible reuse stays near 94%. The GPU share falls to 86.5% at concurrency 128 and 34% at 256 as HBM fills. A broader prompt-source counter reports 87% effective locality at concurrency 256, but it combines NIXL transfers with CPU restores and cannot identify the CPU-memory share. Through concurrency 64, routing captures 96-98% of the reuse available in the workload.
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/mtp-cache-pressure.png"
-  alt="Prefix-cache coverage and restore traffic under MTP-speed decode"
+  alt="GPU and external KV cache coverage as concurrency increases with MTP"
 >
-  On the 32-GPU 1P1D MTP configuration, GPU memory supplies 92-93% of reusable prefixes through concurrency 64 before falling as HBM fills. Higher prefix coverage and lower restore traffic are better. At concurrency 256, local cache plus external KV transfer supplies 87%; the source counter combines NIXL transfer with CPU restores and does not isolate the CPU share.
+  On the 32-GPU 1P1D MTP configuration, GPU memory supplies 92–93% of reusable prefixes through concurrency 64 before falling as HBM fills. At concurrency 256, local cache plus external KV transfer supplies 87%; the source counter combines NIXL transfer with CPU restores and does not isolate the CPU share.
 </Figure>
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/routing-cache.png"
-  alt="Prefix cache hit rate versus workload ceiling and decode-local reuse"
+  alt="Achieved prefill cache reuse and decode-local reuse"
 >
-  Left: the share of prefill prefixes found in GPU memory, compared with the workload's maximum possible reuse; higher is better. Right: decode-local reuse falls as intended when prefill and decode run on separate GPU pools.
+  Left: the share of prefill prefixes found in GPU memory, compared with the workload's maximum possible reuse. Right: decode-local reuse falls as intended when prefill and decode run on separate GPU pools.
 </Figure>
 
 ## Tiered prefix cache
 
-**CPU offloading extends prefix-cache capacity beyond HBM by restoring saved KV from CPU memory instead of recomputing evicted prefixes.** On the 32-GPU 1P1D DEP16 topology at concurrency 256, CPU offloading raises output 34% and cuts median time to first token 24%, while the time between output tokens changes by about 4%.
+CPU offloading extends prefix-cache capacity beyond HBM by restoring saved KV from CPU memory instead of recomputing evicted prefixes. **On the 24-GPU 1P1D DEP8/DEP16 layout at concurrency 32, CPU offloading raises output 13%, cuts median time to first token 32%, and cuts median turn completion 27%, while median time between output tokens is unchanged.**
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/offloading-attribution.png"
-  alt="CPU offloading compared with baseline on matched DEP8 and DEP16 topologies"
+  alt="Matched 24-GPU baseline and CPU-offloading results"
 >
-  CPU offloading compared with baseline on matched 16-GPU DEP8 and 32-GPU DEP16 topologies. In both panels, farther right means higher end-to-end output per user and higher means more output per decode GPU. The 32-GPU c256 control isolates offloading: output rises from 2,714 to 3,626 tok/s, median TTFT falls from 17.1 to 13.0 s, and median ITL moves from 41.4 to 43.1 ms.
+  24-GPU 1P1D with DEP8 prefill and DEP16 decode; MTP is disabled in both runs. At concurrency 32, input distributions match within 1%. At concurrency 128, baseline output remains near 951 tok/s while CPU offloading reaches 2,776 tok/s; the fixed-duration stages complete different request slices, so the endpoint is a capacity comparison rather than a request-identical A/B. Higher output is better; lower latency is better.
 </Figure>
 
-Tool calls pause sessions, leaving their cached context idle and vulnerable to eviction from GPU memory. The prefix cache adds a CPU-memory tier: the OffloadingConnector, stacked with NIXL through MultiConnector, moves KV into a per-rank CPU DRAM pool under LRU eviction. The increasing-load sweeps use 100 GiB per prefill rank; the paused-conversation run uses 150 GiB. Local NVMe is provisioned behind CPU memory and receives no reads in these measurements. When a session resumes after a tool call, its KV is restored from CPU memory.
+Tool calls leave session KV idle, so the serving system may evict it from HBM before the next turn. CPU offloading keeps that KV in a per-rank DRAM pool and restores it when the conversation resumes. MultiConnector handles two paths: OffloadingConnector moves KV between GPU and CPU, while NIXL moves it between prefill and decode. The CPU tier evicts least-recently-used entries first. The increasing-load sweeps allocate 100 GiB per prefill rank; the paused-conversation run uses 150 GiB. Local NVMe sits behind CPU memory and receives no reads in these measurements.
 
-Before GPU memory fills, the restore path stays idle. On the compact 16-GPU 1P1D DEP8 topology at concurrency 16, restores are zero and output stays within 2% of baseline. At concurrency 64, the tier restores 1.9 TiB over the stage; median turn completion falls 42% and p90 falls 5%. At concurrency 128, median turn completion remains 40% lower, but p90 is 21% higher. In a separate 64-GPU 3P1D run at natural cache capacity, CPU memory received roughly 5 TB of writes over 24 minutes without serving a restore. At concurrency 256 on the 32-GPU 1P1D topology, the tier restores 2.8 TiB, raises output from 2,714 to 3,626 tok/s, and cuts median time to first token from 17.1 to 13.0 s. CPU offloading preserves useful work under HBM pressure; before that pressure, stores add modest overhead.
+The increasing-load sweep measures the capacity ceiling; the paused-conversation runs measure whether session state survives the gaps between turns.
 
-The mixed-width 2P1D topology uses two single-node DEP8 prefill instances and one DEP16 decoder, for 32 GPUs. Each rank has about one-third as much space for KV. A DEP8 rank holds twice the expert weights and about 220K KV tokens, versus about 650K for DEP16. With 100-400 ongoing conversations pausing for intervals measured from production traces, session data exceeds GPU cache capacity by 1.4x to 5.6x. CPU memory supplies the missing capacity: restore traffic rises from 3.5 to 22.4 GB/s as paused conversations resume. At 400 conversations, every reused prefix is restored from CPU memory, totaling 9.7 TB in one stage, while the time between output tokens remains 34-37 ms. Restoring saved context is faster than recomputing it: 8.4 s versus 14.8 s median across the run, and 23.0 s versus 26.2 s at 400 conversations.
+### When HBM fills
+
+Offloading does little until HBM fills. On the compact 16-GPU DEP8 topology, with MTP disabled in both runs, output is effectively unchanged at concurrency 16. At concurrency 128, offloading raises output 27% and cuts median turn completion 36%. Each stage runs for a fixed time, so the two runs may finish different requests. This compares how much work each configuration can handle, not the same requests one by one.
+
+A separate dedicated DEP16 run shows the same pattern. At concurrency 256 on the 32-GPU 1P1D topology, offloading restores 2.8 TiB, raises output from 2,714 to 3,626 tok/s, and cuts median time to first token from 17.1 to 13.0 seconds. The dedicated 64-GPU 3P1D run shows the other regime: CPU memory accepts roughly 5 TB of writes over 24 minutes but serves no restores because the active prefixes still fit in HBM. CPU offloading adds capacity under HBM pressure; before that pressure, stores add modest overhead.
+
+### Paused conversations
+
+The paused-conversation test places two DEP8 prefill instances beside one DEP16 decoder, for 32 GPUs total. Each DEP8 rank has about one-third of DEP16’s KV capacity—220K versus 650K tokens—because it holds twice as much expert weight.
+
+With 100–400 ongoing conversations and production-measured pauses of 2.1 s at the median and 25.8 s at p90, live session data reaches 1.4–5.6× GPU cache capacity. CPU memory holds the excess. As conversations resume, restore traffic rises from 3.5 to 22.4 GB/s.
+
+At 400 conversations, every reused prefix is restored from CPU memory, totaling 9.7 TB in one stage, while the time between output tokens remains 34–37 ms. Restoring saved context is faster than recomputing it: 8.4 s versus 14.8 s median across the run, and 23.0 s versus 26.2 s at 400 conversations.
 
 At 400 ongoing conversations on the mixed-width 2P1D topology and load, median time to first token reaches 124.5 s without CPU offloading versus 22.2 s with it. The p90 approaches six minutes, while the time between output tokens stays flat in both configurations. Pauses make recomputation expensive: each eviction forces the entire prefix to be rebuilt before the conversation can resume.
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/natural-cache-pressure.png"
-  alt="Paused conversation cache pressure with and without CPU offloading"
+  alt="Paused-conversation cache pressure with and without CPU offloading"
 >
-  With the GPU cache at its natural size, 100-400 ongoing conversations and production-measured pauses exceed GPU capacity by 1.4x to 5.6x. Lower restore pressure and lower time to first token are better. CPU memory supplies the missing capacity without increasing the time between output tokens.
+  With the GPU cache at its natural size, 100-400 ongoing conversations and production-measured pauses exceed GPU capacity by 1.4x to 5.6x. CPU memory supplies the missing capacity without increasing the time between output tokens.
 </Figure>
+
+### Restore versus recompute
 
 A controlled comparison on the mixed-width 2P1D topology isolates the cost of a cache miss. The GPU KV cache is limited to roughly 230K tokens per rank, slightly above its natural allocation, and CPU offloading is switched on or off for the same workload. At concurrency 32, nothing is evicted and the configurations match within 2%. At higher load, both GPU caches fall to single-digit hit rates; the only meaningful difference is whether a miss restores saved context or recomputes it.
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/cache-miss-ttft.png"
-  alt="Queue-inclusive client TTFT with CPU restore versus recompute after a cache miss"
+  alt="Queue-inclusive client TTFT and throughput for restore versus recompute"
 >
-  Same workload and GPU-cache limit, with CPU offloading enabled or disabled. Lower TTFT and higher throughput are better. Restoring 50K tokens takes about 59 ms, while recomputation adds prefill work and queueing.
+  Same workload and GPU-cache limit, with CPU offloading enabled or disabled. The chart shows queue-inclusive client TTFT; restoring 50K tokens takes about 59 ms, while recomputation adds prefill work and queueing.
 </Figure>
 
 With CPU offloading, a miss takes about 59 ms to restore, and median time to first token remains 8.3 s at concurrency 128 with full throughput. Without offloading, a miss requires recomputing about 45K tokens. The server still produces a first token in about 5.7 s once work starts, but the client waits 59 s because 97 requests are queued for prefill. Throughput falls 78%, and the system completes 4.5x fewer turns. The time between output tokens remains 31-36 ms in both configurations because prefill and decode run on separate GPU pools.
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/latency-stack.png"
-  alt="Where client TTFT comes from under restore versus recompute"
+  alt="Client TTFT split into server processing and prefill queue time"
 >
-  Lower client TTFT is better. Both configurations produce a first token within seconds once work starts; without CPU offloading, 54 of the client's 59 seconds are spent waiting in the prefill queue.
+  Both configurations produce a first token within seconds once work starts; without CPU offloading, 54 of the client's 59 seconds are spent waiting in the prefill queue.
 </Figure>
 
-Engine counters record 12.7 TB of KV, or 283M tokens, restored at 26 ms per GB. At concurrency 128, restore bandwidth reaches 22.7 GB/s while the mixed-width 2P1D topology serves 474K prompt tokens per second. The CPU cache restores 222M tokens while serving 217M prompt tokens, a ratio above 100% because the limited GPU cache can evict freshly restored blocks between turns. The cache moves more KV than the input stream while holding median time to first token at 8.3 s, indicating churn that a retention policy better than LRU could reduce.
+Across the run, engine counters record 12.7 TB of KV, or 283M tokens, restored at 26 ms per GB. At concurrency 128, the CPU cache restores KV at 22.7 GB/s while the topology processes 474K prompt tokens per second.
 
-In the 1P1D/2P1D/3P1D width sweep, which uses a 100 GiB-per-rank CPU tier, storage pressure is highest in the narrowest configuration. At concurrency 256, one prefill instance loads 7,774 GiB from CPU at about 9.0 GB/s average and 19.87 GB/s peak. A second prefill instance cuts CPU-to-GPU load traffic 88%, raises output 41%, and cuts median TTFT 63%; a third cuts load traffic by over 99% versus one prefill instance while adding 5% output over two prefill instances. The CPU offload byte and bandwidth counters support these values.
+The cache restores 222M tokens while serving 217M prompt tokens. That ratio exceeds 100% because the limited GPU cache can evict a block that was just restored, forcing it to be loaded again. Median time to first token remains 8.3 s, but the churn suggests that a retention policy better than LRU could reduce data movement.
+
+### Adding prefill capacity
+
+The narrowest layout puts the most pressure on CPU restore. At concurrency 256, 1P1D loads 7,774 GiB from CPU at about 9.0 GB/s on average and 19.87 GB/s at peak. The 2P1D layout cuts restore traffic 88%, raises output 41%, and cuts median time to first token 63%. The 3P1D layout cuts restore traffic by over 99% relative to 1P1D, but adds only 5% output over 2P1D. All three runs use a 100 GiB CPU tier per rank.
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/prefill-width.png"
-  alt="Prefill width reduces CPU restore pressure and improves output throughput and TTFT"
+  alt="Prefill width reduces CPU restore traffic and improves output and TTFT"
 >
-  Concurrency 256 with one fixed DEP16 decoder. Lower restore traffic and TTFT are better; higher output is better. Across 1P1D, 2P1D, and 3P1D, CPU restore traffic falls from 7,774 to 924 to 29 GiB, output rises from 4,356 to 6,155 to 6,476 tok/s, and median TTFT falls from 24.9 to 9.3 to 7.5 s. NVMe receives no reads.
+  Concurrency 256 with one fixed DEP16 decoder. Across 1P1D, 2P1D, and 3P1D, CPU restore traffic falls from 7,774 to 924 to 29 GiB, output rises from 4,356 to 6,155 to 6,476 tok/s, and median time to first token falls from 24.9 to 9.3 to 7.5 s. NVMe receives no reads.
 </Figure>
 
-The manifests include the NVMe cache mount, a storage evictor, and the router's CPU-cache scoring rule.
+Adding prefill instances keeps more KV in HBM and reduces restore traffic; P/D disaggregation lets that input capacity scale independently of decode.
 
 ## Splitting prefill from decode
 
-**Prefill/decode disaggregation gives input processing and token generation separate GPU pools, so each phase has independent capacity and scheduling.** Across the disaggregated sweep, output throughput tripled while median ITL stayed between 41 and 49 ms, consistent with phase isolation.
+Prefill/decode disaggregation gives input processing and token generation separate GPU pools, so each phase has independent capacity and scheduling.
 
-The study does not include a matched aggregate control. The prefill pool runs deep_gemm with deepep_high_throughput all-to-all, the decode pool runs deepep_low_latency, and NIXL moves KV between them. The deployment network was InfiniBand. Both pools run the wide-EP layout.
+**Across the disaggregated sweep, output throughput tripled while median time between output tokens stayed between 41 and 49 ms, consistent with phase isolation.**
+
+There is no matched aggregate control, so this sweep measures scaling within the P/D layout rather than a controlled P/D-versus-aggregate gain. Prefill uses deep_gemm with deepep_high_throughput; decode uses deepep_low_latency; NIXL moves KV between the pools. Both pools use wide expert parallelism over InfiniBand.
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/pool-throughput.png"
-  alt="Prefill and decode pool throughput and requests by phase"
+  alt="Prefill and decode throughput and requests by phase"
 >
-  Left: the prefill pool processes hundreds of thousands of input tokens per second while the decode pool streams thousands of output tokens per second. Right: average requests in each phase, engine-counted as a load indicator, not a target; at concurrency 256, about 46 requests sit in prefill while about 211 decode.
+  Left: the prefill pool processes hundreds of thousands of input tokens per second while the decode pool streams thousands of output tokens per second. Right: the average number of requests in each phase. Prefill capacity controls the wait for the first token; decode capacity controls streaming and full-turn completion.
 </Figure>
 
-The reference sweep disables CPU offloading and uses the guide's disaggregated routing configuration. The test uses a scaled input distribution that preserves the corpus's overlap structure. Absolute lengths are shorter than the corpus's, setting the about 94% prefix ceiling derived in the routing section. It covers the guide's 16- to 64-GPU topologies at concurrency 4-256. The 3P1D reference uses three two-node DEP16 prefill instances and one two-node DEP16 decoder across eight nodes, or 64 GPUs, with agentic-scale inputs: median about 46-51K tokens, p99 above 100K, and input overlap that sets a prefix-hit ceiling around 94%.
+The load sweep disables CPU offloading and uses the disaggregated routing configuration.
+
+The load sweep preserves the corpus's overlap pattern but shortens the absolute context lengths, producing a reuse ceiling of about 94%. It covers 16- to 64-GPU topologies from concurrency 4 to 256. The 64-GPU 3P1D reference uses three two-node DEP16 prefill instances and one two-node DEP16 decoder across eight nodes. Median input length is about 46K-51K tokens, with p99 above 100K:
 
 | Concurrency | Requests | TTFT p50 / p90 | ITL p50 / p90 | E2E lat. p50 | Output throughput |
-| ---: | ---: | --- | --- | --- | --- |
+| :---- | :---- | :---- | :---- | :---- | :---- |
 | 64 | 2,124 | 1.4 s / 3.8 s | 41 ms / 48 ms | 14.2 s | 1,399 tok/s (22/GPU) |
 | 256 | 6,691 | 3.5 s / 15.3 s | 49 ms / 51 ms | 22.1 s | 4,262 tok/s (67/GPU) |
 
@@ -259,52 +315,54 @@ The reference sweep disables CPU offloading and uses the guide's disaggregated r
   src="/img/blogs/glm52-agentic-serving/reference-latency.png"
   alt="Reference 64-GPU sweep latency at concurrency 64 and 256"
 >
-  Lower TTFT and ITL are better. From concurrency 64 to 256, throughput triples and median ITL moves from 41 to 49 ms. Median TTFT rises from 1.4 to 3.5 s as the prefill queue grows; active turns continue streaming steadily.
+  From concurrency 64 to 256, throughput triples and median time between output tokens moves from 41 to 49 ms. Median time to first token rises from 1.4 to 3.5 s as the prefill queue grows; active turns continue streaming steadily.
 </Figure>
 
-Output tokens undercount what the cluster does for this workload. Total served tokens reach 4,788 tok/s per GPU at concurrency 256, and 98.6% of them are input: for agentic traffic, input throughput is the capacity being bought.
+The output rate hides most of the work. At concurrency 256, each GPU serves 4,788 total tokens per second, and 98.6% are input. For this workload, the cluster is primarily buying prefill capacity.
 
 A decode speedup shifts pressure toward prefill, as the speculation results show.
 
 ## Speculation and tool calling
 
-**Multi-token prediction drafts and verifies several tokens in one decode step, reducing sequential decode steps when the drafts are accepted.** With CPU offloading held constant on the 32-GPU 1P1D topology, MTP delivers 1.8-2.0x aggregate output and 1.6-1.9x end-to-end output per user through concurrency 64; at concurrency 64, median turn completion falls 29% and p90 falls 46%.
+Multi-token prediction drafts and verifies several tokens in one decode step, reducing sequential decode steps when the drafts are accepted.
 
-The matched MTP comparison uses one DEP16 prefill instance and one DEP16 decoder, or 32 GPUs, with CPU offloading enabled in both series. The both-features-off series provides the combined-stack reference. GLM-5.2's native MTP head drafts three tokens per step in both pools while retaining FP8 KV. The 2P1D topology sustains similar MTP gains through concurrency 128.
+**With CPU offloading held constant on the 32-GPU 1P1D topology, MTP delivers 1.7-2.0x aggregate output and 1.7-1.8x end-to-end output per user through concurrency 64; at concurrency 64, median turn completion falls 34% and p90 falls 44%.**
+
+The 32-GPU 1P1D comparison keeps CPU offloading enabled in both runs, so the measured difference comes from MTP. A separate run disables both features and serves as the overall baseline. The measured configuration drafts three extra tokens per decode step and keeps KV in FP8. The 2P1D topology shows similar MTP gains through concurrency 64.
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/matched-frontier.png"
   alt="Matched 32-GPU topology comparing baseline, CPU offloading, and MTP with CPU offloading"
 >
-  1P1D topology, 32 GPUs: one DEP16 prefill instance and one DEP16 decoder. Farther right is higher end-to-end output per user; higher is more output per decode GPU. Baseline versus CPU offloading isolates CPU offloading; CPU offloading versus MTP + CPU offloading isolates MTP.
+  Matched 32-GPU 1P1D DEP16 topology. Baseline and CPU offloading overlap while the active KV set fits in HBM; MTP moves the curve right and up. At concurrency 64, MTP raises aggregate output and end-to-end output per user 1.74x and cuts median turn completion 34%. Right and up are better.
 </Figure>
 
-The acceptance counters match a workload suited to speculation: mean acceptance length 2.94 to 3.00 of a maximum 4, about 65% of draft tokens accepted, 80/63/50% by draft position, flat across a 16x load swing. The measured speedup is consistent with this arithmetic: roughly 2.95 output tokens per step against a roughly 1.3x per-step verify cost. The comparisons with CPU offloading enabled or disabled show that it does not materially change the time between output tokens under the tested load.
+Each MTP step produces about 2.95 output tokens, including the normal token and accepted drafts. The model accepts 64.0-70.5% of draft tokens across both input-length sweeps. It accepts about 2.92-3.12 tokens per step out of a possible four; acceptance by draft position is about 80%, 65%, and 52%. Because acceptance stays similar across runs, it is unlikely to be the main reason throughput differs. Topology, queueing, and which requests finish also matter. When the system is not under heavy load, matched runs show that CPU offloading barely changes the time between output tokens.
 
-Complete matched stages on the same topology and workload compare the baseline, with MTP and CPU offloading disabled, against the configuration using both:
+The table compares the same topology and request limit with both features off and with both on. Each stage runs for a fixed time, so the two runs may finish different requests; the ratios compare overall capacity, not the same requests one by one. The MTP factors above use runs where CPU offloading stays on, which isolates MTP.
 
-| Concurrency | TTFT p50 | ITL p50 | Output throughput | E2E output / user |
-| --- | --- | --- | --- | --- |
-| 32 | 1.7 s / 3.8 s | 35 / 16 ms | 780 / 1,538 tok/s | 23.0 / 35.8 tok/s/user |
-| 64 | 2.3 s / 5.0 s | 38 / 17 ms | 1,492 / 2,529 tok/s | 20.2 / 31.1 tok/s/user |
-| each series peak, both at c256 | 17.1 s / 24.9 s | 41 / 20 ms | 2,714 / 4,356 tok/s | 11.0 / 13.9 tok/s/user |
+| Concurrency | TTFT p50 (baseline / both-on) | ITL p50 (baseline / both-on) | Output throughput (baseline / both-on) | E2E output / user (baseline / both-on) |
+| :---- | :---- | :---- | :---- | :---- |
+| 32 | 1.1 s / 1.3 s | 28.6 / 13.5 ms | 1,158 / 2,159 tok/s | 29.0 / 51.5 tok/s/user |
+| 64 | 1.2 s / 1.6 s | 30.7 / 14.7 ms | 2,178 / 3,788 tok/s | 26.0 / 45.1 tok/s/user |
+| 128 | 1.6 s / 2.4 s | 35.0 / 17.1 ms | 3,513 / 5,647 tok/s | 21.8 / 35.0 tok/s/user |
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/full-frontier.png"
-  alt="All complete configuration stages, including MTP and CPU offloading width sweep"
+  alt="User-visible and per-GPU throughput across limited- and full-input-length runs"
 >
-  The export contains 18 configuration keys. Farther right is higher end-to-end output per user; higher is more output per decode GPU. The figure includes stages with complete benchmark-duration, request-start, and response-end metadata; the highlighted width sweep is the matched comparison used in the text.
+  Left: limited-input-length runs with a 142K benchmark admission cap. Right: full-input-length runs. Each line follows one topology across concurrency; hollow points have median time to first token above 10 seconds. Right and up are better. Absolute throughput is comparable only within a panel. Seven requests fail at concurrency 256 in each of the full-input-length 1P1D DEP16, 3P1D, and 3P2D stages.
 </Figure>
 
-Tool-call validity remains unquantified. Multi-token deltas can break streaming parsers that expect one token at a time, with related reports for other model/parser combinations in vLLM #42400 on GLM-5.1 and #41967 on Gemma4. The decode and aggregate servers use the GLM parser pair recommended by vLLM. The decode configuration includes:
+Tool-call validity remains unquantified. Multi-token deltas can break streaming parsers that expect one token at a time (related reports for other model/parser combinations: [vLLM #42400](https://github.com/vllm-project/vllm/issues/42400) on GLM-5.1, [#41967](https://github.com/vllm-project/vllm/issues/41967) on Gemma4). The decode and aggregate servers use the GLM parser pair recommended by vLLM. The decode configuration includes:
 
 ```bash
 vllm serve zai-org/GLM-5.2-FP8 \
-  --max-model-len 131072 \
+  --max-model-len auto \
+  --gpu-memory-utilization 0.95 \
   --enable-expert-parallel \
   --tensor-parallel-size 1 --data-parallel-size 16 \
-  --kv_transfer_config '{"kv_connector":"NixlConnector","kv_role":"kv_both",\
-    "kv_load_failure_policy":"fail"}' \
+  --kv_transfer_config '{"kv_connector":"NixlConnector","kv_role":"kv_both","kv_load_failure_policy":"fail"}' \
   --all2all-backend deepep_low_latency --moe-backend deep_gemm \
   --reasoning-parser glm45 --tool-call-parser glm47 \
   --enable-auto-tool-choice \
@@ -314,33 +372,43 @@ vllm serve zai-org/GLM-5.2-FP8 \
 
 vLLM also serves the Anthropic Messages API, so harnesses that speak it, Claude Code included, point `ANTHROPIC_BASE_URL` at the gateway. The agentic-serving guides ship ready client configs; the Nemotron cookbook includes a `claude.env`.
 
-## Full input-sequence-length runs
+## Sizing prefill and decode capacity
 
-A second DEP16 decoder raises the high-load envelope once prefill has enough headroom. The full input-sequence-length, or full-ISL, export keeps every instance at DEP16 and varies only prefill and decode replica count: 2P1D, 2P2D, 3P1D, and 3P2D.
+**Prefill and decode replicas remove different queues. The full-input-length sweep compares prefill and decode allocation under DEP16; the limited-input-length sweep widens decode and then prefill. Results are comparable only within the same test.**
 
-At matched 3P concurrency 128, 3P2D raises output from 4,353 to 5,604 tok/s, up 29%, raises end-to-end output per user from 24.8 to 29.2 tok/s/user, up 18%, and cuts median turn completion from 19.8 to 16.6 s. Median ITL falls from 27.2 to 22.5 ms, and input throughput rises from 285K to 385K tok/s. At concurrency 256, only the 2D configurations complete in this export; 3P2D reaches 8,655 output tok/s and 619K input tok/s with 18.5 s median turn completion.
+### Adding prefill or decode capacity
+
+**Prefill replicas shorten the wait before generation; decode replicas raise output capacity.** The full-input-length sweep keeps every instance at DEP16 and compares 1P1D, 2P2D, 3P1D, and 3P2D with native MTP and CPU KV offloading enabled.
+
+At concurrency 128, keeping three prefill replicas fixed and adding a second decoder raises output from 6,281 to 7,598 tok/s (+21%) and end-to-end output per user from 36.6 to 44.2 tok/s/user (+21%). Median turn completion falls from 14.0 to 11.5 seconds, while median time between output tokens falls from 19.1 to 15.5 ms. Median time to first token remains near 2.1 seconds.
+
+Prefill width changes a different part of the turn. With two decoders fixed, moving from 2P2D to 3P2D cuts median time to first token from 2.70 to 2.12 seconds and CPU-to-GPU restore traffic from 759 to 45 GiB; median time between output tokens stays near 15.4 ms. In this sweep, at the same 64-GPU budget, 2P2D produces 8% more output and completes the median turn 10% sooner, while 3P1D lowers median time to first token 19% and restore traffic 63%.
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/full-isl.png"
-  alt="Full-ISL DEP16 runs showing user-visible speed against per-GPU output and input throughput"
+  alt="What additional prefill or decode capacity buys at concurrency 128"
 >
-  Full-ISL DEP16 runs. The x-axis is end-to-end output throughput per user. Left: output throughput normalized by decode GPUs. Right: input throughput normalized by prefill GPUs. In both panels, farther right means higher end-to-end output per user and higher means more throughput per GPU. The 1D series stop earlier, so concurrency 256 is a 2D operating point rather than a matched 1D-vs-2D delta.
+  At concurrency 128, an additional prefill replica reduces first-token delay and CPU restore traffic; an additional decoder raises output and shortens the full turn. Lower is better for latency and restore traffic; higher is better for output.
 </Figure>
 
-## 32, 48, or 64 GPUs?
+At concurrency 256, 3P2D reaches 9,890 output tok/s, 718K input tok/s, 33.3 end-to-end output tok/s/user, and 15.3 seconds median turn completion; CPU restore traffic reaches 1,265 GiB. Seven requests fail during the stage. Because each stage runs for a fixed time, comparisons between layouts may include different completed requests.
 
-Choose the smallest layout that meets the expected concurrency and end-to-end turn completion target. Replica width determines how much KV fits on each GPU; prefill instance count determines headroom; CPU memory holds the broader session working set beyond HBM.
+### Where the bottleneck moves
 
-Decode stays fixed at DEP16 while prefill grows from one to three DEP16 instances. At concurrency 256, 1P1D, 2P1D, and 3P1D serve 4,356, 6,155, and 6,476 tok/s; median turn completion falls from 35.2 to 20.8 to 19.4 seconds; and p90 completion is effectively identical for 2P1D and 3P1D at 50.3 and 50.4 seconds. Median TTFT falls from 24.9 to 9.3 to 7.5 seconds, while median ITL remains between 20 and 25 ms. The 1P1D topology maximizes output per GPU but queues prefill at high load. The 2P1D topology reaches 95% of 3P1D output with 25% fewer GPUs, making 48 GPUs the best measured balance. The 3P1D topology provides the most prefill headroom. CPU restore traffic falls from 7,774 to 924 to 29 GiB as prefill widens.
+**Decode and prefill width remove different queues.** The limited-input-length sweep keeps native MTP and CPU KV offloading enabled while widening one side of the deployment at a time.
+
+At concurrency 128, widening the DEP8 decoder to DEP16 raises output from 1,501 to 3,233 tok/s and cuts the decode queue from 39 to 3 requests. The narrow prefill pool still has 137 requests waiting and restores 7,229 GiB of KV from CPU memory.
+
+Widening prefill from DEP8 to DEP16 moves the active KV set back into HBM. Per-rank prefill capacity rises from about 214K to 990K KV tokens, CPU restore traffic falls from 7,229 to 50 GiB, and median time to first token falls from 20.9 to 2.38 seconds. Output reaches 5,647 tok/s.
+
+A second DEP16 prefill instance removes the remaining restore traffic. At concurrency 128, 2P1D reaches 6,647 output tok/s and 1.59 seconds median time to first token. The 32-GPU 1P1D topology delivers 85% of that output with one-third fewer GPUs; the 48-GPU 2P1D topology buys lower latency and more prefill headroom. Against the 48-GPU baseline with both features disabled, the optimized 32-GPU layout produces 54% more output, delivers 51% more end-to-end output per user, and completes the median turn 18% sooner while using one-third fewer GPUs; median time to first token is 2.38 versus 1.26 seconds. The fixed-duration stages do not complete the same request slice, so these are operating-point comparisons rather than request-identical A/Bs.
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/width-efficiency.png"
-  alt="Output per GPU versus user-visible speed for 1P1D, 2P1D, and 3P1D"
+  alt="Capacity and queue movement across limited-input-length layouts at concurrency 128"
 >
-  MTP and CPU-offloading width-sweep stages with median TTFT under 10 s. Farther right is higher end-to-end output per user; higher is more output per GPU. The 3P1D topology, 64 GPUs, provides the highest aggregate output; the 1P1D topology, 32 GPUs, provides the best output per GPU; at concurrency 256, 2P1D reaches 95% of 3P1D output with 25% fewer GPUs.
+  At concurrency 128, widening decode removes the decode queue but drives more work through a prefill pool that is still too small. Widening prefill moves the active KV set back into HBM; a second prefill replica buys the remaining headroom. Higher output is better; lower TTFT and restore traffic are better.
 </Figure>
-
-The mixed-width 2P1D topology addresses a different constraint from the 48-GPU width sweep. It keeps the total GPU count at 32 by using two DEP8 prefill instances with one DEP16 decoder; each prefill rank holds about 220K KV tokens, versus roughly 650K under DEP16. CPU memory retains the session working set beyond those smaller GPU caches. Its paused-conversation results are not combined with the width sweep because the load pattern and completion length differ.
 
 ## What it costs at an interactivity target
 
@@ -348,7 +416,9 @@ At the operating point used here, the 48-GPU 2P1D topology with MTP and CPU offl
 
 At a 28-30 tok/s/user interactivity target, 3P1D implies $0.10 per million input tokens and $2.45 per million output tokens; 2P1D implies approximately $0.07 per million input tokens and $2.53 per million output tokens at an H200 rental rate of $2.71 per GPU-hour. The 48-GPU 2P1D configuration is the balanced point: extra prefill capacity changes output cost little, while less prefill capacity reduces aggregate output at the target.
 
-[Z.ai](https://docs.z.ai/guides/overview/pricing) lists GLM-5.2 at $1.40 per million input tokens, $0.26 cached input, and $4.40 per million output tokens. [Anthropic](https://platform.claude.com/docs/en/about-claude/pricing) lists Claude Opus 4.8 at $5 input and $25 output, with cache reads at $0.50 per million tokens. At the stated rental rate, self-hosted output is about 57% of Z.ai's first-party rate and about one-tenth of Opus. Input is about one-twentieth of Z.ai's list rate and about one-quarter of its cached-input rate. Input accounts for 98.7% of served tokens at this operating point; under the 32-prefill/16-decode allocation, prefill accounts for two-thirds of GPU rental.
+Input tokens are logical tokens: cached prompt tokens count at their full prompt length, not by the bytes restored from cache.
+
+[Z.ai](https://docs.z.ai/guides/overview/pricing) lists its GLM-5.2 API at $1.40 per million input tokens, $0.26 cached input, and $4.40 per million output tokens. [Anthropic](https://platform.claude.com/docs/en/about-claude/pricing) lists Claude Opus 4.8 at $5 input and $25 output, with cache reads at $0.50 per million tokens. At the stated rental rate, self-hosted output is about 57% of Z.ai's public GLM-5.2 rate and about one-tenth of Opus. Input is about one-twentieth of Z.ai's list rate and about one-quarter of its cached-input rate. Input accounts for 98.7% of served tokens at this operating point; under the 32-prefill/16-decode allocation, prefill accounts for two-thirds of GPU rental.
 
 ### Cost basis and limits
 
@@ -356,19 +426,19 @@ These figures assume that the cluster sustains the measured load 24/7. Lower uti
 
 ## Conclusion
 
-Agentic serving depends on input reuse as much as decode speed. Across the 64-GPU reference sweep, output throughput triples while median ITL stays between 41 and 49 ms, though no matched aggregate control was run. At concurrency 256, the 48-GPU 2P1D topology reaches 95% of the 64-GPU 3P1D topology's output and completes the median turn within 1.4 s of it.
+Agentic serving depends on input reuse as much as decode speed. On the 64-GPU reference, increasing concurrency from 64 to 256 triples output while median time between output tokens stays between 41 and 49 ms. Because there is no matched aggregate control, this demonstrates scaling within P/D rather than a measured P/D-versus-aggregate gain. At concurrency 256, the 48-GPU 2P1D topology reaches 95% of the 64-GPU 3P1D topology's output and completes the median turn within 1.4 s of it.
 
-These mechanisms address different parts of the same workload. MLA and wide expert parallelism create KV capacity; routing and CPU memory preserve reusable context; P/D disaggregation isolates streaming from prefill; MTP reduces decode steps; and prefill width provides headroom. Together they turn repeated, read-heavy agent traffic into a practical serving configuration.
+Each optimization removes a different bottleneck. MLA and wide expert parallelism make room for long contexts, while routing and CPU memory keep them reusable. Separate prefill and decode pools stop long reads from disrupting generation; MTP reduces decode steps; and additional prefill replicas absorb higher concurrency.
 
-At high concurrency, queueing on the fixed DEP16 decoder limits how much generation speed reaches each user. Wider decode layouts are the remaining capacity axis; the baseline family's asymmetric EP8/EP16 layouts provide the comparison points.
+At high concurrency, queueing on the fixed DEP16 decoder limits how much generation speed reaches each user. Wider decode layouts are the remaining capacity axis; the baseline family’s asymmetric EP8/EP16 layouts provide the comparison points.
 
-The agentic-serving cookbooks cover GLM-5.2 on H200, [Nemotron-3-Ultra-550B on H200](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/nemotron-3-ultra-550b-h200.md), with P/D disaggregation and CPU KV offloading, and [Qwen3-Coder-480B on TPU v7](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/qwen3-coder-480b-tpu.md), with routing and CPU offloading. All three target agentic code generation; pick by your hardware.
+The agentic-serving cookbooks include [Nemotron-3-Ultra-550B on H200](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/nemotron-3-ultra-550b-h200.md), with P/D disaggregation and CPU KV offloading, and [Qwen3-Coder-480B on TPU v7](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/qwen3-coder-480b-tpu.md), with routing and CPU offloading. The GLM-5.2 H200 configuration follows the same agentic-serving pattern.
 
 ## Where this goes next
 
 The Agentic Inference SIG focuses on orchestrating session dependency graphs, retaining prefixes without recomputation, placing sub-agent work proactively, and evaluating complete program traces. Deployment priorities include full dependency-graph replay with think time and sub-agent fan-out, DSpark against the native MTP head, tool-call validity, an aggregate-topology sweep, larger xPyD layouts, and Blackwell NVFP4.
 
-The SIG meets in the open: #sig-agentic-inference on the [llm-d Slack](/slack), meetings on the community calendar. Bring traces.
+The SIG meets in the open: [#sig-agentic-inference](https://llm-d.slack.com/archives/C0ALHNZJCFJ) on the llm-d Slack, meetings on the community calendar. Bring traces.
 
 ## Get Involved with llm-d
 
