@@ -155,7 +155,6 @@ const config = {
         path: 'guides',
         routeBasePath: 'guides',
         sidebarPath: './sidebarsGuides.js',
-        editUrl: `${GITHUB_REPO}/edit/main/`,
       },
     ],
   ],

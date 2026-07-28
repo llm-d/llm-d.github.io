@@ -193,7 +193,10 @@ func (r *rewriter) rewriteURL(url, fileRepoDir string) (string, bool) {
 		return ghRaw + "/" + resolved + suffix, true
 	}
 
-	if (strings.HasPrefix(resolved, "docs/") || strings.HasPrefix(resolved, "guides/")) && r.docExists(resolved) {
+	// guides/... has no /docs/guides/... route (only the two guides in
+	// pathMap are mirrored on the site); anything else under guides/ falls
+	// through to GitHub below, same as any other out-of-tree path.
+	if strings.HasPrefix(resolved, "docs/") && r.docExists(resolved) {
 		return r.toSiteDocURL(resolved) + suffix, true
 	}
 
@@ -231,15 +234,11 @@ func (r *rewriter) isDir(repoRel string) bool {
 	return dirExists(filepath.Join(r.repo, filepath.FromSlash(repoRel)))
 }
 
-// toSiteDocURL maps a repo-relative doc path to its absolute site URL
-// (/docs/… or /docs/guides/…), matching legacy rewrite.mjs toSiteDocUrl.
+// toSiteDocURL maps a repo-relative docs/... path to its absolute site URL
+// (/docs/…). Only called for resolved paths under docs/ — guides/... has no
+// such route (see rewriteURL).
 func (r *rewriter) toSiteDocURL(repoRel string) string {
-	var rel string
-	if strings.HasPrefix(repoRel, "guides/") {
-		rel = "guides/" + repoRel[len("guides/"):]
-	} else {
-		rel = repoRel[len("docs/"):]
-	}
+	rel := repoRel[len("docs/"):]
 	rel = reDocIndexSlug.ReplaceAllString(rel, "")
 	rel = reDocIndexRoot.ReplaceAllString(rel, "")
 	rel = reDocExt.ReplaceAllString(rel, "")
