@@ -370,3 +370,332 @@ html:not([data-theme='dark']) .footer-socials img {
 [data-theme='dark'] .theme-doc-sidebar-menu .menu__link--sublist:not(.menu__link--active) {
   color: #f4f4f4;
 }
+
+/* ---------------------------------------------------------------------------
+   Ultra-Premium Modern SaaS Tables
+   --------------------------------------------------------------------------- */
+.markdown > table,
+.markdown table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  width: 100%;
+  margin: 2.5rem 0;
+  border: 1px solid var(--ifm-color-emphasis-200) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+  overflow: hidden !important;
+  display: table;
+}
+
+[data-theme='dark'] .markdown > table {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  border-color: var(--ifm-color-emphasis-300) !important;
+}
+
+.markdown > table thead,
+.markdown table thead {
+  background-color: var(--ifm-color-emphasis-100);
+}
+
+.markdown > table thead tr {
+  border: none !important;
+}
+
+.markdown > table th,
+.markdown table th {
+  border: none !important;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200) !important;
+  color: var(--ifm-color-emphasis-800);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 1.1rem 1.25rem !important;
+}
+
+[data-theme='dark'] .markdown > table th {
+  border-bottom-color: var(--ifm-color-emphasis-300) !important;
+  color: var(--ifm-color-emphasis-500);
+}
+
+.markdown > table td,
+.markdown table td {
+  border: none !important;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200) !important;
+  padding: 1.1rem 1.25rem !important;
+  font-size: 0.95rem;
+  color: var(--ifm-font-color-base);
+  background: transparent;
+  vertical-align: middle;
+}
+
+[data-theme='dark'] .markdown > table td {
+  border-bottom-color: var(--ifm-color-emphasis-300) !important;
+}
+
+.markdown > table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+.markdown > table tbody tr {
+  border: none !important;
+  transition: background-color 0.2s ease;
+}
+
+.markdown > table tbody tr:hover {
+  background-color: var(--ifm-color-emphasis-50);
+}
+
+[data-theme='dark'] .markdown > table tbody tr:hover {
+  background-color: var(--ifm-color-emphasis-100);
+}
+
+/* ---------------------------------------------------------------------------
+   Premium Status Tags (For Matrices)
+   --------------------------------------------------------------------------- */
+
+.status-stable {
+  background-color: rgba(0, 200, 83, 0.1);
+  color: #00a843;
+}
+[data-theme='dark'] .status-stable {
+  background-color: rgba(0, 230, 118, 0.15);
+  color: #69f0ae;
+}
+
+.status-in-progress {
+  background-color: rgba(253, 216, 53, 0.2);
+  color: #b7791f; /* Dark amber for readability */
+}
+[data-theme='dark'] .status-in-progress {
+  background-color: rgba(253, 216, 53, 0.2);
+  color: #b7791f; /* Dark amber for readability */
+}
+
+.status-experimental {
+  background-color: rgba(245, 124, 0, 0.1);
+  color: #e65100;
+}
+[data-theme='dark'] .status-experimental {
+  background-color: rgba(245, 124, 0, 0.15);
+  color: #ffb74d;
+}
+
+.status-planned {
+  background-color: rgba(148, 163, 184, 0.15);
+  color: #64748b;
+}
+[data-theme='dark'] .status-planned {
+  background-color: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+}
+
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+
+
+.status-na {
+  color: var(--ifm-color-emphasis-400);
+  font-weight: 500;
+}
+
+/* Benchmark Chart Styles */
+.benchmark-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.benchmark-label {
+  width: 140px;
+  font-weight: 600;
+}
+.benchmark-track {
+  flex-grow: 1;
+  background-color: var(--ifm-color-emphasis-200, #e5e7eb);
+  border-radius: 4px;
+  height: 28px;
+}
+.benchmark-fill {
+  height: 100%;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  color: white;
+  font-weight: bold;
+  font-size: 13px;
+}
+.benchmark-sglang {
+  background: linear-gradient(90deg, #10b981, #34d399);
+  width: 100%;
+}
+.benchmark-vllm {
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  width: 51%;
+}
+
+/* Instant Premium Tooltips */
+.has-tooltip {
+  position: relative;
+  cursor: help;
+}
+.has-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 135%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #1f2937;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  font-weight: 500;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  pointer-events: none;
+}
+.has-tooltip::before {
+  content: "";
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #1f2937 transparent transparent transparent;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease-in-out;
+  z-index: 9999;
+  pointer-events: none;
+}
+.has-tooltip:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-2px);
+}
+.has-tooltip:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+
+/* Global Matrix Table Styling */
+.matrix-tables table {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.matrix-tables th:nth-child(1),
+.matrix-tables td:nth-child(1) {
+  width: 25%;
+  text-align: left;
+}
+
+.matrix-tables th:nth-child(2), .matrix-tables td:nth-child(2),
+.matrix-tables th:nth-child(3), .matrix-tables td:nth-child(3),
+.matrix-tables th:nth-child(4), .matrix-tables td:nth-child(4) {
+  width: 20%;
+  text-align: center;
+}
+
+.matrix-tables th:nth-child(5),
+.matrix-tables td:nth-child(5) {
+  width: 15%;
+  text-align: center;
+}
+
+.hardware-tables table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.hardware-tables th:nth-child(1),
+.hardware-tables td:nth-child(1) {
+  width: 40%;
+  text-align: left;
+}
+
+.hardware-tables th:nth-child(2), .hardware-tables td:nth-child(2),
+.hardware-tables th:nth-child(3), .hardware-tables td:nth-child(3) {
+  width: 30%;
+  text-align: center;
+}
+
+
+/* Interactive HTML Tooltips */
+.interactive-tooltip-wrapper {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+}
+
+.interactive-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background-color: var(--ifm-color-emphasis-900);
+  color: var(--ifm-color-emphasis-100);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: normal;
+  white-space: nowrap;
+  z-index: 100;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  
+  /* The Bridge Hack: prevents tooltip from vanishing when moving mouse to it */
+  padding-bottom: 20px; 
+  margin-bottom: -12px; 
+}
+
+/* Tooltip Arrow */
+.interactive-tooltip::after {
+  content: '';
+  position: absolute;
+  top: calc(100% - 12px); /* Adjust for the bridge hack padding */
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: var(--ifm-color-emphasis-900) transparent transparent transparent;
+}
+
+.interactive-tooltip-wrapper:hover .interactive-tooltip {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(-50%) translateY(-8px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s;
+}
+
+/* Style links inside tooltips */
+.interactive-tooltip a {
+  color: #64b5f6;
+  text-decoration: underline;
+}
+.interactive-tooltip a:hover {
+  color: #90caf9;
+}
