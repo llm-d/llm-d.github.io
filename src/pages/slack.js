@@ -6,7 +6,7 @@ import Link from '@docusaurus/Link';
 // upstream Netlify redirect so it also works under `docusaurus serve` and
 // any other host).
 const SLACK_INVITE =
-  'https://join.slack.com/t/llm-d/shared_invite/zt-44lb4d8o4-uFFmE9ZOyJIOy6lkiMUf6Q';
+  'https://join.slack.com/t/llm-d/shared_invite/zt-43t0hj2dc-Le_GtjBT6jF9bs_AMvgr9Q';
 
 export default function Slack() {
   useEffect(() => {
