@@ -52,6 +52,25 @@ func (m *Manifest) Validate() error {
 		}
 	}
 
+	for i, g := range m.Guides {
+		if g.From == "" || g.To == "" {
+			return fmt.Errorf("guides[%d]: from and to are required", i)
+		}
+		if !strings.HasPrefix(filepath.ToSlash(g.From), "guides/") {
+			return fmt.Errorf("guides[%d]: from must be under guides/", i)
+		}
+		if g.Title == "" {
+			return fmt.Errorf("guides[%d]: title is required", i)
+		}
+		to := filepath.ToSlash(g.To)
+		if !strings.HasPrefix(to, "guides/") {
+			return fmt.Errorf("guides[%d]: to must be under guides/", i)
+		}
+		if g.SidebarPosition == 0 {
+			return fmt.Errorf("guides[%d]: sidebar_position is required", i)
+		}
+	}
+
 	return nil
 }
 

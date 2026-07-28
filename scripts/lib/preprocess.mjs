@@ -5,8 +5,9 @@
  * at build time so the synced source files stay clean:
  *
  *  - in-tree doc -> doc links are left for Docusaurus to resolve;
- *  - links into guides/<name> (the deployment recipes, which are NOT folded into
- *    the site) point to the source recipe in llm-d/llm-d on GitHub;
+ *  - links into guides/<name> point at the guide's own mirror page under
+ *    /guides (see tools/llmd-site, docs-sync.yaml guides:) when it has been
+ *    migrated, otherwise at the source recipe in llm-d/llm-d on GitHub;
  *  - HTML <img> srcs under docs/ point at the static copy (/img/docs/…);
  *  - other out-of-tree links go to GitHub.
  */
@@ -56,7 +57,7 @@ export function convertGithubAdmonitions(content) {
   return out.join('\n');
 }
 
-export function makeDocsPreprocessor({ docsDir }) {
+export function makeDocsPreprocessor({ docsDir, guidesDir }) {
   const isImg = (p) => IMAGE_EXT.has(path.posix.extname(p).toLowerCase());
   const relLink = (fromDir, to) => {
     const r = path.posix.relative(fromDir === '.' ? '' : fromDir, to);
@@ -97,11 +98,19 @@ export function makeDocsPreprocessor({ docsDir }) {
       return exists ? relLink(ctx.dir, target) + suffix : githubFile(repoRel) + suffix;
     }
 
-    // Guides are NOT folded into the docs — well-lit-path "Deploy" links point to
-    // the source recipes in llm-d/llm-d on GitHub (tree view renders the README).
+    // well-lit-path "Deploy" links target a guide's README (or its directory).
+    // If that guide has been migrated onto the site (tools/llmd-site guides
+    // sync, docs-sync.yaml guides:), link to its mirror page under /guides;
+    // otherwise fall back to the source recipe in llm-d/llm-d on GitHub (tree
+    // view renders the README).
     if (repoRel === 'guides' || repoRel.startsWith('guides/')) {
       if (isImg(repoRel)) return `${GH_RAW}/${repoRel}${suffix}`;
-      return `${GH_TREE}/${repoRel.replace(/\/README\.mdx?$/i, '')}${suffix}`;
+      const guideRoot = repoRel.replace(/\/README\.mdx?$/i, '');
+      const gm = guideRoot.match(/^guides\/([^/]+)$/);
+      if (gm && fs.existsSync(path.join(guidesDir, `${gm[1]}.md`))) {
+        return `/guides/${gm[1]}${suffix}`;
+      }
+      return `${GH_TREE}/${guideRoot}${suffix}`;
     }
 
     if (repoRel.startsWith('..')) return `${GH_TREE}/${repoRel.replace(/^(\.\.\/)+/, '')}${suffix}`;
