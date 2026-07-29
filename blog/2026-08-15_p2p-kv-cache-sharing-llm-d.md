@@ -316,6 +316,18 @@ topology is P/D (the scenario deploys two aggregated pods).
 **Evidence.** 1.23M tokens of session history pulled instead of
 recomputed in the 229-second run.
 
+**Reproduced on a later stack.** The whole comparison was re-run months
+later on a rebuilt fleet with the upstream P2P tier and its robustness
+fixes, fresh arms on both sides: baseline 6.83 s TTFT p50 at 0.82 req/s,
+P2P arm 1.09 s at 1.24 req/s - **6.3x median and +50% throughput**,
+288 of 288 in both arms again. The pull-side figure is the stable one
+across all three independent measurements (1.06, 1.09, 1.09 s); the
+baseline is what moves (5.22-6.83 s), so read the speedup as *at least*
+4.8x rather than a single point. The one number that moved against the
+pull on the re-run was p99 (34.7 s versus 28.2 s), consistent with the
+same explanation: the extreme tail is the cold first prefill, which the
+pull does not touch.
+
 ### Use case 6: affinity rescue at wide-EP scale (753B)
 
 | Setup | |
