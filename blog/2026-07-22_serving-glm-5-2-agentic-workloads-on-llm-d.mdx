@@ -9,6 +9,7 @@ authors:
   - yuchenfama
   - elvircrncevic
   - tylersmith
+  - rajjoshi
   - carloscosta
 
 tags: [blog, kv-cache, inference, scheduling]
@@ -278,7 +279,7 @@ With CPU offloading, a miss takes about 59 ms to restore, and median time to fir
 
 Across the run, engine counters record 12.7 TB of KV, or 283M tokens, restored at 26 ms per GB. At concurrency 128, the CPU cache restores KV at 22.7 GB/s while the topology processes 474K prompt tokens per second.
 
-The cache restores 222M tokens while serving 217M prompt tokens. That ratio exceeds 100% because the limited GPU cache can evict a block that was just restored, forcing it to be loaded again. Median time to first token remains 8.3 s, but the churn suggests that a retention policy better than LRU could reduce data movement.
+The cache restores 222M tokens while serving 217M prompt tokens. That ratio exceeds 100% because the limited GPU cache can evict a block that was just restored, forcing it to be loaded again. Median time to first token remains 8.3s, but the churn suggests that a retention policy better than LRU could reduce data movement.
 
 ### Adding prefill capacity
 
