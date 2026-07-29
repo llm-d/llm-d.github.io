@@ -206,9 +206,23 @@ is structural: the baseline saturates the fleet on recompute work while
 the pull arm keeps serving.
 
 **Evidence.** The same regime on the gpt-oss testbed (128 x 48K pool,
-~5x one pod's cache) reproduces the shape at scale: +78% sustained rate
-over the recompute control on ~139M pulled prefix tokens (~58% of
-requests). Per-rate tables for both experiments are in the
+~5x one pod's cache) reproduces the shape at scale, and a later re-run on
+a rebuilt fleet with the upstream tier made it larger: **+143% sustained
+rate** over the recompute control at 24 req/s (21.9 versus 9.0 req/s) and
++217% at 30, with median latency 63.4 s -> 0.70 s, on 120 pull sessions
+moving 210M prefix tokens.
+
+**How big is "bigger than a pod's cache"?** The ratio decides everything,
+and the effect has a threshold. Sweeping 48K-token prefixes against a
+~1.22M-token-per-pod fleet: at **0.31x** the set fits in every pod, nothing
+is ever recomputed and the pull idles; at **1.26x** placement churn creates
+a burst of misses the pull absorbs (310 ms versus 7.9 s TTFT while the
+fleet redistributes) before replication settles it; at **2.5x** the misses
+are permanent, and the arms separate completely - the recompute control
+caps at 13.9 req/s and *sheds 274 requests* to the client timeout at 48
+req/s offered, while the same placement with the pull serves 44.9 req/s at
+254 ms with none. That is the difference between a shedding fleet and a
+serving one, from one plugin. Per-rate tables for all of these are in the
 [guide's benchmark report](https://github.com/llm-d/llm-d/tree/main/guides/p2p-kv-cache-sharing/benchmark-results).
 
 ### Use case 3: P/D disaggregation - the prefill leg
