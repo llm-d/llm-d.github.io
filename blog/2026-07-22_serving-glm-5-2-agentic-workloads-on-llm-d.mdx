@@ -201,7 +201,7 @@ With MTP and CPU offloading enabled, GPU memory supplies about 90-92% of reusabl
 
 * Decode placement balances GPU and CPU cache locality against the number of active requests.
 
-The optimized-baseline configuration applies separate prefill and decode filters, and the router sees prefixes in both GPU and CPU memory. The load sweep keeps the corpus’s overlap pattern but uses shorter inputs, around 50K tokens at the median. Because each new suffix is a larger fraction of the request, at most 93.9–94.1% of the input can be reused.
+The optimized-baseline configuration applies separate prefill and decode filters, and the router sees prefixes in both GPU and CPU memory. The load sweep keeps the corpus’s overlap pattern but uses shorter inputs, around 50K tokens at the median. Because each new suffix is a larger fraction of the request, at most 93.9–94.4% of the input can be reused.
 
 Decode-local reuse is lower because NIXL moves KV from prefill to decode.
 
@@ -209,9 +209,9 @@ The paused-conversation run shows the latency effect: first turns without a cach
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/routing-cache.png"
-  alt="Prefix reuse supplied by prefill and decode GPU memory through concurrency 128"
+  alt="Prefill GPU reuse in limited-input DEP8 1P1D and decode-local hit rate in DEP16 1P1D"
 >
-  DEP16 1P1D with MTP and CPU offloading. The prefill GPU hit rate stays within four percentage points of the workload's available reuse through concurrency 128. Decode-local reuse is lower because NIXL moves KV to the decode pool.
+  Left: in the limited-input DEP8 1P1D run at concurrency 64, the router reaches a 91.4% prefill GPU hit rate against a 93.9% reusable-prefix ceiling, capturing 97% of the available reuse. Right: in the DEP16 1P1D run, decode-local hit rate is 51.3% at concurrency 64 and 44.6% at 128 because NIXL moves KV to the decode pool.
 </Figure>
 
 ## Tiered prefix cache
@@ -295,7 +295,7 @@ Adding prefill instances keeps more KV in HBM and reduces restore traffic; P/D d
 
 ## Speculative Decoding
 
-**Multi-Token Processing (MTP) gets more output tokens from each decode step.**
+**Multi-Token Prediction (MTP) gets more output tokens from each decode step.**
 
 On the matched 32-GPU 1P1D DEP16 topology, it raises aggregate output 1.6-2.0x and average end-to-end output per user 1.6-1.8x through concurrency 128.
 
