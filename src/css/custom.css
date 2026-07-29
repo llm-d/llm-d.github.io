@@ -370,3 +370,52 @@ html:not([data-theme='dark']) .footer-socials img {
 [data-theme='dark'] .theme-doc-sidebar-menu .menu__link--sublist:not(.menu__link--active) {
   color: #f4f4f4;
 }
+
+/* GLM-5.2 blog figures: size by information density, not source aspect ratio. */
+.glm-figure {
+  width: 94%;
+  max-width: 62.5rem;
+  margin: 1.75rem auto;
+}
+
+.glm-figure--wide {
+  width: 100%;
+  max-width: 72.5rem;
+}
+
+.glm-figure--compact {
+  width: 82%;
+  max-width: 51.25rem;
+}
+
+.glm-figure img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 40rem;
+  margin: 0 auto;
+  object-fit: contain;
+}
+
+.glm-figure figcaption {
+  direction: ltr;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  font-style: italic;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.glm-figure figcaption > :last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 767px) {
+  .glm-figure,
+  .glm-figure--wide,
+  .glm-figure--compact {
+    width: 100%;
+    margin: 1.25rem auto;
+  }
+}
