@@ -112,18 +112,22 @@ gpt-oss-120b, 5-rep medians:
 </div>
 
 The same sweep on the 753B wide-EP testbed (`GLM-5.2-FP8`, ~93 KB of KV
-per token) shows the same two curves with the crossover shifted right - a
-dead tie at 13,648 tokens, hence a **16,384** threshold there:
+per token) shows the same two curves with the crossover shifted right.
+Re-measured on the upstream vLLM tier (the P2P backend as merged, no
+patches), the pull floor dropped to ~1.25 s and the tie sits at ~8.7K
+tokens, hence a **12,288** threshold there:
 
 | prefix tokens | recompute | P2P pull | delta |
 |---|---|---|---|
-| 8,070 | 1.00 s | 1.69 s | +69% |
-| 13,648 | 1.74 s | 1.76 s | tie |
-| 21,617 | 2.76 s | 1.80 s | -35% |
-| 98,220 | 13.75 s | 2.29 s | -83% |
+| 4,096 | 0.67 s | 1.26 s | +88% |
+| 8,192 | 1.07 s | 1.17 s | ~tie |
+| 12,288 | 1.71 s | 1.24 s | -27% |
+| 24,576 | 3.34 s | 1.32 s | -61% |
 
-The pull holds ~1.7-2.3 s nearly flat while recompute pays ~140 us per
-token, so past the tie the gap widens without bound.
+The pull holds ~1.2-1.3 s flat while recompute pays ~130-147 us per token,
+so past the tie the gap widens without bound. (The overlay-era build
+measured the same shape with a slower pull floor - tie at 13.6K, -83% by
+98K tokens.)
 
 ### Use case 1: displaced requests at document scale (the headline)
 
@@ -382,6 +386,14 @@ of pulls at higher concurrency, so the pull does not require the KV-event
 pipeline to be deployed. Single run per cell; the full four-arm grid
 ships with the guide's benchmark report.
 
+Repeated on the upstream vLLM tier - the P2P backend as merged, with
+rank-aware source addressing and the router's prefix index sized to the
+rank-endpoint count - the same isolating pair at c128 keeps its medians
+equal and compresses the tail: TTFT p90 -9%, p95 -14%, **p99 -28%**
+(24.6 s to 17.7 s), throughput unchanged. Under precise affinity the
+median request is already local; what the pull buys at this scale is the
+tail - the displaced and queued sessions.
+
 ### When pulling pays: calibrating the threshold
 
 The `minCachedTokenDelta` threshold from the scheduling step above is a
@@ -391,8 +403,8 @@ crossover measured for that model and testbed; the crossover itself moves
 with fabric contention and producer load, so production deployments
 should leave margin for network and load variance. The single-request sweeps earlier in this post price it for
 gpt-oss-120b and Llama-8B (both cross near or below 2K tokens, hence the
-2048 threshold on those testbeds) and for GLM-5.2 (tie measured at 13.6K,
-hence 16384 there). For a new model, a two-point check on
+2048 threshold on those testbeds) and for GLM-5.2 (tie at ~8.7K on the
+upstream tier, hence 12,288 there). For a new model, a two-point check on
 a live pod pair takes minutes and gives the same answer: time a warm pull
 and a fresh recompute at a small and a large size, and the pull's fixed
 overhead and both per-token rates fall out. On Qwen3-30B-A3B that check
