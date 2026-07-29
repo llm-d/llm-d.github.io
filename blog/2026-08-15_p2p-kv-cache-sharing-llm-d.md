@@ -388,11 +388,15 @@ ships with the guide's benchmark report.
 
 Repeated on the upstream vLLM tier - the P2P backend as merged, with
 rank-aware source addressing and the router's prefix index sized to the
-rank-endpoint count - the same isolating pair at c128 keeps its medians
-equal and compresses the tail: TTFT p90 -9%, p95 -14%, **p99 -28%**
-(24.6 s to 17.7 s), throughput unchanged. Under precise affinity the
-median request is already local; what the pull buys at this scale is the
-tail - the displaced and queued sessions.
+rank-endpoint count - the same pair becomes a mechanism-verified null:
+live sampling shows every source evaluation tying at a cached-token delta
+of exactly zero, so no threshold fires and the arms behave identically.
+The overlay-era wins above were real transfers, triggered by
+index-eviction divergence that the index sizing fix has since removed -
+under precise affinity with a consistent index there is nothing left for
+the pull to repair, exactly as the placement rule predicts. The pull's
+territory is divergence by construction: load-first placement, restarts
+and cold replicas, and the approximate index.
 
 ### When pulling pays: calibrating the threshold
 
