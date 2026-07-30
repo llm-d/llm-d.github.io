@@ -153,10 +153,20 @@ def docqa():
     # blog variant: the two arms of the system-policy comparison;
     # guide variant: all three measured arms
     variants = [
-        ("docqa.png", [0, 1, 4, 5], 5.8, "48 client timeouts"),
-        ("docqa-three-arm.png", [0, 1, 2, 3, 4, 5], 6.4, "47-48 client timeouts"),
+        (
+            "docqa.png",
+            [0, 1, 4, 5],
+            5.8,
+            "Precise routing cold: 48 client timeouts.",
+        ),
+        (
+            "docqa-three-arm.png",
+            [0, 1, 2, 3, 4, 5],
+            6.4,
+            "Precise arms cold: 47-48 client timeouts.",
+        ),
     ]
-    for name, idx, height, timeouts in variants:
+    for name, idx, height, timeouts_line in variants:
         labels = [all_labels[i] for i in idx]
         colors = [all_colors[i] for i in idx]
         p50 = np.array([all_p50[i] for i in idx])
@@ -206,7 +216,7 @@ def docqa():
         fig.text(
             0.012,
             0.875,
-            f"Precise arms cold: {timeouts}. Load-aware + P2P: zero timeouts in all runs.",
+            f"{timeouts_line} Load-aware + P2P: zero timeouts in all runs.",
             color=MUTED,
             fontsize=9.5,
         )

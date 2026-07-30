@@ -111,8 +111,9 @@ baseline: the aggregated and wide-EP comparisons swap only the EPP routing
 config, while the P/D ones add the P2P stack on top of the shipped guide.
 All runs pin the two fleet-wide prerequisites - identical `--block-size`
 and `PYTHONHASHSEED` (mismatched hashes silently degrade P2P to zero
-matches) - and run a CPU offload tier sized around 2x the GPU KV cache (the
-gpt-oss rig runs 1.8x), from the engine's reported KV capacity. The
+matches) - and run a CPU offload tier sized from the engine's reported KV
+capacity (around 2x GPU KV is a good working default; the measured rigs
+range from 0.5x on the Llama pool to 1.8x on gpt-oss). The
 workload profiles and EPP configs for the guide's scenarios ship with
 the guide; the Llama campaigns' exact configurations are archived in the
 measurement record rather than shipped.
@@ -234,7 +235,7 @@ against cold, 7.9x and +189% - and the baseline's cold row carries 48
 client timeouts where the load-aware arm carries none.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/p2p-kv-cache/docqa.png" alt="Three document-Q&A comparisons across precise routing and load-aware plus P2P, cold and warm: medians stay sub-two-seconds, p99 tail latency falls from 162.8 and 25.2 seconds to 20.7 and 16.6, and throughput rises to 11.34 and 13.66 turns per second" style={{width: '100%', height: 'auto'}} />
+  <img src="/img/blogs/p2p-kv-cache/docqa.png" alt="Document Q&A on three metrics, precise routing versus load-aware plus P2P, cold and warm: medians stay sub-two-seconds, p99 tail latency falls from 162.8 and 25.2 seconds to 20.7 and 16.6, and throughput rises to 11.34 and 13.66 turns per second" style={{width: '100%', height: 'auto'}} />
   <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Canonical 16-pod fixed-stack result. The policies separate on tail latency, throughput, and cold-start timeouts.</em></p>
 </div>
 
@@ -266,7 +267,7 @@ placement; `p2p-source-producer` is the only policy difference.
 
 | Setup | |
 |---|---|
-| Topology | `Llama-3.1-8B`, 4x H200 aggregated (TP=1), ~0.5M GPU KV / 32 GiB CPU per pod (~2x) |
+| Topology | `Llama-3.1-8B`, 4x H200 aggregated (TP=1), ~0.5M GPU KV / 32 GiB CPU per pod (~0.5x GPU KV) |
 | Baseline | load-balanced placement, no pull (the recompute control) - `epp-load.yaml` |
 | + P2P | identical placement + `p2p-source-producer`, `minCachedTokenDelta` 2048 - `epp-load-p2p.yaml` |
 
