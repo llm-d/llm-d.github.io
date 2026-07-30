@@ -44,7 +44,7 @@ The P2P connector generalizes the prefill/decode (P/D) disaggregation connector 
 
 A single peer can be a consumer for one request and a producer for another concurrently; the roles are per-request, not per-pod.
 
-The transfer itself is best-effort. The consumer sends the producer the block hashes it needs; the producer matches them against its local CPU cache and answers with the hits; the consumer allocates CPU slots for the hits and the producer pushes the blocks over NIXL. The pull sits on the request's latency path - prefill proceeds once the blocks land or the lookup misses - but never on its failure path: hits load into the GPU as normal cache hits, and misses are recomputed by the engine, so a partial or failed transfer degrades to today's behavior rather than failing the request.
+The transfer itself is best-effort. The consumer sends the producer the block hashes it needs; the producer matches them against its local CPU cache and answers with the hits; the consumer allocates CPU slots for the hits and the producer pushes the blocks over NIXL. The pull sits on the request's latency path - prefill proceeds once the blocks land or the lookup misses - and ordinary misses are recomputed by the engine, so a request whose peer does not have the blocks degrades to today's behavior rather than failing. One known limitation sits outside that fallback: a block a peer has promised but never delivers (`HIT_PENDING`) has no deadline on current engines, so a request waiting on one can stay deferred until the client times out ([vllm#49850](https://github.com/vllm-project/vllm/pull/49850) adds the bound).
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/p2p-kv-cache/architecture.png" alt="Architecture, aggregated serving shown: the EPP picks the destination pod and source peer and sends the consumer a KV-cache-source header; the consumer's routing sidecar injects the P2P transfer params; a ZMQ control exchange carries block hashes and matches between the pods; NIXL moves the matched blocks from the producer's CPU offload tier to the consumer's CPU tier without touching either GPU; hits load into the consumer's GPU KV cache and unmatched blocks fall back to a recompute" style={{width: '100%', height: 'auto'}} />
@@ -55,7 +55,7 @@ The transfer itself is best-effort. The consumer sends the producer the block ha
 
 llm-d's scheduler already estimates, for every request, how much of the prompt's prefix each candidate pod has cached - the same signal that powers prefix-aware routing. P2P adds one decision on top: it compares the best-cached pod against the pod that will actually compute the prefix, and when that peer holds enough more of the prefix to be worth a transfer, it marks the request - through a header the routing sidecar reads - to pull the missing blocks from that peer.
 
-This is a small, opt-in scheduling step, off by default. Because it reuses the existing prefix-cache signal, it works with both prefix-aware routing modes - the source decision consumes the approximate index (hash-estimated, no KV events required) and the precise index (KV-event-fed) interchangeably, and the wide-EP measurement below shows pulls firing from each - and composes with P/D disaggregation: a prefill worker can pull a cached prefix from a peer, compute only the remainder, and still serve its own blocks to the decoder. Without disaggregation, the decode pod pulls the prefix directly. A tie or a self-match never triggers a pull - there is nothing to gain - and deployments that leave the feature off are unaffected.
+This is a small, opt-in scheduling step, off by default. Because it reuses the existing prefix-cache signal, it works with both prefix-aware routing modes - the source decision consumes the approximate index (hash-estimated, no KV events required) and the precise index (KV-event-fed) interchangeably - and composes with P/D disaggregation: a prefill worker can pull a cached prefix from a peer, compute only the remainder, and still serve its own blocks to the decoder. Without disaggregation, the decode pod pulls the prefix directly. A tie or a self-match never triggers a pull - there is nothing to gain - and deployments that leave the feature off are unaffected.
 
 ## What This Enables
 
@@ -144,35 +144,41 @@ enterprise document-assistant shape, where time to first token dominates
 the experience. With 192 documents spread across 16 owner pods (~12
 documents per pod on average) and 128 sessions concurrently active,
 request placement - not cache capacity - decides whether a document is a
-cache hit, a recompute, or a wait in line. Two full runs with arm order
-alternated; all four runs completed 1,152/1,152 turns with zero errors
-and zero restarts.
+cache hit, a recompute, or a wait in line. Each arm cold-rolls the fleet
+before its first run so arms cannot contaminate each other, then runs
+twice; 1,152 turns per run.
 
-| Metric | Baseline | + P2P | delta |
-|---|---|---|---|
-| TTFT p99 (run 1) | 80.5 s | 20.9 s | **-74%** |
-| TTFT p99 (run 2, order reversed) | 37.2 s | 26.7 s | **-28%** |
-| TTFT p95 (run 1) | 41.0 s | 13.0 s | **-68%** |
-| TTFT p50 (runs 1 / 2) | 4.1 / 4.2 s | 4.5 / 3.9 s | parity |
-| Throughput (run 1) | 5.98 turns/s | 7.02 turns/s | **+17%** |
-| Run-to-run throughput spread | 28% | 10% | **2.8x steadier** |
+| arm | run | ok/fail | TTFT p50 | p95 | p99 | turns/s |
+|---|---|---|---:|---:|---:|---:|
+| Baseline | 1 (cold) | 870/47 | 3.2 s | 85.8 s | 164.9 s | 3.23 |
+| Baseline | 2 (warm) | 1152/0 | 4.0 s | 75.0 s | 132.6 s | 4.65 |
+| + P2P | 1 (cold) | 1152/0 | 3.4 s | **12.9 s** | **20.7 s** | **6.86** |
+| + P2P | 2 (warm) | 1152/0 | 3.2 s | **11.7 s** | **18.2 s** | **7.54** |
+
+Warm against warm: **7.3x better p99 TTFT and +62% throughput**; cold
+against cold, 8.0x and +112% - and the baseline's cold rows carry 47
+client timeouts where the load-aware arm carries none.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/p2p-kv-cache/docqa.png" alt="Bar charts: document Q&A TTFT percentiles and throughput across two order-alternated runs; medians equal, Load + P2P p99 21-27 s versus 37-81 s for the Guide baseline, throughput up to +17%" style={{width: '100%', height: 'auto'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>192 documents x 48K tokens, 6 Q&A turns each, 128 concurrent. Medians are equal; the arms separate on tails and on stability.</em></p>
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>192 documents x 48K tokens, 6 Q&A turns each, 128 concurrent. Medians are equal; the arms separate on tails and on cold-start behavior. Figure shows an earlier run of this scenario; the table above is the canonical fixed-stack measurement.</em>{/* TODO: re-render docqa.png from the fixed-stack rerun */}</p>
 </div>
 
 **Why.** Medians are equal - a session answering from its warm cache is
 fast either way. The baseline sends every question to the pod that owns
 its document; under contention the queue on that pod becomes the p99,
 while displaced questions recompute 48K tokens. The pull makes the miss a
-~0.6 s transfer instead of a ~2 s recompute or a multi-second wait - and
-because placement no longer depends on where KV already lives, the
-results barely move between runs (the alternated order gives each arm one
-cold fleet and one warmed by the other arm).
+transfer instead of a recompute or a multi-second wait. The baseline is
+also cold-start fragile: on a cold fleet every endpoint scores
+identically, placement collapses onto one pod (sampled: 122/128 requests
+in flight with one pod holding 79% of them), and the tail damage is the
+165 s p99 and the 47 timeouts.
 
-**Evidence.** 30-32M prefix tokens moved between pods per run; the
-baseline did 23-31M local CPU-tier restores instead.
+**Evidence.** Pull engagement on this rig: 65 P2P sessions under
+load-aware placement versus 2 under affinity on the identical fleet
+(sessions are reusable connections - an engagement signal, not a byte
+count). Offload-tier byte counters do not separate local CPU restores
+from peer pulls and are not cited as transfer volume here.
 
 ### Use case 2: working sets bigger than any pod's cache
 
@@ -247,6 +253,11 @@ already receives the full KV over NIXL and has nothing to pull). The
 document-Q&A workload at concurrency 192; both arms completed 1,152 of
 1,152 requests.
 
+Read this one carefully: it is an **offload-tier result, not a pull
+benchmark**. The cross-pod pull stayed quiet under the guide's
+prefix-affine placement; the arm's gain comes from adding the CPU
+offload tier the P2P stack requires.
+
 | Metric | Baseline (guide) | + P2P stack | delta |
 |---|---|---|---|
 | TTFT p50 | 11.94 s | 1.16 s | **10x** |
@@ -261,8 +272,8 @@ itself stays quiet under the guide's prefix-affine placement and
 activates when placement diverges, which the next two use cases exercise
 directly.
 
-**Evidence.** 52M externally served tokens in the run; zero failures on
-both arms.
+**Evidence.** 52M tokens served from the offload tier (local restores;
+not peer transfers) in the run; zero failures on both arms.
 
 ### Use case 4: session history across roles - the prefiller pulls from the decoder
 
@@ -346,83 +357,64 @@ pull on the re-run was p99 (34.7 s versus 28.2 s), consistent with the
 same explanation: the extreme tail is the cold first prefill, which the
 pull does not touch.
 
-### Use case 6: load spill and affinity rescue at wide-EP scale (753B)
+### Use case 6: load spill at wide-EP scale (753B)
 
 | Setup | |
 |---|---|
 | Topology | `GLM-5.2-FP8` (753B MoE), 1 prefill + 1 decode, wide-EP (16-way data/expert parallel per role) on 32x H200; ~520K GPU KV tokens and a 100 GiB CPU tier per rank |
-| Baseline | precise prefix affinity **without the pull**: precise `prefix-cache` 5 / `queue` 3 / `active-request` 1 |
+| Baseline | load-first prefill placement **without the pull**: precise `prefix-cache` 1 / `queue` 3 / `active-request` 1 |
 | + P2P | the same placement + `p2p-source-producer`, `minCachedTokenDelta` 16384 - the only change is adding the pull |
-| Workload | recorded agentic traces (the SemiAnalysis Weka corpus, agent chains included), replayed at concurrency 32-128 |
+| Workload | fresh ~70K-token prefix per repetition, 96 requests at concurrency 32, three repetitions per arm in counterbalanced order |
 
 Does the mechanism survive the largest deployment shape - a 753B MoE
-spread 16 ways per role? On agentic traces, precise affinity concentrates
-sessions on the ranks that hold their cache, and the queues on those
-ranks become the latency; the pull lets the picker place on a less-loaded
-rank and fetch the session's prefix there.
+spread 16 ways per role? On the pull's own territory it produces the
+largest number in this post. A load-first policy spills requests off the
+cache holder whenever queues build; without the pull every spilled
+request recomputes a 70K-token prefix, and with it the prefix follows the
+request:
 
-| Metric (concurrency 32) | Baseline | + P2P | delta |
-|---|---|---|---|
-| TTFT p50 | 2,265 ms | 1,649 ms | **-27%** |
-| TTFT p90 | 7,557 ms | 4,136 ms | **-45%** |
-| vs the best load-balanced arm | | ties it | |
-
-| Across the ladder, TTFT p90 | Baseline | + P2P | delta |
-|---|---|---|---|
-| concurrency 64 | 9,823 ms | 7,139 ms | **-27%** |
-| concurrency 128 | 11,755 ms | 9,970 ms | **-15%** |
-
-**Why.** The pull erases the concentration penalty at moderate load -
-with it, the affinity arm matches load-balanced placement measured on the
-same ladder, without changing the routing policy. TTFT p99 is within
-single-run noise at every concurrency (the worst case everywhere is the
-cold first prefill of a long context).
-
-**Evidence.** 41 / 93 / 163 GB of KV crossed engines at c32/c64/c128,
-verified byte-exact, zero request errors in every cell. The source index
-is also interchangeable at this scale: the same producer pointed at the
-approximate (hash-estimate) index instead of the precise one drove 34 GB
-of pulls at higher concurrency, so the pull does not require the KV-event
-pipeline to be deployed. Single run per cell; the full four-arm grid
-ships with the guide's benchmark report.
-
-Repeated on the upstream vLLM tier - the P2P backend as merged, with
-rank-aware source addressing and the router's prefix index sized to the
-rank-endpoint count - the same pair becomes a mechanism-verified null:
-live sampling shows every source evaluation tying at a cached-token delta
-of exactly zero, so no threshold fires and the arms behave identically.
-The overlay-era wins above were real transfers, triggered by
-index-eviction divergence that the index sizing fix has since removed -
-under precise affinity with a consistent index there is nothing left for
-the pull to repair, exactly as the placement rule predicts. The pull's
-territory is divergence by construction: load-first placement, restarts
-and cold replicas, and the approximate index.
-
-And measured on that territory, the payoff at 753B is the largest in
-this post. The same wide-EP deployment with a load-first prefill policy
-(`queue` 3 over precise `prefix-cache` 1) spills requests off the cache
-holder whenever queues build; the pull is the only difference between
-the two arms:
-
-| Metric (concurrency 32, fresh ~70K-token prefix per repetition) | load-first | + P2P | delta |
+| Metric | load-first | + P2P | delta |
 |---|---|---|---|
 | TTFT mean | 7.85 s | 2.56 s | **-67%** |
 | TTFT p90 | 21.3 s | 5.0 s | **-77%** |
 | Throughput | 3.8 req/s | 10.1 req/s | **2.7x** |
 
-**Why.** Without the pull, every spilled request recomputes a 70K-token
-prefix - the ~21 s p90 is that recompute tail. With it, the prefix
-follows the request at the pull's flat cost, and the tail collapses to
-the transfer floor. This is the composition rule as a headline number:
-placement optimizes for load, and the cache follows the compute.
+**Why.** The baseline's ~21 s p90 is the spill tail - a 70K-token
+recompute on a non-holder. The pull replaces it with a flat-cost
+transfer, collapsing the tail to the transfer floor.
 
-**Evidence.** Three repetitions per arm in counterbalanced order, 576/576
-requests successful, and the result measured twice end to end - once on
-the original fix build (-70%, 2.8x) and once on independently built
-images with a freshly booted fleet and fresh prompt salts (-67%, 2.7x),
-every repetition landing in the first run's per-repetition bands. The
-matched profile pair ships with the guide
-(`epp-glm-loadfirst{,-p2p}.yaml`).
+**Evidence.** All 576 requests succeeded in both arms, and the result was
+measured twice end to end - once on the original fix build (-70% mean
+TTFT, 2.8x) and once on independently built images with a freshly booted
+fleet and fresh prompt salts (-67%, 2.7x), every repetition landing in
+the first run's per-repetition bands. The two arm profiles differ by the
+`p2p-source-producer` alone; per-repetition transfer counters were not
+recorded, so the attribution rests on that producer-only difference plus
+a separately verified single-request pull proof on the same build
+(per-rank source attribution, the source engine accepting on its
+rank-offset port, and a consumer load matching the prefix size
+byte-for-byte).
+
+The boundary on the other side of the policy space: the same pair under
+precise *affinity* placement (affinity weight 5) is a mechanism-verified
+null on this stack - live sampling shows every source evaluation tying
+at a cached-token delta of exactly zero, so no threshold fires and the
+arms behave identically. Placement already lands requests on their
+cache; a correctly configured pull idles. An earlier measurement of this
+testbed reported the opposite - affinity plus the pull improving TTFT
+substantially - but those transfers were triggered by an undersized
+prefix index (`podCacheSize` default) evicting legitimate holders and
+manufacturing divergence for the pull to repair; the index sizing fix
+removes both the divergence and the win, and that grid is retained in
+the guide's benchmark report only as a reproduction record of the
+failure mode.
+
+Where the pull earns its keep, in one rule: **KV the placement layer did
+not create.** Load-first placement (measured above), decode-generated
+session history under P/D disaggregation (use case 4), and plausibly a
+cold engine replica behind an intact router (unmeasured). A restarted
+router is not on the list: both index modes lose the pre-restart cache
+map, so there is nothing for the source decision to know.
 
 ### When pulling pays: calibrating the threshold
 
@@ -490,10 +482,10 @@ for opposite pairings. A working set that does not fit in any single
 pod's cache (use case 2 above) still wants prefix-aware placement, with
 the pull as its safety net: the same regime measured at scale on the
 guide's gpt-oss testbed shows affinity placement plus the pull tracking
-offered rate to saturation, while load-aware placement plus the pull
-degrades sharply at the top of the offered-rate ladder - scattering a
-popular prefix's traffic costs more in transfer contention than it saves
-in balance. High-concurrency placement under a fixed per-document
+offered rate to saturation, with load-aware placement plus the pull
+trailing it modestly at matched rates - cache co-location is cheaper
+when nothing contends, though the earlier finding of sharp degradation
+at the top of the ladder did not survive a rerun on a fixed transport. High-concurrency placement under a fixed per-document
 ownership rule (the document-Q&A benchmark above) is the opposite case:
 load-aware placement plus the pull wins there, avoiding the owner-pod
 queueing that persists even once affinity's own pull has covered the
@@ -506,4 +498,4 @@ The crossover measurement prices each miss; the document-Q&A benchmark
 above shows what that pricing compounds into at fleet scale, on the tail
 latencies users actually feel.
 
-The Qwen agentic measurement above uses the guide's synthetic session shapes; the wide-EP measurement replays real ones. In recorded Claude Code sessions (the [Weka trace corpus](https://huggingface.co/datasets/semianalysisai/cc-traces-weka-with-subagents-051926) published by SemiAnalysis - the corpus the 753B testbed replays), over half of all model requests arrive through sub-agent bursts - a median of seven per group, 51 at p90 - each inheriting the parent session's context as a verbatim prefix, with no advance signal to the serving layer. A burst that spills across pods today recomputes that repository-scale prefix once per pod; with P2P, the pod that already holds the prefix becomes the source while the others pull the cached blocks instead of recomputing them. A follow-up post will study that fan-out directly - burst-level source selection, session handoff, and think-time gaps included. {/* TODO: link the agentic-serving GLM post once published */}
+The Qwen agentic measurement above uses the guide's synthetic session shapes; the wide-EP measurement replays real ones. In recorded Claude Code sessions (the [Weka trace corpus](https://huggingface.co/datasets/semianalysisai/cc-traces-weka-with-subagents-051926) published by SemiAnalysis - the corpus the 753B testbed replays), a large share of model requests arrive through sub-agent bursts, each inheriting the parent session's context as a verbatim prefix with no advance signal to the serving layer. A burst that spills across pods today recomputes that repository-scale prefix once per pod; with P2P, the pod that already holds the prefix becomes the source while the others pull the cached blocks instead of recomputing them. A follow-up post will study that fan-out directly - burst-level source selection, session handoff, and think-time gaps included. {/* TODO: link the agentic-serving GLM post once published */}
