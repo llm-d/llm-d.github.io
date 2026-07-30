@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 """Generate the benchmark charts used by the P2P KV-cache-sharing blog."""
 
+import math
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+
+def fmt_ms(v):
+    # round half up so 56.5 -> 57, matching the post's tables
+    return f"{math.floor(v + 0.5):,} ms"
 
 
 OUT = Path(__file__).resolve().parents[1] / "static/img/blogs/p2p-kv-cache"
@@ -72,7 +78,7 @@ def crossover():
 
     for x, y in zip(tokens, recompute):
         ax.annotate(
-            f"{y:,.0f} ms",
+            fmt_ms(y),
             (x, y),
             xytext=(0, 10),
             textcoords="offset points",
@@ -82,7 +88,7 @@ def crossover():
         )
     for x, y in zip(tokens, pull):
         ax.annotate(
-            f"{y:,.0f} ms",
+            fmt_ms(y),
             (x, y),
             xytext=(0, -17),
             textcoords="offset points",
@@ -145,7 +151,7 @@ def docqa():
     style_figure(fig)
 
     metrics = [
-        ("Median TTFT stays equal", "Seconds", p50, 5.0, "%.1f"),
+        ("Median TTFT stays equal", "Seconds", p50, 4.6, "%.1f"),
         ("p99 TTFT collapses", "Seconds", p99, 180.0, "%.1f"),
         ("Throughput rises", "Turns/s", throughput, 8.5, "%.2f"),
     ]
@@ -195,15 +201,15 @@ def docqa():
 
 def wide_ep():
     metrics = [
-        ("Mean TTFT", "Seconds", 7.85, 2.56, "-67%", 8.7),
-        ("p90 TTFT", "Seconds", 21.3, 5.0, "-77%", 23.5),
-        ("Throughput", "Requests/s", 3.8, 10.1, "2.7x", 11.2),
+        ("Mean TTFT", "Seconds", 7.85, 2.56, "-67%", 8.7, "%.2f"),
+        ("p90 TTFT", "Seconds", 21.3, 5.0, "-77%", 23.5, "%.1f"),
+        ("Throughput", "Requests/s", 3.8, 10.1, "2.7x", 11.2, "%.1f"),
     ]
 
     fig, axes = plt.subplots(1, 3, figsize=(12.6, 4.9))
     style_figure(fig)
 
-    for ax, (title, unit, baseline, p2p, delta, xmax) in zip(axes, metrics):
+    for ax, (title, unit, baseline, p2p, delta, xmax, vfmt) in zip(axes, metrics):
         bars = ax.barh(
             [1, 0],
             [baseline, p2p],
@@ -218,7 +224,7 @@ def wide_ep():
         ax.set_axisbelow(True)
         ax.bar_label(
             bars,
-            labels=[f"{baseline:g}", f"{p2p:g}"],
+            labels=[vfmt % baseline, vfmt % p2p],
             padding=5,
             color=FG,
             fontsize=10,
