@@ -105,8 +105,8 @@ That produces a clear placement rule:
 
 We evaluated P2P KV cache sharing across four models - an 8B dense to a
 753B wide-EP MoE - on aggregated and P/D-disaggregated testbeds, using the
-llm-d benchmarking framework (the wide-EP testbed replays recorded agentic
-traces). Each experiment below opens with its own setup and names its
+llm-d benchmarking framework. Each experiment below opens with its own
+setup and names its
 baseline: the aggregated and wide-EP comparisons swap only the EPP routing
 config, while the P/D ones add the P2P stack on top of the shipped guide.
 All runs pin the two fleet-wide prerequisites - identical `--block-size`
