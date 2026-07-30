@@ -34,7 +34,7 @@ At a measured output rate of roughly 37-41 tokens per second per user, a 64-GPU 
 
 <!-- truncate -->
 
-**TL;DR**
+:::tip TL;DR
 
 * **The workload is mostly reading.** Across 219 production Claude Code sessions, the median main-agent request carries 195K input tokens and returns 317 output tokens. Among main-agent turns, 96% reuse at least 90% of their input, and more than half of all requests belong to sub-agent groups.
 
@@ -51,6 +51,8 @@ At a measured output rate of roughly 37-41 tokens per second per user, a 64-GPU 
 * **At sustained load, measured GPU rental is below Z.ai's public GLM-5.2 price.** The two 64-GPU layouts work out to $0.05-$0.08 per million input tokens and $1.92-$3.55 per million output tokens, versus $1.40 and $4.40. These figures cover GPU rental only, not the full cost of operating an API service.
 
 * **Run it.** The [GLM-5.2 H200 guide](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/glm-5-2-h200.md) provides the serving pattern and composable MTP, CPU-offloading, and context-length components.
+
+:::
 
 ## The shape of agentic traffic
 
