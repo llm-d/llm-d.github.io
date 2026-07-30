@@ -34,7 +34,9 @@ At a measured output rate of roughly 37-41 tokens per second per user, a 64-GPU 
 
 <!-- truncate -->
 
-:::tip TL;DR
+<!-- reading-time-exclude:start -->
+<details className="alert alert--success">
+<summary><strong>TL;DR: workload, measured gains, cost, and guide</strong></summary>
 
 * **The workload is mostly reading.** Across 219 production Claude Code sessions, the median main-agent request carries 195K input tokens and returns 317 output tokens. Among main-agent turns, 96% reuse at least 90% of their input, and more than half of all requests belong to sub-agent groups.
 
@@ -52,7 +54,8 @@ At a measured output rate of roughly 37-41 tokens per second per user, a 64-GPU 
 
 * **Run it.** The [GLM-5.2 H200 guide](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/glm-5-2-h200.md) provides the serving pattern and composable MTP, CPU-offloading, and context-length components.
 
-:::
+</details>
+<!-- reading-time-exclude:end -->
 
 ## The shape of agentic traffic
 
@@ -106,30 +109,13 @@ One production session combines all three properties:
 
 Prefix resets, where a turn shares less than half its input with any of its previous eight main-agent turns, occur on 2.8% of turns corpus-wide. Context compactions, where a context above 500K tokens returns below 30K, occur on 0.03% of turns. These are expected production pressures alongside sub-agent divergence and cache eviction under load. In the load benchmarks, measured reuse is governed by the admitted request distribution and cache churn, so routing on a single session-level prefix is insufficient.
 
-## Deployment architecture
-
-### The model
-
-GLM-5.2 is a 744B-parameter mixture-of-experts model with 39B active parameters and 78 layers. Each token uses only a subset of its experts, but the full FP8 weight set still has to be distributed across GPUs. Multi-head Latent Attention reduces the KV state stored for each token, and the model's multi-token prediction head drafts up to three additional tokens per decode step. Those properties shape the deployment: expert parallelism makes room for the KV cache, data parallelism avoids duplicating it, and MTP accelerates the short output bursts common in agentic traffic.
+## How the deployment is organized
 
 The deployment has three jobs: keep repository-scale contexts in memory, reuse them on the next turn, and prevent long prefills from interrupting requests that are already streaming.
 
-The measured software stack is open source and runs on Kubernetes. The deployment uses CoreWeave CKS with InfiniBand:
+Four llm-d capabilities divide that work. Wide expert parallelism makes room for the KV cache. Locality- and load-aware routing sends each turn to the right replica. CPU memory holds prefixes that no longer fit in HBM. Separate prefill and decode pools keep reading and generation from competing for the same GPUs. MTP can then reduce the number of decode steps.
 
-| **Layer** | **Component** | **Role** |
-| :---- | :---- | :---- |
-| Model server | vLLM | FP8 inference, MLA KV cache, agentic parsers |
-| Routing | llm-d EPP | prefix-cache-aware routing, P/D scheduling |
-| KV transfer | NIXL | NIXL KV movement between prefill and decode; deployment network: InfiniBand |
-| Tiered prefix cache | CPU DRAM cache + NVMe storage evictor | CPU-backed KV capacity below HBM; NVMe provisioned but inactive in these measurements |
-| MoE compute | DeepEP + deep_gemm | expert parallelism across GPUs |
-| Attention | FlashMLA Sparse | attention backend |
-| Multi-node pods | LeaderWorkerSet | keeps the pods in each multi-node replica together so Kubernetes manages them as one unit |
-| Benchmarking | AIPerf | load sweeps against the gateway |
-
-The deployment combines four llm-d capabilities: wide expert parallelism, locality- and load-aware routing, a CPU-backed prefix cache, and separate prefill and decode pools. The topology chooses the number of prefill and decode instances. Configuration components enable CPU offloading, MTP, and longer context limits. Benchmarks run these disaggregated layouts on CoreWeave CKS with InfiniBand. Aggregate TP=8 appears only in the memory-profile check.
-
-Each request moves through the same stack. MLA and wide expert parallelism determine how much context fits in HBM. Routing and CPU memory determine whether a saved prefix can be reused. Separate prefill and decode pools handle reading and generation. MTP reduces decode steps, while the number of prefill instances sets how much concurrent input work the deployment can absorb.
+Each request follows the same path. MLA and wide expert parallelism determine how much context fits in HBM. Routing and CPU memory determine whether saved context can be reused. The prefill pool reads the context, the decode pool generates the response, and MTP accelerates generation.
 
 ### Topology notation
 
@@ -141,19 +127,17 @@ Each request moves through the same stack. MLA and wide expert parallelism deter
   Measured prefill and decode topologies and their naming.
 </Figure>
 
-Topology names describe two choices: the number of instances and the width of each instance. xPyD means x prefill instances and y decode instances. DEP16 means TP=1 and DP=16 with expert parallelism enabled, so each instance spans 16 GPUs. DEP8 uses the same layout with DP=8 and spans 8 GPUs.
+Topology names describe the number and width of the serving instances. `xPyD` means `x` prefill instances and `y` decode instances. `DEP16` means `TP=1`, `DP=16`, and expert parallelism across 16 GPUs. `DEP8` uses the same layout across eight GPUs. The benchmark sections state the GPU total when it matters.
 
-The full-input-length sweep uses DEP16 throughout and scales both pools. 1P1D uses 32 GPUs, 2P2D and 3P1D each use 64, and 3P2D uses 80. The two 64-GPU layouts spend the same budget differently: 2P2D adds decode capacity, while 3P1D adds prefill capacity. Comparing 3P1D with 3P2D isolates the effect of adding a decoder.
+### What the performance results cover
 
-The limited-input-length sweep changes instance width before adding another instance. A DEP8/DEP8 1P1D layout uses 16 GPUs. Widening only the decoder to DEP16 uses 24; widening prefill too uses 32. Adding a second DEP16 prefill instance produces the 48-GPU 2P1D layout. The paused-conversation test uses another 32-GPU 2P1D layout: two DEP8 prefill instances and one DEP16 decoder. The name counts instances; the widths determine the GPU total.
+The performance tests use requests derived from the production traces, not the complete corpus unchanged. Limited-input-length runs admit requests below 142,000 tokens; full-input-length runs admit longer contexts. Corpus statistics describe the full production workload, while performance results describe the requests admitted by each test. Absolute throughput is comparable only within the same test.
 
-### Benchmark scope
+:::note Deployment and benchmark details
 
-Each benchmark admits only requests below its admission cap. The limited-input-length runs filter the trace at 142,000 tokens; the full-input-length runs admit longer contexts. The server sets max-model-len automatically in both, with GPU-memory utilization at 93.5% for prefill and 95% for decode. Corpus statistics describe the full production workload; performance results describe the trace-derived requests admitted by each test. In AIPerf, concurrency is the number of simulated clients, each keeping one request active. tok/s/user is throughput per simulated client, not per person or full agent task.
+The [appendix](#appendix-deployment-and-benchmark-details) lists the full model configuration, software stack, measured topologies, and settings for each benchmark.
 
-Each test answers a different question. The load sweep increases concurrency with completions near the corpus median, about 317 output tokens. The offload A/B holds matched 16- and 32-GPU topologies constant and switches CPU offloading on or off. The paused-conversation run uses shorter completions and production-measured pauses across 100–400 ongoing conversations.
-
-The cache-limit test isolates restore versus recompute. The dedicated offloading width sweep varies DEP16 prefill count with one fixed DEP16 decoder. The limited-input-length sizing sweep widens decode and then prefill with MTP and CPU offloading enabled. The full-input-length sweep varies DEP16 prefill and decode replica count. Compare absolute tok/s only within the same test. End-to-end turn completion covers queueing, processing, and generation from request submission through the final output token.
+:::
 
 ## Fitting repository-scale sessions in memory
 
@@ -496,3 +480,44 @@ The Agentic Inference SIG develops this work in the open. Join [#sig-agentic-inf
 * Explore the code → [GitHub organization](https://github.com/llm-d)
 
 * Attend meetings → all open; add our [public calendar](/community#public-meeting-calendar)
+
+<!-- reading-time-exclude:start -->
+## Appendix: Deployment and benchmark details
+
+### Model and software stack
+
+GLM-5.2 is a 744B-parameter mixture-of-experts model with 39B active parameters and 78 layers. Each token uses only a subset of its experts, but the full FP8 weight set still has to be distributed across GPUs. Multi-head Latent Attention reduces the KV state stored for each token, and the model's multi-token prediction head drafts up to three additional tokens per decode step.
+
+The measured deployment runs on Kubernetes and uses CoreWeave CKS with InfiniBand:
+
+| **Layer** | **Component** | **Role** |
+| :---- | :---- | :---- |
+| Model server | vLLM | FP8 inference, MLA KV cache, agentic parsers |
+| Routing | llm-d EPP | Prefix-cache-aware routing and P/D scheduling |
+| KV transfer | NIXL | KV movement between prefill and decode over InfiniBand |
+| Tiered prefix cache | CPU DRAM cache + NVMe storage evictor | CPU-backed KV capacity below HBM; NVMe is provisioned but inactive in these measurements |
+| MoE compute | DeepEP + deep_gemm | Expert parallelism across GPUs |
+| Attention | FlashMLA Sparse | Attention backend |
+| Multi-node pods | LeaderWorkerSet | Manages each multi-node replica as one Kubernetes unit |
+| Benchmarking | AIPerf | Load sweeps against the gateway |
+
+The measured benchmarks use disaggregated prefill and decode layouts. Aggregate `TP=8` appears only in the memory-profile comparison.
+
+### Topology inventory
+
+The full-input-length sweep uses `DEP16` throughout and scales both pools. `1P1D` uses 32 GPUs, `2P2D` and `3P1D` each use 64, and `3P2D` uses 80. The two 64-GPU layouts spend the same hardware budget differently: `2P2D` adds decode capacity, while `3P1D` adds prefill capacity. Comparing `3P1D` with `3P2D` isolates the effect of adding a decoder.
+
+The limited-input-length sweep changes instance width before adding another instance. A `DEP8/DEP8` `1P1D` layout uses 16 GPUs. Widening only the decoder to `DEP16` uses 24 GPUs; widening prefill too uses 32. Adding a second `DEP16` prefill instance produces the 48-GPU `2P1D` layout.
+
+The paused-conversation test uses another 32-GPU `2P1D` layout: two `DEP8` prefill instances and one `DEP16` decoder. The topology name counts instances; their widths determine the GPU total.
+
+### Benchmark setup
+
+Each benchmark admits only requests below its admission limit. The limited-input-length runs filter the trace at 142,000 tokens; the full-input-length runs admit longer contexts. The server sets `max-model-len` automatically in both, with GPU-memory utilization at 93.5% for prefill and 95% for decode.
+
+In AIPerf, concurrency is the number of simulated clients, each keeping one request active. `tok/s/user` is throughput per simulated client, not per person or complete agent task. End-to-end turn completion covers queueing, processing, and generation from request submission through the final output token.
+
+The load sweep increases concurrency with completions near the corpus median of about 317 output tokens. The offloading A/B keeps matched 16- and 32-GPU topologies fixed and switches CPU offloading on or off. The paused-conversation test uses shorter completions and production-measured pauses across 100-400 ongoing conversations.
+
+The cache-limit test isolates restore versus recompute. The offloading width sweep changes the number of `DEP16` prefill instances while keeping one `DEP16` decoder fixed. The limited-input-length sizing sweep widens decode and then prefill with MTP and CPU offloading enabled. The full-input-length sweep changes the number of `DEP16` prefill and decode instances. Absolute throughput should be compared only within the same test.
+<!-- reading-time-exclude:end -->
