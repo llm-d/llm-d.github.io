@@ -12,7 +12,7 @@ authors:
   - rajjoshi
   - carloscosta
 
-tags: [agentic-inference, kv-cache, storage, scheduling, speculative-decoding]
+tags: [glm-5-2, agentic-inference, kv-cache, storage, scheduling, speculative-decoding]
 ---
 
 export const Figure = ({src, alt, children, size = 'standard'}) => (
@@ -30,7 +30,7 @@ llm-d's [well-lit paths](https://github.com/llm-d/llm-d/tree/main/guides) are te
 
 GLM-5.2 is a 744B-parameter (39B active) mixture-of-experts model with 78 layers. Its Multi-head Latent Attention (MLA) stores one compressed latent instead of separate KV heads, so tensor parallelism cannot shard it: `TP=8` keeps eight copies of the KV cache. Tensor-parallel all-reduce is also expensive across nodes: every layer performs the column-parallel, row-parallel, and all-reduce sequence twice. llm-d's Wide-EP path avoids both costs with data-parallel attention and expert-parallel MoE, making the KV budget viable for long-context agentic serving.
 
-At a measured output rate of roughly 37-41 tokens per second per user, a 64-GPU llm-d deployment works out to $0.05 per million input tokens and $3.55 per million output tokens at an H200 rental rate of $2.71 per GPU-hour. Z.ai's public GLM-5.2 row lists $1.40 input and $4.40 output; Claude Opus 4.8 lists $5 input and $25 output. These figures assume sustained load and assign prefill rental to input and decode rental to output. They are not production TCO or API-equivalent pricing.
+At a measured output rate of roughly 37-41 tokens per second per user, a 64-GPU llm-d deployment works out to $0.05 per million input tokens and $3.55 per million output tokens at an H200 rental rate of $2.71 per GPU-hour. Z.ai's public GLM-5.2 row lists $1.40 input and $4.40 output; Claude Opus 4.8 lists $5 input and $25 output. These figures assume sustained load and assign prefill rental to input and decode rental to output.
 
 <!-- truncate -->
 
@@ -54,7 +54,7 @@ At a measured output rate of roughly 37-41 tokens per second per user, a 64-GPU 
 
 ## The shape of agentic traffic
 
-A coding agent's turn is mostly reading: a repository-scale context in, a tool call or a short diff out, then the whole context again next turn, slightly longer. The [Weka trace corpus](https://huggingface.co/datasets/semianalysisai/cc-traces-weka-with-subagents-051926) published by SemiAnalysis contains 219 production Claude Code sessions and 78,099 model requests. Each session captures interactive repository work: a main agent grows and reuses a working context across tool calls, pauses while tools run, and delegates work to Task-tool sub-agents that execute concurrently. The corpus preserves request timing, input and output lengths, per-request KV-block hashes, and the original sub-agent fan-out. It does not publish prompts or repository identities, so it characterizes the serving workload rather than the underlying coding-task categories.
+A coding agent's turn is mostly reading: a repository-scale context in, a tool call or a short diff out, then the whole context again next turn, slightly longer. The [Weka trace corpus](https://huggingface.co/datasets/semianalysisai/cc-traces-weka-with-subagents-051926) published by SemiAnalysis contains 219 production Claude Code sessions and 78,099 model requests. Each session captures interactive repository work: a main agent grows and reuses a working context across tool calls, pauses while tools run, and delegates work to Task-tool sub-agents that execute concurrently. The corpus preserves request timing, input and output lengths, per-request KV-block hashes, and the original sub-agent fan-out.
 
 Read the percentiles across each row, not down the column: the p90 input length and p90 pause do not belong to the same request or session. The wall-clock gap is the time between main-agent calls, not generation latency. Input-length growth is the increase from the previous main-agent turn, not a cache miss.
 
@@ -67,7 +67,7 @@ Read the percentiles across each row, not down the column: the p90 input length 
 | Turns per session | 107 | 354 | 992 |
 
 :::note
-Input and output counts use different tokenizers. The corpus uses o200k for input because those tokens determine the per-request KV block hashes; output counts come directly from Anthropic's API. The 195K-to-317 ratio therefore mixes units. We do not report an input-to-output ratio because Anthropic's production tokenizer is not public and this study did not calibrate the two tokenizers.
+Input and output counts use different tokenizers. The corpus uses o200k for input because those tokens determine the per-request KV block hashes; output counts come directly from Anthropic's API. The 195K-to-317 ratio therefore mixes units.
 :::
 
 <Figure
@@ -175,7 +175,7 @@ KV is allocated in 64-token blocks. Full-input-length runs set gpu-memory-utiliz
 
 **Wide expert parallelism spreads model weights across GPUs, leaving more memory for KV.**
 
-In the full-input-length runs, KV uses about 40-41 GiB on each prefill GPU and 45 GiB on each decode GPU. At TP=1, each GPU holds about 65 GiB of weights. The rest of HBM is used by the runtime and communication buffers.
+In the full-input-length runs, KV uses about 40-41 GiB on each prefill GPU and 45 GiB on each decode GPU. At TP=1, each GPU holds about 65 GiB of weights.
 
 The [guide's default layouts](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/glm-5-2-h200.md) use single-node DEP8 prefill instances and a two-node DEP16 decode pool, with LeaderWorkerSets and DP-aware scheduling. The measured 3P1D reference uses two-node DEP16 prefill instances. DeepEP sends tokens to the GPUs holding their experts over NVLink and InfiniBand, and deep_gemm runs the expert computation.
 
@@ -186,7 +186,7 @@ Width determines how much KV remains on each rank. In the limited-input-length s
   alt="Logical tokens in active requests from concurrency 16 through 128"
   size="compact"
 >
-  Logical tokens in active requests rise from 1.45M at c16 to 3.35M at c32, 7.09M at c64, and 14.09M at c128 on the 64-GPU 3P1D full-input-length run. The metric excludes idle cached prefixes and is not physical KV occupancy.
+  Logical tokens in active requests rise from 1.45M at c16 to 3.35M at c32, 7.09M at c64, and 14.09M at c128 on the 64-GPU 3P1D full-input-length run.
 </Figure>
 
 <Figure
@@ -197,7 +197,7 @@ Width determines how much KV remains on each rank. In the limited-input-length s
   Per-GPU HBM accounting by topology. Total device memory is measured; weights and KV allocation come from the serving configuration, and the remainder groups runtime and communication allocations.
 </Figure>
 
-The aggregate TP=8 topology fits in one node and avoids the wide-EP communication buffers, but it gives up KV capacity. The memory profile below is a configuration check, not an agentic-workload benchmark.
+The aggregate TP=8 topology fits in one node and avoids the wide-EP communication buffers, but it gives up KV capacity.
 
 With decode-context parallelism disabled, vLLM copies the same MLA cache onto all eight ranks: 598K logical tokens with a 25 GiB copy per rank, or roughly 200 GiB of physical KV per node. Expert weights use 89.5 GiB per GPU, versus 65.1 GiB in the wide layout.
 
@@ -294,7 +294,7 @@ With CPU offloading, a miss takes about 59 ms to restore, and median time to fir
 
 Across the run, engine counters record 12.7 TB of KV, or 283M tokens, restored at 26 ms per GB. At concurrency 128, the CPU cache restores KV at 22.7 GB/s while the topology processes 474K prompt tokens per second.
 
-The cache restores 222M tokens while serving 217M prompt tokens. That ratio exceeds 100% because the limited GPU cache can evict a block that was just restored, forcing it to be loaded again. Median time to first token remains 8.3s, but the churn suggests that a retention policy better than LRU could reduce data movement.
+The cache restores 222M tokens while serving 217M prompt tokens. That ratio exceeds 100% because the limited GPU cache can evict a block that was just restored, forcing it to be loaded again. The churn suggests that a retention policy better than LRU could reduce data movement.
 
 ### Adding prefill capacity
 

@@ -104,6 +104,11 @@ agentic-inference:
   permalink: /agentic-inference
   description: Inference serving and optimization for agentic workloads
 
+glm-5-2:
+  label: GLM-5.2
+  permalink: /glm-5-2
+  description: Serving and optimization for GLM-5.2
+
 speculative-decoding:
   label: Speculative Decoding
   permalink: /speculative-decoding
