@@ -1,0 +1,133 @@
+---
+title: "Scaling Vision-Heavy Kimi-VL with Heterogeneous E/PD on llm-d and SGLang"
+description: "Benchmarking Kimi-VL-A3B-Instruct with four Intel B60 encoder workers and one NVIDIA H200 prefill/decode worker, delivering 2.4-2.8x higher throughput and 65-75% lower TTFT than collocated serving."
+slug: scaling-vision-heavy-kimi-vl-with-heterogeneous-epd
+date: 2026-07-30T09:00
+
+authors:
+  - xiaojunzhang
+
+tags: [blog, inference, multimodal, disaggregation, sglang]
+---
+
+# Scaling Vision-Heavy Kimi-VL with Heterogeneous E/PD on llm-d and SGLang
+
+Vision-language model (VLM) inference involves several stages: vision encoding, language-model prefill, and language-model decode. Each stage has different compute and memory characteristics, making heterogeneous disaggregation a natural fit. It lets operators assign each stage to hardware suited to its requirements instead of sizing every stage around the same accelerator.
+
+In this post, we evaluate a vision-heavy Kimi-VL workload on llm-d and SGLang. We move vision encoding to four Intel B60 GPUs while keeping prefill and decode on one NVIDIA H200 GPU. Compared with collocated serving on the H200, this heterogeneous E/PD deployment delivers 2.4-2.8x higher throughput and reduces mean time to first token (TTFT) by roughly 65-75% under load.
+
+<!-- truncate -->
+
+## Context and Prior Work
+
+[llm-d](https://github.com/llm-d/llm-d) is an inference orchestration stack for Kubernetes that supports inference engines including SGLang and vLLM. Encoder/prefill/decode (E/P/D) disaggregation separates VLM inference into independently deployable stages. In an E/PD topology, encoding runs on dedicated workers while prefill and decode remain together. llm-d has supported E/PD and E/P/D disaggregation since version 0.8.1.
+
+Previous SGLang E/PD testing demonstrated throughput and TTFT improvements. This experiment extends that work to a heterogeneous hardware configuration, with a focus on whether lower-cost accelerators can remove a vision-encoding bottleneck while preserving scarce high-end GPU capacity for prefill and decode.
+
+## Architecture Overview
+
+The following sequence shows the request path for heterogeneous E/PD serving with llm-d and SGLang.
+
+![Sequence diagram showing a multimodal request routed by llm-d to an SGLang prefill/decode worker, which dispatches media to Intel XPU encode workers](/img/blogs/kimi-vl-heterogeneous-epd/figure1-request-flow.png)
+
+*Figure 1: Request flow for heterogeneous SGLang E/PD serving. llm-d selects the prefill/decode endpoint; SGLang owns encoder dispatch and embedding transfer.*
+
+The components have the following responsibilities:
+
+- **Client:** Sends an OpenAI-compatible multimodal request containing text and images. The client does not need to know whether encoding is collocated or disaggregated.
+- **Gateway / Envoy:** Receives the request, asks the llm-d Endpoint Picker (EPP) to select a prefill/decode worker, and forwards the original request to that endpoint.
+- **llm-d Router EPP:** Selects the prefill/decode worker using routing signals such as queue depth and KV-cache utilization. It does not select or manage the SGLang encode workers.
+- **SGLang prefill/decode worker:** Runs in language-only mode on the NVIDIA GPU. It identifies media in the request, dispatches the media to configured encoder URLs, receives embeddings, and runs prefill and decode.
+- **SGLang encode workers:** Run in encoder-only mode on Intel XPUs. They process media shards and return visual embeddings through SGLang's `zmq_to_scheduler` transfer path.
+
+This differs from llm-d's E-disaggregation integration with vLLM, where the llm-d router selects both the prefill/decode endpoint and the encode endpoint. In the current SGLang integration, llm-d selects only the prefill/decode endpoint, and SGLang manages the encode-worker pool.
+
+## Test Configuration
+
+| Category | Configuration |
+| :---- | :---- |
+| Hardware | 1x NVIDIA H200 GPU (141 GB), 4x Intel B60 GPUs (24 GB each) |
+| Model | `moonshotai/Kimi-VL-A3B-Instruct`, 16B total parameters, 2.8B active parameters |
+| Dataset | Random multimodal dataset |
+| Input | 128 random text tokens and four 1080p images per request |
+| Output | 128 random output tokens |
+| Offered request rate | 0.2-2.0 requests per second |
+| Maximum concurrency | 8 |
+
+We compared two deployment topologies:
+
+- **Collocated baseline:** One llm-d model server runs SGLang on one H200, with encoding, prefill, and decode all on the same GPU.
+- **4E1PD:** One llm-d model server runs the SGLang prefill/decode worker on one H200. Four additional llm-d model servers each run one SGLang encode worker on an Intel B60.
+
+![Deployment diagram showing llm-d routing to one NVIDIA H200 prefill/decode worker connected to four Intel B60 encode workers](/img/blogs/kimi-vl-heterogeneous-epd/figure2-deployment.png)
+
+*Figure 2: The 4E1PD test environment uses one H200 for prefill/decode and four Intel B60 GPUs for encoding.*
+
+:::note Benchmark scope
+
+These results cover one model, one vision-heavy synthetic workload, and the hardware topology above. They demonstrate the effect of moving encoding off the prefill/decode GPU; they are not a general comparison of accelerator platforms.
+
+:::
+
+## How to Reproduce
+
+1. Follow the [aggregated multimodal serving guide](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/aggregation) as the deployment pattern for the collocated baseline, modifying the manifests to run SGLang with `Kimi-VL-A3B-Instruct`.
+2. Follow the [heterogeneous SGLang E/PD guide](https://github.com/xiaojun-zhang/llm-d/blob/sglang-heterogeneous-e-pd/guides/multimodal-serving/e-disaggregation/heterogeneous/sglang/README.md) to deploy four encode workers and one prefill/decode worker. This guide is currently proposed in [llm-d PR #2113](https://github.com/llm-d/llm-d/pull/2113).
+3. Run the following SGLang benchmark against both deployments. Set `IP` to the proxy address from the guide and vary `rate` from 0.2 to 2.0.
+
+```bash
+python3 -m sglang.bench_serving \
+  --served-model-name moonshotai/Kimi-VL-A3B-Instruct \
+  --backend sglang-oai-chat \
+  --host "${IP}" \
+  --ready-check-timeout-sec 0 \
+  --dataset-name image \
+  --num-prompts 128 \
+  --random-input-len 128 \
+  --random-output-len 128 \
+  --image-count 4 \
+  --image-resolution 1080p \
+  --request-rate "${rate}" \
+  --apply-chat-template \
+  --seed 0 \
+  --disable-tqdm \
+  --max-concurrency 8
+```
+
+## Results
+
+### Throughput
+
+![Throughput comparison between collocated serving and the heterogeneous 4E1PD deployment across request rates](/img/blogs/kimi-vl-heterogeneous-epd/figure3-throughput.png)
+
+*Figure 3: Actual request throughput as the offered request rate increases.*
+
+The collocated deployment saturates at approximately 0.31-0.33 requests per second. The 4E1PD deployment sustains approximately 0.79-0.89 requests per second at higher offered rates, providing 2.4-2.8x higher throughput.
+
+### Time to First Token
+
+![Mean time to first token comparison between collocated serving and the heterogeneous 4E1PD deployment](/img/blogs/kimi-vl-heterogeneous-epd/figure4-mean-ttft.png)
+
+*Figure 4: Mean TTFT across offered request rates.*
+
+Under load, mean TTFT for the collocated deployment remains around 10-12 seconds. The 4E1PD deployment remains mostly around 3-4 seconds, a reduction of roughly 65-75%.
+
+### Time per Output Token
+
+![Mean time per output token comparison between collocated serving and the heterogeneous 4E1PD deployment](/img/blogs/kimi-vl-heterogeneous-epd/figure5-mean-tpot.png)
+
+*Figure 5: Mean time per output token (TPOT) across offered request rates.*
+
+Mean TPOT also improves. Under load, the collocated deployment ranges from approximately 160-216 ms per token, while 4E1PD remains mostly around 75-100 ms per token.
+
+## Performance and Cost-Efficiency Analysis
+
+All three measured metrics improve substantially because the heterogeneous topology removes vision encoding from the H200's critical path. The H200 can focus on language-model prefill and decode while the four Intel B60 workers process images in parallel.
+
+The result is a strong cost-efficiency gain for this workload. Adding lower-cost encode workers around one high-end prefill/decode GPU increases request capacity from approximately 0.31-0.33 requests per second to 0.8-0.9 requests per second while reducing mean TTFT from approximately 10-12 seconds to 3-4 seconds under load. This provides a way to scale vision-heavy serving without adding another high-end GPU to every replica.
+
+## Conclusion and Future Work
+
+This experiment shows that heterogeneous E/PD can improve both serving performance and cost efficiency for a vision-heavy VLM workload. It also illustrates a broader opportunity: lower-cost accelerators can contribute effectively to an inference system when a stage's compute and memory profile matches their capabilities.
+
+Our team at Intel is testing more models and workloads. We are also working toward automated evaluation of disaggregation strategies, with the goal of selecting configurations that maximize performance while limiting cost increases. We look forward to sharing those findings in future posts.

@@ -138,3 +138,18 @@ ucx:
   label: UCX
   permalink: /ucx
   description: Unified Communication X (UCX) backend
+
+multimodal:
+  label: Multimodal
+  permalink: /multimodal
+  description: Multimodal model serving and optimization
+
+disaggregation:
+  label: Disaggregation
+  permalink: /disaggregation
+  description: Disaggregated inference serving
+
+sglang:
+  label: SGLang
+  permalink: /sglang
+  description: SGLang inference engine integration and performance
