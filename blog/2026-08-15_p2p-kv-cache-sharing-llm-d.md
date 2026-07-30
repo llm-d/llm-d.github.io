@@ -68,7 +68,14 @@ The transfer itself is best-effort. The consumer sends the producer the block ha
 
 ## How llm-d Decides When to Pull
 
-llm-d's scheduler already estimates, for every request, how much of the prompt's prefix each candidate pod has cached - the same signal that powers prefix-aware routing. P2P adds one decision on top: it compares the best-cached pod against the pod that will actually compute the prefix, and when that peer holds enough more of the prefix to be worth a transfer, it marks the request - through a header the routing sidecar reads - to pull the missing blocks from that peer.
+The EPP can build a request-time view of cached prefixes in two ways: the
+approximate index infers ownership from routing history, while the precise
+index tracks block placement from vLLM KV events. That view is the same input
+prefix-aware routing uses to score candidate pods. P2P adds one decision on
+top: compare the best-cached pod with the pod that will actually compute the
+prefix, and when the peer holds enough more cached tokens to justify a
+transfer, mark the request - through a header the routing sidecar reads - to
+pull the missing blocks from that peer.
 
 This is a small, opt-in scheduling step, off by default. Because it reuses the existing prefix-cache signal, the measured deployments in this post all drive it from the precise (KV-event-fed) index - and it composes with P/D disaggregation: a prefill worker can pull a cached prefix from a peer, compute only the remainder, and still serve its own blocks to the decoder. Without disaggregation, the decode pod pulls the prefix directly. A tie or a self-match never triggers a pull - there is nothing to gain - and deployments that leave the feature off are unaffected.
 
@@ -131,6 +138,11 @@ testbed:
 | p90 TTFT | 21.3 s | 5.0 s | **-77%** |
 | Throughput | 3.8 req/s | 10.1 req/s | **2.7x** |
 
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/p2p-kv-cache/wide-ep-load-spill.png" alt="Three comparisons on GLM-5.2 wide-EP under identical load-first placement: P2P reduces mean TTFT from 7.85 to 2.56 seconds, reduces p90 TTFT from 21.3 to 5.0 seconds, and increases throughput from 3.8 to 10.1 requests per second" style={{width: '100%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Same model, workload, and load-first placement; adding the pull converts spill recomputation into a bounded transfer.</em></p>
+</div>
+
 The placement policy deliberately spills work away from the cache holder.
 Without P2P, the selected worker recomputes a 70K-token prefix. With P2P, the
 prefix follows the request. The detailed result and its precise-affinity null
@@ -167,7 +179,7 @@ gpt-oss-120b, 5-rep medians:
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/p2p-kv-cache/crossover-gptoss.png" alt="Line chart: prefill latency versus prefix length for recompute and P2P pull on gpt-oss-120b; the pull is lower at every length" style={{width: '100%', height: 'auto'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Single-request prefill latency, recompute versus P2P pull, gpt-oss-120b. The pull's latency grows far slower than recompute's; the gap reaches -88% at 48K tokens. Figure shows an earlier sweep; the table above is the canonical fixed-stack measurement.</em>{/* TODO: re-render crossover-gptoss.png from the fixed-stack sweep */}</p>
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Canonical fixed-stack measurement: the pull's latency grows far slower than recompute's, and the gap reaches -88% at 48K tokens.</em></p>
 </div>
 
 The same sweep on the 753B wide-EP testbed (`GLM-5.2-FP8`, ~93 KB of KV
@@ -223,8 +235,8 @@ against cold, 8.0x and +112% - and the baseline's cold rows carry 47
 client timeouts where the load-aware arm carries none.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/p2p-kv-cache/docqa.png" alt="Bar charts: document Q&A TTFT percentiles and throughput across two order-alternated runs; medians equal, Load + P2P p99 21-27 s versus 37-81 s for the Guide baseline, throughput up to +17%" style={{width: '100%', height: 'auto'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>192 documents x 48K tokens, 6 Q&A turns each, 128 concurrent. Medians are equal; the arms separate on tails and on cold-start behavior. Figure shows an earlier run of this scenario; the table above is the canonical fixed-stack measurement.</em>{/* TODO: re-render docqa.png from the fixed-stack rerun */}</p>
+  <img src="/img/blogs/p2p-kv-cache/docqa.png" alt="Three document-Q&A comparisons across precise routing and load-aware plus P2P, cold and warm: median TTFT stays near 3 to 4 seconds, p99 tail latency falls sharply with load-aware plus P2P, and throughput rises to 6.86 and 7.54 turns per second" style={{width: '100%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Canonical 16-pod fixed-stack result. Medians stay equal; the policies separate on tail latency, throughput, and cold-start timeouts.</em></p>
 </div>
 
 **Why.** Medians are equal - a session answering from its warm cache is
