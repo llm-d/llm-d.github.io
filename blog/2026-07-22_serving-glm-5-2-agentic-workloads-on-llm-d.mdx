@@ -26,7 +26,9 @@ export const Figure = ({src, alt, children, size = 'standard'}) => (
 
 # Serving GLM-5.2 for Agentic Workloads on llm-d
 
-llm-d's [well-lit paths](https://github.com/llm-d/llm-d/tree/main/guides) are tested, benchmarked recipes for serving large language models in production. The [agentic-serving path](https://github.com/llm-d/llm-d/blob/main/docs/well-lit-paths/workloads/agentic-serving.md) starts with the workload and combines the capabilities it needs into a deployment for each accelerator. This post applies that pattern to GLM-5.2-FP8 on H200, using the 219 production Claude Code sessions in SemiAnalysis's Weka trace corpus.
+llm-d's [well-lit paths](https://github.com/llm-d/llm-d/tree/main/guides) are tested, benchmarked recipes for serving large language models in production. The [agentic-serving path](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/glm-5-2-h200.md) starts with the workload and combines the capabilities it needs into a deployment for each accelerator. This post applies that pattern to GLM-5.2-FP8 on H200, using the 219 production Claude Code sessions in SemiAnalysis's Weka trace corpus.
+
+GLM-5.2 is a 744B-parameter (39B active) mixture-of-experts model with 78 layers. Its Multi-head Latent Attention (MLA) stores one compressed latent instead of separate KV heads, so tensor parallelism cannot shard it: `TP=8` keeps eight copies of the KV cache. Tensor-parallel all-reduce is also expensive across nodes: every layer performs the column-parallel, row-parallel, and all-reduce sequence twice. llm-d's Wide-EP path avoids both costs with data-parallel attention and expert-parallel MoE, making the KV budget viable for long-context agentic serving.
 
 At a measured output rate of roughly 37-41 tokens per second per user, a 64-GPU llm-d deployment works out to $0.05 per million input tokens and $3.55 per million output tokens at an H200 rental rate of $2.71 per GPU-hour. Z.ai's public GLM-5.2 row lists $1.40 input and $4.40 output; Claude Opus 4.8 lists $5 input and $25 output. These figures assume sustained load and assign prefill rental to input and decode rental to output. They are not production TCO or API-equivalent pricing.
 
@@ -48,7 +50,7 @@ At a measured output rate of roughly 37-41 tokens per second per user, a 64-GPU 
 
 * **At sustained load, measured GPU rental is below Z.ai's public GLM-5.2 price.** The two 64-GPU layouts work out to $0.05-$0.08 per million input tokens and $1.92-$3.55 per million output tokens, versus $1.40 and $4.40. These figures cover GPU rental only, not the full cost of operating an API service.
 
-* **Run it.** The [agentic-serving guides](https://github.com/llm-d/llm-d/tree/main/guides/agentic-serving) provide the serving pattern and composable MTP, CPU-offloading, and context-length components.
+* **Run it.** The [GLM-5.2 H200 guide](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/glm-5-2-h200.md) provides the serving pattern and composable MTP, CPU-offloading, and context-length components.
 
 ## The shape of agentic traffic
 
@@ -106,7 +108,7 @@ Prefix resets, where a turn shares less than half its input with any of its prev
 
 ### The model
 
-GLM-5.2 is a 753-billion-parameter mixture-of-experts model with 78 layers. Each token uses only a subset of its experts, but the full FP8 weight set still has to be distributed across GPUs. Multi-head Latent Attention reduces the KV state stored for each token, and the model's multi-token prediction head drafts up to three additional tokens per decode step. Those properties shape the deployment: expert parallelism makes room for the KV cache, while MTP accelerates the short output bursts common in agentic traffic.
+GLM-5.2 is a 744B-parameter mixture-of-experts model with 39B active parameters and 78 layers. Each token uses only a subset of its experts, but the full FP8 weight set still has to be distributed across GPUs. Multi-head Latent Attention reduces the KV state stored for each token, and the model's multi-token prediction head drafts up to three additional tokens per decode step. Those properties shape the deployment: expert parallelism makes room for the KV cache, data parallelism avoids duplicating it, and MTP accelerates the short output bursts common in agentic traffic.
 
 The deployment has three jobs: keep repository-scale contexts in memory, reuse them on the next turn, and prevent long prefills from interrupting requests that are already streaming.
 
@@ -155,7 +157,7 @@ The cache-limit test isolates restore versus recompute. The dedicated offloading
 
 **Multi-Head Latent Attention (MLA) keeps the KV cache small enough for repository-scale contexts.**
 
-GLM-5.2 stores about 44 KB of KV state per token. In the measured 64-GPU 3P1D layout, that gives about 47.2M prefill-cache tokens and 17.3M decode-cache tokens beside the 753B model's weights. It stores 576 FP8 elements per layer per token: a 512-element latent plus 64 RoPE elements. Across 78 layers, that is 0.045 GB per 1K tokens. A counterfactual with 64 KV heads and 256-dimensional keys and values would use about 57x more KV memory; eight KV heads at those dimensions would use about 7x more.
+GLM-5.2 stores about 44 KB of KV state per token. In the measured 64-GPU 3P1D layout, that gives about 47.2M prefill-cache tokens and 17.3M decode-cache tokens beside the model's weights. It stores 576 FP8 elements per layer per token: a 512-element latent plus 64 RoPE elements. Across 78 layers, that is 0.045 GB per 1K tokens. A counterfactual with 64 KV heads and 256-dimensional keys and values would use about 57x more KV memory; eight KV heads at those dimensions would use about 7x more.
 
 <Figure
   src="/img/blogs/glm52-agentic-serving/kv-footprint.png"
@@ -175,7 +177,7 @@ KV is allocated in 64-token blocks. Full-input-length runs set gpu-memory-utiliz
 
 In the full-input-length runs, KV uses about 40-41 GiB on each prefill GPU and 45 GiB on each decode GPU. At TP=1, each GPU holds about 65 GiB of weights. The rest of HBM is used by the runtime and communication buffers.
 
-The [guide’s default layouts](https://github.com/llm-d/llm-d/tree/main/guides/agentic-serving) use single-node DEP8 prefill instances and a two-node DEP16 decode pool, with LeaderWorkerSets and DP-aware scheduling. The measured 3P1D reference uses two-node DEP16 prefill instances. DeepEP sends tokens to the GPUs holding their experts over NVLink and InfiniBand, and deep_gemm runs the expert computation.
+The [guide's default layouts](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/glm-5-2-h200.md) use single-node DEP8 prefill instances and a two-node DEP16 decode pool, with LeaderWorkerSets and DP-aware scheduling. The measured 3P1D reference uses two-node DEP16 prefill instances. DeepEP sends tokens to the GPUs holding their experts over NVLink and InfiniBand, and deep_gemm runs the expert computation.
 
 Width determines how much KV remains on each rank. In the limited-input-length sweep, the DEP8 prefill rank holds about 182K KV tokens and DEP16 about 990K. The narrower layout therefore reaches the CPU-backed cache sooner.
 
@@ -471,9 +473,11 @@ Each optimization removes a different bottleneck. Wide expert parallelism makes 
 
 At high concurrency in the measured layouts, queueing on the fixed DEP16 decoder limits how much generation speed reaches each user. Adding decode capacity is the next sizing question.
 
-The agentic-serving cookbooks include [Nemotron-3-Ultra-550B on H200](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/nemotron-3-ultra-550b-h200.md), with P/D disaggregation and CPU KV offloading, and [Qwen3-Coder-480B on TPU v7](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/qwen3-coder-480b-tpu.md), with routing and CPU offloading. The GLM-5.2 H200 configuration follows the same agentic-serving pattern.
+The agentic-serving cookbooks include [Nemotron-3-Ultra-550B on H200](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/nemotron-3-ultra-550b-h200.md), with P/D disaggregation and CPU KV offloading, and [Qwen3-Coder-480B on TPU v7](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/qwen3-coder-480b-tpu.md), with routing and CPU offloading. The [GLM-5.2 H200 configuration](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/glm-5-2-h200.md) follows the same agentic-serving pattern.
 
 ## Where this goes next
+
+For GLM-5.2, KV capacity is the main deployment constraint. The cache hierarchy can extend beyond CPU DRAM and local NVMe to distributed DRAM and network storage. Each tier adds capacity but also restore latency, so it helps only while loading saved KV remains cheaper than recomputing it. The right boundary depends on the workload: active streams are latency-sensitive, while paused agent sessions can move state to a cheaper tier and restore it before work resumes. The deployment policy should choose the cheapest tier that still beats recomputation.
 
 The open problem is serving a complete agent program, not isolated requests. That means replaying think time, tool calls, sub-agent fan-out, and the dependency graph that connects them, then measuring how routing, prefix retention, and prefill/decode sizing affect the time a user waits for a result.
 
