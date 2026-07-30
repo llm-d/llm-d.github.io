@@ -111,7 +111,7 @@ Prefix resets, where a turn shares less than half its input with any of its prev
 
 ## How llm-d serves this workload
 
-MLA and wide expert parallelism make room for repository-scale contexts in HBM. KV-cache-aware routing sends each turn to a replica that can reuse its prefix while balancing load across the deployment. CPU memory keeps evicted prefixes available. The prefill pool reads the context, the decode pool generates the response, and MTP reduces the work needed to produce it.
+The serving path starts with the context: fit it in memory, keep it reusable across turns, then handle context processing and token generation separately. MLA and wide expert parallelism make room in HBM. CPU offloading keeps prefixes available as HBM fills, and KV-cache-aware routing sends later turns back to them. MTP reduces decode work, while separate prefill and decode pools let long reads and token generation scale independently. The sections below follow that path, then show how to tune and scale those pools for this workload.
 
 ### Topology notation
 
