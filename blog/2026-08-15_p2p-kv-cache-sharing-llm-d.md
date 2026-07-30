@@ -5,7 +5,7 @@ title: "Move the KV, Not the Work: P2P Cache Sharing in llm-d"
 description: "When load balancing or serving topology separates a request from its cached prefix, llm-d can move the KV from a peer instead of recomputing it."
 slug: p2p-kv-cache-sharing-llm-d
 date: 2026-08-15T09:00
-draft: false  # TEMP for preview render - revert before merge
+draft: true
 
 authors:
   - niliguy
