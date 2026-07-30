@@ -55,7 +55,7 @@ The transfer itself is best-effort. The consumer sends the producer the block ha
 
 llm-d's scheduler already estimates, for every request, how much of the prompt's prefix each candidate pod has cached - the same signal that powers prefix-aware routing. P2P adds one decision on top: it compares the best-cached pod against the pod that will actually compute the prefix, and when that peer holds enough more of the prefix to be worth a transfer, it marks the request - through a header the routing sidecar reads - to pull the missing blocks from that peer.
 
-This is a small, opt-in scheduling step, off by default. Because it reuses the existing prefix-cache signal, it works with both prefix-aware routing modes - the source decision consumes the approximate index (hash-estimated, no KV events required) and the precise index (KV-event-fed) interchangeably - and composes with P/D disaggregation: a prefill worker can pull a cached prefix from a peer, compute only the remainder, and still serve its own blocks to the decoder. Without disaggregation, the decode pod pulls the prefix directly. A tie or a self-match never triggers a pull - there is nothing to gain - and deployments that leave the feature off are unaffected.
+This is a small, opt-in scheduling step, off by default. Because it reuses the existing prefix-cache signal, the measured deployments in this post all drive it from the precise (KV-event-fed) index - and it composes with P/D disaggregation: a prefill worker can pull a cached prefix from a peer, compute only the remainder, and still serve its own blocks to the decoder. Without disaggregation, the decode pod pulls the prefix directly. A tie or a self-match never triggers a pull - there is nothing to gain - and deployments that leave the feature off are unaffected.
 
 ## What This Enables
 
@@ -74,10 +74,11 @@ baseline: the aggregated and wide-EP comparisons swap only the EPP routing
 config, while the P/D ones add the P2P stack on top of the shipped guide.
 All runs pin the two fleet-wide prerequisites - identical `--block-size`
 and `PYTHONHASHSEED` (mismatched hashes silently degrade P2P to zero
-matches) - and run a CPU offload tier at least 2x the GPU KV cache, sized
-from the engine's reported KV capacity. The exact workload profiles and
-EPP configs for every run ship with the guide, so each result below is
-reproducible the same way the other llm-d guides' benchmarks are.
+matches) - and run a CPU offload tier sized around 2x the GPU KV cache (the
+gpt-oss rig runs 1.8x), from the engine's reported KV capacity. The
+workload profiles and EPP configs for the guide's scenarios ship with
+the guide; the Llama campaigns' exact configurations are archived in the
+measurement record rather than shipped.
 {/* Setup: kermit/CoreWeave, vLLM nightly + P2P connector branch +
 robustness fixes; full tables in the p2p-findings RESULTS.md. */}
 
@@ -100,15 +101,15 @@ gpt-oss-120b, 5-rep medians:
 
 | prefix tokens | recompute | P2P pull | delta |
 |---|---|---|---|
-| 2,048 | 71 ms | 49 ms | -31% |
-| 8,192 | 205 ms | 120 ms | -42% |
-| 16,384 | 426 ms | 196 ms | -54% |
-| 32,768 | 983 ms | 376 ms | -62% |
-| 49,152 | 1,695 ms | 551 ms | -68% |
+| 2,048 | 75 ms | 38 ms | -49% |
+| 8,192 | 243 ms | 59 ms | -76% |
+| 16,384 | 490 ms | 86 ms | -82% |
+| 32,768 | 1,154 ms | 165 ms | -86% |
+| 49,152 | 1,952 ms | 244 ms | -88% |
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/p2p-kv-cache/crossover-gptoss.png" alt="Line chart: prefill latency versus prefix length for recompute and P2P pull on gpt-oss-120b; the pull is lower at every length, 551 ms versus 1,695 ms at 48K tokens (-68%)" style={{width: '100%', height: 'auto'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Single-request prefill latency, recompute versus P2P pull, gpt-oss-120b. The pull's latency grows far slower than recompute's; the gap reaches -68% at 48K tokens.</em></p>
+  <img src="/img/blogs/p2p-kv-cache/crossover-gptoss.png" alt="Line chart: prefill latency versus prefix length for recompute and P2P pull on gpt-oss-120b; the pull is lower at every length" style={{width: '100%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Single-request prefill latency, recompute versus P2P pull, gpt-oss-120b. The pull's latency grows far slower than recompute's; the gap reaches -88% at 48K tokens. Figure shows an earlier sweep; the table above is the canonical fixed-stack measurement.</em>{/* TODO: re-render crossover-gptoss.png from the fixed-stack sweep */}</p>
 </div>
 
 The same sweep on the 753B wide-EP testbed (`GLM-5.2-FP8`, ~93 KB of KV
@@ -219,8 +220,12 @@ the pull arm keeps serving.
 ~5x one pod's cache) reproduces the shape at scale, and a later re-run on
 a rebuilt fleet with the upstream tier made it larger: **+143% sustained
 rate** over the recompute control at 24 req/s (21.9 versus 9.0 req/s) and
-+217% at 30, with median latency 63.4 s -> 0.70 s, on 120 pull sessions
-moving 210M prefix tokens.
++217% at 30, with median latency 63.4 s -> 0.70 s. Engagement evidence:
+120 reusable P2P sessions established, with 210M external-hit tokens
+served from the offload tier (a figure that includes local CPU restores
+alongside peer transfers). The arm comparisons on this testbed were
+measured before the router's prefix-index sizing fix; the guide carries
+the provenance caveat.
 
 **How big is "bigger than a pod's cache"?** The ratio decides everything,
 and the effect has a threshold. Sweeping 48K-token prefixes against a
@@ -426,10 +431,11 @@ with fabric contention and producer load, so production deployments
 should leave margin for network and load variance. The single-request sweeps earlier in this post price it for
 gpt-oss-120b and Llama-8B (both cross near or below 2K tokens, hence the
 2048 threshold on those testbeds) and for GLM-5.2 (tie at ~8.7K on the
-upstream tier, hence 12,288 there). For a new model, a two-point check on
-a live pod pair takes minutes and gives the same answer: time a warm pull
-and a fresh recompute at a small and a large size, and the pull's fixed
-overhead and both per-token rates fall out. On Qwen3-30B-A3B that check
+upstream tier, hence 12,288 there). For a new model, the guide ships a calibration recipe that runs the
+ladder against a live pod pair and prints the recommended value - gated
+so a length only qualifies when its pulls actually moved bytes and the
+no-pull control moved none (a faster timing with zero bytes is recompute
+measured twice). On Qwen3-30B-A3B that check
 gives a ~30 ms pull overhead, an 8K-token pull in 74 ms against ~1.2 s of
 recompute - a 16x advantage at that length - and a crossover near 760
 tokens, so the agentic testbed runs a 1024 threshold, and the pull's
@@ -471,7 +477,7 @@ the TP coupling from the stored blocks themselves.
 
 ## Summary and Next Steps
 
-P2P KV cache sharing turns llm-d's per-pod prefix caches into a fleet-wide resource. The EPP's existing per-request prefix knowledge picks the source, a single header carries the decision, and the connector moves the blocks peer to peer - best-effort, and off the request's failure path. It composes with prefix-aware routing (which minimizes how often a pull is needed), with P/D disaggregation (prefill workers pull prefixes too), and with the storage tier (which adds persistence and capacity beyond what peers hold).
+P2P KV cache sharing turns llm-d's per-pod prefix caches into a fleet-wide resource. The EPP's existing per-request prefix knowledge picks the source, a single header carries the decision, and the connector moves the blocks peer to peer - best-effort, with ordinary misses degrading to a recompute (the one known exception is described above). It composes with prefix-aware routing (which minimizes how often a pull is needed), with P/D disaggregation (prefill workers pull prefixes too), and with the storage tier (which adds persistence and capacity beyond what peers hold).
 
 The measurements give a simple rule for when to reach for it - and a
 slightly less simple one for which placement policy to pair it with. When
