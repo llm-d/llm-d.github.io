@@ -371,6 +371,12 @@ html:not([data-theme='dark']) .footer-socials img {
   color: #f4f4f4;
 }
 
+/* Keep full author titles visible without letting cards grow unbounded. */
+small[class*='authorTitle_'] {
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+}
+
 /* GLM-5.2 blog figures: size by information density, not source aspect ratio. */
 .glm-figure {
   width: 94%;
