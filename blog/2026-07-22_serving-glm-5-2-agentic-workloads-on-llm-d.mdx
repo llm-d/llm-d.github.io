@@ -109,13 +109,9 @@ One production session combines all three properties:
 
 Prefix resets, where a turn shares less than half its input with any of its previous eight main-agent turns, occur on 2.8% of turns corpus-wide. Context compactions, where a context above 500K tokens returns below 30K, occur on 0.03% of turns. These are expected production pressures alongside sub-agent divergence and cache eviction under load. In the load benchmarks, measured reuse is governed by the admitted request distribution and cache churn, so routing on a single session-level prefix is insufficient.
 
-## How the deployment is organized
+## How llm-d serves this workload
 
-The deployment has three jobs: keep repository-scale contexts in memory, reuse them on the next turn, and prevent long prefills from interrupting requests that are already streaming.
-
-Four llm-d capabilities divide that work. Wide expert parallelism makes room for the KV cache. Locality- and load-aware routing sends each turn to the right replica. CPU memory holds prefixes that no longer fit in HBM. Separate prefill and decode pools keep reading and generation from competing for the same GPUs. MTP can then reduce the number of decode steps.
-
-Each request follows the same path. MLA and wide expert parallelism determine how much context fits in HBM. Routing and CPU memory determine whether saved context can be reused. The prefill pool reads the context, the decode pool generates the response, and MTP accelerates generation.
+MLA and wide expert parallelism make room for repository-scale contexts in HBM. KV-cache-aware routing sends each turn to a replica that can reuse its prefix while balancing load across the deployment. CPU memory keeps evicted prefixes available. The prefill pool reads the context, the decode pool generates the response, and MTP reduces the work needed to produce it.
 
 ### Topology notation
 
