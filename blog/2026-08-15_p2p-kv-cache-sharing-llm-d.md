@@ -101,11 +101,11 @@ gpt-oss-120b, 5-rep medians:
 
 | prefix tokens | recompute | P2P pull | delta |
 |---|---|---|---|
-| 2,048 | 75 ms | 38 ms | -49% |
-| 8,192 | 243 ms | 59 ms | -76% |
-| 16,384 | 490 ms | 86 ms | -82% |
-| 32,768 | 1,154 ms | 165 ms | -86% |
-| 49,152 | 1,952 ms | 244 ms | -88% |
+| 2,048 | 78 ms | 35 ms | -56% |
+| 8,192 | 250 ms | 57 ms | -77% |
+| 16,384 | 510 ms | 86 ms | -83% |
+| 32,768 | 1,173 ms | 165 ms | -86% |
+| 49,152 | 1,988 ms | 235 ms | -88% |
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/p2p-kv-cache/crossover-gptoss.png" alt="Line chart: prefill latency versus prefix length for recompute and P2P pull on gpt-oss-120b; the pull is lower at every length" style={{width: '100%', height: 'auto'}} />
@@ -388,7 +388,7 @@ request:
 recompute on a non-holder. The pull replaces it with a flat-cost
 transfer, collapsing the tail to the transfer floor.
 
-**Evidence.** All 576 requests succeeded in both arms, and the result was
+**Evidence.** All 576 requests across both arms succeeded, and the result was
 measured twice end to end - once on the original fix build (-70% mean
 TTFT, 2.8x) and once on independently built images with a freshly booted
 fleet and fresh prompt salts (-67%, 2.7x), every repetition landing in
