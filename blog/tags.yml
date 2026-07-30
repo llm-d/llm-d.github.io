@@ -98,6 +98,17 @@ inference:
   label: Inference
   permalink: /inference
   description: LLM inference serving and optimization
+
+agentic-inference:
+  label: Agentic Inference
+  permalink: /agentic-inference
+  description: Inference serving and optimization for agentic workloads
+
+speculative-decoding:
+  label: Speculative Decoding
+  permalink: /speculative-decoding
+  description: Speculative decoding and multi-token prediction for LLM inference
+
 hma:
   label: HMA
   permalink: /hma
