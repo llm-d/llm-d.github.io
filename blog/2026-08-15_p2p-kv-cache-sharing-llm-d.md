@@ -346,7 +346,7 @@ pull on the re-run was p99 (34.7 s versus 28.2 s), consistent with the
 same explanation: the extreme tail is the cold first prefill, which the
 pull does not touch.
 
-### Use case 6: affinity rescue at wide-EP scale (753B)
+### Use case 6: load spill and affinity rescue at wide-EP scale (753B)
 
 | Setup | |
 |---|---|
@@ -397,6 +397,32 @@ under precise affinity with a consistent index there is nothing left for
 the pull to repair, exactly as the placement rule predicts. The pull's
 territory is divergence by construction: load-first placement, restarts
 and cold replicas, and the approximate index.
+
+And measured on that territory, the payoff at 753B is the largest in
+this post. The same wide-EP deployment with a load-first prefill policy
+(`queue` 3 over precise `prefix-cache` 1) spills requests off the cache
+holder whenever queues build; the pull is the only difference between
+the two arms:
+
+| Metric (concurrency 32, fresh ~70K-token prefix per repetition) | load-first | + P2P | delta |
+|---|---|---|---|
+| TTFT mean | 7.85 s | 2.56 s | **-67%** |
+| TTFT p90 | 21.3 s | 5.0 s | **-77%** |
+| Throughput | 3.8 req/s | 10.1 req/s | **2.7x** |
+
+**Why.** Without the pull, every spilled request recomputes a 70K-token
+prefix - the ~21 s p90 is that recompute tail. With it, the prefix
+follows the request at the pull's flat cost, and the tail collapses to
+the transfer floor. This is the composition rule as a headline number:
+placement optimizes for load, and the cache follows the compute.
+
+**Evidence.** Three repetitions per arm in counterbalanced order, 576/576
+requests successful, and the result measured twice end to end - once on
+the original fix build (-70%, 2.8x) and once on independently built
+images with a freshly booted fleet and fresh prompt salts (-67%, 2.7x),
+every repetition landing in the first run's per-repetition bands. The
+matched profile pair ships with the guide
+(`epp-glm-loadfirst{,-p2p}.yaml`).
 
 ### When pulling pays: calibrating the threshold
 
