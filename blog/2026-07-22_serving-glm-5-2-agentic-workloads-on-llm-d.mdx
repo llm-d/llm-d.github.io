@@ -44,7 +44,7 @@ At a measured output rate of roughly 37-41 tokens per second per user, a 64-GPU 
 
 * **Routing avoids redundant prefill.** Prefix-aware routing captures 96-97% of the reuse the workload makes available. In a separate paused-conversation run, turns with a cached prefix reach first token 2.8x faster than first turns without one.
 
-* **CPU offloading keeps active prefixes reusable after HBM fills.** On the 24-GPU 1P1D DEP8/DEP16 layout at concurrency 32, it raises output 13%, cuts median time to first token 32%, and cuts median turn completion 27%, while median time between output tokens is unchanged. At concurrency 128, baseline output remains near 951 tok/s while offloading reaches 2,776 tok/s.
+* **CPU offloading keeps active prefixes reusable after HBM fills.** In matched 24-GPU runs at concurrency 32, offloading raises output 13%, cuts median time to first token 32%, and cuts median turn completion 27%, while median time between output tokens is unchanged. At concurrency 128, baseline output remains near 951 tok/s while offloading reaches 2,776 tok/s.
 
 * **Multi-Token Prediction lets the same 32 GPUs serve at least eight times as many concurrent requests without dropping below 30 output tokens per second per user.** With CPU offloading enabled in both runs, MTP holds that rate through 128 concurrent requests and produces 5,647 tok/s; without MTP, it holds only through 16 requests and 561 tok/s.
 
