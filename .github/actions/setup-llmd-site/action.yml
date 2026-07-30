@@ -4,7 +4,7 @@ description: Install the Node/Go toolchain and build the llmd-site CLI
 inputs:
   node-version:
     description: Node.js version
-    default: '20.18.1'
+    default: '24.x'
   go-version:
     description: Go version
     default: '1.22'
