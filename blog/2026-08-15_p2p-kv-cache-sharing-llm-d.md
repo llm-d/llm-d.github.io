@@ -224,35 +224,40 @@ twice; 1,152 turns per run.
 
 | arm | run | ok/fail | TTFT p50 | p95 | p99 | turns/s |
 |---|---|---|---:|---:|---:|---:|
-| Precise routing | 1 (cold) | 870/47 | 3.2 s | 85.8 s | 164.9 s | 3.23 |
-| Precise routing | 2 (warm) | 1152/0 | 4.0 s | 75.0 s | 132.6 s | 4.65 |
-| Load-aware + P2P | 1 (cold) | 1152/0 | 3.4 s | **12.9 s** | **20.7 s** | **6.86** |
-| Load-aware + P2P | 2 (warm) | 1152/0 | 3.2 s | **11.7 s** | **18.2 s** | **7.54** |
+| Precise routing | 1 (cold) | 864/48 | 0.2 s | 83.3 s | 162.8 s | 3.93 |
+| Precise routing | 2 (warm) | 1152/0 | 0.3 s | 14.0 s | 25.2 s | 10.15 |
+| Load-aware + P2P | 1 (cold) | 1152/0 | 1.7 s | **11.4 s** | **20.7 s** | **11.34** |
+| Load-aware + P2P | 2 (warm) | 1152/0 | 0.6 s | **9.0 s** | **16.6 s** | **13.66** |
 
-Warm against warm: **7.3x better p99 TTFT and +62% throughput**; cold
-against cold, 8.0x and +112% - and the baseline's cold rows carry 47
+Warm against warm: **1.5x better p99 TTFT and +35% throughput**; cold
+against cold, 7.9x and +189% - and the baseline's cold row carries 48
 client timeouts where the load-aware arm carries none.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/p2p-kv-cache/docqa.png" alt="Three document-Q&A comparisons across precise routing and load-aware plus P2P, cold and warm: median TTFT stays near 3 to 4 seconds, p99 tail latency falls sharply with load-aware plus P2P, and throughput rises to 6.86 and 7.54 turns per second" style={{width: '100%', height: 'auto'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Canonical 16-pod fixed-stack result. Medians stay equal; the policies separate on tail latency, throughput, and cold-start timeouts.</em></p>
+  <img src="/img/blogs/p2p-kv-cache/docqa.png" alt="Three document-Q&A comparisons across precise routing and load-aware plus P2P, cold and warm: medians stay sub-two-seconds, p99 tail latency falls from 162.8 and 25.2 seconds to 20.7 and 16.6, and throughput rises to 11.34 and 13.66 turns per second" style={{width: '100%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Canonical 16-pod fixed-stack result. The policies separate on tail latency, throughput, and cold-start timeouts.</em></p>
 </div>
 
-**Why.** Medians are equal - a session answering from its warm cache is
-fast either way. The baseline sends every question to the pod that owns
+**Why.** The medians show the trade: the baseline's warm p50 is 0.3 s (a
+local cache hit) against 0.6 s for load-aware + P2P - every displaced
+question pays a pull - and load-aware + P2P buys the tail and the
+throughput with it. The baseline sends every question to the pod that owns
 its document; under contention the queue on that pod becomes the p99,
 while displaced questions recompute 48K tokens. The pull makes the miss a
 transfer instead of a recompute or a multi-second wait. The baseline is
 also cold-start fragile: on a cold fleet every endpoint scores
 identically, placement collapses onto one pod (sampled: 122/128 requests
 in flight with one pod holding 79% of them), and the tail damage is the
-165 s p99 and the 47 timeouts.
+163 s p99 and the 48 timeouts.
 
-**Evidence.** Pull engagement on this rig: 65 P2P sessions under
-load-aware placement versus 2 under affinity on the identical fleet
-(sessions are reusable connections - an engagement signal, not a byte
-count). Offload-tier byte counters do not separate local CPU restores
-from peer pulls and are not cited as transfer volume here.
+**Evidence.** Pull engagement on this rig: 120 P2P sessions across the
+16-pod fleet during the load-aware + P2P arm (sessions are reusable
+connections - an engagement signal, not a byte count). Offload-tier byte
+counters do not separate local CPU restores from peer pulls and are not
+cited as transfer volume here. The precise index runs at the
+fleet-matched `podCacheSize: 32` in both arms; undersizing it inflates
+the arm separation without changing the ordering (see the guide's
+benchmark report).
 
 ### Isolated A/B: working sets larger than one pod's cache
 

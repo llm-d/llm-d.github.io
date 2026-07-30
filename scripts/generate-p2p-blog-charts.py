@@ -20,6 +20,7 @@ FG = "#222630"
 MUTED = "#6c7280"
 GRID = "#dce1e9"
 GREEN = "#1ea97c"
+GREEN_LIGHT = "#83cdb4"
 BLUE = "#2e76d0"
 BLUE_LIGHT = "#86afe1"
 GRAY = "#8d939d"
@@ -136,67 +137,82 @@ def crossover():
 
 
 def docqa():
-    labels = [
+    all_labels = [
         "Precise\ncold",
         "Precise\nwarm",
+        "Precise + P2P\ncold",
+        "Precise + P2P\nwarm",
         "Load + P2P\ncold",
         "Load + P2P\nwarm",
     ]
-    colors = [GRAY, GRAY_LIGHT, BLUE, BLUE_LIGHT]
-    p50 = np.array([3.2, 4.0, 3.4, 3.2])
-    p99 = np.array([164.9, 132.6, 20.7, 18.2])
-    throughput = np.array([3.23, 4.65, 6.86, 7.54])
+    all_colors = [GRAY, GRAY_LIGHT, GREEN, GREEN_LIGHT, BLUE, BLUE_LIGHT]
+    all_p50 = [0.2, 0.3, 0.2, 0.3, 1.7, 0.6]
+    all_p99 = [162.8, 25.2, 165.4, 18.6, 20.7, 16.6]
+    all_tp = [3.93, 10.15, 3.90, 11.90, 11.34, 13.66]
 
-    fig, axes = plt.subplots(1, 3, figsize=(13.2, 5.8))
-    style_figure(fig)
-
-    metrics = [
-        ("Median TTFT stays equal", "Seconds", p50, 4.6, "%.1f"),
-        ("p99 TTFT collapses", "Seconds", p99, 180.0, "%.1f"),
-        ("Throughput rises", "Turns/s", throughput, 8.5, "%.2f"),
+    # blog variant: the two arms of the system-policy comparison;
+    # guide variant: all three measured arms
+    variants = [
+        ("docqa.png", [0, 1, 4, 5], 5.8, "48 client timeouts"),
+        ("docqa-three-arm.png", [0, 1, 2, 3, 4, 5], 6.4, "47-48 client timeouts"),
     ]
-    y = np.arange(len(labels))[::-1]
-    for ax, (title, unit, values, xmax, value_format) in zip(axes, metrics):
-        bars = ax.barh(y, values, color=colors, height=0.58)
-        ax.set_title(title, color=FG, fontsize=11, pad=12)
-        ax.set_xlabel(unit, fontsize=10)
-        ax.set_xlim(0, xmax)
-        ax.set_yticks(y, [label.replace("\n", " ") for label in labels])
-        ax.grid(axis="x", color=GRID, linewidth=0.8)
-        ax.set_axisbelow(True)
-        ax.bar_label(
-            bars,
-            fmt=value_format,
-            padding=4,
-            color=FG,
-            fontsize=9,
-        )
+    for name, idx, height, timeouts in variants:
+        labels = [all_labels[i] for i in idx]
+        colors = [all_colors[i] for i in idx]
+        p50 = np.array([all_p50[i] for i in idx])
+        p99 = np.array([all_p99[i] for i in idx])
+        throughput = np.array([all_tp[i] for i in idx])
 
-    fig.text(
-        0.012,
-        0.955,
-        "Load-aware placement + P2P collapses the document-Q&A tail",
-        color=FG,
-        fontsize=17,
-        fontweight="bold",
-    )
-    fig.text(
-        0.012,
-        0.915,
-        "16x H200 | 192 documents x 48K tokens | 128 concurrent sessions | system-policy comparison",
-        color=MUTED,
-        fontsize=10.5,
-    )
-    fig.text(
-        0.012,
-        0.875,
-        "Precise routing cold: 47 client timeouts. Load-aware + P2P: zero timeouts in both runs.",
-        color=MUTED,
-        fontsize=9.5,
-    )
-    add_source(fig, "Source: llm-d P2P KV-cache-sharing benchmarks, 2026-07")
-    fig.subplots_adjust(left=0.105, right=0.985, top=0.79, bottom=0.18, wspace=0.4)
-    save(fig, "docqa.png")
+        fig, axes = plt.subplots(1, 3, figsize=(13.2, height))
+        style_figure(fig)
+
+        metrics = [
+            ("Median TTFT: the pull's price", "Seconds", p50, 2.1, "%.1f"),
+            ("p99 TTFT collapses", "Seconds", p99, 215.0, "%.1f"),
+            ("Throughput rises", "Turns/s", throughput, 15.5, "%.2f"),
+        ]
+        y = np.arange(len(labels))[::-1]
+        for ax, (title, unit, values, xmax, value_format) in zip(axes, metrics):
+            bars = ax.barh(y, values, color=colors, height=0.58)
+            ax.set_title(title, color=FG, fontsize=11, pad=12)
+            ax.set_xlabel(unit, fontsize=10)
+            ax.set_xlim(0, xmax)
+            ax.set_yticks(y, [label.replace("\n", " ") for label in labels])
+            ax.grid(axis="x", color=GRID, linewidth=0.8)
+            ax.set_axisbelow(True)
+            ax.bar_label(
+                bars,
+                fmt=value_format,
+                padding=4,
+                color=FG,
+                fontsize=9,
+            )
+
+        fig.text(
+            0.012,
+            0.955,
+            "Load-aware placement + P2P collapses the document-Q&A tail",
+            color=FG,
+            fontsize=17,
+            fontweight="bold",
+        )
+        fig.text(
+            0.012,
+            0.915,
+            "16x H200 | 192 documents x 48K tokens | 128 concurrent sessions | system-policy comparison",
+            color=MUTED,
+            fontsize=10.5,
+        )
+        fig.text(
+            0.012,
+            0.875,
+            f"Precise arms cold: {timeouts}. Load-aware + P2P: zero timeouts in all runs.",
+            color=MUTED,
+            fontsize=9.5,
+        )
+        add_source(fig, "Source: llm-d P2P KV-cache-sharing benchmarks, 2026-07")
+        fig.subplots_adjust(left=0.115, right=0.985, top=0.80, bottom=0.16, wspace=0.42)
+        save(fig, name)
 
 
 def wide_ep():
