@@ -144,10 +144,20 @@ multimodal:
   permalink: /multimodal
   description: Multimodal model serving and optimization
 
+heterogeneous:
+  label: Heterogeneous
+  permalink: /heterogeneous
+  description: Heterogeneous inference hardware and serving
+
 disaggregation:
   label: Disaggregation
   permalink: /disaggregation
   description: Disaggregated inference serving
+
+vlm:
+  label: VLM
+  permalink: /vlm
+  description: Vision-language model serving and optimization
 
 sglang:
   label: SGLang
