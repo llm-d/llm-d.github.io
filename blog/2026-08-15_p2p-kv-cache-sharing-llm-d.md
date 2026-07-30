@@ -399,9 +399,10 @@ larger the win. The next section is exactly that regime.
 
 ### P/D payoff: agentic re-engagement after tool-call gaps
 
-**Evidence: P/D stack A/B with peer-pull evidence.** The candidate adds the
-offload and P2P stack to the shipped agentic-serving deployment, and the run
-records the session history moved between peers.
+**Evidence: system-policy comparison.** The candidate adds the offload
+and P2P stack to the shipped agentic-serving deployment, so the stack
+changes together; the run also records the session history moved between
+peers, which is the mechanism half of the attribution.
 
 | Setup | |
 |---|---|
@@ -471,11 +472,17 @@ cache holder whenever queues build; without the pull every spilled
 request recomputes a 70K-token prefix, and with it the prefix follows the
 request:
 
-| Metric | load-first | + P2P | delta |
-|---|---|---|---|
-| TTFT mean | 7.85 s | 2.56 s | **-67%** |
-| TTFT p90 | 21.3 s | 5.0 s | **-77%** |
-| Throughput | 3.8 req/s | 10.1 req/s | **2.7x** |
+The aggregate result is the hero table at the top of the benchmarks
+section (-67% mean TTFT, -77% p90, 2.7x throughput). Per repetition:
+
+| rep | load-first mean TTFT | req/s | + P2P mean TTFT | req/s |
+|---:|---:|---:|---:|---:|
+| 1 | 8.44 s | 3.48 | 2.64 s | 9.96 |
+| 2 | 7.60 s | 3.96 | 2.45 s | 10.51 |
+| 3 | 7.53 s | 3.96 | 2.57 s | 9.82 |
+
+The control never dips below 7.5 s and the pull never rises above 2.7 s -
+the arms do not overlap at any repetition.
 
 **Why.** The baseline's ~21 s p90 is the spill tail - a 70K-token
 recompute on a non-holder. The pull replaces it with a flat-cost
@@ -484,8 +491,8 @@ transfer, collapsing the tail to the transfer floor.
 **Evidence.** All 576 requests across both arms succeeded, and the result was
 measured twice end to end - once on the original fix build (-70% mean
 TTFT, 2.8x) and once on independently built images with a freshly booted
-fleet and fresh prompt salts (-67%, 2.7x), every repetition landing in
-the first run's per-repetition bands. The two arm profiles differ by the
+fleet and fresh prompt salts (-67%, 2.7x), every repetition landing in or
+adjacent to the first run's per-repetition bands. The two arm profiles differ by the
 `p2p-source-producer` alone; per-repetition transfer counters were not
 recorded, so the attribution rests on that producer-only difference plus
 a separately verified single-request pull proof on the same build
