@@ -1,0 +1,34 @@
+name: Post Latest Blog from RSS to Bluesky
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '00 12 * * *'
+
+jobs:
+  fetch-and-post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install xmllint and dateutils
+        run: |
+          sudo apt-get update && sudo apt-get install -y libxml2-utils dateutils
+
+      - name: Fetch Latest Blog Post
+        id: fetch_post
+        run: |
+          RSS_FEED_URL="https://llm-d.ai/blog/rss.xml"
+          response=$(curl -s "$RSS_FEED_URL")
+          description=$(echo "$response" | xmllint --xpath "string(//item[1]/description)" -)
+          url=$(echo "$response" | xmllint --xpath "string(//item[1]/link)" -)
+          description=$(echo "$description" | xargs)
+          preview="$description $url"
+          echo "preview=$preview" >> $GITHUB_ENV
+          echo "rss_url=$url" >> $GITHUB_ENV
+
+      - name: Post to Bluesky
+        uses: myConsciousness/bluesky-post@v5
+        with:
+          text: "${{ env.preview }}"
+          link-preview-url: "${{ env.rss_url }}"
+          identifier: llm-d.ai.bsky.social
+          password: "${{ secrets.BSKY_SECRET }}"
