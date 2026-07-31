@@ -78,16 +78,6 @@ pull the missing blocks from that peer.
 
 This is a small, opt-in scheduling step, off by default. Because it reuses the existing prefix-cache signal, the measured deployments in this post all drive it from the precise (KV-event-fed) index - and it composes with P/D disaggregation: a prefill worker can pull a cached prefix from a peer, compute only the remainder, and still serve its own blocks to the decoder. Without disaggregation, the decode pod pulls the prefix directly. A tie or a self-match never triggers a pull - there is nothing to gain - and deployments that leave the feature off are unaffected.
 
-That produces a clear placement rule:
-
-| Situation | Where the reusable KV lives | P2P action |
-|---|---|---|
-| Prefix affinity succeeds | On the selected pod | Stays idle; the local hit is already optimal |
-| Load balancing spills work | On another pod | Pulls instead of recomputing |
-| The next P/D turn reaches prefill | On a decode worker or another prefiller | Moves the reusable history to prefill |
-| The router restarts | The source map is lost | Cannot select a source; this is not a recovery case |
-| An engine starts cold behind an intact router | On established peers | Plausible warmup path; not yet benchmarked |
-
 ## What This Enables
 
 * **Load balancing without throwing away reuse.** A scheduler can choose a
@@ -472,13 +462,9 @@ byte-matched consumer loads were verified independently on the same build.
 
 Does the mechanism survive the largest deployment shape - a 753B MoE
 spread 16 ways per role? On the pull's own territory it produces the
-largest number in this post. A load-first policy spills requests off the
-cache holder whenever queues build; without the pull every spilled
-request recomputes a 70K-token prefix, and with it the prefix follows the
-request:
-
-The aggregate result is the hero table at the top of the benchmarks
-section (-67% mean TTFT, -77% p90, 2.7x throughput). Per repetition:
+largest number in this post. The aggregate result is the hero table at
+the top of the benchmarks section (-67% mean TTFT, -77% p90, 2.7x
+throughput). Per repetition:
 
 | rep | load-first mean TTFT | req/s | + P2P mean TTFT | req/s |
 |---:|---:|---:|---:|---:|
@@ -533,10 +519,9 @@ crossover: below it, the transfer's fixed cost outweighs the recompute it
 saves. The threshold keeps the scheduler from issuing pulls below the
 crossover measured for that model and testbed; the crossover itself moves
 with fabric contention and producer load, so production deployments
-should leave margin for network and load variance. The single-request sweeps earlier in this post price it for
-gpt-oss-120b and Llama-8B (both cross near or below 2K tokens, hence the
-2048 threshold on those testbeds) and for GLM-5.2 (tie at ~8.7K on the
-upstream tier, hence 12,288 there). For a new model, the guide ships a calibration recipe that runs the
+should leave margin for network and load variance. The single-request
+sweeps earlier in this post price it for the measured models. For a new
+model, the guide ships a calibration recipe that runs the
 ladder against a live pod pair and prints the recommended value - gated
 so a length only qualifies when its pulls actually moved bytes and the
 no-pull control moved none (a faster timing with zero bytes is recompute
@@ -582,19 +567,8 @@ the TP coupling from the stored blocks themselves.
 
 ## Local hits first, portable reuse when locality breaks
 
-P2P does not replace prefix-aware routing. It changes what the scheduler can
-do when cache locality conflicts with another objective:
-
-* When affinity can place a request on its cache holder without contention,
-  keep the hit local. Nothing beats moving zero bytes.
-* When load balancing chooses another worker, let the prefix follow the
-  request instead of recomputing it.
-* When decode generated the history that prefill needs for the next turn,
-  move that history across the serving-role boundary.
-* When the peer pull stays idle, do not credit it for gains produced by the
-  local offload tier.
-
-The pull does not create compute or network capacity. It decouples placement
+P2P does not replace prefix-aware routing, and it does not create
+compute or network capacity. It decouples placement
 from cache locality, which lets the scheduler optimize for load or topology
 without automatically paying the full recompute cost. The crossover
 measurement prices each transfer; the fleet experiments show what that price
@@ -609,7 +583,3 @@ repository-scale context and may spill across pods with no advance signal to
 the serving layer. That is the same placement conflict at a new scale: one
 peer holds the prefix, while several workers need it concurrently.
 {/* TODO: link the agentic-serving GLM post once published */}
-
-**Keep the request with the cache when that is the best placement. When load
-or topology requires a different worker, move the KV instead of recomputing
-it.**
