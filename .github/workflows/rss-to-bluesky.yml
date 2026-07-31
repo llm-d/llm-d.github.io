@@ -12,10 +12,9 @@ jobs:
   fetch-and-post:
     runs-on: ubuntu-latest
     steps:
-      - name: Install xmllint and dateutils
+      - name: Install xmllint
         run: |
-          sudo apt-get update && sudo apt-get install -y libxml2-utils dateutils
-
+          sudo apt-get update && sudo apt-get install -y libxml2-utils
       - name: Fetch Latest Blog Post
         id: fetch_post
         run: |
