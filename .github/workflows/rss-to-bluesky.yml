@@ -19,15 +19,23 @@ jobs:
       - name: Fetch Latest Blog Post
         id: fetch_post
         run: |
-          RSS_FEED_URL="https://llm-d.ai/blog/rss.xml"
-          response=$(curl -s "$RSS_FEED_URL")
-          description=$(echo "$response" | xmllint --xpath "string(//item[1]/description)" -)
-          url=$(echo "$response" | xmllint --xpath "string(//item[1]/link)" -)
-          description=$(echo "$description" | xargs)
-          preview="$description $url"
-          echo "preview=$preview" >> $GITHUB_ENV
-          echo "rss_url=$url" >> $GITHUB_ENV
+          set -euo pipefail
 
+          RSS_FEED_URL="https://llm-d.ai/blog/rss.xml"
+          response="$(curl -fsSL "$RSS_FEED_URL")"
+          description="$(printf '%s' "$response" | xmllint --xpath "string(//item[1]/description)" - | xargs)"
+          url="$(printf '%s' "$response" | xmllint --xpath "string(//item[1]/link)" - | xargs)"
+
+          if [ -z "$description" ] || [ -z "$url" ]; then
+            echo "Failed to parse latest post from RSS feed: $RSS_FEED_URL" >&2
+            exit 1
+          fi
+
+          preview="$description $url"
+          {
+            echo "preview=$preview"
+            echo "rss_url=$url"
+          } >> "$GITHUB_ENV"
       - name: Post to Bluesky
         uses: myConsciousness/bluesky-post@v5
         with:
