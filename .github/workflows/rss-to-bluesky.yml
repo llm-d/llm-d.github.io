@@ -1,9 +1,12 @@
 name: Post Latest Blog from RSS to Bluesky
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
   schedule:
     - cron: '00 12 * * *'
+
+permissions:
+  contents: read
 
 jobs:
   fetch-and-post:
