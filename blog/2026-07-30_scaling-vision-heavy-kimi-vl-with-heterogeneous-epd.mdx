@@ -22,7 +22,7 @@ In this post, we evaluate a vision-heavy Kimi-VL workload on llm-d and SGLang. W
 
 [llm-d](https://github.com/llm-d/llm-d) is an inference orchestration stack for Kubernetes that supports inference engines including SGLang and vLLM. Encoder/prefill/decode (E/P/D) disaggregation separates VLM inference into independently deployable stages. In an E/PD topology, encoding runs on dedicated workers while prefill and decode remain together. llm-d has supported E/PD and E/P/D disaggregation since version 0.8.1.
 
-Previous SGLang E/PD testing demonstrated throughput and TTFT improvements. This experiment extends that work to a heterogeneous hardware configuration, with a focus on whether lower-cost accelerators can remove a vision-encoding bottleneck while preserving scarce high-end GPU capacity for prefill and decode.
+[Previous SGLang E/PD testing](https://www.lmsys.org/blog/2026-01-12-epd/) demonstrated throughput and TTFT improvements. This experiment extends that work to a heterogeneous hardware configuration, with a focus on whether lower-cost accelerators can remove a vision-encoding bottleneck while preserving scarce high-end GPU capacity for prefill and decode.
 
 ## Architecture Overview
 
@@ -72,7 +72,7 @@ These results cover one model, one vision-heavy synthetic workload, and the hard
 ## How to Reproduce
 
 1. Follow the [aggregated multimodal serving guide](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/aggregation) as the deployment pattern for the collocated baseline, modifying the manifests to run SGLang with `Kimi-VL-A3B-Instruct`.
-2. Follow the [heterogeneous SGLang E/PD guide](https://github.com/xiaojun-zhang/llm-d/blob/sglang-heterogeneous-e-pd/guides/multimodal-serving/e-disaggregation/heterogeneous/sglang/README.md) to deploy four encode workers and one prefill/decode worker. This guide is currently proposed in [llm-d PR #2113](https://github.com/llm-d/llm-d/pull/2113).
+2. Follow the [heterogeneous SGLang E/PD guide](https://github.com/llm-d/llm-d/pull/2113/files#diff-1d3baf4841134e24ef466511ecaf7c287f687adf061a54bb518d6f80f62356dd) to deploy four encode workers and one prefill/decode worker.
 3. Run the following SGLang benchmark against both deployments. Set `IP` to the proxy address from the guide and vary `rate` from 0.2 to 2.0.
 
 ```bash
@@ -124,7 +124,11 @@ Mean TPOT also improves. Under load, the collocated deployment ranges from appro
 
 All three measured metrics improve substantially because the heterogeneous topology removes vision encoding from the H200's critical path. The H200 can focus on language-model prefill and decode while the four Intel B60 workers process images in parallel.
 
-The result is a strong cost-efficiency gain for this workload. Adding lower-cost encode workers around one high-end prefill/decode GPU increases request capacity from approximately 0.31-0.33 requests per second to 0.8-0.9 requests per second while reducing mean TTFT from approximately 10-12 seconds to 3-4 seconds under load. This provides a way to scale vision-heavy serving without adding another high-end GPU to every replica.
+The result is a strong cost-efficiency gain for this workload. Adding lower-cost encode workers around one high-end prefill/decode GPU increases request capacity from approximately 0.31-0.33 requests per second to 0.8-0.9 requests per second while reducing mean TTFT from approximately 10-12 seconds to 3-4 seconds under load.
+
+Public prices in July 2026 were approximately [$599 for an Intel Arc Pro B60](https://www.techpowerup.com/341191/intel-arc-pro-b60-workstation-gpu-spotted-at-usd-599-suggests-non-oem-availability) and [$30,000-$40,000 for an NVIDIA H200](https://www.thepricer.org/how-much-does-nvidia-h200-cost/). Amortized over three years at 100% utilization, this is approximately $0.023 per B60 GPU-hour and $1.14-$1.52 per H200 GPU-hour. Four B60 workers add about $0.09 per hour, increasing accelerator cost by 6-8% while providing 2.4-2.8x the request capacity, or approximately 2.2-2.6x more request capacity per dollar.
+
+These hardware-only estimates exclude host systems, power, cooling, networking, software, support, operational costs, and differences in utilization.
 
 ## Conclusion and Future Work
 
