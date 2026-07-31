@@ -50,7 +50,7 @@ At a measured output rate of roughly 37-41 tokens per second per user, a 64-GPU 
 
 * **Multi-Token Prediction lets the same 32 GPUs serve at least eight times as many concurrent requests without dropping below 30 output tokens per second per user.** With CPU offloading enabled in both runs, MTP holds that rate through 128 concurrent requests and produces 5,647 tok/s; without MTP, it holds only through 16 requests and 561 tok/s.
 
-* **At sustained load, measured GPU rental is below Z.ai's public GLM-5.2 price.** The two 64-GPU layouts work out to $0.05-$0.08 per million input tokens and $1.92-$3.55 per million output tokens, versus $1.40 and $4.40. These figures cover GPU rental only, not the full cost of operating an API service.
+* **At sustained load, self-hosted GPU rental accounts for a fraction of the per-token cost of a managed API.** The two 64-GPU layouts work out to $0.05-$0.08 per million input tokens and $1.92-$3.55 per million output tokens, versus $1.40 and $4.40. These figures cover GPU rental only, not the full cost of operating an API service.
 
 * **Run it.** The [GLM-5.2 H200 guide](https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/glm-5-2-h200.md) provides the serving pattern and composable MTP, CPU-offloading, and context-length components.
 
@@ -417,7 +417,7 @@ A second `DEP16` prefill instance removes the remaining restore traffic. At conc
 
 ## What it costs at an interactivity target
 
-**At sustained load, the measured GPU-rental cost per token is below Z.ai's public GLM-5.2 price.**
+**At sustained load, self-hosted GPU rental accounts for a fraction of the per-token cost of a managed API.**
 
 At concurrency 128, the 64-GPU `3P1D` topology with MTP and CPU offloading serves 431K input and 6,281 output tokens per second, delivering 36.6 end-to-end output tokens per second per user. The 64-GPU `2P2D` topology serves 489K input and 6,781 output tokens per second, delivering 40.9 end-to-end output tokens per second per user. End-to-end throughput includes queueing and prefill, so it is the user-visible rate.
 
@@ -460,6 +460,8 @@ The Agentic Inference SIG develops this work in the open. Join [#sig-agentic-inf
 * Explore the code → [GitHub organization](https://github.com/llm-d)
 
 * Attend meetings → all open; add our [public calendar](/community#public-meeting-calendar)
+
+---
 
 <!-- reading-time-exclude:start -->
 ## Appendix: Deployment and benchmark details
