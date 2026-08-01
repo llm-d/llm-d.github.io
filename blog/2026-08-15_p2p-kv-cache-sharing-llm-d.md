@@ -69,7 +69,10 @@ sharing uses that middle path.
 
 ## How P2P Works
 
-P2P pulling is a small, opt-in scheduling step and is off by default.
+P2P pulling is a small, opt-in scheduling step. It is off by default because
+the crossover and available CPU-tier and fabric capacity are
+deployment-specific; without calibration, a short-prefix pull can cost more
+than recomputation.
 Every participating vLLM instance can serve two roles, selected per request:
 
 * **Consumer.** Pulls matching KV blocks from a peer instead of computing them
@@ -146,9 +149,10 @@ length. Its latency grew much more slowly than recompute:
 The crossover moved on the 753B GLM testbed, whose KV footprint is about 93 KB
 per token. Pull and recompute were roughly tied near 8K tokens; at 12K the pull
 was 27% faster, and at 24K it was 61% faster. A 24K prefix is about 2.2 GiB of
-KV, while a 70K prefix is about 6.2 GiB. The roughly 1.2-1.3 second transfer
-floor matters, but it is paid instead of a prefill whose cost continues to grow
-with context length.
+KV, while a 70K prefix is about 6.2 GiB. Break-even depends on the ratio of
+prefill cost to KV-transfer cost, not model size alone. On the GLM rig,
+short-prefix recompute stayed below the measured 1.2-1.3 second pull floor, so
+P2P began winning only around 8.7K tokens.
 
 This is why the router uses a per-deployment minimum cached-token advantage
 rather than pulling every remote hit. The production threshold should sit
