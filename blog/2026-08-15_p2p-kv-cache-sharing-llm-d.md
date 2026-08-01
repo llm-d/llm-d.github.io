@@ -69,6 +69,7 @@ sharing uses that middle path.
 
 ## How P2P Works
 
+P2P pulling is a small, opt-in scheduling step and is off by default.
 Every participating vLLM instance can serve two roles, selected per request:
 
 * **Consumer.** Pulls matching KV blocks from a peer instead of computing them
@@ -145,9 +146,9 @@ length. Its latency grew much more slowly than recompute:
 The crossover moved on the 753B GLM testbed, whose KV footprint is about 93 KB
 per token. Pull and recompute were roughly tied near 8K tokens; at 12K the pull
 was 27% faster, and at 24K it was 61% faster. A 24K prefix is about 2.2 GiB of
-KV, while a 70K prefix is about 6.2 GiB. The measured transfer floor therefore
-matters, but it is paid instead of a prefill whose cost continues to grow with
-context length.
+KV, while a 70K prefix is about 6.2 GiB. The roughly 1.2-1.3 second transfer
+floor matters, but it is paid instead of a prefill whose cost continues to grow
+with context length.
 
 This is why the router uses a per-deployment minimum cached-token advantage
 rather than pulling every remote hit. The production threshold should sit
@@ -221,6 +222,10 @@ decode-generated history by peer pull, moving 477K tokens at one topology and
 recomputing a short answer on an 8B model was already cheap; the benefit was
 reclaimed prefill capacity rather than a visible latency reduction.
 
+Pulling a generated turn requires the next request to reproduce the same token
+IDs: Llama re-renders assistant turns verbatim, while models whose templates
+drop reasoning segments can pull only input context and re-prefilled history.
+
 The user-visible payoff appeared on `Qwen3-30B-A3B` with long agentic sessions.
 Contexts reached 10K to 100K tokens, sessions ran for many turns, and tool-call
 gaps gave KV time to leave GPU memory. Request prompts in the reproduced run
@@ -254,9 +259,9 @@ the feature should remain quiet:
 * **A local hit is already optimal.** Under precise affinity on the wide-EP
   testbed, no remote peer had a cached-token advantage. No pull fired and the
   P2P arm behaved like the control.
-* **Local CPU restores are not peer transfers.** One P/D comparison improved
-  sharply after adding the offload stack, but the peer pull stayed idle. That
-  gain belongs to the local CPU tier.
+* **Local CPU restores are not peer transfers.** One P/D comparison cut median
+  TTFT from 11.94 to 1.16 seconds (10.3x) after adding the offload stack, but
+  the peer pull stayed idle. That gain belongs to the local CPU tier.
 * **A restarted router has no source map.** Peers may still hold KV, but the new
   index cannot name them until it learns new state. P2P is not router-restart
   recovery.
@@ -278,9 +283,9 @@ rather than the data path.
 
 :::warning[Silent prerequisite]
 
-Every peer must use identical block-size and hash-seed settings. A mismatch
-produces different block hashes and silently degrades P2P to zero matching
-transfers.
+Every peer must use identical `--block-size` and `PYTHONHASHSEED` settings. A
+mismatch produces different block hashes and silently degrades P2P to zero
+matching transfers.
 
 :::
 
@@ -305,13 +310,6 @@ patterns that create locality breaks dynamically:
   and how well concurrent pulls preserve the reuse advantage.
 
 ## Local Hits First, Portable Reuse When Locality Breaks
-
-P2P does not replace prefix-aware routing. It changes what the scheduler can
-do when cache locality conflicts with another objective. Keep a local hit when
-affinity can place it without harmful contention. Let the prefix follow a
-request when load balancing chooses another worker. Move decode-generated
-history across the P/D boundary for the next turn. When the peer pull stays
-idle, do not credit it for gains produced by another cache tier.
 
 The transfer does not create compute or network capacity. It decouples
 placement from cache locality, allowing the scheduler to optimize for load or
