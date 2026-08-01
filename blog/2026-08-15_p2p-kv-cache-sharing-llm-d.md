@@ -47,18 +47,18 @@ llm-d already attacks this problem from two directions:
 * **Prefix-aware routing.** The EPP tracks which pods hold which prefix blocks (approximately, from routing history, or precisely, from KV events) and scores candidates accordingly, so requests land where their cache lives.
 * **KV cache offloading.** vLLM's Offloading Connector copies completed KV blocks to a much larger CPU memory tier as they are produced - not on eviction - so a block the GPU later evicts still has a copy one tier down; llm-d's [filesystem backend](https://llm-d.ai/blog/native-kv-cache-offloading-to-any-file-system-with-llm-d) extends that to shared storage for cluster-wide reuse and persistence.
 
-But routing alone cannot make a cold pod warm, and shared storage introduces an infrastructure dependency plus a storage-speed data path. There is a middle option: the blocks the request needs are often sitting in a peer pod's CPU offload tier, one network hop away, at memory speed. P2P KV cache sharing uses that path.
+But routing alone cannot make a cold pod warm, and shared storage introduces an infrastructure dependency plus a storage-speed data path. There is a middle option: the blocks the request needs are often sitting in a peer pod's CPU offload tier, one network hop away, behind a direct memory-to-memory transfer path with no storage system in between. P2P KV cache sharing uses that path.
 
 ## How P2P Works
 
-The P2P connector generalizes the prefill/decode (P/D) disaggregation connector into a symmetric peer-to-peer mode. It reuses the same building blocks - CPU KV cache in a canonical layout, a NIXL (NVIDIA's inference transfer library) data path for the block movement, a ZMQ message-queue control path for the lookup handshake - but drops the hard prefiller/decoder role split. Every vLLM instance is a peer; for any given request a peer plays one of two roles:
+The P2P connector generalizes the prefill/decode (P/D) disaggregation connector into a symmetric peer-to-peer mode. It reuses the same building blocks - CPU KV cache in a canonical layout, a NIXL (NVIDIA Inference Xfer Library) data path for the block movement, a ZMQ message-queue control path for the lookup handshake - but drops the hard prefiller/decoder role split. Every vLLM instance is a peer; for any given request a peer plays one of two roles:
 
 * **Consumer**: pulls KV blocks for the request from a remote peer's CPU cache instead of computing them locally.
 * **Producer**: serves KV blocks from its CPU cache when a remote consumer asks for them.
 
 A single peer can be a consumer for one request and a producer for another concurrently; the roles are per-request, not per-pod.
 
-The transfer itself is best-effort. The consumer sends the producer the block hashes it needs; the producer matches them against its local CPU cache and answers with the hits; the consumer allocates CPU slots for the hits and the producer pushes the blocks over NIXL. The pull sits on the request's latency path - prefill proceeds once the blocks land or the lookup misses - and ordinary misses are recomputed by the engine, so a request whose peer does not have the blocks degrades to today's behavior rather than failing.
+The transfer itself is best-effort. The consumer sends the producer the block hashes it needs; the producer matches them against its local CPU cache and answers with the hits; the consumer allocates CPU slots for the hits and the producer pushes the blocks over NIXL ("pull" describes the scheduler's view; after the lookup handshake, the data-path write is performed by the producer). The pull sits on the request's latency path - prefill proceeds once the blocks land or the lookup misses - and ordinary misses are recomputed by the engine, so a request whose peer does not have the blocks degrades to today's behavior rather than failing.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/p2p-kv-cache/architecture.png" alt="Architecture, aggregated serving shown: the EPP picks the destination pod and source peer and sends the consumer a KV-cache-source header; the consumer's routing sidecar injects the P2P transfer params; a ZMQ control exchange carries block hashes and matches between the pods; NIXL moves the matched blocks from the producer's CPU offload tier to the consumer's CPU tier without touching either GPU; hits load into the consumer's GPU KV cache and unmatched blocks fall back to a recompute" style={{width: '100%', height: 'auto'}} />
@@ -74,9 +74,11 @@ prefix-aware routing uses to score candidate pods. P2P adds one decision on
 top: compare the best-cached pod with the pod that will actually compute the
 prefix, and when the peer holds enough more cached tokens to justify a
 transfer, mark the request - through a header the routing sidecar reads - to
-pull the missing blocks from that peer.
+pull the missing blocks from that peer. Because the pull decision reuses
+this prefix-cache signal, every measured deployment in this post drives
+it from the precise index.
 
-This is a small, opt-in scheduling step, off by default. Because it reuses the existing prefix-cache signal, the measured deployments in this post all drive it from the precise (KV-event-fed) index - and it composes with P/D disaggregation: a prefill worker can pull a cached prefix from a peer, compute only the remainder, and still serve its own blocks to the decoder. Without disaggregation, the decode pod pulls the prefix directly. A tie or a self-match never triggers a pull - there is nothing to gain - and deployments that leave the feature off are unaffected.
+This is a small, opt-in scheduling step, off by default. It composes with P/D disaggregation: a prefill worker can pull a cached prefix from a peer, compute only the remainder, and still serve its own blocks to the decoder. Without disaggregation, the decode pod pulls the prefix directly. A tie or a self-match never triggers a pull - there is nothing to gain - and deployments that leave the feature off are unaffected.
 
 ## What This Enables
 
@@ -88,8 +90,8 @@ This is a small, opt-in scheduling step, off by default. Because it reuses the e
 * **Fleet-wide reuse of shared prefixes.** A long system prompt prefilled on
   one pod can seed its peers by pull instead of every pod paying its own
   prefill.
-* **Fast warmup on scale-out.** A new replica serves cache hits from day zero by pulling hot shared prefixes from established peers - the same pull the sections below measure, aimed at a cold pod; the dedicated scale-out benchmark is future work (see [What to measure next](#what-to-measure-next)).
-* **No storage dependency.** Transfers go peer to peer at CPU-memory and network speed; no shared filesystem or object store is required - every benchmark in this post runs storage-free. For deployments that want persistence and effectively unlimited capacity, P2P complements rather than replaces the storage tier.
+* **Fast warmup on scale-out.** A new replica can start serving reusable prefixes as soon as it joins the fleet by pulling them from established peers - the same pull the sections below measure, aimed at a cold pod; the dedicated scale-out benchmark is future work (see [What to measure next](#what-to-measure-next)).
+* **No storage dependency.** Transfers go peer to peer over a direct memory-to-memory network path; no shared filesystem or object store is required - every benchmark in this post runs storage-free. For deployments that want persistence and effectively unlimited capacity, P2P complements rather than replaces the storage tier.
 
 ## Benchmarks
 
@@ -99,16 +101,23 @@ llm-d benchmarking framework. Each experiment below opens with its own
 setup and names its
 baseline: the aggregated and wide-EP comparisons swap only the EPP routing
 config, while the P/D ones add the P2P stack on top of the shipped guide.
-All runs pin the two fleet-wide prerequisites - identical `--block-size`
-and `PYTHONHASHSEED` (mismatched hashes silently degrade P2P to zero
-matches) - and run a CPU offload tier sized from the engine's reported KV
-capacity (around 2x GPU KV is a good working default; the measured rigs
-range from 0.5x on the Llama pool to 1.8x on gpt-oss). The
+All runs pin the two fleet-wide prerequisites and run a CPU offload tier
+sized from the engine's reported KV capacity (around 2x GPU KV is a good
+working default; the measured rigs range from 0.5x on the Llama pool to
+1.8x on gpt-oss). The
 workload profiles and EPP configs for the guide's scenarios ship with
 the guide; the Llama campaigns' exact configurations are archived in the
 measurement record rather than shipped.
 {/* Setup: kermit/CoreWeave, vLLM nightly + P2P connector branch +
 robustness fixes; full tables in the p2p-findings RESULTS.md. */}
+
+:::warning[Fleet-wide prerequisites]
+
+Every peer must run identical `--block-size` and `PYTHONHASHSEED` values.
+A mismatch does not raise an error: block hashes stop matching and P2P
+silently degrades to zero transfers.
+
+:::
 
 The results below carry their attribution with them:
 
@@ -146,7 +155,7 @@ pull.
 
 | Setup | |
 |---|---|
-| Measurement | single source->consumer pod pair (fleet-size-independent), fresh prefix, warmed transfer mesh |
+| Measurement | single source-to-consumer pod pair (fleet-size-independent), fresh prefix, warmed transfer mesh |
 | Compared | local recompute vs P2P pull from a peer's CPU tier |
 
 The measurement that sets each model's pull threshold: seed a fresh prefix
@@ -186,9 +195,11 @@ tokens, hence a **12,288** threshold there:
 | 24,576 | 3.34 s | 1.32 s | -61% |
 
 The pull holds ~1.2-1.3 s flat while recompute pays ~130-147 us per token,
-so past the tie the gap widens without bound. (The overlay-era build
-measured the same shape with a slower pull floor - tie at 13.6K, -83% by
-98K tokens.)
+so past the tie the gap keeps widening across the measured range. The
+data volume explains the floor: at ~93 KB of KV per token, the 24K-token
+pull moves ~2.2 GiB, and the load-spill experiment's 70K-token prefix
+~6.2 GiB. (The overlay-era build measured the same shape with a slower
+pull floor - tie at 13.6K, -83% by 98K tokens.)
 
 ### System-policy comparison: displaced requests at document scale
 
@@ -220,9 +231,10 @@ twice; 1,152 turns per run.
 | Load-aware + P2P | 1 (cold) | 1152/0 | 1.7 s | **11.4 s** | **20.7 s** | **11.34** |
 | Load-aware + P2P | 2 (warm) | 1152/0 | 0.6 s | **9.0 s** | **16.6 s** | **13.66** |
 
-Warm against warm: **1.5x better p99 TTFT and +35% throughput**; cold
-against cold, 7.9x and +189% - and the baseline's cold row carries 48
-client timeouts where the load-aware arm carries none.
+Warm against warm: **1.5x lower p99 TTFT and +35% throughput**; cold
+against cold, 7.9x lower p99 TTFT and +189% throughput - and the
+baseline's cold row carries 48 client timeouts where the load-aware arm
+carries none.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/p2p-kv-cache/docqa.png" alt="Document Q&A on three metrics, precise routing versus load-aware plus P2P, cold and warm: medians stay sub-two-seconds, p99 tail latency falls from 162.8 and 25.2 seconds to 20.7 and 16.6, and throughput rises to 11.34 and 13.66 turns per second" style={{width: '100%', height: 'auto'}} />
@@ -241,14 +253,20 @@ identically, placement collapses onto one pod (sampled: 122/128 requests
 in flight with one pod holding 79% of them), and the tail damage is the
 163 s p99 and the 48 timeouts.
 
-**Evidence.** Pull engagement on this rig: 120 P2P sessions across the
-16-pod fleet during the load-aware + P2P arm (sessions are reusable
-connections - an engagement signal, not a byte count). Offload-tier byte
-counters do not separate local CPU restores from peer pulls and are not
-cited as transfer volume here. The precise index runs at the
-fleet-matched `podCacheSize: 32` in both arms; undersizing it inflates
-the arm separation without changing the ordering (see the guide's
-benchmark report).
+**Evidence.** Pull engagement on this rig: 120 P2P sessions established
+across the 16-pod fleet during the load-aware + P2P arm.
+
+<details>
+<summary>Measurement notes</summary>
+
+Sessions are reusable connections - an engagement signal, not a byte
+count. Offload-tier byte counters do not separate local CPU restores
+from peer pulls and are not cited as transfer volume here. The precise
+index runs at the fleet-matched `podCacheSize: 32` in both arms;
+undersizing it inflates the arm separation without changing the ordering
+(see the guide's benchmark report).
+
+</details>
 
 ### Isolated A/B: working sets larger than one pod's cache
 
@@ -292,12 +310,18 @@ the pull arm keeps serving.
 ~5x one pod's cache) reproduces the shape at scale, and a later re-run on
 a rebuilt fleet with the upstream tier made it larger: **+143% sustained
 rate** over the recompute control at 24 req/s (21.9 versus 9.0 req/s) and
-+217% at 30, with median latency 63.4 s -> 0.70 s. Engagement evidence:
-120 reusable P2P sessions established, with 210M external-hit tokens
-served from the offload tier (a figure that includes local CPU restores
-alongside peer transfers). The arm comparisons on this testbed were
-measured before the router's prefix-index sizing fix; the guide carries
-the provenance caveat.
++217% at 30, with median latency falling from 63.4 s to 0.70 s.
+
+<details>
+<summary>Measurement notes</summary>
+
+Engagement evidence on the gpt-oss re-run: 120 reusable P2P sessions
+established, with 210M external-hit tokens served from the offload tier
+(a figure that includes local CPU restores alongside peer transfers).
+The arm comparisons on this testbed were measured before the router's
+prefix-index sizing fix; the guide carries the provenance caveat.
+
+</details>
 
 **How big is "bigger than a pod's cache"?** The ratio decides everything,
 and the effect has a threshold. Sweeping 48K-token prefixes against a
@@ -334,24 +358,23 @@ already receives the full KV over NIXL and has nothing to pull). The
 document-Q&A workload at concurrency 192; both arms completed 1,152 of
 1,152 requests.
 
-Read this one carefully: it is an **offload-tier result, not a pull
-benchmark**. The cross-pod pull stayed quiet under the guide's
-prefix-affine placement; the arm's gain comes from adding the CPU
-offload tier the P2P stack requires.
+**The peer-to-peer pull did not activate in this experiment; the gain
+comes from the local CPU offload tier the P2P stack requires.** Under
+the guide's prefix-affine placement the source decision never fires, so
+read this as an offload-tier result, not a pull benchmark.
 
-| Metric | Baseline (guide) | + P2P stack | delta |
+| Metric | Baseline (guide) | + CPU offload tier (P2P idle) | delta |
 |---|---|---|---|
-| TTFT p50 | 11.94 s | 1.16 s | **10x** |
+| TTFT p50 | 11.94 s | 1.16 s | **10.3x lower** |
 | TTFT p95 | 71.6 s | 55.2 s | **-23%** |
 | TTFT p99 | 106.1 s | 80.0 s | **-25%** |
 | Throughput | 5.68 turns/s | 7.96 turns/s | **+40%** |
 
 **Why.** Under 192-deep queues, turn N+1's history re-prefill is served
 from the stack's CPU offload tier instead of recomputed - that tier is
-what buys the 10x median at this operating point. The cross-pod pull
-itself stays quiet under the guide's prefix-affine placement and
-activates when placement diverges, which the next two sections exercise
-directly.
+what buys the 10.3x median drop at this operating point. The cross-pod
+pull activates when placement diverges, which the next two sections
+exercise directly.
 
 **Evidence.** 52M tokens served from the offload tier (local restores;
 not peer transfers) in the run; zero failures on both arms.
@@ -373,7 +396,10 @@ received the prompt over NIXL and generated the answer. When the next turn
 arrives, the scheduled prefill worker is missing that history, the
 EPP's index (fed by both roles' cache events) sees the decoder holding it,
 and the pull fires - per turn, decided by the router, no application
-change.
+change. (Pulling a *generated* turn requires the chat template to
+re-render assistant text verbatim - Llama's does; the boundaries at the
+end of the benchmarks section list the model families whose templates do
+not.)
 
 | Metric | Baseline | + P2P | delta |
 |---|---|---|---|
@@ -414,7 +440,7 @@ of 288, fresh fleet per arm.
 
 | Metric | Baseline (guide) | + P2P stack | delta |
 |---|---|---|---|
-| TTFT p50 | 5.22 s | 1.09 s | **4.8x** |
+| TTFT p50 | 5.22 s | 1.09 s | **4.8x lower** |
 | TTFT p95 | 18.94 s | 11.77 s | **-38%** |
 | TTFT p99 | 30.29 s | 29.98 s | parity |
 | Run time (288 requests) | 304 s | 229 s | **+33% throughput** |
@@ -437,15 +463,22 @@ recomputed in the 229-second run.
 
 **Reproduced on a later stack.** The whole comparison was re-run months
 later on a rebuilt fleet with the upstream P2P tier and its robustness
-fixes, fresh arms on both sides: baseline 6.83 s TTFT p50 at 0.82 req/s,
-P2P arm 1.09 s at 1.24 req/s - **6.3x median and +50% throughput**,
-288 of 288 in both arms again. The pull-side figure is the stable one
-across all three independent measurements (1.06, 1.09, 1.09 s); the
-baseline is what moves (5.22-6.83 s), so read the speedup as *at least*
-4.8x rather than a single point. The one number that moved against the
-pull on the re-run was p99 (34.7 s versus 28.2 s), consistent with the
-same explanation: the extreme tail is the cold first prefill, which the
-pull does not touch.
+fixes, fresh arms on both sides: **6.3x lower median TTFT and +50%
+throughput** (baseline 6.83 s TTFT p50 at 0.82 req/s, P2P arm 1.09 s at
+1.24 req/s), 288 of 288 in both arms again.
+
+<details>
+<summary>Measurement notes</summary>
+
+The pull-side figure is the stable one across all three independent
+measurements (1.06, 1.09, 1.09 s); the baseline is what moves
+(5.22-6.83 s), so read the improvement as *at least* a 4.8x reduction
+rather than a single point. The one number that moved against the pull
+on the re-run was p99 (34.7 s versus 28.2 s), consistent with the same
+explanation: the extreme tail is the cold first prefill, which the pull
+does not touch.
+
+</details>
 
 ### Isolated A/B: load spill at wide-EP scale (753B)
 
@@ -459,6 +492,12 @@ byte-matched consumer loads were verified independently on the same build.
 | Baseline | load-first prefill placement **without the pull**: precise `prefix-cache` 1 / `queue` 3 / `active-request` 1 |
 | + P2P | the same placement + `p2p-source-producer`, `minCachedTokenDelta` 16384 - the only change is adding the pull |
 | Workload | fresh ~70K-token prefix per repetition, 96 requests at concurrency 32, three repetitions per arm in counterbalanced order |
+
+The 16,384 threshold sits above the crossover measured on both stacks
+(13.6K on the overlay-era build, ~8.7K on the upstream tier) - deliberate
+margin at a 70K prefix, where any value below the prefix length fires the
+pull; the crossover section's 12,288 is the tighter calibrated value for
+new deployments on this testbed.
 
 Does the mechanism survive the largest deployment shape - a 753B MoE
 spread 16 ways per role? On the pull's own territory it produces the
@@ -479,31 +518,39 @@ the arms do not overlap at any repetition.
 recompute on a non-holder. The pull replaces it with a flat-cost
 transfer, collapsing the tail to the transfer floor.
 
-**Evidence.** All 576 requests across both arms succeeded, and the result was
-measured twice end to end - once on the original fix build (-70% mean
-TTFT, 2.8x) and once on independently built images with a freshly booted
-fleet and fresh prompt salts (-67%, 2.7x), every repetition landing in or
-adjacent to the first run's per-repetition bands. The two arm profiles differ by the
-`p2p-source-producer` alone; per-repetition transfer counters were not
-recorded, so the attribution rests on that producer-only difference plus
-a separately verified single-request pull proof on the same build
-(per-rank source attribution, the source engine accepting on its
-rank-offset port, and a consumer load matching the prefix size
-byte-for-byte).
+**Evidence.** All 576 requests across both arms succeeded, and the
+result was measured twice end to end - once on the original fix build
+(-70% mean TTFT, 2.8x) and once on independently built images with a
+freshly booted fleet (-67%, 2.7x).
 
 The boundary on the other side of the policy space: the same pair under
 precise *affinity* placement (affinity weight 5) is a mechanism-verified
 null on this stack - live sampling shows every source evaluation tying
 at a cached-token delta of exactly zero, so no threshold fires and the
 arms behave identically. Placement already lands requests on their
-cache; a correctly configured pull idles. An earlier measurement of this
-testbed reported the opposite - affinity plus the pull improving TTFT
-substantially - but those transfers were triggered by an undersized
-prefix index (`podCacheSize` default) evicting legitimate holders and
-manufacturing divergence for the pull to repair; the index sizing fix
-removes both the divergence and the win, and that grid is retained in
-the guide's benchmark report only as a reproduction record of the
-failure mode.
+cache; a correctly configured pull idles.
+
+<details>
+<summary>Measurement notes</summary>
+
+The re-run used fresh prompt salts, with every repetition landing in or
+adjacent to the first run's per-repetition bands. The two arm profiles
+differ by the `p2p-source-producer` alone; per-repetition transfer
+counters were not recorded, so the attribution rests on that
+producer-only difference plus a separately verified single-request pull
+proof on the same build (per-rank source attribution, the source engine
+accepting on its rank-offset port, and a consumer load matching the
+prefix size byte-for-byte).
+
+On the affinity null: an earlier measurement of this testbed reported
+the opposite - affinity plus the pull improving TTFT substantially - but
+those transfers were triggered by an undersized prefix index
+(`podCacheSize` default) evicting legitimate holders and manufacturing
+divergence for the pull to repair; the index sizing fix removes both the
+divergence and the win, and that grid is retained in the guide's
+benchmark report only as a reproduction record of the failure mode.
+
+</details>
 
 Where the pull earns its keep, in one rule: **KV the placement layer did
 not create.** Load-first placement (measured above), decode-generated
