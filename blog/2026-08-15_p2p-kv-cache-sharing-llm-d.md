@@ -223,8 +223,9 @@ reclaimed prefill capacity rather than a visible latency reduction.
 
 The user-visible payoff appeared on `Qwen3-30B-A3B` with long agentic sessions.
 Contexts reached 10K to 100K tokens, sessions ran for many turns, and tool-call
-gaps gave KV time to leave GPU memory. A returning turn could either re-prefill
-an accumulated history averaging about 62K tokens or pull it from a peer.
+gaps gave KV time to leave GPU memory. Request prompts in the reproduced run
+averaged 61.9K tokens. For a returning turn, the prefiller could either rebuild
+the accumulated history or pull its reusable blocks from a peer.
 
 :::info[Agentic P/D result]
 
