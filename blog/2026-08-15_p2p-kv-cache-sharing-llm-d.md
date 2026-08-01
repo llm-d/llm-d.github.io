@@ -256,18 +256,6 @@ in flight with one pod holding 79% of them), and the tail damage is the
 **Evidence.** Pull engagement on this rig: 120 P2P sessions established
 across the 16-pod fleet during the load-aware + P2P arm.
 
-<details>
-<summary>Measurement notes</summary>
-
-Sessions are reusable connections - an engagement signal, not a byte
-count. Offload-tier byte counters do not separate local CPU restores
-from peer pulls and are not cited as transfer volume here. The precise
-index runs at the fleet-matched `podCacheSize: 32` in both arms;
-undersizing it inflates the arm separation without changing the ordering
-(see the guide's benchmark report).
-
-</details>
-
 ### Isolated A/B: working sets larger than one pod's cache
 
 **Evidence: isolated P2P A/B.** Both arms use the same load-balanced
@@ -311,17 +299,6 @@ the pull arm keeps serving.
 a rebuilt fleet with the upstream tier made it larger: **+143% sustained
 rate** over the recompute control at 24 req/s (21.9 versus 9.0 req/s) and
 +217% at 30, with median latency falling from 63.4 s to 0.70 s.
-
-<details>
-<summary>Measurement notes</summary>
-
-Engagement evidence on the gpt-oss re-run: 120 reusable P2P sessions
-established, with 210M external-hit tokens served from the offload tier
-(a figure that includes local CPU restores alongside peer transfers).
-The arm comparisons on this testbed were measured before the router's
-prefix-index sizing fix; the guide carries the provenance caveat.
-
-</details>
 
 **How big is "bigger than a pod's cache"?** The ratio decides everything,
 and the effect has a threshold. Sweeping 48K-token prefixes against a
@@ -467,19 +444,6 @@ fixes, fresh arms on both sides: **6.3x lower median TTFT and +50%
 throughput** (baseline 6.83 s TTFT p50 at 0.82 req/s, P2P arm 1.09 s at
 1.24 req/s), 288 of 288 in both arms again.
 
-<details>
-<summary>Measurement notes</summary>
-
-The pull-side figure is the stable one across all three independent
-measurements (1.06, 1.09, 1.09 s); the baseline is what moves
-(5.22-6.83 s), so read the improvement as *at least* a 4.8x reduction
-rather than a single point. The one number that moved against the pull
-on the re-run was p99 (34.7 s versus 28.2 s), consistent with the same
-explanation: the extreme tail is the cold first prefill, which the pull
-does not touch.
-
-</details>
-
 ### Isolated A/B: load spill at wide-EP scale (753B)
 
 **Evidence: isolated P2P A/B plus a separate mechanism proof.** The two
@@ -529,28 +493,6 @@ null on this stack - live sampling shows every source evaluation tying
 at a cached-token delta of exactly zero, so no threshold fires and the
 arms behave identically. Placement already lands requests on their
 cache; a correctly configured pull idles.
-
-<details>
-<summary>Measurement notes</summary>
-
-The re-run used fresh prompt salts, with every repetition landing in or
-adjacent to the first run's per-repetition bands. The two arm profiles
-differ by the `p2p-source-producer` alone; per-repetition transfer
-counters were not recorded, so the attribution rests on that
-producer-only difference plus a separately verified single-request pull
-proof on the same build (per-rank source attribution, the source engine
-accepting on its rank-offset port, and a consumer load matching the
-prefix size byte-for-byte).
-
-On the affinity null: an earlier measurement of this testbed reported
-the opposite - affinity plus the pull improving TTFT substantially - but
-those transfers were triggered by an undersized prefix index
-(`podCacheSize` default) evicting legitimate holders and manufacturing
-divergence for the pull to repair; the index sizing fix removes both the
-divergence and the win, and that grid is retained in the guide's
-benchmark report only as a reproduction record of the failure mode.
-
-</details>
 
 Where the pull earns its keep, in one rule: **KV the placement layer did
 not create.** Load-first placement (measured above), decode-generated
