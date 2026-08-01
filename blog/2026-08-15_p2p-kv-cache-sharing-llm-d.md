@@ -283,9 +283,9 @@ rather than the data path.
 
 :::warning[Silent prerequisite]
 
-Every peer must use identical `--block-size` and `PYTHONHASHSEED` settings. A
-mismatch produces different block hashes and silently degrades P2P to zero
-matching transfers.
+Every peer must use identical block-size and hash-seed settings. A mismatch
+produces different block hashes and silently degrades P2P to zero matching
+transfers.
 
 :::
 
