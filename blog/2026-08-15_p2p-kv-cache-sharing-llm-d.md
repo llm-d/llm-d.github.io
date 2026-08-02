@@ -131,9 +131,15 @@ measured rather than assumed. A fresh prefix in these experiments means a
 newly salted token sequence that is seeded on the source and absent from the
 consumer before the timed request.
 
-*Setup: a single source-to-consumer pod pair. The driver bypasses the router
-and injects the KV source directly, so this measures the transfer itself
-rather than any placement policy.*
+<details>
+<summary>Setup: a single pod pair, KV source injected directly, no router in the path</summary>
+
+The driver seeds a fresh prefix on the source pod and requests it on the
+consumer, injecting the KV source into the request rather than letting the
+router decide. This measures the transfer itself rather than any placement
+policy.
+
+</details>
 
 On `openai/gpt-oss-120b` with H200 GPUs, the pull won at every measured prefix
 length. Its latency grew much more slowly than recompute:
@@ -167,15 +173,20 @@ producer load.
 ### 2. When Load Breaks Locality
 
 The cleanest end-to-end result came from `GLM-5.2-FP8` on the wide-EP testbed.
-Both arms used the same load-first prefill placement. Each repetition
+Both configurations used the same load-first prefill placement. Each repetition
 introduced a fresh, approximately 70K-token prefix. The only policy difference
 was whether a worker that did not own the prefix could pull it.
 
-*Setup: 753B MoE, one prefill and one decode instance, each 16-way
-data/expert-parallel across 32 H200s. Both arms run the guide's load-first
+<details>
+<summary>Setup: 32x H200 wide-EP; the guide's load-first configuration with and without the source producer</summary>
+
+753B MoE, one prefill and one decode instance, each 16-way
+data/expert-parallel across 32 H200s. Both runs use the guide's load-first
 prefill weights - precise prefix-cache 1, queue 3, active-request 1 -
-shipped as `epp-glm-loadfirst.yaml`; the P2P arm is the same file plus the
-source producer, `epp-glm-loadfirst-p2p.yaml`.*
+shipped as `epp-glm-loadfirst.yaml`; the P2P side is that same file plus the
+`p2p-source-producer`, shipped as `epp-glm-loadfirst-p2p.yaml`.
+
+</details>
 
 | Same placement | Without P2P | With P2P | Delta |
 |---|---:|---:|---:|
@@ -191,7 +202,7 @@ source producer, `epp-glm-loadfirst-p2p.yaml`.*
 Without the pull, every spill recomputed the 70K-token prefix on a non-holder.
 With it, the prefix followed the request. The repetitions did not overlap:
 control mean TTFT ranged from 7.53 to 8.44 seconds, while P2P ranged from 2.45
-to 2.64 seconds. All requests succeeded in both arms. The two profiles differed
+to 2.64 seconds. All requests succeeded on both sides. The two profiles differed
 only by the P2P source producer, and a separate single-request probe verified
 that the selected source delivered the expected bytes.
 
@@ -201,10 +212,15 @@ saturation, it raised the fleet ceiling by 22% and peak token throughput by
 32%. The gain grew with load because the no-pull control consumed capacity
 recomputing cross-pod misses.
 
-*Setup: 4 aggregated H200 pods, a pool of 64 shared 16K prefixes larger than
-any single pod's cache. Both arms use the same load-balanced placement and
-differ only by the source producer; these campaign configs are archived with
-the measurement record rather than shipped with the guide.*
+<details>
+<summary>Setup: 4 aggregated H200 pods; identical load-balanced placement on both sides</summary>
+
+A pool of 64 shared 16K prefixes, larger than any single pod's cache. Both
+runs use the same load-balanced placement and differ only by the
+`p2p-source-producer`. These campaign configurations are archived with the
+measurement record rather than shipped with the guide.
+
+</details>
 
 #### Document Q&A: A Complete Policy Comparison
 
@@ -213,11 +229,15 @@ load-aware placement plus P2P outperform precise affinity when many active
 sessions queue behind their document owners? It compares complete serving
 policies, not P2P as a single toggle.
 
-*Setup: `gpt-oss-120b` on 16 aggregated H200 pods. The baseline is the
-guide's precise prefix-affinity arm, `epp-affinity.yaml`; the candidate is
-load-aware placement plus the pull, `epp-load-p2p.yaml`, at
-`minCachedTokenDelta` 2048. Both arms run the precise index at the
-fleet-matched `podCacheSize: 32`.*
+<details>
+<summary>Setup: gpt-oss-120b on 16 aggregated H200 pods; epp-affinity.yaml versus epp-load-p2p.yaml</summary>
+
+The baseline is the guide's precise prefix-affinity configuration,
+`epp-affinity.yaml`. The candidate is load-aware placement plus the pull,
+`epp-load-p2p.yaml`, at `minCachedTokenDelta` 2048. Both run the precise
+index at the fleet-matched `podCacheSize: 32`.
+
+</details>
 
 The workload used 192 distinct 48K-token documents, each queried through six
 short turns, with 128 conversations active at once. The corpus fit in aggregate
@@ -264,10 +284,15 @@ profile. Those gaps give session KV time to leave GPU memory, so a returning
 turn must either rebuild the accumulated history or pull its reusable blocks
 from a peer. Prompts averaged 61.9K tokens.
 
-*Setup: 2 prefill and 4 decode pods, one H200 each. Both arms carry
-`NixlConnector` for the P/D handoff and use identical placement plugins and
-weights; the P2P arm adds the CPU offload tier, enables the pull on the decode
-routing sidecar, and adds the source producer at `minCachedTokenDelta` 1024.*
+<details>
+<summary>Setup: 2 prefill and 4 decode pods; identical placement, the P2P side adds the offload tier and the pull</summary>
+
+One H200 per pod. Both runs carry `NixlConnector` for the P/D handoff and use
+identical placement plugins and weights. The P2P run adds the CPU offload
+tier, enables the pull on the decode routing sidecar, and adds the
+`p2p-source-producer` at `minCachedTokenDelta` 1024.
+
+</details>
 
 :::info[Agentic P/D result]
 
@@ -284,9 +309,9 @@ median TTFT and 50% more throughput.
 
 A separate run directly observed 1.23 million tokens of session history moved
 between peers, confirming the mechanism. The extreme tail did not improve.
-Both arms' worst case was the first prefill of a cold 100K-token context, and
-P2P can reuse only KV that someone has already computed. It removes repeated
-work; it does not remove the first computation.
+The worst case on both sides was the first prefill of a cold 100K-token
+context, and P2P can reuse only KV that someone has already computed. It
+removes repeated work; it does not remove the first computation.
 
 ## Where P2P Should Stay Inactive
 
@@ -295,7 +320,7 @@ the feature should remain quiet:
 
 * **A local hit is already optimal.** Under precise affinity on the wide-EP
   testbed, no remote peer had a cached-token advantage. No pull fired and the
-  P2P arm behaved like the control.
+  P2P configuration behaved like the control.
 * **Local CPU restores are not peer transfers.** Against the
   [P/D disaggregation guide](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation)
   as shipped with plain `NixlConnector`, adding the offload stack cut median
