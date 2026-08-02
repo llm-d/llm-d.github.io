@@ -131,6 +131,10 @@ measured rather than assumed. A fresh prefix in these experiments means a
 newly salted token sequence that is seeded on the source and absent from the
 consumer before the timed request.
 
+*Setup: a single source-to-consumer pod pair. The driver bypasses the router
+and injects the KV source directly, so this measures the transfer itself
+rather than any placement policy.*
+
 On `openai/gpt-oss-120b` with H200 GPUs, the pull won at every measured prefix
 length. Its latency grew much more slowly than recompute:
 
@@ -167,6 +171,12 @@ Both arms used the same load-first prefill placement. Each repetition
 introduced a fresh, approximately 70K-token prefix. The only policy difference
 was whether a worker that did not own the prefix could pull it.
 
+*Setup: 753B MoE, one prefill and one decode instance, each 16-way
+data/expert-parallel across 32 H200s. Both arms run the guide's load-first
+prefill weights - precise prefix-cache 1, queue 3, active-request 1 -
+shipped as `epp-glm-loadfirst.yaml`; the P2P arm is the same file plus the
+source producer, `epp-glm-loadfirst-p2p.yaml`.*
+
 | Same placement | Without P2P | With P2P | Delta |
 |---|---:|---:|---:|
 | Mean TTFT | 7.85 s | 2.56 s | **-67%** |
@@ -191,12 +201,23 @@ saturation, it raised the fleet ceiling by 22% and peak token throughput by
 32%. The gain grew with load because the no-pull control consumed capacity
 recomputing cross-pod misses.
 
+*Setup: 4 aggregated H200 pods, a pool of 64 shared 16K prefixes larger than
+any single pod's cache. Both arms use the same load-balanced placement and
+differ only by the source producer; these campaign configs are archived with
+the measurement record rather than shipped with the guide.*
+
 #### Document Q&A: A Complete Policy Comparison
 
 The document Q&A experiment asks a related but different question: can
 load-aware placement plus P2P outperform precise affinity when many active
 sessions queue behind their document owners? It compares complete serving
 policies, not P2P as a single toggle.
+
+*Setup: `gpt-oss-120b` on 16 aggregated H200 pods. The baseline is the
+guide's precise prefix-affinity arm, `epp-affinity.yaml`; the candidate is
+load-aware placement plus the pull, `epp-load-p2p.yaml`, at
+`minCachedTokenDelta` 2048. Both arms run the precise index at the
+fleet-matched `podCacheSize: 32`.*
 
 The workload used 192 distinct 48K-token documents, each queried through six
 short turns, with 128 conversations active at once. The corpus fit in aggregate
@@ -231,11 +252,22 @@ Pulling a generated turn requires the next request to reproduce the same token
 IDs: Llama re-renders assistant turns verbatim, while models whose templates
 drop reasoning segments can pull only input context and re-prefilled history.
 
-The user-visible payoff appeared on `Qwen3-30B-A3B` with long agentic sessions.
-Contexts reached 10K to 100K tokens, sessions ran for many turns, and tool-call
-gaps gave KV time to leave GPU memory. Request prompts in the reproduced run
-averaged 61.9K tokens. For a returning turn, the prefiller could either rebuild
-the accumulated history or pull its reusable blocks from a peer.
+The user-visible payoff appeared on `Qwen3-30B-A3B-Thinking` under the
+agentic-serving workload: the conversation-replay profile from the
+[agentic-serving guide](https://github.com/llm-d/llm-d/tree/main/guides/agentic-serving),
+which models coding sessions over large reused contexts with tool-call pauses
+between turns. Its context, turn-count and tool-gap ranges are scaled to this
+six-GPU testbed - 24 conversations, dynamic system prompts of 10K to 100K
+tokens, 4 to 40 turns each, and tool-call gaps of 1 to 20 seconds - while the
+per-turn shapes (about 1,500 input and 425 output tokens) match the guide's
+profile. Those gaps give session KV time to leave GPU memory, so a returning
+turn must either rebuild the accumulated history or pull its reusable blocks
+from a peer. Prompts averaged 61.9K tokens.
+
+*Setup: 2 prefill and 4 decode pods, one H200 each. Both arms carry
+`NixlConnector` for the P/D handoff and use identical placement plugins and
+weights; the P2P arm adds the CPU offload tier, enables the pull on the decode
+routing sidecar, and adds the source producer at `minCachedTokenDelta` 1024.*
 
 :::info[Agentic P/D result]
 
@@ -264,9 +296,12 @@ the feature should remain quiet:
 * **A local hit is already optimal.** Under precise affinity on the wide-EP
   testbed, no remote peer had a cached-token advantage. No pull fired and the
   P2P arm behaved like the control.
-* **Local CPU restores are not peer transfers.** One P/D comparison cut median
-  TTFT from 11.94 to 1.16 seconds (10.3x) after adding the offload stack, but
-  the peer pull stayed idle. That gain belongs to the local CPU tier.
+* **Local CPU restores are not peer transfers.** Against the
+  [P/D disaggregation guide](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation)
+  as shipped with plain `NixlConnector`, adding the offload stack cut median
+  TTFT from 11.94 to 1.16 seconds (10.3x) - but under that guide's
+  prefix-affine placement the peer pull stayed idle, so the gain belongs to
+  the local CPU tier.
 * **A restarted EPP has no source map.** Peers may still hold KV, but the new
   index cannot name them until it learns new state. P2P is not restart
   recovery.
