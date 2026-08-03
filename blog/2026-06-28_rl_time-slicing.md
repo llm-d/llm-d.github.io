@@ -15,11 +15,11 @@ tags: [blog, updates, llm-d, rl]
 
 In Reinforcement Learning (RL) post-training for Large Language Models using algorithms like GRPO, optimizing the ratio of generator (sampler) to trainer throughput is the single largest driver of infrastructure Total Cost of Ownership (TCO). Because typical RL post-training loops alternate sequentially between generation and optimization phases, expensive GPU and TPU clusters sit completely idle for 40% to 60% of their lifecycle.
 
-Today, llm-d introduces a new well-lit path for Co-operative Time-Slicing: the Snapshot Agent. Rather than forcing physical hardware to wait on upstream phases or sit idle during blocking operations, this platform-level capability dynamically interleaves independent RL jobs onto shared hardware blocks, driving aggregate accelerator duty cycles from the poor 40% baseline up to 95%+ efficiency without altering underlying model convergence or accuracy.
+Today, llm-d introduces a new well-lit path for Co-operative Time-Slicing: the Snapshot Agent. Rather than forcing physical hardware to wait on upstream phases or sit idle during blocking operations, this platform-level capability dynamically interleaves independent RL jobs onto shared hardware blocks, driving aggregate accelerator duty cycles from the poor 40% baseline up to 70%+ efficiency without altering underlying model convergence or accuracy.
 
 ## Key Takeaways
 
-- **Zero Idle Accelerators**: Co-operative time-slicing multiplexes concurrent RL jobs onto shared GPU and TPU hardware, reclaiming stranded compute capacity and boosting duty cycles from ~40% up to 95%+.
+- **Zero Idle Accelerators**: Co-operative time-slicing multiplexes concurrent RL jobs onto shared GPU and TPU hardware, reclaiming stranded compute capacity and boosting duty cycles from ~40% up to 70%+.
 - **Zero Model Degradation**: Because active jobs retain exclusive access to physical accelerators during their compute windows, there is no loss in token generation throughput or training step convergence.
 - **Zero Code Rewrites**: A lightweight two-call TimeSlice Client API (`acquire()` and `yield()`) integrates seamlessly into existing RL loops, while the Snapshot Agent automatically handles CUDA context evacuation and restoration to host DRAM under the hood.
 
@@ -39,7 +39,7 @@ Traditional cloud infrastructure is designed for continuous, steady-state worklo
 
 ## Introducing Co-operative Time-Slicing (RL Job Interleaving)
 
-To eliminate idle accelerators during RL jobs, the **llm-d** project introduces Co-operative Time-Slicing. Rather than forcing hardware to wait on upstream phases, the infrastructure dynamically interleaves independent RL jobs onto shared hardware blocks, driving aggregate accelerator duty cycles up to 95% without altering the underlying model convergence or accuracy.
+To eliminate idle accelerators during RL jobs, the **llm-d** project introduces Co-operative Time-Slicing. Rather than forcing hardware to wait on upstream phases, the infrastructure dynamically interleaves independent RL jobs onto shared hardware blocks, driving aggregate accelerator duty cycles up to 70% without altering the underlying model convergence or accuracy.
 
 When Job A pauses its training phase to run reward evaluation on the CPU or distribute updated weights, the infrastructure time-slices the physical accelerators, swapping in the active sampling or training phase of Job B.
 
@@ -91,9 +91,9 @@ This bottom layer acts on the physical node boundary to enforce absolute memory 
 To validate the infrastructure’s ability to reclaim stranded compute capacity without impacting algorithmic convergence, early tests evaluated the platform-native time-slicing system using a representative Reinforcement Learning (RL) workload:
 - **Hardware Configuration**: 1x NVIDIA H100 SXM5 (80GB) node (8 GPUs per node), interconnected via NVLink and InfiniBand networking.
 - **Model & Workload Configuration**: Qwen2.5-7B-Instruct fine-tuned using veRL with GRPO (Group Relative Policy Optimization). Each job ran with a rollout batch size of 512, maximum prompt length of 1024 tokens, and maximum response length of 1024 tokens. Samplers ran via vLLM with tensor parallelism of 4, while trainers utilized PyTorch FSDP (Fully Sharded Data Parallel).
-- **Baseline Measurement Method**: The 41% baseline GPU duty cycle was measured during standard standalone (non-interleaved) execution over 5 continuous training epochs using NVIDIA DCGM (Data Center GPU Manager) and Prometheus metrics. During standalone execution, GPUs remain completely idle (0% compute utilization) during reward computation on CPU, rollout buffer processing, and inter-node weight synchronization.
+- **Baseline Measurement Method**: The 40% baseline GPU duty cycle was measured during standard standalone (non-interleaved) execution over 5 continuous training epochs using NVIDIA DCGM (Data Center GPU Manager) and Prometheus metrics. During standalone execution, GPUs remain completely idle (0% compute utilization) during reward computation on CPU, rollout buffer processing, and inter-node weight synchronization.
 
-During the test, co-scheduling and interleaving two independent sampler workloads on a single node elevated the actual hardware duty cycle from a baseline of 41% to 71%, with a theoretical peak of ~95% under idealized phase alignments. The theoretical peak of ~95% is derived under complementary phase alignment where Job A is executing CPU-bound reward evaluation or weight transfer while Job B executes GPU-bound sampling or gradient computation; the remaining ~5% accounts for irreducible PCIe Gen5 host-to-device memory snapshot and restore serialization overheads. Because the active job maintains exclusive access to the GPU during its compute window, there is zero degradation to token generation or training step throughput.
+During the test, co-scheduling and interleaving two independent sampler workloads on a single node elevated the actual hardware duty cycle from a baseline of 40% to 70%, with a possible theoretical peak of ~95% under idealized phase alignments. The theoretical peak of ~95% is derived under complementary phase alignment where Job A is executing CPU-bound reward evaluation or weight transfer while Job B executes GPU-bound sampling or gradient computation; the remaining ~5% accounts for irreducible PCIe Gen5 host-to-device memory snapshot and restore serialization overheads. Because the active job maintains exclusive access to the GPU during its compute window, there is zero degradation to token generation or training step throughput.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/time-slicing/rl_time-slice_4.webp" alt="Figure4 : Baseline RL run without time-slicing" style={{width: '75%', height: 'auto'}} />
