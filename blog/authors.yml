@@ -104,10 +104,30 @@ orozeri:
 
 tylersmith:
   name: Tyler Smith
-  title: Member of Technical Staff, Red Hat
+  title: Chief Architect, Inference Engineering, Red Hat
+  url: https://github.com/tlrmchlsmth
   image_url: /img/blogs/tylersmith.webp
   socials:
     linkedin: tyler-michael-smith-017b28102
+    github: https://github.com/tlrmchlsmth
+
+yuchenfama:
+  name: Yuchen Fama
+  title: Senior Principal Product Manager, Inference, Red Hat
+  url: https://github.com/cemigo114
+  image_url: /img/blogs/yuchenfama.jpeg
+  socials:
+    linkedin: yuchen-fama
+    github: https://github.com/cemigo114
+
+elvircrncevic:
+  name: Elvir Crncevic
+  title: Machine Learning Engineer (vLLM), Red Hat
+  url: https://github.com/elvircrn
+  image_url: /img/blogs/elvircrncevic.jpeg
+  socials:
+    linkedin: elvir-crncevic-99a17960
+    github: https://github.com/elvircrn
 
 kellenswain:
   name: Kellen Swain
@@ -272,9 +292,11 @@ abhisyant:
 maroonayoub-redhat:
   name: Maroon Ayoub
   title: Senior Principal Machine Learning Engineer, Red Hat
+  url: https://github.com/vMaroon
   image_url: /img/blogs/maroonayoub.webp
   socials:
     linkedin: v-maroon
+    github: https://github.com/vMaroon
 
 liranschour:
   name: Liran Schour
@@ -298,6 +320,7 @@ rajjoshi:
   name: Raj Joshi
   title: Senior Machine Learning Engineer, Red Hat
   email: rajjoshi@redhat.com
+  url: https://github.com/rajkiranjoshi
   image_url: https://ca.slack-edge.com/E030G10V24F-U09NVNF8JP7-cfbc57010dc3-512
   socials:
     linkedin: rajkiranjoshi
@@ -405,8 +428,10 @@ carloscosta:
   name: Carlos Costa
   title: Distinguished Engineer, IBM
   email: chcost@us.ibm.com
+  url: https://github.com/chcost
   image_url: https://github.com/chcost.png
   socials:
+    linkedin: carlos-costa-9b9b1a1
     github: https://github.com/chcost
 
 itayetelis:
