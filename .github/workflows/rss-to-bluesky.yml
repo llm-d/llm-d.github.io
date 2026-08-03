@@ -1,0 +1,41 @@
+name: Post Latest Blog from RSS to Bluesky
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '00 12 * * *'
+
+jobs:
+  fetch-and-post:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install xmllint
+        run: |
+          sudo apt-get update && sudo apt-get install -y libxml2-utils
+
+      - name: Fetch Latest Blog Post
+        id: fetch_post
+        run: |
+          set -euo pipefail
+          RSS_FEED_URL="https://llm-d.ai/blog/rss.xml"
+          response=$(curl --fail --show-error --silent --location "$RSS_FEED_URL")
+          description=$(echo "$response" | xmllint --xpath "string(//item[1]/description)" -)
+          url=$(echo "$response" | xmllint --xpath "string(//item[1]/link)" -)
+          description=$(echo "$description" | xargs)
+          if [ -z "$description" ] || [ -z "$url" ]; then
+            echo "Failed to parse latest RSS item description or URL"
+            exit 1
+          fi
+          preview="$description $url"
+          echo "preview=$preview" >> $GITHUB_ENV
+          echo "rss_url=$url" >> $GITHUB_ENV
+
+      - name: Post to Bluesky
+        uses: myConsciousness/bluesky-post@96827d0a9604cb228b11b3095f6961196efba4a0 # v5
+        with:
+          text: "${{ env.preview }}"
+          link-preview-url: "${{ env.rss_url }}"
+          identifier: llm-d.ai.bsky.social
+          password: "${{ secrets.BSKY_SECRET }}"

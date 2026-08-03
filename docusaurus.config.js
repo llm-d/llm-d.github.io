@@ -110,6 +110,14 @@ const config = {
           path: 'blog',
           routeBasePath: 'blog',
           showReadingTime: true,
+          readingTime: ({ content, defaultReadingTime, locale }) =>
+            defaultReadingTime({
+              content: content.replace(
+                /<!-- reading-time-exclude:start -->[\s\S]*?<!-- reading-time-exclude:end -->/g,
+                '',
+              ),
+              locale,
+            }),
           blogSidebarTitle: 'All posts',
           blogSidebarCount: 'ALL',
           editUrl: `${GITHUB_REPO}/edit/main/website/`,
