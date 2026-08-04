@@ -19,6 +19,7 @@ const siteDir = path.dirname(fileURLToPath(import.meta.url));
 // into docs/ alongside the docs it describes. It may be absent before the first
 // sync, so loadMenuConfig tolerates a missing file and we only validate when docs/ exists.
 const docsDir = path.join(siteDir, 'docs');
+const guidesDir = path.join(siteDir, 'guides');
 const menuConfig = loadMenuConfig(path.join(docsDir, 'menu-config.json'));
 if (fs.existsSync(docsDir)) validateMenuConfig(menuConfig, docsDir);
 const versionsFile = path.join(siteDir, 'versions.json');
@@ -83,7 +84,7 @@ const config = {
     format: 'detect',
     mermaid: true,
     // Render-time link/image/brace fixes for the pristine synced docs copy.
-    preprocessor: makeDocsPreprocessor({ docsDir }),
+    preprocessor: makeDocsPreprocessor({ docsDir, guidesDir }),
     hooks: {
       onBrokenMarkdownLinks: 'warn',
       onBrokenMarkdownImages: 'warn',
@@ -152,11 +153,23 @@ const config = {
         sidebarPath: './sidebarsCommunity.js',
       },
     ],
+    // Well-lit-path deployment guides as their own docs instance (see guides:
+    // in docs-sync.yaml / tools/llmd-site). Guides link out to sibling
+    // manifests/sub-guides on GitHub, so they don't fit the versioned docs/ tree.
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'guides',
+        path: 'guides',
+        routeBasePath: 'guides',
+        sidebarPath: './sidebarsGuides.js',
+      },
+    ],
   ],
 
   themes: [
     '@docusaurus/theme-mermaid',
-    // Offline full-text search (docs + blog + community).
+    // Offline full-text search (docs + blog + community + guides).
     [
       require.resolve('@easyops-cn/docusaurus-search-local'),
       /** @type {import('@easyops-cn/docusaurus-search-local').PluginOptions} */
@@ -164,7 +177,7 @@ const config = {
         hashed: true,
         indexBlog: true,
         indexPages: true,
-        docsRouteBasePath: ['/docs', '/community'],
+        docsRouteBasePath: ['/docs', '/community', '/guides'],
         highlightSearchTermsOnTargetPage: true,
       }),
     ],
@@ -207,6 +220,13 @@ const config = {
             label: 'Docs',
           },
           { to: '/blog', label: 'Blog', position: 'left' },
+          {
+            type: 'docSidebar',
+            sidebarId: 'guidesSidebar',
+            docsPluginId: 'guides',
+            position: 'left',
+            label: 'Guides',
+          },
           {
             type: 'docSidebar',
             sidebarId: 'communitySidebar',
@@ -264,6 +284,9 @@ const config = {
               },
               {
                 html: '<a href="/docs/well-lit-paths" class="footer__link-item">Well-Lit Paths</a>',
+              },
+              {
+                html: '<a href="/guides" class="footer__link-item">Deployment Guides</a>',
               },
             ],
           },
