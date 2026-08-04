@@ -99,14 +99,21 @@ def crossover():
         )
 
     ax.annotate(
+        "",
+        xy=(tokens[-1], pull[-1] + 60),
+        xytext=(tokens[-1], recompute[-1] - 60),
+        arrowprops={"arrowstyle": "<->", "color": BLUE, "linewidth": 1.4},
+    )
+    ax.annotate(
         "-88%",
-        xy=(tokens[-1], pull[-1]),
-        xytext=(tokens[-1], 1020),
-        ha="center",
+        xy=(tokens[-1], (pull[-1] + recompute[-1]) / 2),
+        xytext=(-8, 0),
+        textcoords="offset points",
+        ha="right",
+        va="center",
         color=BLUE,
         fontsize=15,
         fontweight="bold",
-        arrowprops={"arrowstyle": "-", "color": BLUE, "linewidth": 1.4},
     )
 
     ax.set_xticks(tokens, ["2K", "8K", "16K", "32K", "48K"])
