@@ -457,5 +457,44 @@ ezrasilvera:
     github: https://github.com/ezrasilvera
     linkedin: ezra-silvera-9746682
 
-intel-sglang-team:
-  name: "Intel & SGLang Team"
+xiaojunzhang:
+  name: Xiaojun(Robin) Zhang
+  title: AI Software Solutions Engineer, Intel
+  image_url: /img/blogs/xiaojunzhang.webp
+  socials:
+    linkedin: zhangxiaojunhust
+
+weifengyao:
+  name: Weifeng(Matrix) Yao
+  title: AI Principal Engineer, Intel
+  image_url: /img/blogs/weifengyao.webp
+  socials:
+    linkedin: weifeng-yao-040b0322
+
+fanzhao:
+  name: Fan Zhao
+  title: Senior Engineering Director, Intel
+  image_url: /img/blogs/fanzhao.webp
+  socials:
+    linkedin: fan-zhao-a1560a20
+
+yuanwu:
+  name: Yuan Wu
+  title: AI Frameworks Engineer, Intel
+  image_url: https://github.com/yuanwu2017.png
+  socials:
+    github: https://github.com/yuanwu2017
+
+jianangu:
+  name: Jianan Gu
+  title: AI Frameworks Engineer, Intel
+  image_url: /img/blogs/jianangu.webp
+  socials:
+    github: https://github.com/jianan-gu
+
+alexandernail:
+  name: Alexander Nail
+  title: Member of Technical Staff, RadixArk
+  image_url: /img/blogs/alexandernail.webp
+  socials:
+    linkedin: alex-nails
