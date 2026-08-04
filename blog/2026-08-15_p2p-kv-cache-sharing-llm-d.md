@@ -10,7 +10,7 @@ draft: false  # TEMP for preview render - revert before merge
 authors:
   - niliguy
   - liranschour
-  - maroonayoub
+  - maroonayoub-redhat
 
 tags: [blog, kv-cache]
 # TODO: consider adding a dedicated p2p tag to tags.yml
