@@ -10,6 +10,7 @@ draft: false  # TEMP for preview render - revert before merge
 authors:
   - niliguy
   - liranschour
+  - maroonayoub
 
 tags: [blog, kv-cache]
 # TODO: consider adding a dedicated p2p tag to tags.yml
@@ -34,9 +35,11 @@ where to fetch the missing prefix.
 
 :::info[Headline result]
 
-On a 753B wide-EP testbed under identical load-first placement, adding P2P
-reduced mean TTFT by 67%, reduced p90 TTFT by 77%, and increased throughput
-2.7x.
+Replaying a real recorded coding-agent session that forks 43 parallel
+subagents over a shared 40K-token prefix, adding P2P removed every straggler
+branch a copy could exist for: p90 branch-start TTFT dropped from 11.2 s to
+1.6 s (-86%), and each verified pull replaced ~13 s of prefix recomputation
+with a sub-second transfer.
 
 :::
 
@@ -89,9 +92,9 @@ blocks over NIXL, the NVIDIA Inference Xfer Library. The scheduler describes
 the operation as a pull because the consumer requests it; after the lookup
 handshake, the producer performs the data-path write. Neither GPU performs the
 peer-to-peer copy, so serving a peer costs the producer CPU memory bandwidth
-and network capacity, not GPU compute; in the wide-EP measurement below,
-every pod carries both roles under load and the gains stand. A normal miss
-falls back to computation.
+and network capacity, not GPU compute; in the fork experiments below, a
+verified pull was served by a decode worker while it carried its own load. A
+normal miss falls back to computation.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/p2p-kv-cache/architecture.png" alt="Architecture diagram showing the EPP selecting a destination and KV source, with NIXL moving matching blocks between peer CPU tiers" style={{width: '100%', height: 'auto'}} />
@@ -180,45 +183,68 @@ producer load.
 
 ### 2. When Load Breaks Locality
 
-The cleanest end-to-end result came from `GLM-5.2-FP8` on the wide-EP testbed.
-Both configurations used the same load-first prefill placement. Each repetition
-introduced a fresh, approximately 70K-token prefix. The only policy difference
-was whether a worker that did not own the prefix could pull it.
+The cleanest end-to-end result comes from a real recorded workload: a
+Claude Code session from the public `semianalysisai/cc-traces-weka-062126`
+corpus that forks 43 parallel subagents, every one inheriting the same
+40K-token context. The burst arrives faster than any single worker can absorb,
+so placement must send siblings to workers that have never seen the prefix.
+Whether those workers recompute or pull is the only policy difference.
 
 <details>
-<summary>Setup: 32x H200 wide-EP; the guide's load-first configuration with and without the source producer</summary>
+<summary>Setup: GLM-5.2-FP8 on 32x H200 P/D-disaggregated; token-load placement with and without the source producer; AIPerf trace replay</summary>
 
-753B MoE, one prefill and one decode instance, each 16-way
-data/expert-parallel across 32 H200s. Both runs use the guide's load-first
-prefill weights - precise prefix-cache 1, queue 3, active-request 1 -
-shipped as `epp-glm-loadfirst.yaml`; the P2P side is that same file plus the
-`p2p-source-producer`, shipped as `epp-glm-loadfirst-p2p.yaml`.
+753B MoE, two prefill and two decode instances, each 8-way data/expert
+parallel. Both arms run the same load-modeled prefix-affinity placement
+(`prefix-cache-affinity-filter` over the precise index with
+`token-load-scorer`); the P2P arm adds only the `p2p-source-producer` at
+`minCachedTokenDelta: 12288`. The workload is replayed with AIPerf
+(`weka_trace`, fixed schedule, `ignore_eos`), which reconstructs the recorded
+token counts, KV-block sharing, and subagent spawn timing exactly. Two fork
+groups of matched size (43 and 44 children, prefixes within 0.8%) serve as
+twins so each can act as the other's control, with cold caches enforced
+between arms; the comparison was then repeated with the windows swapped.
+Every pull was verified at three layers: the router directive, the source
+engine's transfer session, and the destination engine's
+`external_prefix_cache_hits` counter.
 
 </details>
 
-| Same placement | Without P2P | With P2P | Delta |
-|---|---:|---:|---:|
-| Mean TTFT | 7.85 s | 2.56 s | **-67%** |
-| p90 TTFT | 21.3 s | 5.0 s | **-77%** |
-| Throughput | 3.8 req/s | 10.1 req/s | **2.7x** |
+| Branch starts (~40K inherited prefix) | Without P2P | With P2P |
+|---|---:|---:|
+| p50 TTFT | 1.2 s | 1.2 s |
+| p90 TTFT | **11.2 s** | **1.6 s (-86%)** |
+| Stragglers (recompute band) | 6 at 11-12.5 s | none |
+| Burst-head colds (no copy exists yet) | included above | 2 at ~7.5 s |
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/p2p-kv-cache/wide-ep-load-spill.png" alt="Bar chart showing P2P reducing mean and p90 TTFT and increasing throughput on GLM-5.2 wide-EP" style={{width: '100%', height: 'auto'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Under identical load-first placement, adding P2P converts spill recomputation into a bounded transfer.</em></p>
+  <img src="/img/blogs/p2p-kv-cache/fork-stragglers.png" alt="Strip plot of branch-start TTFT for the same 43-subagent fork with and without P2P: without P2P six branches cluster at 11-12.5 seconds; with P2P all branches sit at or below 1.9 seconds except two burst-head colds near 7.5 seconds" style={{width: '100%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Every branch start in the same fork under both arms. P2P leaves only the burst head - the siblings that arrived before any copy of the prefix existed.</em></p>
 </div>
 
-Without the pull, every spill recomputed the 70K-token prefix on a non-holder.
-With it, the prefix followed the request. The repetitions did not overlap:
-control mean TTFT ranged from 7.53 to 8.44 seconds, while P2P ranged from 2.45
-to 2.64 seconds. All requests succeeded on both sides. The two profiles differed
-only by the P2P source producer, and a separate single-request probe verified
-that the selected source delivered the expected bytes.
+Without the pull, the six siblings that scattered onto cold workers each
+recomputed the prefix - and recomputing simultaneously, they slowed each
+other from 6.6 s to 11-12.5 s apiece. With the pull, the same placements
+fetched the prefix in about a second. The median does not move because most
+siblings land warm either way; what P2P removes is the straggler band. The
+only slow starts left are the burst head - siblings that arrive before any
+copy of the prefix exists anywhere, which no mechanism can serve. The
+reversed-window replicate reproduced the shape (p90 -66% with the wider
+burst head), and a separately measured pull on a 75K-token fork start
+replaced a 13.9-second cold prefill with a 790 ms transfer, within 6% of a
+value predicted in advance from the recompute rate measured in earlier runs.
 
 A smaller `Llama-3.1-8B` shared-prefix pool showed the same causal shape. At 8
 requests per second, P2P reduced median request latency by 43%. Near
 saturation, it raised the fleet ceiling by 22% and peak token throughput by
 32%. The gain grew with load because the no-pull control consumed capacity
-recomputing cross-pod misses.
+recomputing cross-pod misses:
+
+| Offered rate | Without P2P | With P2P |
+|---:|---:|---:|
+| 4 req/s | 1.12 s p50 | 0.93 s p50 |
+| 8 req/s | 2.49 s p50 | **1.41 s p50 (-43%)** |
+| 12 req/s | 12.2 s p50, 9.9 req/s achieved | 2.1 s p50, 11.6 req/s achieved |
+| 16 req/s | 21.3 s p50, 10.3 req/s achieved | **7.8 s p50, 12.6 req/s achieved (+22%)** |
 
 <details>
 <summary>Setup: 4 aggregated H200 pods; identical load-balanced placement on both sides</summary>
@@ -378,9 +404,12 @@ patterns that create locality breaks dynamically:
 * **Scale-out warmup.** Add a cold replica under steady shared-prefix traffic
   and compare how quickly it reaches useful TTFT and cache-hit levels with and
   without peer pulls.
-* **Agentic burst fan-out.** Fan a parent session's repository-scale context
-  out to several sub-agents at once, then measure tail latency, source load,
-  and how well concurrent pulls preserve the reuse advantage.
+* **Restart and preemption recovery.** Restart a prefill fleet under live
+  multi-turn sessions, where every conversation must recover its context at
+  once. Without pulls this is a synchronized recompute storm; with them, the
+  decode tier serves the history back. Simultaneous cold recomputes already
+  measurably slow each other in the fork experiment, so this is where the
+  per-pull saving should compound into the mean.
 * **Prefetch ahead of arrival.** Trigger the pull from local or remote CPU
   when a session's next request is predictable, so the transfer overlaps idle
   time instead of the request's critical path.
