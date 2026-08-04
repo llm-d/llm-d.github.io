@@ -209,13 +209,6 @@ engine's transfer session, and the destination engine's
 
 </details>
 
-| Branch starts (~40K inherited prefix) | Without P2P | With P2P |
-|---|---:|---:|
-| p50 TTFT | 1.2 s | 1.2 s |
-| p90 TTFT | **11.2 s** | **1.6 s (-86%)** |
-| Stragglers (recompute band) | 6 at 11-12.5 s | none |
-| Burst-head colds (no copy exists yet) | included above | 2 at ~7.5 s |
-
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/p2p-kv-cache/fork-stragglers.png" alt="Strip plot of branch-start TTFT for the same 43-subagent fork with and without P2P: without P2P six branches cluster at 11-12.5 seconds; with P2P all branches sit at or below 1.9 seconds except two burst-head colds near 7.5 seconds" style={{width: '100%', height: 'auto'}} />
   <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Every branch start in the same fork under both arms. P2P leaves only the burst head - the siblings that arrived before any copy of the prefix existed.</em></p>
@@ -223,11 +216,13 @@ engine's transfer session, and the destination engine's
 
 Without the pull, the six siblings that scattered onto cold workers each
 recomputed the prefix - and recomputing simultaneously, they slowed each
-other from 6.6 s to 11-12.5 s apiece. With the pull, the same placements
-fetched the prefix in about a second. The median does not move because most
-siblings land warm either way; what P2P removes is the straggler band. The
-only slow starts left are the burst head - siblings that arrive before any
-copy of the prefix exists anywhere, which no mechanism can serve. The
+other from 6.6 s to 11-12.5 s apiece, putting p90 branch-start TTFT at
+11.2 s. With the pull, the same placements fetched the prefix in about a
+second, and p90 fell to 1.6 s. The median holds at ~1.2 s in both arms
+because most siblings land warm either way; what P2P removes is the
+straggler band. The only slow starts left are the burst head - siblings
+that arrive before any copy of the prefix exists anywhere, which no
+mechanism can serve. The
 reversed-window replicate reproduced the shape (p90 -66% with the wider
 burst head), and a separately measured pull on a 75K-token fork start
 replaced a 13.9-second cold prefill with a 790 ms transfer, within 6% of a
