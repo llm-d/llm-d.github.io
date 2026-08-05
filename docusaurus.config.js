@@ -170,7 +170,6 @@ const config = {
       crossorigin: "anonymous",
     },
   ],
-  
   themes: [
     "@docusaurus/theme-mermaid",
     // Offline full-text search (docs + blog + community).
