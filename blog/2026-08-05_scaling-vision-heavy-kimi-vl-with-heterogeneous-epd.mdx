@@ -11,7 +11,7 @@ authors:
   - yuanwu
   - jianangu
   - carloscosta
-  - alexnail
+  - alexnails
 
 tags: [blog, inference, heterogeneous, multimodal, disaggregation, vlm, sglang]
 ---
@@ -20,7 +20,7 @@ tags: [blog, inference, heterogeneous, multimodal, disaggregation, vlm, sglang]
 
 Vision-language model (VLM) inference involves several stages: vision encoding, language model prefill, and language model decode. Each stage has different compute and memory characteristics, making heterogeneous disaggregation a natural fit. This gives us the flexibility to place different stages to different accelerator resources based on their compute and memory characteristics.
 
-In this post, we evaluate a vision-heavy Kimi-VL serving workload on llm-d and SGLang. We place vision encoding stage in 4 Intel Arc Pro B60 (Intel B60) GPUs while keeping prefill and decode stage on 1 NVIDIA H200 GPU. Compared with the collocated baseline, the measured heterogeneous E/PD configuration achieved 2.4x-2.8x higher throughput and reduced mean `Time To First Token (TTFT)` by roughly 69%-80% under load.
+In this post, we evaluate a vision-heavy Kimi-VL serving workload on llm-d and SGLang. We place vision encoding stage in 4 Intel Arc Pro B60 (Intel B60) GPUs while keeping prefill and decode stage on 1 NVIDIA H200 GPU. Compared with the collocated baseline, the measured heterogeneous E/PD configuration achieved 2.4x-2.8x higher throughput and reduced mean Time To First Token (TTFT) by roughly 69%-80% under load.
 
 <!-- truncate -->
 
@@ -137,6 +137,6 @@ As an illustrative sensitivity check, we applied publicly reported July 2026 acq
 
 ## Conclusion and Future Work
 
-This experiment shows that heterogeneous E/PD can improve serving performance for vision-heavy VLM workloads. It also illustrates a broader opportunity: heterogeneous accelerator resources can be assigned to different inference stages when their execution characteristics are complementary. It gives us more flexities to optimize the VLM workload in cluster scale from a holistic view.
+This experiment shows that heterogeneous E/PD can improve serving performance for vision-heavy VLM workloads. It also illustrates a broader opportunity: heterogeneous accelerator resources can be assigned to different inference stages when their execution characteristics are complementary. It gives us more flexibility to optimize the VLM workload in cluster scale from a holistic view.
 
 We are benchmarking more models and workloads. We are also working toward automated evaluation of disaggregation strategies, with the goal of selecting configurations that can maximize performance as well as cost efficiency. We look forward to sharing more findings in future posts.

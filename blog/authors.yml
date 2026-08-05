@@ -463,6 +463,7 @@ xiaojunzhang:
   image_url: /img/blogs/xiaojunzhang.webp
   socials:
     linkedin: zhangxiaojunhust
+    github: https://github.com/xiaojun-zhang
 
 weifengyao:
   name: Weifeng(Matrix) Yao
@@ -470,6 +471,7 @@ weifengyao:
   image_url: /img/blogs/weifengyao.webp
   socials:
     linkedin: weifeng-yao-040b0322
+    github: https://github.com/yao-matrix
 
 fanzhao:
   name: Fan Zhao
@@ -492,9 +494,10 @@ jianangu:
   socials:
     github: https://github.com/jianan-gu
 
-alexnail:
+alexnails:
   name: Alex Nails
   title: Member of Technical Staff, RadixArk
-  image_url: /img/blogs/alexnail.webp
+  image_url: /img/blogs/alexnails.webp
   socials:
     linkedin: alex-nails
+    github: https://github.com/alexnails
