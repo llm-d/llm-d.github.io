@@ -12,6 +12,7 @@ const SKIP_DIRS = new Set(['assets']);
 
 /**
  * @param {string} configPath
+ * @returns {{ categories: Record<string, object>, pages: Record<string, object> }}
  */
 export function loadMenuConfig(configPath) {
   /** @type {{ categories?: Record<string, object>, pages?: Record<string, object> }} */
@@ -23,9 +24,10 @@ export function loadMenuConfig(configPath) {
     // sidebar falls back to pure autogeneration. Malformed JSON still fails loudly.
     if (err.code !== 'ENOENT') throw err;
   }
-  config.categories ??= {};
-  config.pages ??= {};
-  return config;
+  return {
+    categories: config.categories ?? {},
+    pages: config.pages ?? {},
+  };
 }
 
 /**
