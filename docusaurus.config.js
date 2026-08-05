@@ -163,10 +163,10 @@ const config = {
 
   stylesheets: [
     {
-      href: "https://cdn.jsdelivr.net/npm/katex@0.13.24/dist/katex.min.css",
+      href: "https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.css",
       type: "text/css",
       integrity:
-        "sha384-odtC+0UGzzFL/6PNoE8rX/SPcQDXBJ+uRepguP4QkPCm2LBxH3FA3y+fKSiJ+AmM",
+        "sha384-8mbt0RMYO82eOsn+Rafjm7RQ5iXXpWaVfsGzqL+0/AY4ybVWIwUQ2TeyVK0Rk29T",
       crossorigin: "anonymous",
     },
   ],
