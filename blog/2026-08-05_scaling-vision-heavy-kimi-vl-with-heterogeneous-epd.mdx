@@ -20,7 +20,7 @@ tags: [blog, inference, heterogeneous, multimodal, disaggregation, vlm, sglang]
 
 Vision-language model (VLM) inference involves several stages: vision encoding, language-model prefill, and language-model decode. Each stage has different compute and memory characteristics, making heterogeneous disaggregation a natural fit. It lets operators assign each stage to hardware suited to its requirements instead of sizing every stage around the same accelerator.
 
-In this post, we evaluate a vision-heavy Kimi-VL workload on llm-d and SGLang. We move vision encoding to four Intel Arc Pro B60 (Intel B60) GPUs while keeping prefill and decode on one NVIDIA H200 GPU. Compared with collocated serving on the H200, this heterogeneous E/PD deployment delivers 2.4-2.8x higher throughput and reduces mean time to first token (TTFT) by roughly 69-80% under load.
+In this post, we evaluate a vision-heavy Kimi-VL workload on llm-d and SGLang. We place vision encoding stage in 4 Intel Arc Pro B60 (Intel B60) GPUs while keeping prefill and decode stage on 1 NVIDIA H200 GPU. Compared with collocated serving on the H200, this heterogeneous E/PD deployment delivers 2.4x-2.8x higher throughput and reduces mean time to first token (TTFT) by roughly 69%-80% under load.
 
 <!-- truncate -->
 
