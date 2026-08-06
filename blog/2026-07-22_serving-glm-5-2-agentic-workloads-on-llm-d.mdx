@@ -127,7 +127,7 @@ Topology names describe the number and width of the serving instances. `xPyD` me
 
 ### What the performance results cover
 
-The performance tests use requests derived from the production traces, not the complete corpus unchanged. Limited-input-length runs admit requests below 142,000 tokens; full-input-length runs admit longer contexts. Corpus statistics describe the full production workload, while performance results describe the requests admitted by each test. Absolute throughput is comparable only within the same test.
+The workload analysis uses SemiAnalysis's 219-session [`cc-traces-weka-with-subagents-051926`](https://huggingface.co/datasets/semianalysisai/cc-traces-weka-with-subagents-051926) corpus. The performance tests use the 393-trace [`cc-traces-weka-062126`](https://huggingface.co/datasets/semianalysisai/cc-traces-weka-062126) release, which applies additional trace-quality filters. Limited-input-length runs admit traces that fit a 142,000-token context limit; full-input-length runs admit longer contexts. The workload statistics and performance results therefore cover different request populations. Absolute throughput is comparable only within the same test.
 
 :::note Deployment and benchmark details
 
