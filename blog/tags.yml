@@ -163,3 +163,8 @@ sglang:
   label: SGLang
   permalink: /sglang
   description: SGLang inference engine integration and performance
+
+observability:
+  label: Observability
+  permalink: /observability
+  description: Metrics, tracing, and observability for llm-d deployments
