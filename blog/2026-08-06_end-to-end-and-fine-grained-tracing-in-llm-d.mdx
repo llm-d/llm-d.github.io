@@ -1,11 +1,12 @@
 ---
 title: "Seeing Through the Stack: End-to-End and Fine-Grained Tracing in llm-d"
-description: "How llm-d stitches Gateway, EPP, KV-cache, P/D proxy, and vLLM into one OpenTelemetry trace — and instruments the scheduling decisions that metrics alone cannot explain."
+description: "How llm-d stitches Gateway, EPP, KV-cache, P/D proxy, and vLLM into one OpenTelemetry trace, and instruments the scheduling decisions that metrics alone cannot explain."
 slug: end-to-end-and-fine-grained-tracing-in-llm-d
 date: 2026-08-06T09:00
 
 authors:
   - gyliu513
+  - prateekkumar
 
 tags: [blog, observability, llm-d]
 ---
@@ -16,24 +17,24 @@ Production llm-d deployments usually already expose Prometheus metrics, GPU util
 
 > *For this slow or failed request, which hop decided what, and where did the time actually go?*
 
-That gap is structural. llm-d’s value sits in control-plane decisions — precise prefix-cache scoring, load-aware selection, prefill/decode (P/D) disaggregation, multi-hop proxies. Fleet aggregates cannot reconstruct those decisions after the fact. Distributed tracing can.
+That gap is structural. llm-d’s value sits in control-plane decisions: precise prefix-cache scoring, load-aware selection, prefill/decode (P/D) disaggregation, multi-hop proxies. Fleet aggregates cannot reconstruct those decisions after the fact. Distributed tracing can.
 
 This post walks through two complementary capabilities now available across the llm-d stack:
 
-1. **End-to-end (E2E) distributed tracing** — one `trace_id` across Gateway → EPP → KV-cache → P/D proxy → vLLM  
-2. **Fine-grained tracing** — first-party spans at the decision points that make well-lit paths real
+1. **End-to-end (E2E) distributed tracing:** one `trace_id` across Gateway → EPP → KV-cache → P/D proxy → vLLM  
+2. **Fine-grained tracing:** first-party spans at the decision points that make well-lit paths real
 
-Together they move observability from “the cluster looks busy” to “this request chose this pod for this cache score, ran prefill here, and spent 15ms to first token on decode.”
+Together they move observability from “the cluster looks busy” to “this request chose this pod for this cache score, ran prefill here, and spent most of its time to first token waiting in the decode queue.”
 
 <!-- truncate -->
 
 :::tip Blog key takeaways
 
 - **Metrics detect; traces explain.** Prometheus/Grafana remain the detection and capacity plane; OpenTelemetry traces are the request-level causal spine for RCA and optimization validation.
-- **E2E tracing** propagates W3C Trace Context (`traceparent` / `tracestate`) so Gateway, EPP, KV-cache, P/D proxy, and vLLM share one tree — not four orphan timelines.
+- **E2E tracing** propagates W3C Trace Context (`traceparent` / `tracestate`) so Gateway, EPP, KV-cache, P/D proxy, and vLLM share one tree, not four orphan timelines.
 - **Fine-grained tracing** manually instruments llm-d decisions (prefix-cache scoring, KV index lookup, P/D profile pick, proxy stages) that HTTP auto-instrumentation cannot name.
-- **Telemetry is metadata-only:** token counts, latencies, routing attributes, cache ratios — never prompts or completions.
-- **Production defaults:** parent-based sampling (often ~10%), an OpenTelemetry Collector in the middle, and GenAI semantic conventions where engines emit them.
+- **Telemetry is metadata-only:** token counts, latencies, routing attributes, cache ratios, never prompts or completions.
+- **Production defaults:** parent-based ratio sampling at 10% unless you override it, an OpenTelemetry Collector in the middle, and GenAI semantic conventions where engines emit them.
 
 :::
 
@@ -54,31 +55,31 @@ Kubernetes-era APM habits assume relatively uniform microservices: short RPCs, s
 | One hop failure is obvious | Failure can surface far from the decision that caused it |
 | Auto-instrumented HTTP spans are enough | The important story is *inside* the scheduler and cache index |
 
-llm-d already invests heavily in making those control-plane decisions correct — see [Intelligent Inference Scheduling](/blog/intelligent-inference-scheduling-with-llm-d) and [KV-Cache Wins You Can See](/blog/kvcache-wins-you-can-see). Observability has to keep pace: if a precise prefix-cache win or a P/D mis-decision cannot be inspected on a real request, those paths cannot be operated or improved with confidence.
+llm-d already invests heavily in making those control-plane decisions correct; see [Intelligent Inference Scheduling](/blog/intelligent-inference-scheduling-with-llm-d) and [KV-Cache Wins You Can See](/blog/kvcache-wins-you-can-see). Observability has to keep pace: if a precise prefix-cache win or a P/D mis-decision cannot be inspected on a real request, those paths cannot be operated or improved with confidence.
 
-From an observability design standpoint, that means tracing is a first-class well-lit-path concern — configuration, sampling, span contracts, and backend wiring — not an optional debug switch flipped after an outage.
+From an observability design standpoint, that means tracing is a first-class well-lit-path concern (configuration, sampling, span contracts, and backend wiring), not an optional debug switch flipped after an outage.
 
 ## Design goals for llm-d tracing
 
 The [distributed tracing proposal](https://github.com/llm-d/llm-d/blob/main/proposals/distributed-tracing.md) and the operator guide [Distributed Tracing](/docs/operations/observability/tracing) target five outcomes:
 
-1. **Performance diagnostics** — decompose TTFT / ITL / e2e latency across hops  
-2. **Optimization validation** — prove KV-aware routing and P/D policy behave as intended on individual requests  
-3. **Error attribution** — keep failures on the same tree as the scheduling decision that preceded them  
-4. **Cost / usage attribution** — token counts and cache effectiveness per request, not only fleet averages  
-5. **Safe-by-default telemetry** — metadata and timings without shipping user content into the backend
+1. **Performance diagnostics:** decompose TTFT / ITL / e2e latency across hops  
+2. **Optimization validation:** prove KV-aware routing and P/D policy behave as intended on individual requests  
+3. **Error attribution:** keep failures on the same tree as the scheduling decision that preceded them  
+4. **Cost / usage attribution:** token counts and cache effectiveness per request, not only fleet averages  
+5. **Safe-by-default telemetry:** metadata and timings without shipping user content into the backend
 
 Those outcomes require both **breadth** (E2E context propagation) and **depth** (fine-grained decision spans). Either alone is incomplete: a connected tree of opaque HTTP spans still hides why the scheduler chose a path; rich local spans without shared context still force timestamp archaeology.
 
 ## Before: the fragmented request story
 
-Early llm-d rollouts — and many DIY inference platforms — typically show one of three incomplete pictures:
+Early llm-d rollouts (and many DIY inference platforms) typically show one of three incomplete pictures:
 
 **Metrics-only.** Dashboards for queue depth, GPU utilization, TTFT histograms. Excellent for SLOs and capacity planning. Blind for a single request’s path through scorers, proxies, and engines.
 
 **Component-local traces.** vLLM emits `llm_request`; the gateway logs a request ID; the P/D sidecar keeps local timers. Without shared context, engineers glue timelines together with wall-clock timestamps and hope clocks agree.
 
-**Generic HTTP spans only.** Auto-instrumentation draws `POST /v1/chat/completions` between services. It does not record why the prefix-cache scorer preferred pod B, or why the profile handler chose `decode_only` instead of `prefill_decode`.
+**Generic HTTP spans only.** Auto-instrumentation draws `POST /v1/chat/completions` between services. It does not record why the prefix-cache scorer preferred pod B, or why the profile handler completed the request on decode alone instead of running a prefill leg first.
 
 <div style={{textAlign: 'center', margin: '24px 0'}}>
   <img src="/img/blogs/distributed-tracing/figure2-before-after.png" alt="Before fragmented signals versus after one unified trace tree" style={{width: '98%', height: 'auto'}} />
@@ -101,24 +102,24 @@ Debate about “network vs GPU” becomes secondary until the waterfall has iden
 
 <div style={{textAlign: 'center', margin: '24px 0'}}>
   <img src="/img/blogs/distributed-tracing/figure3-ttft-walkthrough.png" alt="Four-step TTFT root-cause walkthrough using metrics then traces" style={{width: '98%', height: 'auto'}} />
-  <p style={{textAlign: 'center', fontSize: '0.9em', marginTop: '8px'}}><em><strong>FIGURE 3</strong>: Recommended RCA loop — detect with metrics, explain with traces, confirm with logs, verify the fix on subsequent sampled trees.</em></p>
+  <p style={{textAlign: 'center', fontSize: '0.9em', marginTop: '8px'}}><em><strong>FIGURE 3</strong>: Recommended RCA loop: detect with metrics, explain with traces, confirm with logs, verify the fix on subsequent sampled trees.</em></p>
 </div>
 
 ### 2. Did KV-cache-aware routing actually help?
 
-Fleet-level cache hit rate can look healthy while a slice of traffic is still routed poorly. Fine-grained spans such as `llm_d.epp.scorer.prefix_cache` and `llm_d.kv_cache.get_scores` expose candidate pods, score distributions, and block hit ratios for *that* request. That is how precise prefix-cache scheduling is validated in production — the same spirit as the wins in the [KV-cache blog](/blog/kvcache-wins-you-can-see), but request-scoped.
+Fleet-level cache hit rate can look healthy while a slice of traffic is still routed poorly. Fine-grained spans expose candidate endpoints, score distributions, and block hit ratios for *that* request. Which spans appear depends on how routing is configured: scorer-based setups emit `llm_d.epp.scoring` with one `llm_d.epp.scorer.<scorer type>` child per scorer, carrying `llm_d.epp.scorer.score.max` / `.avg` and `llm_d.epp.scorer.endpoints_scored`. The precise prefix-cache path adds `produce_precise_prefix_cache` (`llm_d.epp.producer.total_blocks`, `.max_match_blocks`) over a `llm_d.kv_cache.index` lookup (`llm_d.kv_cache.lookup.cache_hit`, `.blocks_found`). Prefix affinity there is not a scorer, so it appears as `prefix-cache-affinity-filter` shrinking the pool under `filter_endpoints`, while any scorers you also configure keep emitting their own `llm_d.epp.scoring` subtree next to it. On a warm repeat of a shared prefix, that subtree is where the hit becomes visible: in a capture on a two-pod deployment, the producer reported `max_match_blocks` equal to `total_blocks` at 13 of 13, the lookup reported `cache_hit=true`, and `filter_endpoints` narrowed two candidates to the single pod already holding those blocks. That is how precise prefix-cache scheduling is validated in production, in the same spirit as the wins in the [KV-cache blog](/blog/kvcache-wins-you-can-see), but request-scoped.
 
 ### 3. Was P/D the right call?
 
-Disaggregation is not free. `llm_d.epp.pd.profile_handler.pick` records the decision (`prefill_decode` vs `decode_only`), input size, and related signals. When separation adds coordination overhead instead of TTFT benefit, the rationale is on the span — ready for threshold tuning with evidence rather than folklore.
+Disaggregation is not free. `pick_disagg_profile` records each stage decision on `llm_d.epp.profile_handler.decision`: `run_decode`, then `run_prefill` or `skip_prefill`, and finally `complete_prefill-decode` or `complete_decode-only`. The handler is called once per stage, so a P/D request carries several of these spans rather than one. When separation adds coordination overhead instead of TTFT benefit, the rationale is on the span, ready for threshold tuning with evidence rather than folklore.
 
-### 4. Which component failed — and after which decision?
+### 4. Which component failed, and after which decision?
 
 Errors set span status and remain attached to the parent tree. A decode failure still sits under the Gateway root that includes the scoring and profile decision that sent the request there. Mean time to resolution drops because causality does not have to be reconstructed from three log systems.
 
 ### 5. Can tokens and cache effectiveness be attributed without leaking prompts?
 
-vLLM’s `llm_request` spans carry GenAI semantic convention attributes (prompt/completion token counts, latency breakdowns). Combined with llm-d routing attributes, each sampled request yields a cost shape — still without putting prompt text into Jaeger or Tempo.
+vLLM’s `llm_request` spans carry GenAI semantic convention attributes (prompt/completion token counts, latency breakdowns). Combined with llm-d routing attributes, each sampled request yields a cost shape, still without putting prompt text into Jaeger or Tempo.
 
 ## Architecture: request path and telemetry path
 
@@ -129,7 +130,7 @@ llm-d tracing is built on four layers:
 - **W3C Trace Context** propagation on HTTP hops  
 - **OTLP → OpenTelemetry Collector → backend** (Jaeger in the recipes; Tempo or commercial backends in production)
 
-Sampling is typically **parent-based** at the entrypoint (`parentbased_traceidratio`) so one decision covers the whole tree. For production traffic, start around **10%** (`OTEL_TRACES_SAMPLER_ARG=0.1`) and adjust for QPS, retention cost, and whether staging needs denser samples.
+Sampling is **parent-based ratio** (`parentbased_traceidratio`), the only sampler these components accept, so one decision at the entrypoint covers the whole tree. For production traffic, start around **10%** (`OTEL_TRACES_SAMPLER_ARG=0.1`) and adjust for QPS, retention cost, and whether staging needs denser samples.
 
 <div style={{textAlign: 'center', margin: '24px 0'}}>
   <img src="/img/blogs/distributed-tracing/figure4-architecture.png" alt="llm-d distributed tracing architecture with W3C propagation and OTLP export" style={{width: '98%', height: 'auto'}} />
@@ -140,10 +141,10 @@ Sampling is typically **parent-based** at the entrypoint (`parentbased_traceidra
 
 | Layer | Span role | What to inspect |
 | :--- | :--- | :--- |
-| **Gateway** | Root `gateway.request` (SERVER); injects `traceparent` / `tracestate` | Total e2e time; whether context reached children |
-| **EPP plugins** | Child spans for scorers, P/D profile pick, pre-request setup | Why a pod / mode was chosen |
-| **KV-cache** | Lookup / score / index spans (`TracedIndex`, `TracedScorer`, get_scores) | Block hits, score max/avg, lookup cost |
-| **P/D proxy** | `llm_d.pd_proxy.request` + conditional prefill/decode children | Stage timing, connector, skip reasons |
+| **Gateway** | `gateway.request` (SERVER): the root when the gateway's own tracing is off, otherwise a child of the gateway's span; injects `traceparent` / `tracestate` | Total e2e time; whether context reached children |
+| **EPP plugins** | `gateway.request_orchestration` over scoring, profile pick, and pre-request spans | Why an endpoint / mode was chosen |
+| **KV-cache** | `llm_d.kv_cache.index` lookups on the request path, `.add` when speculative indexing records the request's own blocks, `.evict` from KV-event processing; emitted inside the EPP process, so they carry the EPP service name in Jaeger | Block hits, lookup cost, index churn |
+| **P/D proxy** | `llm_d.pd_proxy.<METHOD> <path>` (otelhttp) → `forward_request` → conditional prefill/decode children | Stage timing, connector, skip reasons |
 | **vLLM (or peer engine)** | Continued `llm_request` with GenAI attributes | Prefill/decode time, TTFT, token usage |
 
 ```mermaid
@@ -170,7 +171,7 @@ sequenceDiagram
 
 A few mechanics matter when validating a deployment:
 
-- **Entry sampling wins.** With `parentbased_traceidratio`, the gateway (or an upstream traced client) decides once. Downstream components should respect that parent decision so the tree stays complete — partial trees are worse than fewer trees.
+- **Entry sampling wins.** With `parentbased_traceidratio`, the gateway (or an upstream traced client) decides once. Downstream components should respect that parent decision so the tree stays complete; partial trees are worse than fewer trees.
 - **Headers are the contract.** W3C `traceparent` / `tracestate` must survive Envoy, ext-proc, and sidecar hops. Dropped headers produce orphan `llm_request` spans that look “traced” but cannot join the gateway root.
 - **Collectors are not optional in production.** Exporting OTLP directly from every pod to a UI backend skips batching, noise filtering (for example `/metrics` scrapes), and fan-out to long-term storage. The recipes put a Collector in the path for that reason.
 - **Service names are operational metadata.** Set distinct `OTEL_SERVICE_NAME` values per role (`vllm-prefill`, `vllm-decode`, EPP/gateway name). Ambiguous names make multi-cluster Jaeger search painful.
@@ -183,7 +184,7 @@ A few mechanics matter when validating a deployment:
 - a block hit ratio from the KV index  
 - a score distribution across candidate pods  
 
-Those are **llm-d product semantics**. They belong in first-party spans with stable `llm_d.*` attribute names — the same way first-party PromQL surfaces in the [observability docs](/docs/operations/observability/).
+Those are **llm-d product semantics**. They belong in first-party spans with stable `llm_d.*` attribute names, the same way first-party PromQL surfaces in the [observability docs](/docs/operations/observability/).
 
 ## Capability 1: End-to-end tracing (breadth)
 
@@ -195,9 +196,9 @@ The mechanism is intentionally standard:
 2. Propagate W3C context on every hop to the P/D proxy and model servers.  
 3. Export via OTLP so the Collector assembles one tree in Jaeger/Tempo.
 
-Operationally, this removes timestamp archaeology. One `trace_id` surfaces gateway time, scheduling time, prefill, decode, and engine spans as parent/child relationships — even when those processes run in different pods (as long as they share the Collector/backend).
+Operationally, this removes timestamp archaeology. One `trace_id` surfaces gateway time, scheduling time, prefill, decode, and engine spans as parent/child relationships, even when those processes run in different pods (as long as they share the Collector/backend).
 
-**Acceptance check in Jaeger:** the EPP/gateway service name and `vllm-prefill` / `vllm-decode` (or configured `OTEL_SERVICE_NAME` values) appear on the same trace. If only generic `GET`/`POST` spans appear, export is often working while llm-d/engine detailed instrumentation is not — follow the checklist in the [tracing guide](/docs/operations/observability/tracing).
+**Acceptance check in Jaeger:** the EPP service name, which the router chart registers as `llm-d-router/epp`, and the engine names you set, such as `vllm-prefill` / `vllm-decode`, appear on the same trace. If only generic `GET`/`POST` spans appear, export is often working while llm-d/engine detailed instrumentation is not; follow the checklist in the [tracing guide](/docs/operations/observability/tracing).
 
 ## Capability 2: Fine-grained tracing (depth)
 
@@ -212,29 +213,38 @@ E2E alone can still leave a fat opaque span inside the scheduler. Fine-grained t
 
 | Span | Insight |
 | :--- | :--- |
-| `llm_d.epp.scorer.prefix_cache` | Pods scored, score max/avg, model & request IDs |
-| `llm_d.kv_cache.get_scores` | Block keys, pods considered, block hit ratio |
-| `llm_d.kv_cache.storage.lookup` / `llm_d.kv_cache.scorer.compute` | Where scoring time went; algorithm/strategy |
-| `llm_d.kv_cache.index` / `.add` / `.evict` | Index read/write path via traced wrappers |
-| `llm_d.epp.pd.profile_handler.pick` | `prefill_decode` vs `decode_only` and related attrs |
-| `llm_d.epp.prerequest.pd_disaggregation` | Whether prefill headers were set for the proxy |
-| `llm_d.pd_proxy.request` / `.prefill` / `.decode` | Stage timing, connector, targets, skip reasons |
+| `gateway.request_orchestration` | The EPP-side envelope every decision span hangs from |
+| `filter_endpoints` / `pick_endpoints` | Candidate set before and after filters; top endpoints and scores |
+| `llm_d.epp.scoring` → `llm_d.epp.scorer.<scorer type>` | Endpoints scored, score max/avg, scorer name and weight |
+| `produce_precise_prefix_cache` | Resident-block match for the request (`total_blocks`, `max_match_blocks`) |
+| `llm_d.kv_cache.index` / `.add` / `.evict` | Lookup and speculative add on the request path; eviction from KV-event processing |
+| `pick_disagg_profile` | Per-stage disaggregation decision (`run_prefill`, `complete_decode-only`, …) |
+| `prepare_disaggregation` | Whether prefill / encode headers were set for the proxy |
+| `llm_d.pd_proxy.<METHOD> <path>` → `forward_request` → `prefill` / `decode` | Stage timing, connector, targets, skip reasons |
 | `llm_request` (vLLM) | Engine TTFT, phase times, token usage |
 
-On the KV-cache side, wrappers such as `NewTracedIndex` and `NewTracedScorer` keep tracing orthogonal to index/scorer implementations: business logic stays clean; span names and attributes stay consistent. That pattern — **instrumentation as a decorator** — is the preferred control-plane approach over copy-pasted `StartSpan` calls inside every algorithm.
+Two naming details are worth knowing before searching Jaeger. The scorer span uses the plugin *type*, not its instance name, so a profile that configures the same scorer twice produces two identically-named spans separated only by `llm_d.epp.scorer.name`. And the proxy's stage spans are bare `prefill` / `decode` on the default `nixlv2` connector; the `llm_d.pd_proxy.`-prefixed variants come from the `p2p` and `mooncake` connectors and the parallel-dispatch path. Deployments still on the deprecated `pd-profile-handler` see `pick_pd_profile` with `prefill_decode` / `decode_only` instead of the values above.
+
+One version caveat matters when reproducing this map. The scheduling spans (`run_scheduler_profile`, `filter_endpoints`, `llm_d.epp.scoring`, `llm_d.epp.scorer.<scorer type>`, `pick_endpoints`) and the KV index spans (`llm_d.kv_cache.index`, plus `.add` and `.evict`) landed in llm-d-router after its `v0.9.0` tag. Expect the index family to be split across two places in the backend: the lookup, and the `.add` that records the request's own blocks when speculative indexing is enabled, sit inside the request tree, while `.evict` is driven by background KV-event processing and therefore arrives as its own single-span trace rather than under any request. Since llm-d `v0.8.0` pins router `v0.9.0`, a deployment from that release shows a single `score_prefix_cache` span where the scoring subtree appears here. The guides on llm-d `main` take the chart default, the EPP's floating `main` tag, and that image does emit the full set. The gateway, disaggregation, and proxy spans are the same either way.
+
+On the KV-cache side, a wrapper such as `NewTracedIndex` keeps tracing orthogonal to the index implementation: business logic stays clean; span names and attributes stay consistent. That pattern, **instrumentation as a decorator**, is the preferred control-plane approach over copy-pasted `StartSpan` calls inside every algorithm.
 
 ### Attribute contract (what belongs on a span)
 
 ```text
-# KV scoring / lookup
-llm_d.kv_cache.score.max = 0.91
-llm_d.kv_cache.score.avg = 0.44
+# KV index lookup (llm_d.kv_cache.index)
 llm_d.kv_cache.lookup.cache_hit = true
 llm_d.kv_cache.lookup.blocks_found = 48
+llm_d.kv_cache.index.lookup.block_count = 52
 
-# P/D profile handler
-decision = prefill_decode
-input_tokens = 512
+# Scoring (llm_d.epp.scorer.<scorer type>)
+llm_d.epp.scorer.score.max = 0.91
+llm_d.epp.scorer.score.avg = 0.44
+llm_d.epp.scorer.endpoints_scored = 8
+
+# Disaggregation profile handler (pick_disagg_profile)
+llm_d.epp.profile_handler.decision = run_prefill
+gen_ai.request.model = meta-llama/Llama-3.1-8B-Instruct
 
 # vLLM / GenAI semantic conventions
 gen_ai.usage.prompt_tokens = 128
@@ -243,56 +253,92 @@ gen_ai.latency.time_to_first_token = 0.015
 ```
 
 **In scope:** timings, counts, enums, bounded identifiers (model name, request ID where cardinality is managed), cache ratios, error status.  
+
 **Out of scope by design:** raw prompts, completions, full token ID lists, unbounded label sets. Payload debugging belongs in controlled logging, not the trace backend.
 
 Span status follows a minimal convention: leave success as unset/default; set `Error` only on failures. Traces carry flow and timing; detailed exception text stays in logs correlated by `trace_id` where needed.
 
 ## After: one request, one tree
 
-The same P/D request as a waterfall — the shape to recognize in Jaeger once E2E and fine-grained tracing are enabled:
+Here is one real request, captured end to end on a live P/D deployment and exported from Jaeger. This is the shape to recognize once E2E and fine-grained tracing are enabled. Durations below are as measured; attribute names are shortened to keep the tree readable:
 
 <div style={{textAlign: 'center', margin: '24px 0'}}>
-  <img src="/img/blogs/distributed-tracing/figure6-trace-waterfall.png" alt="Jaeger-style waterfall for a P/D disaggregated request with fine-grained llm-d spans" style={{width: '98%', height: 'auto'}} />
-  <p style={{textAlign: 'center', fontSize: '0.9em', marginTop: '8px'}}><em><strong>FIGURE 6</strong>: Illustrative waterfall for a disaggregated chat completion — a visual checklist when validating a deployment.</em></p>
+  <img src="/img/blogs/distributed-tracing/figure6-trace-waterfall.png" alt="Jaeger waterfall of a real 25-span trace for a P/D disaggregated chat completion, spanning EPP, routing sidecar, and both vLLM engines" style={{width: '98%', height: 'auto'}} />
+  <p style={{textAlign: 'center', fontSize: '0.9em', marginTop: '8px'}}><em><strong>FIGURE 6</strong>: A real 25-span trace for a single disaggregated chat completion (2,071 prompt tokens, 200 completion tokens) across four services. EPP tracing came from the router chart; the routing sidecar and both vLLM engines were wired by hand.</em></p>
 </div>
 
 ```text
-gateway.request                                  2150ms
-├─ llm_d.epp.scorer.prefix_cache                   12ms
-│  └─ llm_d.kv_cache.get_scores                    10ms
-│     ├─ llm_d.kv_cache.storage.lookup              6ms
-│     └─ llm_d.kv_cache.scorer.compute             3ms
-├─ llm_d.epp.pd.profile_handler.pick                3ms
-│  attrs: decision=prefill_decode  input_tokens=512
-├─ llm_d.epp.prerequest.pd_disaggregation           2ms
-└─ llm_d.pd_proxy.request                        2105ms
-   ├─ llm_d.pd_proxy.prefill                       55ms
-   │  └─ vllm:llm_request (prefill)                50ms
-   └─ llm_d.pd_proxy.decode                      2050ms
-      └─ vllm:llm_request (decode)               2045ms
+gateway.request                                          3146ms
+├─ gateway.request_orchestration                        0.295ms
+│  ├─ pick_disagg_profile                               0.004ms
+│  │  attrs: llm_d.epp.profile_handler.decision=run_decode
+│  ├─ run_scheduler_profile                             0.036ms
+│  │  attrs: llm_d.epp.scheduling.profile.name=decode
+│  │  ├─ filter_endpoints                               0.007ms
+│  │  │  attrs: candidate_endpoints=3  filtered_endpoints=1
+│  │  ├─ llm_d.epp.scoring                              0.013ms
+│  │  │  └─ llm_d.epp.scorer.active-request-scorer      0.007ms
+│  │  │     attrs: score.max=1  endpoints_scored=1
+│  │  └─ pick_endpoints                                 0.006ms
+│  ├─ pick_disagg_profile                               0.003ms
+│  │  attrs: llm_d.epp.profile_handler.decision=run_prefill
+│  ├─ run_scheduler_profile                             0.029ms
+│  │  attrs: llm_d.epp.scheduling.profile.name=prefill
+│  │  ├─ filter_endpoints                               0.009ms
+│  │  ├─ llm_d.epp.scoring                              0.011ms
+│  │  │  └─ llm_d.epp.scorer.token-load-scorer          0.007ms
+│  │  └─ pick_endpoints                                 0.002ms
+│  ├─ pick_disagg_profile                               0.004ms
+│  │  attrs: llm_d.epp.profile_handler.decision=complete_prefill-decode
+│  ├─ prepare_disaggregation                            0.005ms
+│  └─ prepare_disaggregation                            0.002ms
+└─ llm_d.pd_proxy.POST /v1/chat/completions               3142ms
+   └─ forward_request                                     3142ms
+      └─ prefill                                          49.9ms
+         attrs: llm_d.pd_proxy.connector=nixlv2
+         ├─ HTTP POST (to the prefill pod)                49.8ms
+         │  └─ llm_request                                 47.7ms
+         │     attrs: gen_ai.usage.prompt_tokens=2071  completion_tokens=1
+         └─ decode                                         3092ms
+            attrs: llm_d.pd_proxy.true_ttft_ms=50
+            └─ HTTP POST (to the decode pod)               3092ms
+               └─ llm_request                              3091ms
+                  attrs: gen_ai.latency.time_to_first_token=0.343
+                         gen_ai.latency.time_in_queue=0.322
 ```
+
+Three things in that capture are worth dwelling on, because they are easy to get wrong from a diagram alone.
+
+**Routing is usually not where the time goes.** The entire EPP orchestration here, three profile decisions, two scheduler profiles, filtering, scoring, and picking, took 0.295ms out of 3146ms, so those scheduling spans are microsecond-scale. The exception worth knowing is the precise prefix-cache path, where the EPP calls the engine's render endpoint to tokenize the prompt before it can hash blocks: in a separate capture that single HTTP child accounted for 7.1ms of a 7.6ms orchestration. Still small against engine time, but no longer invisible. Either way, when a request is slow the trace tells you immediately whether to look downstream.
+
+**`decode` really is nested under `prefill`.** With the default `nixlv2` connector the decode span is started from the prefill span's context, so Jaeger renders it as a child rather than a sibling. This capture confirms it on `main`, and the same context reuse is present in `v0.9.0`. A prefill span reporting 49.9ms while containing a 3092ms child is that quirk, not a slow prefill. Read the stage durations from the attributes the proxy puts on the decode span, `llm_d.pd_proxy.prefill_duration_ms` and `llm_d.pd_proxy.decode_duration_ms`, rather than from the nesting.
+
+**Two TTFT numbers, two questions.** The coordinator recorded `llm_d.pd_proxy.true_ttft_ms = 50`, derived from the prefill leg, while the decode engine independently reported `gen_ai.latency.time_to_first_token = 0.343` with `gen_ai.latency.time_in_queue = 0.322`. Neither is wrong; they measure different things, and only a trace that carries both makes the difference legible. Also note the prefill engine's `completion_tokens = 1`: the prefill leg is sent with `max_tokens=1`, visible as `gen_ai.request.max_tokens` on that engine span, so prefill reports a single token while the decode engine reports the full 200.
+
+One deployment detail affects the root span. This capture ran the standalone `epponly` topology, where an Envoy sidecar fronts the EPP rather than a Kubernetes Gateway, and that proxy was not itself traced, so `gateway.request` is the root. Where the gateway is traced, or a payload processor runs ahead of the EPP, `gateway.request` becomes a child of that span instead.
 
 Compared with Figure 2: one ID, explicit parent/child edges, and attributes that explain **routing and P/D policy**, not only HTTP status codes.
 
 ## What this unlocks for platform teams
 
-1. **Faster bottleneck localization** — decompose the critical path of a real request before changing scorer weights or P/D thresholds.  
-2. **Optimization validation** — treat precise prefix-cache and P/D as measurable per-request behaviors, not faith-based features.  
-3. **Shared technical vocabulary** — scheduling, KV, and serving work can refer to the same stable span names in design reviews and incident channels.  
-4. **Safer default telemetry** — metadata-only tracing is easier to enable in regulated environments.  
-5. **Vendor-neutral ops** — OTLP + W3C + GenAI conventions; swap Jaeger for Tempo (or a commercial backend) without re-instrumenting llm-d.
+1. **Faster bottleneck localization:** decompose the critical path of a real request before changing scorer weights or P/D thresholds.  
+2. **Optimization validation:** treat precise prefix-cache and P/D as measurable per-request behaviors, not faith-based features.  
+3. **Shared technical vocabulary:** scheduling, KV, and serving work can refer to the same stable span names in design reviews and incident channels.  
+4. **Safer default telemetry:** metadata-only tracing is easier to enable in regulated environments.  
+5. **Vendor-neutral ops:** OTLP + W3C + GenAI conventions; swap Jaeger for Tempo (or a commercial backend) without re-instrumenting llm-d.
 
-Traces do **not** replace metrics. PromQL still owns SLOs, Grafana still owns fleet views, and alerts still own detection. Traces are how alert → action avoids guesswork.
+Traces do **not** replace metrics. PromQL still owns SLOs, Grafana still owns fleet views, and alerts still own detection. Traces are what keeps the step from alert to action out of guesswork.
 
 ## Getting started (operator checklist)
 
 Full steps live in the docs; the mental model is:
 
-1. **Install the telemetry plane** — OTel Collector + Jaeger (or another backend) via the observability recipes.  
-2. **Enable model-server tracing** — engine OTLP flags/env (`OTEL_SERVICE_NAME`, `OTEL_EXPORTER_OTLP_ENDPOINT`, parent-based sampler); for vLLM, enable detailed trace collection as documented.  
-3. **Enable EPP / gateway tracing** — GAIE `inferenceExtension.tracing` (endpoint + sampler).  
-4. **Send one request · open the UI** — confirm a multi-service tree, not orphan engine spans.  
-5. **Turn sampling down for production** — start near `0.1` unless actively debugging or soaking in staging.
+1. **Install the telemetry plane:** OTel Collector + Jaeger (or another backend) via the observability recipes.  
+2. **Enable model-server tracing:** for vLLM, pass `--otlp-traces-endpoint`, add `--collect-detailed-traces all` if you want the queue and model-phase latencies used above, and set `OTEL_SERVICE_NAME` on the pod. The engine ships no service name of its own, so without it every engine span arrives as `unknown_service`, which reads like broken instrumentation rather than a missing variable.  
+3. **Enable EPP tracing:** one switch in the chart that deploys your EPP, either `inferenceExtension.tracing` in the GAIE values the tracing guide uses, or `router.tracing` in the llm-d-router chart. In the router chart that switch sets the EPP's `--tracing` flag along with its exporter, endpoint, and sampler, so nothing else is needed there.  
+4. **Wire the P/D routing sidecar yourself:** the EPP switch above does not reach it, and the shipped P/D model-server manifests carry no tracing configuration at all. That container needs `--tracing=true`, which defaults to false, *and* its own `OTEL_TRACES_EXPORTER=otlp` plus `OTEL_EXPORTER_OTLP_ENDPOINT`. Miss the flag and the proxy stages simply never appear; miss the exporter variable and the spans are pretty-printed to the pod's stdout instead, because the default exporter is `console`. Both failures look exactly like the dropped-header symptom above.  
+5. **Send one request, then open the UI:** confirm a multi-service tree, not orphan engine spans.  
+6. **Turn sampling down for production:** start near `0.1` unless actively debugging or soaking in staging. One trap here: `parentbased_traceidratio` is the only sampler the llm-d components accept. Any other value, including standard OpenTelemetry names like `parentbased_always_on`, logs an error and falls back to ratio `0.1`, as does a `OTEL_TRACES_SAMPLER_ARG` that fails to parse as a float. A debug run you believed captured everything then quietly keeps a tenth.
 
 Docs:
 
@@ -301,7 +347,7 @@ Docs:
 - [Metrics](/docs/operations/observability/metrics)
 
 :::info Production sampling
-Always-on 100% tracing is fine for demos and small staging clusters. For production inference traffic, prefer parent-based ratio sampling and a Collector that batches and filters noise (for example `/metrics` scrape spans). Retention and cardinality costs climb quickly with QPS.
+Sampling every request (ratio `1.0`) is fine for demos and small staging clusters. For production inference traffic, prefer parent-based ratio sampling and a Collector that batches and filters noise (for example `/metrics` scrape spans). Retention and cardinality costs climb quickly with QPS.
 :::
 
 ## Roadmap: tightening the observability loop
@@ -313,7 +359,7 @@ E2E and fine-grained tracing are a foundation, not an end state. Near-term work 
 - **Better empty-trace diagnostics** when only generic HTTP spans appear  
 - **Multi-cluster / multi-tenant service-naming guidance** (`OTEL_SERVICE_NAME` discipline)
 
-Gaps — missing spans on a path that matters, attributes needed for a well-lit path, Collector recipes for a specific backend — are welcome as issues and proposals in the llm-d observability channels and GitHub.
+Gaps (missing spans on a path that matters, attributes needed for a well-lit path, Collector recipes for a specific backend) are welcome as issues and proposals in the llm-d observability channels and GitHub.
 
 ## Closing
 
