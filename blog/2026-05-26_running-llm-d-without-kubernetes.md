@@ -2,7 +2,7 @@
 title: "No Kubernetes? No Problem: llm-d Now Runs Anywhere"
 description: "llm-d's routing intelligence was entangled with Kubernetes. A new endpoint-discovery abstraction separates the two, so KV-cache-aware scheduling, prefix affinity, and P/D run on Slurm, Ray, bare metal, or a laptop."
 slug: running-llm-d-without-kubernetes
-date: 2026-07-25T09:00
+date: 2026-05-26T09:00
 
 authors:
   - ezrasilvera
