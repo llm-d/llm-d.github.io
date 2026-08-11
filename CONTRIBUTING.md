@@ -90,61 +90,61 @@ If you are having trouble with the DCO process, please see some [troubleshooting
 
 ### 📝 Documentation Changes
 
-**Before making changes, check if the content is synced:**
+**Before making changes, check whether the content is synced from `llm-d/llm-d`:**
 
-1. **Look for "Content Source" banners** at the bottom of pages
-2. **If banner exists**: Click "edit the source file" to edit in the source repository (llm-d/llm-d)
-3. **If no banner**: The content is local to this repository - proceed with PR below
+1. **Docs pages** (`/docs/...`): use **Edit this page** (points at the live source under `llm-d/llm-d` for the current/`dev` docs)
+2. **Mirrored community pages** (`/community/contribute`, code of conduct, security, SIGs): look for the info callout that says the page mirrors a file from `llm-d` — edit that upstream file
+3. **Local-only pages** (blog, landing, `community/index.mdx`, `community/events.mdx`, site config): edit in this repository
 
 ### 🔄 Types of Content
 
 | Content Type | Location | How to Edit |
 |--------------|----------|-------------|
-| **Main Documentation** | Architecture, guides, API reference | Edit in llm-d/llm-d (synced via `./bin/llmd-site sync` / `docs-sync.yaml`) |
-| **Community Documentation** | Contributing, Code of Conduct, Security, SIGs | Edit in llm-d/llm-d (synced via `remote-content/`) |
-| **Local Content** | Blog posts, landing pages, website config | Edit in this repository |
+| **Main Documentation** | Architecture, well-lit paths, API reference, operations, … | Edit in `llm-d/llm-d` under `docs/` (mirrored by `./bin/llmd-site sync`) |
+| **Community Documentation** | Contributing, Code of Conduct, Security, SIGs | Edit the repo-root files in `llm-d/llm-d` (mapped in [`docs-sync.yaml`](docs-sync.yaml)) |
+| **Local Content** | Blog posts, landing page, website config, community index/events | Edit in this repository |
 
 ## 📝 Editing Documentation
 
 ### Editing Main Documentation
 
-Main documentation (architecture, guides, API reference, resources) is synced from the `llm-d/llm-d` repository.
+Main documentation is mirrored from `llm-d/llm-d` `docs/**` into this repo’s `docs/` by `./bin/llmd-site sync`. Sidebar labels and order come from `docs/menu-config.json` (also synced from upstream).
 
 **To update main documentation:**
-1. Find the source file using the "Content Source" banner at the bottom of the page
-2. Click "edit the source file" to open the file in the llm-d/llm-d repository
-3. Submit a PR to llm-d/llm-d
-4. Once merged, changes will appear on the website after the next deployment
+1. Open the page on the site and use **Edit this page**, or edit the matching file under `docs/` in `llm-d/llm-d`
+2. Submit a PR to `llm-d/llm-d`
+3. Once merged, the website picks it up on the next deploy (or the nightly / `docs-updated` sync)
 
-**Files synced via [`docs-sync.yaml`](docs-sync.yaml):**
-- Architecture documentation
-- User guides
-- API reference
-- Resources (monitoring, gateway, RDMA)
-- Getting Started pages
+You normally do **not** need a PR in this repository for new or changed files under the mirrored `docs/` tree.
 
 ### Editing Community Documentation
 
-Community documentation files are synced from the root of the `llm-d/llm-d` repository:
-- CONTRIBUTING.md
-- CODE_OF_CONDUCT.md
-- SECURITY.md
-- SIGS.md
+These community pages are generated on sync from repo-root files in `llm-d/llm-d` (see the `community:` list in [`docs-sync.yaml`](docs-sync.yaml)):
 
-**To update community documentation:**
-1. Edit the file in the llm-d/llm-d repository
-2. Submit a PR to llm-d/llm-d
-3. Once merged, changes sync automatically during website build
+| Upstream file | Site page |
+|---------------|-----------|
+| `CONTRIBUTING.md` | `/community/contribute` |
+| `CODE_OF_CONDUCT.md` | `/community/code-of-conduct` |
+| `SECURITY.md` | `/community/security` |
+| `SIGS.md` | `/community/sigs` |
+
+**To update mirrored community documentation:**
+1. Edit the upstream file in `llm-d/llm-d`
+2. Submit a PR to `llm-d/llm-d`
+3. Once merged, the next website sync regenerates the matching `community/*.md` page
+
+Authored (non-mirrored) community pages such as `community/index.mdx` and `community/events.mdx` are edited in this repository.
 
 ### Editing Local Content
 
-For content **without** "Content Source" banners (blog posts, landing pages, website configuration):
+For blog posts, landing pages, and website configuration:
 
 1. **Fork & Clone**
    ```bash
    git clone https://github.com/YOUR-USERNAME/llm-d.github.io.git
    cd llm-d.github.io
-   npm install
+   npm ci
+   npm run llmd-site
    ```
 
 2. **Create Branch**
@@ -153,13 +153,14 @@ For content **without** "Content Source" banners (blog posts, landing pages, web
    ```
 
 3. **Make Changes**
-   - Edit files directly in this repository
    - Blog posts: `blog/`
-   - Landing pages: `src/pages/`
+   - Landing page: `src/landing/` (then `npm run landing:css` if styles change)
+   - Community index/events: `community/index.mdx`, `community/events.mdx`
    - Website config: `docusaurus.config.js`
 
-4. **Test Locally**
+4. **Sync docs (if needed) & preview**
    ```bash
+   npm run sync          # optional: refresh docs/ + community mirrors from llm-d/llm-d
    npm start
    ```
 
@@ -176,64 +177,37 @@ For content **without** "Content Source" banners (blog posts, landing pages, web
 
 ### Adding Main Documentation
 
-To add new architecture, guide, or API documentation:
+To add new architecture, well-lit-path, API, or other docs content:
 
-1. **Add the file to llm-d/llm-d repository** in the appropriate location:
-   - Architecture: `docs/architecture/`
-   - Guides: `docs/guides/`
-   - API reference: `docs/api-reference/`
-   - Resources: `docs/resources/`
+1. **Add the file under `docs/` in `llm-d/llm-d`** (for example `docs/architecture/...`, `docs/well-lit-paths/...`, `docs/operations/...`)
+2. **Update `docs/menu-config.json` in `llm-d/llm-d`** if the page needs a sidebar label or position
+3. **Submit a PR to `llm-d/llm-d`**
 
-2. **Update `docs-sync.yaml`** to copy the new file (add an entry under `copies:`)
+`./bin/llmd-site sync` mirrors upstream `docs/**` wholesale, so new files under that tree do not need a `docs-sync.yaml` entry in this repo.
 
-3. **Test the sync locally:**
-   ```bash
-   make llmd-site
-   ./bin/llmd-site sync main --local   # or set LLMD_REPO=~/repos/llm-d
-   cd preview && npm run build
-   ```
+To preview from a local `llm-d` checkout:
 
-4. **Submit PR to this repository** with the `docs-sync.yaml` changes
+```bash
+make llmd-site
+./bin/llmd-site sync --local main   # or set LLMD_REPO=/path/to/llm-d
+npm start
+```
 
 ### Adding Community Documentation
 
-To add a new community file (e.g., `GOVERNANCE.md`):
+To mirror a new repo-root file from `llm-d/llm-d` into the community section (for example `GOVERNANCE.md`):
 
-1. **Create the remote source config** at `remote-content/remote-sources/community/governance.js`:
+1. **Add the source file to `llm-d/llm-d`** at the repository root (e.g. `GOVERNANCE.md`) and merge it there
+2. **Add a `community:` entry in [`docs-sync.yaml`](docs-sync.yaml)** in this repository:
 
-```javascript
-import { createContentWithSource, createStandardTransform, getLlmdRepoConfig } from '../utils.js';
-
-const { sourceBaseUrl } = getLlmdRepoConfig();
-const contentTransform = createStandardTransform();
-
-export default [
-  'docusaurus-plugin-remote-content',
-  {
-    name: 'governance',
-    sourceBaseUrl,
-    outDir: 'community',
-    documents: ['GOVERNANCE.md'],
-    noRuntimeDownloads: false,
-    performCleanup: true,
-
-    modifyContent(filename, content) {
-      if (filename === 'GOVERNANCE.md') {
-        return createContentWithSource({
-          title: 'Project Governance',
-          description: 'Governance structure for the llm-d project',
-          sidebarLabel: 'Governance',
-          sidebarPosition: 6,
-          filename: 'GOVERNANCE.md',
-          newFilename: 'governance.md',
-          content,
-          contentTransform
-        });
-      }
-      return undefined;
-    },
-  },
-];
+```yaml
+community:
+  # ...existing entries...
+  - from: GOVERNANCE.md
+    to: community/governance.md
+    title: Project Governance
+    sidebar_label: Governance
+    sidebar_position: 7
 ```
 
 2. **Import in remote-content.js**:
@@ -251,34 +225,31 @@ const remoteContentPlugins = [
 ];
 ```
 
-3. **Add the source file to llm-d/llm-d** (e.g., `GOVERNANCE.md` in repo root)
+4. **Submit a PR to this repository** with the `docs-sync.yaml` change
 
-4. **Test locally:**
-   ```bash
-   npm run build
-   ```
+The community sidebar is autogenerated from `community/` (`sidebarsCommunity.js`), so a correct `sidebar_position` / `sidebar_label` in the sync entry is enough.
 
 ## 🧪 Testing Changes
 
 ### Local Development Server
 
 ```bash
+npm run sync    # when you need fresh upstream docs/community mirrors
 npm start
 ```
 
-Opens a browser with live reload. Most changes reflect immediately.
+Opens a browser with live reload. Most local changes reflect immediately.
 
-### Full Build
+### Full Build (matches deploy CI)
 
 ```bash
-npm run build
+npm ci
+npm run llmd-site
+npm run build:all    # sync + landing CSS + Docusaurus build
+# or: npm run ci     # sync + build + link check
 ```
 
-Generates static content into the `build` directory. Tests the complete build including:
-1. Main site build (includes remote-content community files)
-2. Preview docs sync from llm-d/llm-d
-3. Preview docs build
-4. Merge of preview build into main site at `/docs`
+This produces static output in `build/`. Prefer `npm run build:all` / `make build` over bare `npm run build` (the latter skips landing CSS and only auto-syncs if `docs/` is missing).
 
 ### Preview Deployments
 
@@ -288,15 +259,17 @@ Every PR automatically gets a Netlify preview deployment. Check the PR for the p
 
 | Issue | Solution |
 |-------|----------|
-| **Build errors** | Check that all remote sources are accessible from llm-d/llm-d |
-| **Content not syncing** | Verify file exists in llm-d/llm-d main branch |
-| **Preview not updating** | Netlify builds can take 5-10 minutes; check build logs |
-| **Links broken** | Ensure links use proper Docusaurus paths or full GitHub URLs |
-| **Images not showing** | Verify image paths in `docs-sync.yaml` sync mappings |
+| **Build / sync errors** | Run `./bin/llmd-site validate` and confirm `docs-sync.yaml` / upstream paths are correct |
+| **Content not syncing** | Verify the file exists on `llm-d/llm-d` `main`; for community pages, confirm a matching `community:` entry in `docs-sync.yaml` |
+| **Preview not updating** | Netlify builds can take 5–10 minutes; check build logs |
+| **Links broken** | Use in-tree relative doc links or full GitHub URLs; run `npm run check-links` after a build |
+| **Images not showing** | Doc images are mirrored to `static/img/docs/` on sync; confirm the image exists under upstream `docs/` |
 
 ## 📚 Additional Resources
 
-- [README.md](README.md) - Full documentation of the website structure
+- [README.md](README.md) — Website layout, sync, and build overview
+- [tools/llmd-site/README.md](tools/llmd-site/README.md) — `llmd-site` CLI reference
+- [docs-sync.yaml](docs-sync.yaml) — Sync sources and community mirror pages
 - [Docusaurus Documentation](https://docusaurus.io/)
 - [llm-d Main Repository](https://github.com/llm-d/llm-d)
 - [llm-d Contributing Guidelines](https://github.com/llm-d/llm-d/blob/main/CONTRIBUTING.md)
@@ -305,4 +278,4 @@ Every PR automatically gets a Netlify preview deployment. Check the PR for the p
 
 - **Slack**: Join [#website-and-docs](https://llm-d.ai/slack) channel
 - **Issues**: Open an issue in this repository for website-specific questions
-- **Community**: See [Community Guidelines](https://llm-d.ai/docs/community/code-of-conduct)
+- **Community**: See [Community Guidelines](https://llm-d.ai/community/code-of-conduct)
