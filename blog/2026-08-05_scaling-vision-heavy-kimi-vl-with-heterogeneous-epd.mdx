@@ -79,7 +79,7 @@ These results cover one model, one vision-heavy synthetic workload, and the hard
 ## How to Reproduce
 
 1. Use llm-d [v0.8.1](https://github.com/llm-d/llm-d/releases/tag/v0.8.1) or later. Follow the [v0.8.1 aggregated multimodal serving guide](https://github.com/llm-d/llm-d/tree/v0.8.1/guides/multimodal-serving/aggregation) as the deployment pattern for the collocated baseline, modifying the manifests to run SGLang with `Kimi-VL-A3B-Instruct`.
-2. Follow the [heterogeneous SGLang E/PD guide](https://github.com/llm-d/llm-d/pull/2113/files#diff-1d3baf4841134e24ef466511ecaf7c287f687adf061a54bb518d6f80f62356dd) to deploy four encode workers and one prefill/decode worker.
+2. Follow the [heterogeneous SGLang E/PD guide](https://github.com/llm-d/llm-d/blob/main/guides/multimodal-serving/e-disaggregation/profiles/sglang-xpu-encode-gpu-pd.md) to deploy four encode workers and one prefill/decode worker.
 3. Run the following SGLang benchmark against both deployments. Set `IP` to the proxy address from the guide and vary `rate` from 0.2 to 2.0.
 
 ```bash
