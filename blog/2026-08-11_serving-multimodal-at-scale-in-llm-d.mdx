@@ -311,7 +311,7 @@ Start aggregated. It is a single manifest and a router config, and if your traff
 
 Reach for disaggregation when the encoder is genuinely the bottleneck: a high multimodal-to-text ratio, several large assets per request, or a ViT heavy enough that running it inline visibly stalls decode.
 
-And be honest about the crossover. SGLang's report is blunt on this, and it applies equally here: for image-light workloads the network latency of shipping embeddings can outweigh the time saved by offloading, **raising** TTFT relative to collocation while dedicated encoder GPUs sit idle. Disaggregation is most efficient exactly when visual processing is the primary bottleneck. If it is not, you are paying for a tier and a network hop to solve a problem you do not have.
+And be honest about the crossover. [SGLang's report](https://www.lmsys.org/blog/2026-01-12-epd/) is blunt on this, and it applies equally here: for image-light workloads the network latency of shipping embeddings can outweigh the time saved by offloading, **raising** TTFT relative to collocation while dedicated encoder GPUs sit idle. Disaggregation is most efficient exactly when visual processing is the primary bottleneck. If it is not, you are paying for a tier and a network hop to solve a problem you do not have.
 
 There is a middle path worth trying first: `--mm-encoder-tp-mode data` buys intra-replica encoder parallelism with no topology change, no extra pods, and no embedding transfer.
 
