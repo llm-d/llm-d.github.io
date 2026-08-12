@@ -3,7 +3,7 @@
 
 # Production build output
 /build
-/preview 
+/preview
 
 # llmd-site CLI
 /bin
@@ -42,3 +42,4 @@ sync-report.json
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.vscode/

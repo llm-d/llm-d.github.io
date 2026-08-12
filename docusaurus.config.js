@@ -7,6 +7,9 @@ import { themes as prismThemes } from 'prism-react-renderer';
 import { makeDocsPreprocessor } from './scripts/lib/preprocess.mjs';
 import { loadMenuConfig, makeSidebarItemsGenerator, validateMenuConfig } from './scripts/lib/sidebar.mjs';
 
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+
 const GITHUB_REPO = 'https://github.com/llm-d/llm-d';
 
 // Self-adjusting versioning: derive the version map from versions.json (which
@@ -22,6 +25,7 @@ const docsDir = path.join(siteDir, 'docs');
 const menuConfig = loadMenuConfig(path.join(docsDir, 'menu-config.json'));
 if (fs.existsSync(docsDir)) validateMenuConfig(menuConfig, docsDir);
 const versionsFile = path.join(siteDir, 'versions.json');
+/** @type {string[]} */
 const releasedVersions = fs.existsSync(versionsFile)
   ? JSON.parse(fs.readFileSync(versionsFile, 'utf8'))
   : [];
@@ -49,7 +53,8 @@ const docsVersions = LATEST_VERSION
   : {};
 
 /** Docs are synced from llm-d/llm-d into docs/ (see tools/llmd-site).
- *  Map a synced doc back to its source file for the "Edit this page" link. */
+ *  Map a synced doc back to its source file for the "Edit this page" link.
+ *  @type {import('@docusaurus/plugin-content-docs').EditUrlFunction} */
 function docsEditUrl({ versionDocsDirPath, docPath }) {
   // Only the current ("next") version maps cleanly back to the live source tree.
   if (versionDocsDirPath !== 'docs') return undefined;
@@ -58,47 +63,49 @@ function docsEditUrl({ versionDocsDirPath, docPath }) {
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'llm-d',
-  tagline: 'Kubernetes-native, high-performance distributed LLM inference',
-  favicon: 'img/llm-d-favicon.png',
+  title: "llm-d",
+  tagline: "Kubernetes-native, high-performance distributed LLM inference",
+  favicon: "img/llm-d-favicon.png",
 
-  url: 'https://llm-d.ai',
-  baseUrl: '/',
+  url: "https://llm-d.ai",
+  baseUrl: "/",
 
-  organizationName: 'llm-d',
-  projectName: 'llm-d',
+  organizationName: "llm-d",
+  projectName: "llm-d",
 
   trailingSlash: false,
-  onBrokenLinks: 'warn',
-  onBrokenAnchors: 'warn',
+  onBrokenLinks: "warn",
+  onBrokenAnchors: "warn",
 
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en'],
+    defaultLocale: "en",
+    locales: ["en"],
   },
 
   markdown: {
     // .md -> CommonMark (forgiving of the raw HTML in the synced GitHub docs),
     // .mdx -> MDX (blog posts, community index/events, getting-started).
-    format: 'detect',
+    format: "detect",
     mermaid: true,
     // Render-time link/image/brace fixes for the pristine synced docs copy.
     preprocessor: makeDocsPreprocessor({ docsDir }),
     hooks: {
-      onBrokenMarkdownLinks: 'warn',
-      onBrokenMarkdownImages: 'warn',
+      onBrokenMarkdownLinks: "warn",
+      onBrokenMarkdownImages: "warn",
     },
   },
 
   presets: [
     [
-      'classic',
+      "classic",
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
-          path: 'docs',
-          routeBasePath: 'docs',
-          sidebarPath: './sidebars.js',
+          path: "docs",
+          remarkPlugins: [remarkMath],
+          rehypePlugins: [rehypeKatex],
+          routeBasePath: "docs",
+          sidebarPath: "./sidebars.js",
           editUrl: docsEditUrl,
           sidebarItemsGenerator: makeSidebarItemsGenerator(menuConfig),
           // Native versioning: the synced docs/ are the unreleased "dev" version;
@@ -107,35 +114,35 @@ const config = {
           ...docsVersions,
         },
         blog: {
-          path: 'blog',
-          routeBasePath: 'blog',
+          path: "blog",
+          routeBasePath: "blog",
           showReadingTime: true,
           readingTime: ({ content, defaultReadingTime, locale }) =>
             defaultReadingTime({
               content: content.replace(
                 /<!-- reading-time-exclude:start -->[\s\S]*?<!-- reading-time-exclude:end -->/g,
-                '',
+                "",
               ),
               locale,
             }),
-          blogSidebarTitle: 'All posts',
-          blogSidebarCount: 'ALL',
+          blogSidebarTitle: "All posts",
+          blogSidebarCount: "ALL",
           editUrl: `${GITHUB_REPO}/edit/main/website/`,
           feedOptions: {
-            type: ['rss', 'atom'],
+            type: ["rss", "atom"],
             xslt: true,
           },
-          onInlineTags: 'warn',
-          onInlineAuthors: 'warn',
-          onUntruncatedBlogPosts: 'ignore',
+          onInlineTags: "warn",
+          onInlineAuthors: "warn",
+          onUntruncatedBlogPosts: "ignore",
         },
         theme: {
-          customCss: './src/css/custom.css',
+          customCss: "./src/css/custom.css",
         },
         sitemap: {
-          changefreq: 'weekly',
+          changefreq: "weekly",
           priority: 0.5,
-          ignorePatterns: ['/tags/**'],
+          ignorePatterns: ["/tags/**"],
         },
       }),
     ],
@@ -144,44 +151,53 @@ const config = {
   plugins: [
     // Community section as its own docs instance (mirrors docusaurus.io/community).
     [
-      '@docusaurus/plugin-content-docs',
+      "@docusaurus/plugin-content-docs",
       {
-        id: 'community',
-        path: 'community',
-        routeBasePath: 'community',
-        sidebarPath: './sidebarsCommunity.js',
+        id: "community",
+        path: "community",
+        routeBasePath: "community",
+        sidebarPath: "./sidebarsCommunity.js",
       },
     ],
   ],
 
+  stylesheets: [
+    {
+      href: "https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.css",
+      type: "text/css",
+      integrity:
+        "sha384-8mbt0RMYO82eOsn+Rafjm7RQ5iXXpWaVfsGzqL+0/AY4ybVWIwUQ2TeyVK0Rk29T",
+      crossorigin: "anonymous",
+    },
+  ],
   themes: [
-    '@docusaurus/theme-mermaid',
+    "@docusaurus/theme-mermaid",
     // Offline full-text search (docs + blog + community).
-    [
-      require.resolve('@easyops-cn/docusaurus-search-local'),
-      /** @type {import('@easyops-cn/docusaurus-search-local').PluginOptions} */
-      ({
+    /** @type {import('@docusaurus/types').PluginConfig} */
+    ([
+      "@easyops-cn/docusaurus-search-local",
+      {
         hashed: true,
         indexBlog: true,
         indexPages: true,
-        docsRouteBasePath: ['/docs', '/community'],
+        docsRouteBasePath: ["/docs", "/community"],
         highlightSearchTermsOnTargetPage: true,
-      }),
-    ],
+      },
+    ]),
   ],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      image: 'img/llm-d-social-card.jpg',
+      image: "img/llm-d-social-card.jpg",
       colorMode: {
         respectPrefersColorScheme: true,
       },
       announcementBar: {
-        id: 'llm-d-0-8-0',
+        id: "llm-d-0-8-0",
         content:
           '🎉 <b>llm-d 0.8 is here!</b> Multimodal, batch &amp; flow-control graduate to production, with broader accelerator support and initial RL. <a href="/docs/getting-started/quickstart"><b>See what\'s new →</b></a>',
-        textColor: '#ffffff',
+        textColor: "#ffffff",
         isCloseable: true,
       },
       docs: {
@@ -192,69 +208,69 @@ const config = {
       },
       navbar: {
         logo: {
-          alt: 'llm-d',
-          src: 'img/llm-d-logotype-and-icon.svg',
-          srcDark: 'img/llm-d-logotype-and-icon-dark.svg',
-          href: '/',
+          alt: "llm-d",
+          src: "img/llm-d-logotype-and-icon.svg",
+          srcDark: "img/llm-d-logotype-and-icon-dark.svg",
+          href: "/",
         },
         items: [
           {
             // Plain link (not a version-aware docSidebar item) so "Docs" always
             // opens the latest release at /docs, regardless of the version the
             // visitor last viewed (dev/0.7 are reachable via the dropdown).
-            to: '/docs',
-            position: 'left',
-            label: 'Docs',
+            to: "/docs",
+            position: "left",
+            label: "Docs",
           },
-          { to: '/blog', label: 'Blog', position: 'left' },
+          { to: "/blog", label: "Blog", position: "left" },
           {
-            type: 'docSidebar',
-            sidebarId: 'communitySidebar',
-            docsPluginId: 'community',
-            position: 'left',
-            label: 'Contributing',
+            type: "docSidebar",
+            sidebarId: "communitySidebar",
+            docsPluginId: "community",
+            position: "left",
+            label: "Contributing",
           },
           {
-            type: 'docsVersionDropdown',
+            type: "docsVersionDropdown",
             // On the left, right after Community (consistent navbar spacing).
-            position: 'left',
+            position: "left",
             dropdownActiveClassDisabled: true,
             // Order the dropdown releases-first (newest default at top), dev last.
-            versions: [...releasedVersions, 'current'],
+            versions: [...releasedVersions, "current"],
           },
           {
             // GitHub icon + live star count (see src/components/GithubStarsNavbarItem).
-            type: 'custom-githubStars',
+            type: "custom-githubStars",
             href: GITHUB_REPO,
-            position: 'right',
-            'aria-label': 'GitHub repository',
+            position: "right",
+            "aria-label": "GitHub repository",
           },
           {
-            href: 'https://llm-d.ai/slack',
-            position: 'right',
-            className: 'header-slack-link',
-            label: 'Join Slack',
-            'aria-label': 'llm-d Slack',
+            href: "https://llm-d.ai/slack",
+            position: "right",
+            className: "header-slack-link",
+            label: "Join Slack",
+            "aria-label": "llm-d Slack",
           },
         ],
       },
       footer: {
-        style: 'dark',
+        style: "dark",
         logo: {
-          alt: 'llm-d Logo',
-          src: 'img/cncf-color.svg',
-          srcDark: 'img/cncf-white.png',
-          href: 'https://cncf.io',
-          target: '_blank',
+          alt: "llm-d Logo",
+          src: "img/cncf-color.svg",
+          srcDark: "img/cncf-white.png",
+          href: "https://cncf.io",
+          target: "_blank",
           width: 240,
-          className: 'footer-logo',
+          className: "footer-logo",
           style: {
-            marginRight: '10px',
+            marginRight: "10px",
           },
         },
         links: [
           {
-            title: 'Documentation',
+            title: "Documentation",
             items: [
               {
                 html: '<a href="/docs" class="footer__link-item">Getting Started</a>',
@@ -268,7 +284,7 @@ const config = {
             ],
           },
           {
-            title: 'Community',
+            title: "Community",
             items: [
               {
                 html: '<a href="/community" class="footer__link-item">Contact us</a>',
@@ -282,19 +298,19 @@ const config = {
             ],
           },
           {
-            title: 'More',
+            title: "More",
             items: [
               {
                 html: '<a href="/blog" class="footer__link-item">Blog</a>',
               },
               {
-                label: 'Privacy Policy',
-                href: 'https://www.redhat.com/en/about/privacy-policy',
+                label: "Privacy Policy",
+                href: "https://www.redhat.com/en/about/privacy-policy",
               },
             ],
           },
           {
-            title: 'Social',
+            title: "Social",
             items: [
               {
                 html: `
@@ -344,10 +360,10 @@ const config = {
       prism: {
         theme: prismThemes.oneLight,
         darkTheme: prismThemes.oneDark,
-        additionalLanguages: ['bash', 'yaml', 'json', 'toml', 'promql'],
+        additionalLanguages: ["bash", "yaml", "json", "toml", "promql"],
       },
       mermaid: {
-        theme: { light: 'neutral', dark: 'dark' },
+        theme: { light: "neutral", dark: "dark" },
       },
     }),
 };
