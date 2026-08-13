@@ -153,7 +153,10 @@ policy.
 </details>
 
 On `openai/gpt-oss-120b` with H200 GPUs, the pull won at every measured prefix
-length. Its latency grew much more slowly than recompute:
+length, so the crossover sits below the smallest measured prefix of 2K tokens.
+The gap also widens with length: the transfer moves bytes at network
+bandwidth, linear in prefix size, while recompute pays prefill FLOPs per token
+plus an attention term that grows quadratically with context:
 
 | Prefix tokens | Recompute | P2P pull | Delta |
 |---:|---:|---:|---:|
