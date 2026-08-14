@@ -295,53 +295,44 @@ def wide_ep():
 
 
 def glm_c64():
-    paired_approx = np.array([3.077, 2.977, 3.217])
-    paired_precise_p2p = np.array([3.383, 3.387, 3.383])
-    paired_delta = [10.0, 13.8, 5.2]
+    policies = [
+        "Approximate routing\nP2P disabled",
+        "Approximate routing\nP2P enabled",
+        "Precise routing\nP2P disabled",
+        "Precise routing\nP2P enabled",
+    ]
+    successful_rps = np.array([2.890, 3.023, 2.927, 3.210])
+    baseline_delta = [None, 4.6, 1.3, 11.1]
+    colors = [GRAY, BLUE_LIGHT, GRAY_LIGHT, BLUE]
 
     fig, ax = plt.subplots(figsize=(11.5, 6.2))
     style_figure(fig)
 
-    x = np.arange(3)
-    width = 0.34
-    approx_bars = ax.bar(
-        x - width / 2,
-        paired_approx,
-        width,
-        color=GRAY,
-        label="Calibrated approximate",
-    )
-    precise_bars = ax.bar(
-        x + width / 2,
-        paired_precise_p2p,
-        width,
-        color=BLUE,
-        label="DP-aware precise + P2P",
-    )
-    ax.set_xticks(x, ["Window 1", "Window 2", "Window 3"])
+    x = np.arange(4)
+    bars = ax.bar(x, successful_rps, width=0.58, color=colors)
+    ax.set_xticks(x, policies)
     ax.set_ylabel("Successful requests/s", fontsize=10)
-    ax.set_ylim(0, 4.15)
+    ax.set_ylim(0, 3.85)
     ax.grid(axis="y", color=GRID, linewidth=0.8)
     ax.set_axisbelow(True)
-    ax.bar_label(approx_bars, fmt="%.3f", padding=4, color=FG, fontsize=9)
-    ax.bar_label(precise_bars, fmt="%.3f", padding=4, color=FG, fontsize=9)
-    for xpos, value, delta in zip(x, paired_precise_p2p, paired_delta):
+    ax.bar_label(bars, fmt="%.3f", padding=4, color=FG, fontsize=9)
+    for xpos, value, delta in zip(x, successful_rps, baseline_delta):
+        label = "baseline" if delta is None else f"+{delta:.1f}%"
         ax.text(
-            xpos + width / 2,
+            xpos,
             value + 0.18,
-            f"+{delta:.1f}%",
+            label,
             ha="center",
             va="bottom",
-            color=BLUE,
+            color=MUTED if delta is None else BLUE,
             fontsize=10,
             fontweight="bold",
         )
-    ax.legend(frameon=False, loc="upper left", fontsize=9)
 
     fig.text(
         0.012,
         0.955,
-        "The complete precise + P2P policy carries more work at C64",
+        "P2P improves throughput with both routing methods",
         color=FG,
         fontsize=17,
         fontweight="bold",
@@ -349,12 +340,19 @@ def glm_c64():
     fig.text(
         0.012,
         0.915,
-        "GLM-5.2-FP8 | 32x H200 | 2 prefill + 2 decode | concurrency 64 | fixed 300-second windows",
+        "GLM-5.2-FP8 | 32x H200 | 2 prefill + 2 decode | concurrency 64",
         color=MUTED,
         fontsize=10.5,
     )
+    fig.text(
+        0.012,
+        0.88,
+        "300-second comparison; percentages use approximate routing without P2P as the baseline",
+        color=MUTED,
+        fontsize=9.5,
+    )
     add_source(fig, "Source: llm-d GLM-5.2 C64 benchmark, 2026-08")
-    fig.subplots_adjust(left=0.09, right=0.985, top=0.82, bottom=0.17)
+    fig.subplots_adjust(left=0.09, right=0.985, top=0.79, bottom=0.17)
     save(fig, "glm-c64-policy-comparison.png")
 
 

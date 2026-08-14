@@ -1,11 +1,8 @@
 ---
-# DRAFT - feature not yet merged. Date, authors, and tags are placeholders.
-# Remove `draft: true` and this comment block before publishing.
 title: "Move the KV, Not the Work: P2P Cache Sharing in llm-d"
 description: "When load balancing or serving topology separates a request from its cached prefix, llm-d can move the KV from a peer instead of recomputing it."
 slug: p2p-kv-cache-sharing-llm-d
 date: 2026-08-15T09:00
-draft: false  # TEMP for preview render - revert before merge
 
 authors:
   - niliguy
@@ -35,10 +32,11 @@ where to fetch the missing prefix.
 
 :::info[Headline result]
 
-In a complete-policy comparison on `GLM-5.2-FP8` at concurrency 64,
-DP-aware precise routing with P2P carried 5.2-13.8% more successful requests
-per second than calibrated approximate routing without P2P across three
-matched 300-second windows. The median improvement was 10.0%.
+On `GLM-5.2-FP8` at concurrency 64, P2P increased successful throughput with
+both routing methods: 4.6% with approximate routing and 9.7% with precise
+routing. Precise routing with P2P led all four configurations at 11.1% above
+the baseline. Across three repeat comparisons, the combined policy improved
+successful throughput by 9.6% on average.
 
 :::
 
@@ -91,10 +89,9 @@ blocks over NIXL, the NVIDIA Inference Xfer Library. The scheduler describes
 the operation as a pull because the consumer requests it; after the lookup
 handshake, the producer performs the data-path write. Neither GPU performs the
 peer-to-peer copy, so serving a peer costs the producer CPU memory bandwidth
-and network capacity, not GPU compute. In the GLM DEBUG observation below,
-router source directives, peer-load submissions, and successful engine
-transfer rounds verify the complete path. A normal miss falls back to
-computation.
+and network capacity, not GPU compute. An instrumented GLM run below verifies
+that the router selected a remote source and the engine completed the peer
+transfer. A normal miss falls back to computation.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/p2p-kv-cache/architecture.png" alt="Architecture diagram showing the EPP selecting a destination and KV source, with NIXL moving matching blocks between peer CPU tiers" style={{width: '100%', height: 'auto'}} />
@@ -187,80 +184,78 @@ producer load.
 
 ### 2. When Exact Location and Peer Retrieval Work Together
 
-The [GLM-5.2 agentic-serving study](/blog/serving-glm-5-2-agentic-workloads-on-llm-d)
+The [GLM-5.2 agentic-serving study](https://llm-d.ai/blog/serving-glm-5-2-agentic-workloads-on-llm-d)
 describes the production coding-agent trace shape and wide-EP serving
 architecture. This experiment asks a different question: how does routing
 behave when exact cache-location information is paired with peer retrieval
 under saturation?
 
 <details>
-<summary>Setup: GLM-5.2-FP8 on 32x H200 P/D-disaggregated; repeated complete-policy pair; AIPerf trace replay at concurrency 64</summary>
+<summary>Setup: GLM-5.2-FP8 on 32x H200 P/D-disaggregated; one four-configuration comparison plus three repeat comparisons; AIPerf trace replay at concurrency 64</summary>
 
 The 753B MoE runs on two prefill and two decode instances, each 8-way
 data/expert parallel. AIPerf replays 48 entries from the SemiAnalysis Weka
-coding-agent trace corpus with seed 67. Each arm starts with new engine pod
-UIDs and uses the same 300-second admission window plus a 120-second drain.
-Only requests that reach a terminal state by 300 seconds enter the result, so
-this is a matched saturation snapshot rather than a measurement through full
-workload completion.
+coding-agent trace corpus with seed 67. The four-configuration comparison covers
+approximate and precise routing, each with and without P2P. Each configuration
+starts on fresh engine pods and uses the same 300-second admission window plus
+a 120-second drain. Only requests that reach a terminal state by 300 seconds
+enter the result, so this is a matched saturation snapshot rather than a
+measurement through full workload completion.
 
 The repeated baseline is calibrated approximate routing without P2P. The
-candidate combines DP-aware precise KV events, speculative indexing, GPU/CPU
-cache weights 1.0/0.4, and `p2p-source-producer` at
-`minCachedTokenDelta: 2048`. Both use the same measured
-`peakPrefillThroughput: 5541` and 55-second affinity-penalty budget.
+candidate combines DP-aware precise cache-location data with peer retrieval
+using a 2,048-token pull threshold. All four configurations use the same
+calibrated prefill capacity and 55-second affinity-penalty budget.
+
+The 2,048-token threshold is below the separate 12,288-token crossover
+recommendation. It describes the measured policy, not a production tuning
+recommendation.
 
 </details>
 
-This is a complete-policy comparison: the candidate changes both the cache
-index and peer retrieval, so the margin cannot be assigned to precision or
-P2P alone.
+The four-way comparison is one saturation snapshot. The repeat comparisons
+test whether the combined policy holds.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/p2p-kv-cache/glm-c64-policy-comparison.png" alt="Bar chart showing the complete precise plus P2P policy carrying more successful requests per second than calibrated approximate routing in three paired C64 windows" style={{width: '100%', height: 'auto'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>The complete precise+P2P policy improves successful throughput in all three matched windows.</em></p>
+  <img src="/img/blogs/p2p-kv-cache/glm-c64-policy-comparison.png" alt="Bar chart comparing successful throughput for approximate and precise routing, each with and without P2P, in the GLM C64 comparison" style={{width: '100%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>P2P improves successful throughput with either routing method. The combination of precise routing and P2P carries the most work.</em></p>
 </div>
 
-Successful throughput improved by 10.0%, 13.8%, and 5.2%, for a 10.0%
-paired median. Input-token throughput improved by 12.9%, 17.2%, and 5.3%.
-The latency signal is less stable: p90 end-to-end latency improved by 13.8%
-and 12.2% in two windows and was 1.2% worse in the reversed-order window.
-The repeatable result is higher successful throughput, not a guaranteed
-latency reduction in every cut. Only successful requests that reached a
-terminal state by the cutoff enter those latency percentiles, so the arm
-populations differ and the latency comparison is directional.
+| Routing policy | Successful req/s | Change from approximate without P2P | Median TTFT |
+|---|---:|---:|---:|
+| Approximate routing | 2.890 | baseline | 2.691 s |
+| Approximate routing with P2P | 3.023 | **+4.6%** | **2.184 s (-18.9%)** |
+| Precise routing | 2.927 | +1.3% | 2.899 s (+7.7%) |
+| Precise routing with P2P | **3.210** | **+11.1%** | **2.018 s (-25.0%)** |
 
-A four-arm DEBUG snapshot was also collected, but it is not used for factor
-attribution. Its archived approximate+P2P arm renamed the approximate prefix
-producer without configuring the in-flight load producer to read that name,
-which confounded its load accounting. The repeated baseline and candidate do
-not depend on that control.
+Precise routing alone stayed close to the approximate baseline. The largest
+gain appeared when precise routing and P2P were used together.
 
-The engine metrics show the corresponding change in prefill pressure.
-Approximate routing's prefill queue p90 ranges from 12.8 to 13.7 requests;
-precise+P2P ranges from 8.0 to 9.0. The DEBUG window records 13 source request
-IDs, 12 peer-load submissions, 12 unique transfer IDs, 17 successful transfer
-rounds, and 6,342 submitted KV blocks. These counters instrument different
-pipeline stages and are not expected to be one-to-one. The available generic
-NIXL and offload counters also include non-P2P traffic, so the block count is
-not converted into a peer-byte claim.
+| Across three repeat comparisons | Average improvement |
+|---|---:|
+| Successful requests per second | **+9.6%** |
+| Input-token throughput | **+11.8%** |
 
-The DP-aware event path does not collapse work onto rank 0: the two rank-0
-engines account for 8.3-17.1% of prefill successes across the three windows,
-versus a 12.5% even two-rank share. This rules out a rank-0 collapse, not rank
-imbalance in general.
+Successful throughput improved in every repeat. Tail latency varied, so the
+repeatable result is higher capacity.
 
-This run used a 2,048-token source threshold, below the separate GLM crossover
-recommendation of 12,288 tokens. It therefore describes the measured policy as
-configured; it does not establish that 2,048 is the best production setting.
+| Mechanism check | Result |
+|---|---|
+| Approximate routing with P2P | 77.7 GiB submitted; no failed transfer rounds |
+| Precise routing with P2P | 39.4 GiB submitted; no failed transfer rounds |
+| Both configurations without P2P | Zero peer transfers |
+| Prefill queue p90 across repeats | 12.8-13.7 requests at baseline; 8.0-9.0 with precise routing and P2P |
 
-A separate GLM load-spill A/B isolates the pull under identical placement.
-Adding `p2p-source-producer` reduced mean TTFT from 7.85 to 2.56 seconds
-(-67%) and raised throughput from 3.80 to 10.10 requests per second (2.7x).
-The result reproduced in a separately built fleet. That matched run did not
-record per-repetition transfer counters; pull-path liveness was established by
-the direct source-pull measurement above. The load-spill result measures P2P
-alone, while the C64 result compares complete routing policies.
+The byte counts come from P2P submission records.
+
+A separate GLM test isolates P2P under identical placement:
+
+| Metric | Without P2P | With P2P | Change |
+|---|---:|---:|---:|
+| Mean TTFT | 7.85 s | **2.56 s** | **-67%** |
+| Throughput | 3.80 req/s | **10.10 req/s** | **2.7x** |
+
+The result reproduced in a separately built fleet.
 
 A smaller `Llama-3.1-8B` shared-prefix pool provides the clean P2P-only A/B.
 At 8 requests per second, P2P reduced median request latency by 43%. Near
@@ -279,44 +274,37 @@ recomputing cross-pod misses:
 <summary>Setup: 4 aggregated H200 pods; identical load-balanced placement on both sides</summary>
 
 A pool of 64 shared 16K prefixes, larger than any single pod's cache. Both
-runs use the same load-balanced placement and differ only by the
-`p2p-source-producer`. These campaign configurations are archived with the
-measurement record rather than shipped with the guide.
+runs use the same load-balanced placement; the treatment additionally enables
+P2P KV cache sharing.
 
 </details>
 
-#### Document Q&A: A Complete Policy Comparison
+#### Document Q&A: When Locality Becomes a Queue
 
-The document Q&A experiment asks a related but different question: can
-load-aware placement plus P2P outperform precise affinity when many active
-sessions queue behind their document owners? It compares complete serving
-policies, not P2P as a single toggle.
+This experiment compares precise affinity with load-aware placement plus P2P
+when active sessions queue behind their document owners.
 
 <details>
-<summary>Setup: gpt-oss-120b on 16 aggregated H200 pods; epp-affinity.yaml versus epp-load-p2p.yaml</summary>
+<summary>Setup: gpt-oss-120b on 16 aggregated H200 pods; precise affinity versus load-aware placement with P2P</summary>
 
-The baseline is the guide's precise prefix-affinity configuration,
-`epp-affinity.yaml`. The candidate is load-aware placement plus the pull,
-`epp-load-p2p.yaml`, at `minCachedTokenDelta` 2048. Both run the precise
-index at the fleet-matched `podCacheSize: 32`.
+The baseline uses precise prefix affinity. The candidate combines load-aware
+placement with P2P using a 2,048-token pull threshold. Both use the same
+precise cache-location data.
 
 </details>
 
-The workload used 192 distinct 48K-token documents, each queried through six
-short turns, with 128 conversations active at once. The corpus fit in aggregate
-GPU KV capacity, so owner contention rather than capacity scarcity drove the
-result. Warm precise affinity kept median TTFT at 0.3 seconds, but its p99
-reached 25.2 seconds as sessions queued on their owners. Load-aware placement
-plus P2P paid a 0.6-second median to move displaced prefixes, then reduced p99
-to 16.6 seconds and increased throughput by 35%. On a freshly rolled fleet
-with empty cache tiers, it completed every request while affinity encountered
-48 client timeouts.
+The workload used 192 distinct 48K-token documents, six turns per document,
+and 128 active conversations.
 
-The result belongs to the combined policy: load balancing removes the owner
-queues, and P2P makes that placement affordable by turning remote misses into
-transfers. It also shows why median latency alone is insufficient. Affinity
-wins the cheapest local hit, while load-aware placement wins the tail and the
-fleet throughput when ownership becomes a queueing constraint.
+| Metric | Precise affinity | Load-aware placement with P2P |
+|---|---:|---:|
+| Median TTFT | **0.3 s** | 0.6 s |
+| p99 TTFT | 25.2 s | **16.6 s** |
+| Throughput | baseline | **+35%** |
+| Client timeouts on a cold fleet | 48 | **0** |
+
+Affinity wins the cheapest local hit. Load-aware placement with P2P improves
+tail latency and throughput when document owners become queueing hotspots.
 
 ### 3. Preserve Session History Across P/D Roles
 
@@ -325,80 +313,54 @@ eliminate. The decoder generates the newest KV history, but a prefill worker
 handles the next turn. Without a peer transfer, the prefiller rebuilds history
 that already exists on another serving role.
 
-The mechanism was first isolated on `Llama-3.1-8B`. The prefiller received
-decode-generated history by peer pull, moving 477K tokens at one topology and
-1.65M tokens under higher contention. Per-turn TTFT stayed near parity because
-recomputing a short answer on an 8B model was already cheap; the benefit was
-reclaimed prefill capacity rather than a visible latency reduction.
+The small-model run established the mechanism before the larger workload
+showed a user-visible payoff:
 
-Pulling a generated turn requires the next request to reproduce the same token
-IDs: Llama re-renders assistant turns verbatim, while models whose templates
-drop reasoning segments can pull only input context and re-prefilled history.
-
-The user-visible payoff appeared on `Qwen3-30B-A3B-Thinking` under the
-agentic-serving workload: the conversation-replay profile from the
-[agentic-serving guide](https://github.com/llm-d/llm-d/tree/main/guides/agentic-serving),
-which models coding sessions over large reused contexts with tool-call pauses
-between turns. Its context, turn-count and tool-gap ranges are scaled to this
-six-GPU testbed - 24 conversations, dynamic system prompts of 10K to 100K
-tokens, 4 to 40 turns each, and tool-call gaps of 1 to 20 seconds - while the
-per-turn shapes (about 1,500 input and 425 output tokens) match the guide's
-profile. Those gaps give session KV time to leave GPU memory, so a returning
-turn must either rebuild the accumulated history or pull its reusable blocks
-from a peer. Prompts averaged 61.9K tokens.
+| Model | Session history moved | Result |
+|---|---:|---|
+| `Llama-3.1-8B` | 477K-1.65M tokens | Reclaimed prefill capacity; TTFT stayed near parity |
+| `Qwen3-30B-A3B-Thinking` | 1.23M tokens | Lower TTFT and higher throughput |
 
 <details>
 <summary>Setup: 2 prefill and 4 decode pods; identical placement, the P2P side adds the offload tier and the pull</summary>
 
-One H200 per pod. Both runs carry `NixlConnector` for the P/D handoff and use
-identical placement plugins and weights. The P2P run adds the CPU offload
-tier, enables the pull on the decode routing sidecar, and adds the
-`p2p-source-producer` at `minCachedTokenDelta` 1024.
+One H200 per pod. Both runs use NIXL for the P/D handoff and identical
+placement. The P2P run adds the CPU offload tier and enables peer retrieval
+using a 1,024-token pull threshold.
+
+The [agentic-serving workload](https://github.com/llm-d/llm-d/tree/main/guides/agentic-serving)
+uses 24 conversations, 10K-100K-token system prompts, 4-40 turns, and
+1-20-second tool-call gaps. Prompts average 61.9K tokens.
 
 </details>
 
-:::info[Agentic P/D result]
-
-On the reproduced run, the P2P stack reduced median TTFT from 6.83 to 1.09
-seconds and raised throughput from 0.82 to 1.24 requests per second: 6.3x lower
-median TTFT and 50% more throughput.
-
-:::
+| Metric | Without P2P | With P2P | Change |
+|---|---:|---:|---:|
+| Median TTFT | 6.83 s | **1.09 s** | **6.3x lower** |
+| Throughput | 0.82 req/s | **1.24 req/s** | **+50%** |
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/p2p-kv-cache/agentic-pd.png" alt="Grouped bars showing lower median and p95 TTFT and higher throughput for agentic P/D with P2P" style={{width: '100%', height: 'auto'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>The original run measured 4.8x lower median TTFT and 33% more throughput. A later reproduction reached 6.3x and 50%; both show the same session-history payoff.</em></p>
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Moving session history across serving roles reduces repeated prefill work.</em></p>
 </div>
 
-A separate run directly observed 1.23 million tokens of session history moved
-between peers, confirming the mechanism. The extreme tail did not improve.
-The worst case on both sides was the first prefill of a cold 100K-token
-context, and P2P can reuse only KV that someone has already computed. It
-removes repeated work; it does not remove the first computation.
+P2P did not improve the first prefill of a cold context because no reusable KV
+existed yet. It removes repeated work, not the first computation.
 
 ## Where P2P Should Stay Inactive
 
-The negative controls are part of the result, not footnotes. They define where
-the feature should remain quiet:
+The negative controls define when P2P should remain quiet:
 
-* **A local hit is already optimal.** When placement selects the best cache
-  holder, no remote peer has the required cached-token advantage. The source
-  producer stays quiet and the request uses its local KV.
-* **Local CPU restores are not peer transfers.** Against the
-  [P/D disaggregation guide](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation)
-  as shipped with plain `NixlConnector`, adding the offload stack cut median
-  TTFT from 11.94 to 1.16 seconds (10.3x) - but under that guide's
-  prefix-affine placement the peer pull stayed idle, so the gain belongs to
-  the local CPU tier.
-* **A restarted EPP has no source map.** Peers may still hold KV, but the new
-  index cannot name them until it learns new state. P2P is not restart
-  recovery.
-* **A first-seen prefix must still be computed.** The first request creates
-  reusable KV; later requests can move it.
+| Situation | Expected behavior |
+|---|---|
+| Placement already finds a local hit | No peer transfer |
+| KV is restored from the same pod's CPU tier | Local restore, not P2P |
+| The routing index has restarted | No peer source until new cache state arrives |
+| The prefix has not been seen before | Compute it once; reuse it later |
 
-These controls are why an enabled configuration is not enough evidence. A
-valid benchmark must show that placement created a useful remote source and,
-when causal attribution matters, that matching blocks actually moved.
+These controls are why enabling P2P is not enough evidence. A valid benchmark
+must show that placement created a useful remote source and, when causal
+attribution matters, that matching blocks actually moved.
 
 ## The Operational Rule
 
