@@ -299,19 +299,9 @@ def glm_c64():
     paired_precise_p2p = np.array([3.383, 3.387, 3.383])
     paired_delta = [10.0, 13.8, 5.2]
 
-    four_labels = [
-        "Approximate\nno P2P",
-        "Approximate\nwith P2P",
-        "Precise\nno P2P",
-        "Precise\nwith P2P",
-    ]
-    four_values = np.array([3.077, 3.010, 2.993, 3.383])
-    four_delta = ["baseline", "-2.2%", "-2.7%", "+10.0%"]
-
-    fig, axes = plt.subplots(1, 2, figsize=(13.2, 6.2))
+    fig, ax = plt.subplots(figsize=(11.5, 6.2))
     style_figure(fig)
 
-    ax = axes[0]
     x = np.arange(3)
     width = 0.34
     approx_bars = ax.bar(
@@ -328,7 +318,6 @@ def glm_c64():
         color=BLUE,
         label="DP-aware precise + P2P",
     )
-    ax.set_title("Three matched C64 windows", color=FG, fontsize=12, pad=13)
     ax.set_xticks(x, ["Window 1", "Window 2", "Window 3"])
     ax.set_ylabel("Successful requests/s", fontsize=10)
     ax.set_ylim(0, 4.15)
@@ -349,32 +338,10 @@ def glm_c64():
         )
     ax.legend(frameon=False, loc="upper left", fontsize=9)
 
-    ax = axes[1]
-    colors = [GRAY, GRAY_LIGHT, GRAY_LIGHT, BLUE]
-    bars = ax.bar(np.arange(4), four_values, color=colors, width=0.62)
-    ax.set_title("Single four-arm observation", color=FG, fontsize=12, pad=13)
-    ax.set_xticks(np.arange(4), four_labels)
-    ax.set_ylabel("Successful requests/s", fontsize=10)
-    ax.set_ylim(0, 4.15)
-    ax.grid(axis="y", color=GRID, linewidth=0.8)
-    ax.set_axisbelow(True)
-    ax.bar_label(bars, fmt="%.3f", padding=4, color=FG, fontsize=9)
-    for bar, delta in zip(bars, four_delta):
-        ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + 0.18,
-            delta,
-            ha="center",
-            va="bottom",
-            color=BLUE if delta.startswith("+") else MUTED,
-            fontsize=10,
-            fontweight="bold" if delta.startswith("+") else "normal",
-        )
-
     fig.text(
         0.012,
         0.955,
-        "The combined precise + P2P policy carries more work at C64",
+        "The complete precise + P2P policy carries more work at C64",
         color=FG,
         fontsize=17,
         fontweight="bold",
@@ -387,7 +354,7 @@ def glm_c64():
         fontsize=10.5,
     )
     add_source(fig, "Source: llm-d GLM-5.2 C64 benchmark, 2026-08")
-    fig.subplots_adjust(left=0.075, right=0.985, top=0.82, bottom=0.17, wspace=0.28)
+    fig.subplots_adjust(left=0.09, right=0.985, top=0.82, bottom=0.17)
     save(fig, "glm-c64-policy-comparison.png")
 
 

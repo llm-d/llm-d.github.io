@@ -35,10 +35,10 @@ where to fetch the missing prefix.
 
 :::info[Headline result]
 
-On `GLM-5.2-FP8` at concurrency 64, DP-aware precise routing with P2P
-carried 5.2-13.8% more successful requests per second than calibrated
-approximate routing without P2P across three matched 300-second windows.
-The median improvement was 10.0%.
+In a complete-policy comparison on `GLM-5.2-FP8` at concurrency 64,
+DP-aware precise routing with P2P carried 5.2-13.8% more successful requests
+per second than calibrated approximate routing without P2P across three
+matched 300-second windows. The median improvement was 10.0%.
 
 :::
 
@@ -130,10 +130,10 @@ of claims. In an isolated A/B, P2P is the only policy difference. In a
 system-policy comparison, placement or the CPU offload stack changes with it,
 so the result belongs to the complete serving policy.
 
-The three anchor results below establish the transfer economics, a wide-EP
-policy interaction under saturation, and the P/D session-continuity payoff.
-The document Q&A and smaller-model experiments then show where the same
-mechanism appears under different serving policies.
+The three anchor results below establish the transfer economics, compare a
+complete wide-EP routing policy under saturation, and measure the P/D
+session-continuity payoff. The document Q&A and smaller-model experiments then
+show where the same mechanism appears under different serving policies.
 
 ### 1. Price the Transfer Before Using It
 
@@ -174,7 +174,7 @@ plus an attention term that grows quadratically with context:
 
 The crossover moved on the 753B GLM testbed, whose KV footprint is about 93 KB
 per token. Pull and recompute were roughly tied near 8K tokens; at 12K the pull
-was 27% faster, and at 24K it was 61% faster. A 24K prefix is about 2.2 GiB of
+was 27% faster, and at 24K it was 61% faster. A 24K prefix is about 2.1 GiB of
 KV, while a 70K prefix is about 6.2 GiB. Break-even depends on the ratio of
 prefill cost to KV-transfer cost, not model size alone. On the GLM rig,
 short-prefix recompute stayed below the measured 1.2-1.3 second pull floor, so
@@ -194,7 +194,7 @@ behave when exact cache-location information is paired with peer retrieval
 under saturation?
 
 <details>
-<summary>Setup: GLM-5.2-FP8 on 32x H200 P/D-disaggregated; four routing policies; AIPerf trace replay at concurrency 64</summary>
+<summary>Setup: GLM-5.2-FP8 on 32x H200 P/D-disaggregated; repeated complete-policy pair; AIPerf trace replay at concurrency 64</summary>
 
 The 753B MoE runs on two prefill and two decode instances, each 8-way
 data/expert parallel. AIPerf replays 48 entries from the SemiAnalysis Weka
@@ -205,17 +205,20 @@ this is a matched saturation snapshot rather than a measurement through full
 workload completion.
 
 The repeated baseline is calibrated approximate routing without P2P. The
-candidate combines DP-aware precise KV events, GPU/CPU cache weights 1.0/0.4,
-and `p2p-source-producer` at `minCachedTokenDelta: 2048`. Both use the same
-measured `peakPrefillThroughput: 5541` and 55-second affinity-penalty budget.
-The comparison therefore belongs to the complete routing policy, not to P2P
-or precision alone.
+candidate combines DP-aware precise KV events, speculative indexing, GPU/CPU
+cache weights 1.0/0.4, and `p2p-source-producer` at
+`minCachedTokenDelta: 2048`. Both use the same measured
+`peakPrefillThroughput: 5541` and 55-second affinity-penalty budget.
 
 </details>
 
+This is a complete-policy comparison: the candidate changes both the cache
+index and peer retrieval, so the margin cannot be assigned to precision or
+P2P alone.
+
 <div style={{textAlign: 'center', margin: '20px 0'}}>
-  <img src="/img/blogs/p2p-kv-cache/glm-c64-policy-comparison.png" alt="Two-panel bar chart showing precise plus P2P carrying more successful requests per second than approximate routing in three paired C64 windows, while only the combined policy wins in a single four-arm ablation" style={{width: '100%', height: 'auto'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>The complete precise+P2P policy improves successful throughput in all three matched windows. The single-factor arms have one observation each.</em></p>
+  <img src="/img/blogs/p2p-kv-cache/glm-c64-policy-comparison.png" alt="Bar chart showing the complete precise plus P2P policy carrying more successful requests per second than calibrated approximate routing in three paired C64 windows" style={{width: '100%', height: 'auto'}} />
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>The complete precise+P2P policy improves successful throughput in all three matched windows.</em></p>
 </div>
 
 Successful throughput improved by 10.0%, 13.8%, and 5.2%, for a 10.0%
@@ -223,35 +226,41 @@ paired median. Input-token throughput improved by 12.9%, 17.2%, and 5.3%.
 The latency signal is less stable: p90 end-to-end latency improved by 13.8%
 and 12.2% in two windows and was 1.2% worse in the reversed-order window.
 The repeatable result is higher successful throughput, not a guaranteed
-latency reduction in every cut.
+latency reduction in every cut. Only successful requests that reached a
+terminal state by the cutoff enter those latency percentiles, so the arm
+populations differ and the latency comparison is directional.
 
-One window included the two single-factor controls:
-
-| Routing | P2P | Successful req/s | Change from approximate without P2P |
-|---|---:|---:|---:|
-| Approximate | no | 3.077 | baseline |
-| Approximate | yes | 3.010 | -2.2% |
-| Precise | no | 2.993 | -2.7% |
-| Precise | yes | 3.383 | **+10.0%** |
-
-Neither factor wins by itself in that observation. The result supports an
-interaction: the precise index identifies which data-parallel rank holds
-reusable KV, and P2P makes that location actionable when placement selects a
-different rank. The middle arms need repeated, counterbalanced measurements
-before the gain can be divided quantitatively between the two features.
+A four-arm DEBUG snapshot was also collected, but it is not used for factor
+attribution. Its archived approximate+P2P arm renamed the approximate prefix
+producer without configuring the in-flight load producer to read that name,
+which confounded its load accounting. The repeated baseline and candidate do
+not depend on that control.
 
 The engine metrics show the corresponding change in prefill pressure.
 Approximate routing's prefill queue p90 ranges from 12.8 to 13.7 requests;
-precise+P2P ranges from 8.0 to 9.0. The DEBUG window records 12 peer-load
-submissions, 12 unique transfer IDs, 17 successful transfer rounds, and 6,342
-transferred KV blocks. At the observed block size that implies 20.69 GiB of
-peer payload, but it remains an inferred volume because the available generic
-NIXL and offload counters also include non-P2P traffic. The DP-aware event path
-also avoids the rank-0 concentration seen with a pod-only identity.
+precise+P2P ranges from 8.0 to 9.0. The DEBUG window records 13 source request
+IDs, 12 peer-load submissions, 12 unique transfer IDs, 17 successful transfer
+rounds, and 6,342 submitted KV blocks. These counters instrument different
+pipeline stages and are not expected to be one-to-one. The available generic
+NIXL and offload counters also include non-P2P traffic, so the block count is
+not converted into a peer-byte claim.
+
+The DP-aware event path does not collapse work onto rank 0: the two rank-0
+engines account for 8.3-17.1% of prefill successes across the three windows,
+versus a 12.5% even two-rank share. This rules out a rank-0 collapse, not rank
+imbalance in general.
 
 This run used a 2,048-token source threshold, below the separate GLM crossover
 recommendation of 12,288 tokens. It therefore describes the measured policy as
 configured; it does not establish that 2,048 is the best production setting.
+
+A separate GLM load-spill A/B isolates the pull under identical placement.
+Adding `p2p-source-producer` reduced mean TTFT from 7.85 to 2.56 seconds
+(-67%) and raised throughput from 3.80 to 10.10 requests per second (2.7x).
+The result reproduced in a separately built fleet. That matched run did not
+record per-repetition transfer counters; pull-path liveness was established by
+the direct source-pull measurement above. The load-spill result measures P2P
+alone, while the C64 result compares complete routing policies.
 
 A smaller `Llama-3.1-8B` shared-prefix pool provides the clean P2P-only A/B.
 At 8 requests per second, P2P reduced median request latency by 43%. Near
