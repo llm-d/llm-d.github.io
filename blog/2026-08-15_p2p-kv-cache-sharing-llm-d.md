@@ -33,7 +33,7 @@ where to fetch the missing prefix.
 :::info[Headline result]
 
 On `GLM-5.2-FP8` at concurrency 64, P2P increased successful throughput with
-both routing methods: 4.6% with approximate routing and 9.7% with precise
+both prefix-cache routing methods: 4.6% with approximate routing and 9.7% with precise
 routing. Precise routing with P2P led all four configurations at 11.1% above
 the baseline. Across three repeat comparisons, the combined policy improved
 successful throughput by 9.6% on average.
@@ -218,7 +218,7 @@ test whether the combined policy holds.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/p2p-kv-cache/glm-c64-policy-comparison.png" alt="Bar chart comparing successful throughput for approximate and precise routing, each with and without P2P, in the GLM C64 comparison" style={{width: '100%', height: 'auto'}} />
-  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>P2P improves successful throughput with either routing method. The combination of precise routing and P2P carries the most work.</em></p>
+  <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>P2P improves successful throughput with either routing method. The combination of precise routing and P2P delivers the best performance.</em></p>
 </div>
 
 | Routing policy | Successful req/s | Change from approximate without P2P | Median TTFT |
