@@ -1,5 +1,5 @@
 ---
-title: "Move the KV, Not the Work: P2P Cache Sharing in llm-d"
+title: "Pull, Don't Recompute: Peer-to-Peer KV Cache Sharing in llm-d"
 description: "When load balancing or serving topology separates a request from its cached prefix, llm-d can move the KV from a peer instead of recomputing it."
 slug: p2p-kv-cache-sharing-llm-d
 date: 2026-08-15T09:00
@@ -13,7 +13,7 @@ tags: [blog, kv-cache]
 # TODO: consider adding a dedicated p2p tag to tags.yml
 ---
 
-# Move the KV, Not the Work: P2P Cache Sharing in llm-d
+# Pull, Don't Recompute: Peer-to-Peer KV Cache Sharing in llm-d
 
 A request arrives and its 48K-token prefix is already sitting in a KV cache,
 but the pod holding it is busy. Route the request to the cache owner and it
