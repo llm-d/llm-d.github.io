@@ -541,3 +541,36 @@ alexnails:
   socials:
     linkedin: alex-nails
     github: https://github.com/alexnails
+
+xiyue:
+  name: Xiyue Yu
+  title: Software Engineer, Google
+  url: https://github.com/capri-xiyue
+  image_url: https://avatars.githubusercontent.com/u/52932582?v=4
+  socials:
+    linkedin: xiyue-yu-765200100
+
+alexey:
+  name: Alexey Roytman
+  title: Senior Technical Staff Member, IBM
+  url: https://github.com/roytman
+  image_url: https://avatars.githubusercontent.com/u/1816654?v=4
+
+rahul:
+  name: Rahul Gurnani
+  title: Software Engineer, Google
+  url: https://github.com/rahulgurnani
+  image_url: https://avatars.githubusercontent.com/u/6068038?v=4
+
+guygir:
+  name: Guy Girmonsky
+  title: AI Platforms Research Engineer , IBM
+  url: https://github.com/guygir
+  image_url: https://avatars.githubusercontent.com/u/144227974?v=4
+
+
+revitale:
+  name: Revital Eres
+  title: Software Engineer at,  IBM
+  url: https://github.com/revit13
+  image_url: https://avatars.githubusercontent.com/u/16211463?v=4
