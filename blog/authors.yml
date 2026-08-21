@@ -600,3 +600,11 @@ sunilarora:
   socials:
     linkedin: https://www.linkedin.com/in/sunilarora101/
     github: https://github.com/droot
+
+xiahua:
+  name: Xia Hua
+  title: Software Engineer, Google
+  image_url: https://github.com/huaxig.png
+  socials:
+    linkedin: huax
+    github: https://github.com/huaxig

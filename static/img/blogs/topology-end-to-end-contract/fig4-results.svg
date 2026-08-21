@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <rect width="960" height="500" fill="#ffffff"/>
+  <!-- Panel A -->
+  <text x="240" y="40" text-anchor="middle" fill="#0b0b0b" font-size="16" font-weight="700">Transport &#8212; same cluster, same workload</text>
+  <text x="240" y="62" text-anchor="middle" fill="#52514e" font-size="12.5">UCX&#8217;s TCP path could not sustain the offered 45 QPS</text>
+  <rect x="80" y="120" width="320" height="94" rx="8" fill="#fcfcfb" stroke="#d03b3b" stroke-width="2"/>
+  <text x="240" y="150" text-anchor="middle" fill="#0b0b0b" font-size="13.5" font-weight="600">&#215;  DCN / TCP baseline</text>
+  <text x="240" y="174" text-anchor="middle" fill="#d03b3b" font-size="13">436 of 5,400 requests timed out</text>
+  <text x="240" y="196" text-anchor="middle" fill="#52514e" font-size="12.5">the system was queuing, not serving</text>
+  <rect x="80" y="240" width="320" height="94" rx="8" fill="#fcfcfb" stroke="#0ca30c" stroke-width="2"/>
+  <text x="240" y="270" text-anchor="middle" fill="#0b0b0b" font-size="13.5" font-weight="600">&#10003;  Verified RDMA</text>
+  <text x="240" y="294" text-anchor="middle" fill="#006300" font-size="13">5,400 / 5,400 served, zero timeouts</text>
+  <text x="240" y="316" text-anchor="middle" fill="#52514e" font-size="12.5">serves at the ladder&#8217;s 1.16 s TTFT tier (right)</text>
+
+  <!-- Panel B -->
+  <text x="720" y="40" text-anchor="middle" fill="#0b0b0b" font-size="16" font-weight="700">End-to-end stack &#8212; the TTFT ladder, one cluster</text>
+  <text x="720" y="62" text-anchor="middle" fill="#52514e" font-size="12.5">mean TTFT (s); percentiles and provenance in the text</text>
+  <line x1="540" y1="330" x2="910" y2="330" stroke="#c3c2b7" stroke-width="1.5"/>
+  <rect x="580" y="115" width="70" height="215" rx="4" fill="#898781" opacity="0.8"/>
+  <text x="615" y="105" text-anchor="middle" fill="#0b0b0b" font-size="14" font-weight="600">2.15 s</text>
+  <text x="615" y="352" text-anchor="middle" fill="#52514e" font-size="12.5">unconstrained</text>
+  <text x="615" y="370" text-anchor="middle" fill="#52514e" font-size="12.5">control</text>
+  <rect x="710" y="214" width="70" height="116" rx="4" fill="#86b6ef" opacity="0.9"/>
+  <text x="745" y="204" text-anchor="middle" fill="#0b0b0b" font-size="14" font-weight="600">1.16 s</text>
+  <text x="745" y="352" text-anchor="middle" fill="#52514e" font-size="12.5">channel-verified</text>
+  <text x="745" y="370" text-anchor="middle" fill="#52514e" font-size="12.5">(DRA + RDMA)</text>
+  <rect x="820" y="297" width="70" height="33" rx="4" fill="#2a78d6"/>
+  <text x="855" y="287" text-anchor="middle" fill="#0b0b0b" font-size="14" font-weight="600">0.33 s</text>
+  <text x="855" y="352" text-anchor="middle" fill="#52514e" font-size="12.5">topology-scored</text>
+  <text x="855" y="370" text-anchor="middle" fill="#52514e" font-size="12.5">pairing (prototype)</text>
+  <line x1="470" y1="50" x2="470" y2="390" stroke="#e1e0d9" stroke-width="1.5"/>
+
+  <text x="480" y="424" text-anchor="middle" fill="#52514e" font-size="12">All bars: this cluster &#8212; gpt-oss-120b on two GKE A3 Ultra nodes, 45 QPS &#215; 120 s. All values are means.</text>
+  <text x="480" y="444" text-anchor="middle" fill="#52514e" font-size="12">Reference: llm-d&#8217;s current published P/D guide reports 1.157 s on the same 16&#215; H200 class and 45-QPS harness.</text>
+</svg>
