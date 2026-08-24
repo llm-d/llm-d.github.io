@@ -541,3 +541,11 @@ alexnails:
   socials:
     linkedin: alex-nails
     github: https://github.com/alexnails
+
+xiahua:
+  name: Xia Hua
+  title: Software Engineer, Google
+  image_url: https://github.com/huaxig.png
+  socials:
+    linkedin: huax
+    github: https://github.com/huaxig
