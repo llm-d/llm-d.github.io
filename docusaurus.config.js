@@ -220,7 +220,7 @@ const config = {
       announcementBar: {
         id: "llm-d-0-9-0",
         content:
-          '🎉 <b>llm-d 0.9 is here!</b> Hardened for scale with router HA, KEDA autoscaling, end-to-end observability and expanded hardware support. <a href="/blog/llm-d-v0.9-hardened-for-scale"><b>Read the release blog →</b></a>',
+          '🎉 <b>llm-d 0.9 is here!</b> Hardened for scale with router HA, enhanced autoscaling, end-to-end observability and expanded hardware support. <a href="/blog/llm-d-v0.9-hardened-for-scale"><b>Read the release blog →</b></a>',
         textColor: "#ffffff",
         isCloseable: true,
       },
