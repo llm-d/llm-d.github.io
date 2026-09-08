@@ -1,6 +1,6 @@
 ---
 title: "From workload-variant-autoscaler to llm-d-autoscaling: retiring a custom engine for KEDA + EPP"
-description: "Why we're renaming workload-variant-autoscaler to llm-d-autoscaling and deprecating its scaling engine now that EPP exposes the metrics it used to compute, and Kueue/Slurm/LSF already handle GPU quotas better than a bolt-on limiter."
+description: "Why we're renaming workload-variant-autoscaler to llm-d-autoscaling and deprecating its scaling engine now that the Endpoint Picker (EPP) exposes the metrics it used to compute, and Kueue/Slurm/LSF already handle GPU quotas better than a bolt-on limiter."
 slug: renaming-wva-to-llm-d-autoscaling
 date: 2026-08-26T09:00
 
@@ -12,7 +12,7 @@ tags: [blog, updates, llm-d, autoscaling, scheduling]
 
 # From workload-variant-autoscaler to llm-d-autoscaling: retiring a custom engine for KEDA + EPP
 
-`llm-d-workload-variant-autoscaler` (WVA) is being renamed to `llm-d-autoscaling`. At the same time, the part of WVA that made it an "autoscaler" — the analyzers and cost-aware optimizer that turned Prometheus metrics into a `wva_desired_replicas` signal — is deprecated and will be removed from the repository. Instead, we're pointing KEDA directly at metrics that EPP now produces on its own. Quota-constrained environments get the same treatment: instead of WVA's own GPU quota limiter, we're pointing operators at Kueue, Slurm, and LSF — tools already built and trusted for that job.
+`llm-d-workload-variant-autoscaler` (WVA) is being renamed to `llm-d-autoscaling`. At the same time, the part of WVA that made it an "autoscaler" — the analyzers and cost-aware optimizer that turned Prometheus metrics into a `wva_desired_replicas` signal — is deprecated and will be removed from the repository. Instead, we're pointing KEDA directly at metrics that the Endpoint Picker (EPP) now produces on its own. Quota-constrained environments get the same treatment: instead of WVA's own GPU quota limiter, we're pointing operators at Kueue, Slurm, and LSF — tools already built and trusted for that job.
 
 That scaling-decision pipeline — the part of WVA that reads metrics and computes a replica count, as opposed to the CRDs and controller code around it — ships as-is in release v0.9 and won't get further updates.
 
@@ -44,7 +44,7 @@ Handing quota decisions back to Kueue, Slurm, or LSF — and keeping llm-d's aut
 
 Dropping "variant" from the name is deliberate. `workload-variant-autoscaler` described one specific approach: a `VariantAutoscaling` CRD, a cost-aware optimizer choosing among variants, an engine that owned the whole scaling decision. That approach is what's being deprecated.
 
-`llm-d-autoscaling` describes a smaller, longer-lasting job: the home for llm-d's autoscaling story in general — guides, glue code, and whatever integration work is still needed to connect llm-d's own signals (mainly EPP's metrics) to standard Kubernetes autoscaling tools like KEDA and the HPA — rather than a standalone system that competes with them. There's a precedent for shedding a name once it stops fitting: `llm-d-inference-scheduler` was renamed to `llm-d-router` in the v0.9 release once "scheduler" stopped describing what the component actually did — scheduling requests is now just one piece of a bigger router that also handles the proxy, flow control, and request parsing. "Variant-autoscaler" has the same problem: it named one bespoke engine, not the broader autoscaling job `llm-d-autoscaling` is meant to cover.
+`llm-d-autoscaling` describes a smaller, longer-lasting job. It will serve as the home for llm-d's autoscaling story in general—encompassing guides, glue code, and the integration work needed to connect llm-d's signals (mainly EPP's metrics) to standard Kubernetes tools like KEDA and the HPA, rather than building a standalone system that competes with them. There's a precedent for shedding a name once it stops fitting: `llm-d-inference-scheduler` was renamed to `llm-d-router` in the v0.9 release once "scheduler" stopped describing what the component actually did — scheduling requests is now just one piece of a bigger router that also handles the proxy, flow control, and request parsing. "Variant-autoscaler" has the same problem: it named one bespoke engine, not the broader autoscaling job `llm-d-autoscaling` is meant to cover.
 
 ## What's coming next
 
