@@ -585,9 +585,20 @@ guygir:
   url: https://github.com/guygir
   image_url: https://avatars.githubusercontent.com/u/144227974?v=4
 
-
 revitale:
   name: Revital Eres
   title: Software Engineer at,  IBM
   url: https://github.com/revit13
   image_url: https://avatars.githubusercontent.com/u/16211463?v=4
+
+lionelvillard:
+  name: Lionel Villard
+  title: Senior Technical Staff Member, IBM
+  url: https://github.com/lionelvillard
+  image_url: https://avatars.githubusercontent.com/u/12345678?v=4
+
+asm582:
+  name: Abhishek Malvankar
+  title: Senior Software Engineer, IBM
+  url: https://github.com/asm582
+  image_url: https://avatars.githubusercontent.com/u/asm582?v=4
