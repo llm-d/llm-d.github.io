@@ -1,0 +1,84 @@
+---
+title: "llm-d-workload-variant-autoscaler is now llm-d-autoscaling — and its engine is going away"
+description: "Why we're renaming llm-d-workload-variant-autoscaler to llm-d-autoscaling and deprecating its scaling engine now that the Endpoint Picker (EPP) exposes the metrics it used to compute, and Kueue/Slurm/LSF already handle GPU quotas better than a bolt-on limiter."
+slug: wva-is-now-llm-d-autoscaling
+date: 2026-08-26T09:00
+
+authors:
+  - lionelvillard
+  - asm582
+
+tags: [blog, updates, llm-d, autoscaling, scheduling]
+---
+
+# llm-d-workload-variant-autoscaler is now llm-d-autoscaling — and its engine is going away
+
+`llm-d-workload-variant-autoscaler` (WVA) is being renamed to `llm-d-autoscaling`. The part of WVA that made it an autoscaler is deprecated at the same time: the analyzers and cost-aware optimizer that turned Prometheus metrics into a `wva_desired_replicas` signal will be removed from the repository. KEDA reads metrics that the Endpoint Picker (EPP) publishes on its own instead. Quota-constrained environments get the same treatment. In place of WVA's GPU quota limiter, we point operators at Kueue, Slurm, and LSF, which were built for that job.
+
+The scaling-decision pipeline, meaning the code that reads metrics and computes a replica count rather than the CRDs and controllers around it, ships as-is in release v0.9 and will not get further updates.
+
+<!-- truncate -->
+
+## Why WVA existed
+
+WVA was built as a global autoscaler for LLM inference on Kubernetes. It watched request load and other signals across variants, which are differently configured replicas of the same model that can differ in accelerator type, tensor parallelism, or role in a disaggregated pipeline, and computed one replica count per variant. The pipeline had four steps: pull vLLM and EPP metrics from Prometheus, run an analyzer to judge saturation, apply a cost-aware optimizer with GPU fair-share rules, and publish the result as `wva_desired_replicas`. KEDA or the HPA read that number and scaled the deployment.
+
+This design has already been trimmed once. The `VariantAutoscaling` CRD, previously required for every model variant, is deprecated. Discovery now works through annotations (`llm-d.ai/managed`, `llm-d.ai/model-id`, `llm-d.ai/variant-cost`) placed directly on the `ScaledObject` or `HPA`, which makes the scaling object, not a WVA-specific API, the integration point. That was the first step. This post covers the second: the engine.
+
+## EPP publishes the metrics now
+
+WVA's pipeline existed because KEDA and the HPA can only scale on metrics someone hands them, and nothing published inference-aware signals (queue depth, in-flight requests, KV cache pressure) in a form Prometheus and KEDA could read. WVA computed those signals itself and published them.
+
+EPP, llm-d's inference gateway extension, now does that. Along with Flow Control, EPP emits queue-depth and running-request metrics straight to Prometheus. The KEDA+EPP guide in the [llm-d/llm-d](https://github.com/llm-d/llm-d) repository wires KEDA to those metrics with no autoscaler controller in between: request → EPP Flow Control → queue/running metrics → Prometheus → KEDA external metric → KEDA-owned HPA → Deployment. The `llm-d-workload-variant-autoscaler` repository's own CI tests that path end to end (`make test-e2e-keda-epp-guide-with-setup`, documented in [its testing guide](https://github.com/llm-d/llm-d-autoscaling/blob/main/docs/developer-guide/testing.md#direct-kedaepp-guide-contract)). The common case, scaling one model on load, works with no WVA in the loop.
+
+Not every part of WVA's engine is redundant. Cost optimization across several variants and GPU fair-share are still real problems for teams running many variants of the same model side by side. But the problem the metrics pipeline was built for, giving KEDA a number to scale on, is now solved by EPP. Running a second system to recompute and republish numbers EPP already exposes adds cost without adding capability.
+
+## Kueue, Slurm, and LSF already handle quota
+
+WVA's other job was splitting capacity under constraint: which accelerator to prefer and how many replicas to allow, given a GPU or cost budget. We shipped a [quota limiter](https://github.com/llm-d/llm-d-autoscaling/blob/main/docs/developer-guide/quota-limiter.md) for this, with operator-declared per-accelerator GPU caps independent of physical inventory, enforced inside the optimizer.
+
+That is a capacity-allocation problem, not an inference-serving problem, and existing tools handle it. Kueue does Kubernetes-native job and quota management with borrowing, preemption, and grouped quotas. Slurm and LSF have been standard for HPC-style cluster allocation for decades. Most organizations running LLM inference at scale already run one of them, with tenants, budgets, and priorities configured. A per-accelerator cap inside an autoscaler's optimizer is a smaller, less tested version of the same thing, and it makes WVA a second source of truth for who gets how much compute.
+
+Quota decisions belong to Kueue, Slurm, or LSF. That leaves llm-d's autoscaling surface with one question: how many replicas for this signal.
+
+## Why the new name
+
+Dropping "variant" is deliberate. `workload-variant-autoscaler` named one approach: a `VariantAutoscaling` CRD, a cost-aware optimizer choosing among variants, an engine that owned the whole scaling decision. That approach is what is being deprecated.
+
+`llm-d-autoscaling` names a smaller job with a longer life. The repository becomes the home for llm-d's autoscaling material in general: guides, glue code, and the integration work that connects llm-d's signals, mainly EPP's metrics, to standard Kubernetes tools like KEDA and the HPA, rather than a standalone system that competes with them. There is precedent for dropping a name that no longer fits. `llm-d-inference-scheduler` was renamed to `llm-d-router` in the v0.9 release once "scheduler" stopped describing the component; scheduling requests is one piece of a router that also handles the proxy, flow control, and request parsing. "Variant-autoscaler" has the same problem. It named one engine, not the autoscaling work the repository now covers.
+
+## What's coming next
+
+This is a redirection of the autoscaling work, not a retreat from it. The [v0.10.0 milestone](https://github.com/llm-d/llm-d-autoscaling/milestone/8) shows where it goes:
+
+- **Promoting the KEDA+EPP guide from experimental to stable** ([#1326](https://github.com/llm-d/llm-d-autoscaling/issues/1326)). Queue size and running-request count are a reliable signal across backends (vLLM, SGLang) and most deployment shapes, with prefill/decode disaggregation as the main open edge case. Promoting it means adding it to nightly CI, holding it to the same bar as anything else users depend on, and making it the default scaling path rather than the fallback.
+- **A GPU rebalancing guide built on Kueue quotas** ([#1528](https://github.com/llm-d/llm-d-autoscaling/issues/1528)). WVA's quota limiter enforced fixed per-accelerator caps inside its own optimizer. This guide instead shows how to use Kueue quotas, including borrowing, to share GPUs across models competing for the same accelerators. It is the documented version of the argument above.
+- **Experimental token-velocity-aware autoscaling** ([#1546](https://github.com/llm-d/llm-d-autoscaling/issues/1546)). Queue depth and running-request counts are lagging signals; by the time they move, latency may already be degrading. This explores scaling on in-flight token throughput, a signal exposed by the llm-d router, combined with KV cache utilization, for both disaggregated and non-disaggregated deployments. Two disaggregated cases drive the design:
+  - **Where the replica count gets written.** A `DisaggregatedSet`'s child LeaderWorkerSets carry a revision hash in their names, so an HPA or `ScaledObject` pointed at one breaks on the next rolling update. LWS instead exposes a [`DisaggregatedSetRoleScaler`](https://lws.sigs.k8s.io/docs/concepts/disaggregatedset/role-scaler/) per role: a stable `/scale` target named `<set>-<role>`, created by the controller when a role sets `scaling.mode: External`, which resizes the matching child LWS from the count written to it. That object is what an autoscaler targets. External role scaling currently requires `spec.slices: 1`.
+  - **Scaling prefill and decode independently.** Each role scales on its own, and the two saturate on different work: prefill is compute-bound on input tokens, decode is bound by KV cache capacity and output token rate. One queue-depth number for the pool cannot say which side is short of capacity. Separating input token rate from output token rate gives each role its own signal.
+
+Four longer-term directions go beyond the v0.10.0 work. The last one is not autoscaling, but it limits what autoscaling can do.
+
+**Scaling for multiple SLO classes.** The KEDA+EPP path treats a model's traffic as a single stream: one queue-depth number, one replica count. Most deployments serve more than one class of traffic. EPP's [Flow Control guide](https://github.com/llm-d/llm-d/tree/main/guides/flow-control) already splits traffic into priority bands and per-tenant flows: a premium class at priority 100, a standard default at 0, best-effort at -10, each with its own queue, its own fairness ID, and its own `inference_extension_flow_control_queue_size` series. Those per-class series are the input SLO-aware scaling needs. A premium class missing its latency target should add capacity even when aggregate queue depth looks healthy. A best-effort backlog, which Flow Control buffers deliberately rather than sheds, should not. Two questions are open: how per-class signals combine into a scaling decision, whether through per-class thresholds on a shared deployment or separate capacity pools per class, and how those decisions stay consistent with the priority and fairness policies EPP enforces at dispatch time. The target is for operators to configure an SLO and have replica counts follow from it.
+
+**Autoscaling an E/P/D pipeline** ([disaggregation](https://github.com/llm-d/llm-d-router/blob/main/docs/disaggregation.md), [coordinator architecture](https://github.com/llm-d/llm-d-router/blob/main/docs/coordinator_architecture.md)). The router splits inference into up to three stages, encode, prefill, and decode, across four topologies: EPD, P/D, E/PD, and E/P/D. Roles are distinguished by pod label (`llm-d.ai/role`) within a single pool, and EPP runs one scheduling profile per stage, each narrowed to the pods holding that role. In a coordinator deployment each stage is a separate EPP call rather than one cycle that picks every endpoint. Autoscaling then has three per-stage EPP signals to read instead of one, and they do not move together. The split between them is also data-dependent. `prefix-based-pd-decider` keeps everything on decode when the non-cached suffix is small enough or the prompt is very short, the conditional-decode fast path skips the rest of the pipeline when the decode pod can serve the request outright, and encode fires only for image, video, or audio content. Total request rate therefore says little about how much encode, prefill, or decode capacity is needed: each stage needs its own signal, and the ratios between them shift with traffic mix and cache hit rate. Scaling three pools that feed each other adds an ordering problem, since adding decode capacity without prefill, or the reverse, relocates the bottleneck instead of removing it.
+
+**Vertical, not just horizontal** ([#1218](https://github.com/llm-d/llm-d-autoscaling/issues/1218)). Replica count is one dimension. How much GPU each replica gets is another, and nothing scales it today. Dynamic Resource Allocation (DRA) and GPU partitioning make per-GPU compute share and memory tunable at runtime, so a model that is memory-bound and compute-idle can run on a slimmer slice instead of a whole accelerator, leaving capacity for a workload that can use it. The proposal keeps the division of labor described above: llm-d-autoscaling generates and exports the vertical-scaling signal, and a DRA-aware autoscaler decides the allocation and applies it. Horizontal and vertical together give multi-dimensional autoscaling, where replica count and per-replica resources move in step.
+
+**Startup time bounds what autoscaling can do.** Adding a replica changes nothing until that replica serves traffic, and a cold start for a large model takes minutes: downloading weights, moving them into HBM, capturing CUDA graphs, importing Python. Operators compensate by over-provisioning. Four efforts, developed in close collaboration with the autoscaling work, attack this from different angles. Three reduce startup time; the last measures where it goes:
+
+- [**Fast Model Actuation**](https://github.com/llm-d/llm-d/tree/main/guides/fast-model-actuation) (FMA) avoids the work instead of speeding it up. vLLM's sleep/wake parks a warmed instance with its tensors in host memory, and a launcher process that has already imported Python spawns new vLLM instances. A *hot start* wakes a sleeping instance in seconds, a *warm start* reuses a launcher's loaded modules, and only a *cold start* pays full price.
+- [**ModelExpress P2P**](https://github.com/llm-d/llm-d/tree/main/guides/modelexpress-p2p) addresses weight loading. Rather than every replica pulling the same checkpoint from Hugging Face or a shared volume, one seed pod downloads it and registers its tensors with NIXL, and the rest pull them GPU-to-GPU over RDMA. In one 8×H200 InfiniBand environment, per-rank weight load dropped from 30.3s off a warm NFS volume to 0.93s peer-to-peer. The advantage grows with the size of the pool.
+- [**snapshot-orchestrator**](https://github.com/wseaton/snapshot-orchestrator) goes furthest: CRIU plus NVIDIA's `cuda-checkpoint` snapshot a fully warmed engine to node-local NVMe, release the GPU, and restore the process later, either into a fresh pod or fanned out to new replicas from one golden checkpoint. Its prototype measured a ~117s cold boot against ~5.5s to restore, resume CUDA, and wake.
+- [**vLLM cold-start evaluation**](https://github.com/llm-d-extensions/vllm-cold-start-evaluation) instruments an unmodified vLLM process from exec to a `/health` 200, splits the window into non-overlapping phases, and reports medians over interleaved runs. On Qwen3-32B at TP=1 on one H100 it took time-to-ready from 90.7s to 43.3s, mostly through three configuration changes: a writable bytecode cache directory (`PYTHONPYCACHEPREFIX`), `forkserver` rather than `spawn` for the engine-core worker, and `fastsafetensors` for weight loading. It is equally clear about what is left. CUDA graph capture accounts for 11.4s of the remaining 43.3s, and at TP=2 only two of the four levers still apply.
+
+All four are early. FMA is an incubation project, snapshot-orchestrator describes itself as a prototype, and the numbers above come from specific test environments rather than portable benchmarks. Startup time sets the limits on autoscaling policy either way. At minutes, scaling needs long stabilization windows, conservative thresholds, and a standing buffer of idle replicas. At seconds, tighter thresholds are safe, reacting to short bursts becomes practical, and scale-to-zero for idle models becomes a reasonable default.
+
+## Learn more
+
+- [v0.10.0 milestone](https://github.com/llm-d/llm-d-autoscaling/milestone/8)
+- [EPP Flow Control guide](https://github.com/llm-d/llm-d/tree/main/guides/flow-control)
+- [KEDA+EPP guide contract in the WVA test suite](https://github.com/llm-d/llm-d-autoscaling/blob/main/docs/developer-guide/testing.md#direct-kedaepp-guide-contract)
+- [Migrating from the VariantAutoscaling CRD](https://github.com/llm-d/llm-d-autoscaling/blob/main/docs/developer-guide/migrating-from-va-crd.md)
+- [Proposal: Remove the VariantAutoscaling CRD](https://github.com/llm-d/llm-d-autoscaling/blob/main/docs/proposals/deprecate-va-crd.md)
+- [Quota Limiter design](https://github.com/llm-d/llm-d-autoscaling/blob/main/docs/developer-guide/quota-limiter.md)
