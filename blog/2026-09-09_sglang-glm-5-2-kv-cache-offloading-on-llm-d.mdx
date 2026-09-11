@@ -17,7 +17,7 @@ Large language models powering software engineering agents—such as Claude Code
 
 When serving these workloads on state-of-the-art Mixture-of-Experts (MoE) models like [GLM-5.2-FP8](https://huggingface.co/zai-org/GLM-5.2-FP8) (744B parameters, 39B active, 78 layers), GPU High Bandwidth Memory (HBM) runs into a strict physical limit: **the KV cache capacity cliff**. After accounting for the ~744 GB model weights on an 8× NVIDIA B200 node, the remaining HBM can only hold roughly 14 active long-context sessions. The moment the 15th session arrives, older prefixes are evicted. The very next turn forces the GPU to recompute tens of thousands of prompt tokens from scratch—consuming ~5.4 seconds of 100% compute per request, causing massive queue build-ups, and triggering HTTP 429 load-shedding storms.
 
-In this post, we share our production evaluation of **hierarchical KV cache offloading with SGLang and llm-d** on Google Kubernetes Engine (GKE) using NVIDIA B200 GPUs (`a4-highgpu-8g`). We deploy a 3-tier memory hierarchy orchestrated by SGLang's Hierarchical Cache (**HiCache**) engine and fronted by `llm-d-router`:
+In this post, we share our production evaluation of **hierarchical KV cache offloading with SGLang and llm-d** on Google Kubernetes Engine (GKE) using NVIDIA B200 GPUs (`a4-highgpu-8g`). We deploy a 3-tier memory hierarchy orchestrated by SGLang's Hierarchical Cache (**HiCache**) engine and fronted by [`llm-d-router`](https://github.com/llm-d/llm-d-router):
 * **Tier 1 (L1 GPU HBM):** Local GPU High Bandwidth Memory for active decoding and hot prefixes.
 * **Tier 2 (L2 Host CPU DRAM):** Host system memory managed by HiCache (`--hicache-size=250`), streaming KV blocks over PCIe Gen5 in 10–20 ms.
 * **Tier 3 (L3 Shared Remote Storage):** HiCache's file storage backend (`--hicache-storage-backend=file`) backed by **Google Cloud Managed Lustre** (referred to simply as **Lustre** throughout this post), mounted across worker pods for persistent cluster-wide prefix reuse.
@@ -56,10 +56,6 @@ Before diving into hardware math and benchmark traces, platform engineers evalua
 | **2. Multi-Node Fleet Deployments (Cluster-Wide Serving)** | Ingress routers dispatch returning turns or subagent waves to pods that lack resident DRAM cache. | L3 shared remote storage (Lustre) acts as a persistent cluster-wide pool; any node loads pre-generated KV blocks from Lustre without re-prefill. | **L1 (HBM) + L2 (DRAM) + L3 (Lustre)** |
 | **3. High Concurrency Traffic Spikes ($C > 14$ sessions/node)** | Bursts exhaust GPU HBM, triggering queue saturation, tail latency spikes (TTFT > 30s), and 429 shedding. | L2 Host DRAM absorbs the memory overflow with zero compute stalls, sustaining **140–229 tok/s decode generation**. | **L1 (HBM) + L2 (DRAM)** |
 | **4. Long-Paced & Multi-Hour Workflows** | Real agent traces show think-time delays up to hours or days. Idle sessions get evicted from memory. | L3 Lustre permanently retains KV blocks, allowing cold sessions to resume with **P50 TTFT ~6.2s** instead of paying full recompute. | **L1 (HBM) + L2 (DRAM) + L3 (Lustre)** |
-
-### When Offloading is NOT Needed
-* **Short-Context, Stateless Q&A (< 4,000 tokens):** Prefill compute takes less than 50 ms. The transfer overhead over PCIe or network storage provides negligible gain over direct GPU computation.
-* **Low-Concurrency Single-Turn Batches ($C \le 4$ on 8× B200):** All active KV cache comfortably fits in GPU HBM without eviction pressure.
 
 ---
 
