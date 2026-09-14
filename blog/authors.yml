@@ -310,10 +310,11 @@ bogdan:
 
 aishu:
   name: Aishu Kamal
-  title: Software Engineer, Google
+  title: Staff Software Engineer, Google
   image_url: https://github.com/aishukamal.png
   socials:
     linkedin: https://www.linkedin.com/in/aishwaryakamal
+    github: https://github.com/aishukamal
 
 dolev:
   name: Dolev Ish Am
@@ -591,3 +592,11 @@ revitale:
   title: Software Engineer at,  IBM
   url: https://github.com/revit13
   image_url: https://avatars.githubusercontent.com/u/16211463?v=4
+
+sunilarora:
+  name: Sunil Arora
+  title: Software Engineer, Google
+  image_url: https://github.com/droot.png
+  socials:
+    linkedin: https://www.linkedin.com/in/sunilarora101/
+    github: https://github.com/droot
