@@ -168,3 +168,28 @@ observability:
   label: Observability
   permalink: /observability
   description: Metrics, tracing, and observability for llm-d deployments
+
+evaluation:
+  label: Evaluation
+  permalink: /evaluation
+  description: Evaluating llm-d deployments and configurations
+
+benchmarking:
+  label: Benchmarking
+  permalink: /benchmarking
+  description: Benchmark tooling, workloads, and performance results
+
+configuration:
+  label: Configuration
+  permalink: /configuration
+  description: Configuring llm-d deployments and the inference scheduler
+
+skills:
+  label: Skills
+  permalink: /skills
+  description: Code assistant skills for llm-d workflows
+
+code-assistants:
+  label: Code Assistants
+  permalink: /code-assistants
+  description: AI code assistants and AI-assisted development workflows
