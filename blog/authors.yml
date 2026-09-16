@@ -310,10 +310,11 @@ bogdan:
 
 aishu:
   name: Aishu Kamal
-  title: Software Engineer, Google
+  title: Staff Software Engineer, Google
   image_url: https://github.com/aishukamal.png
   socials:
     linkedin: https://www.linkedin.com/in/aishwaryakamal
+    github: https://github.com/aishukamal
 
 dolev:
   name: Dolev Ish Am
@@ -321,7 +322,7 @@ dolev:
   image_url: https://github.com/ishamdo.png
   socials:
     linkedin: https://www.linkedin.com/in/dolev-ish-am-b41a8917/
-    
+
 poonamlamba:
   name: Poonam Lamba
   title: Senior Product Manager, Google
@@ -595,3 +596,44 @@ prateekkumar:
   socials:
     linkedin: prateek1709
     github: https://github.com/PrateekKumar1709
+
+xiyue:
+  name: Xiyue Yu
+  title: Software Engineer, Google
+  url: https://github.com/capri-xiyue
+  image_url: https://avatars.githubusercontent.com/u/52932582?v=4
+  socials:
+    linkedin: xiyue-yu-765200100
+
+alexey:
+  name: Alexey Roytman
+  title: Senior Technical Staff Member, IBM
+  url: https://github.com/roytman
+  image_url: https://avatars.githubusercontent.com/u/1816654?v=4
+
+rahul:
+  name: Rahul Gurnani
+  title: Software Engineer, Google
+  url: https://github.com/rahulgurnani
+  image_url: https://avatars.githubusercontent.com/u/6068038?v=4
+
+guygir:
+  name: Guy Girmonsky
+  title: AI Platforms Research Engineer , IBM
+  url: https://github.com/guygir
+  image_url: https://avatars.githubusercontent.com/u/144227974?v=4
+
+
+revitale:
+  name: Revital Eres
+  title: Software Engineer at,  IBM
+  url: https://github.com/revit13
+  image_url: https://avatars.githubusercontent.com/u/16211463?v=4
+
+sunilarora:
+  name: Sunil Arora
+  title: Software Engineer, Google
+  image_url: https://github.com/droot.png
+  socials:
+    linkedin: https://www.linkedin.com/in/sunilarora101/
+    github: https://github.com/droot

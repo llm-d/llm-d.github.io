@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interleaving — blog embed</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1: #fcfcfb;
+    --text-secondary: #52514e;
+    --grid: #e1e0d9;
+    --tenant-a: #2a78d6;
+    --tenant-b: #eb6834;
+    --tenant-c: #1baf7a;
+    --idle-track: #f0efec;
+  }
+  html, body { margin: 0; padding: 0; background: var(--surface-1); }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
+  .wrap { margin: 0 auto; padding: 10px 12px 6px; }
+  .hdr { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 10px; margin: 0 0 10px; }
+  .hdr h1 { font-size: 12px; font-weight: 600; color: #0b0b0b; margin: 0; }
+  .legend { display: flex; gap: 4px 14px; align-items: center; flex-wrap: wrap; font-size: 11px; color: var(--text-secondary); }
+  .legend .key { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .sw { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  canvas { display: block; }
+  /* compact header on narrow screens so the fixed-height embed never clips */
+  @media (max-width: 600px) {
+    .hdr h1 { display: none; }
+    .legend { font-size: 10px; gap: 3px 10px; }
+    .hdr { margin: 0 0 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <h1>GPU occupancy</h1>
+    <div class="legend">
+      <span class="key"><span class="sw" style="background:var(--tenant-a)"></span>Job A — text-to-SQL RL</span>
+      <span class="key"><span class="sw" style="background:var(--tenant-b)"></span>Job B — math RL</span>
+      <span class="key"><span class="sw" style="background:var(--tenant-c)"></span>Job C — dialogue SFT</span>
+    </div>
+  </div>
+  <canvas id="cv"></canvas>
+</div>
+
+<script src="data.js"></script>
+<script>
+// Minimal blog embed: two GPU lanes, tenant holds sweeping with the playhead.
+// One full window -> one 40 s loop (38.5 s sweep + 1.5 s hold on the completed
+// frame, then instant restart). Canvas sizes to the container width so the
+// embed works at any iframe width.
+// Deterministic: content is a pure function of the loop phase and RUN_DATA.
+const TCOL = { A: '#2a78d6', B: '#eb6834', C: '#1baf7a' };
+const INK = '#0b0b0b', SEC = '#52514e', MUT = '#898781', GRID = '#e1e0d9',
+      IDLE = '#f0efec', SURF = '#fcfcfb';
+const H100_MIB = 81559;
+const MAXW = RUN_DATA.windowSec;
+
+const LOOP = 40, HOLD = 1.5, SWEEP = LOOP - HOLD;   // exact 40 s loop
+const PADL = 8, PADR = 8;
+const LANE_LABEL_H = 17, BLOCK_H = 26, VRAM_H = 16, LANE_GAP = 14, AXIS_H = 24;
+const H = RUN_DATA.lanes.length * (LANE_LABEL_H + BLOCK_H + VRAM_H + LANE_GAP) + AXIS_H;
+
+const LANE_NAMES = ['Trainer GPU', 'Sampler GPU'];
+const laneData = RUN_DATA.lanes.map((L, i) => ({
+  label: LANE_NAMES[i] || L.label,
+  holds: RUN_DATA.holds.filter(h => h.gpu === L.gpu).sort((a, b) => a.t0 - b.t0),
+  fb: RUN_DATA.dcgm[L.gpu] || null,
+}));
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const wrap = document.querySelector('.wrap');
+
+let W = 760, plotW = W - PADL - PADR;
+function sizeCanvas() {
+  W = Math.max(300, wrap.clientWidth - 24);  // minus .wrap padding
+  plotW = W - PADL - PADR;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+sizeCanvas();
+window.addEventListener('resize', () => { sizeCanvas(); if (fixedT !== null) draw(fixedT); });
+
+const t2x = t => PADL + t / MAXW * plotW;
+
+function rr(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function draw(T) {
+  ctx.fillStyle = SURF; ctx.fillRect(0, 0, W, H);
+  let y = 0;
+  for (const L of laneData) {
+    ctx.fillStyle = SEC;
+    ctx.font = '600 11px system-ui, sans-serif';
+    ctx.fillText(L.label, PADL, y + 11);
+    y += LANE_LABEL_H;
+
+    // idle track up to the playhead
+    const ix1 = Math.min(t2x(Math.min(MAXW, T)), PADL + plotW);
+    if (ix1 > PADL) { ctx.fillStyle = IDLE; rr(PADL, y + 7, ix1 - PADL, BLOCK_H - 14, 3); ctx.fill(); }
+
+    for (const h of L.holds) {
+      const t1 = Math.min(h.t1, T);
+      if (t1 <= h.t0) continue;
+      const x0 = Math.max(t2x(h.t0), PADL);
+      const x1 = Math.min(t2x(t1), PADL + plotW);
+      const bw = Math.max(x1 - x0, 0.75);
+      ctx.fillStyle = TCOL[h.tenant];
+      rr(x0, y, bw, BLOCK_H, Math.min(3, bw / 2)); ctx.fill();
+      if (bw > 26) {
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '600 10px system-ui, sans-serif';
+        ctx.fillText(h.tenant, x0 + bw / 2 - 3, y + BLOCK_H / 2 + 3.5);
+      }
+    }
+    y += BLOCK_H;
+
+    // VRAM underlay (DCGM FB_USED, 0-80 GiB), revealed with the playhead
+    if (L.fb) {
+      const baseY = y + VRAM_H;
+      ctx.beginPath();
+      let started = false, lastX = null;
+      for (let i = 0; i < L.fb.t.length; i++) {
+        const t = L.fb.t[i];
+        if (t > T) break;
+        const x = Math.min(Math.max(t2x(t), PADL), PADL + plotW);
+        const vy = baseY - (L.fb.fb[i] / H100_MIB) * VRAM_H;
+        if (!started) { ctx.moveTo(x, baseY); ctx.lineTo(x, vy); started = true; }
+        else ctx.lineTo(x, vy);
+        lastX = x;
+      }
+      if (started) {
+        ctx.lineTo(lastX, baseY); ctx.closePath();
+        ctx.fillStyle = 'rgba(82,81,78,0.18)'; ctx.fill();
+      }
+      ctx.strokeStyle = GRID; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(PADL, baseY + 0.5); ctx.lineTo(PADL + plotW, baseY + 0.5); ctx.stroke();
+    }
+    y += VRAM_H + LANE_GAP;
+  }
+
+  // minutes axis
+  ctx.fillStyle = MUT; ctx.font = '10.5px system-ui, sans-serif';
+  ctx.strokeStyle = GRID;
+  for (let m = 0; m <= Math.floor(MAXW / 60); m += 5) {
+    const x = t2x(m * 60);
+    ctx.beginPath(); ctx.moveTo(x + 0.5, y - 2); ctx.lineTo(x + 0.5, y + 2); ctx.stroke();
+    const lab = m + ' min';
+    const tw = ctx.measureText(lab).width;
+    if (x + tw / 2 < PADL + plotW && x - tw / 2 > 0) ctx.fillText(lab, x - tw / 2, y + 14);
+    else if (m === 0) ctx.fillText(lab, PADL, y + 14);
+  }
+
+  // playhead
+  const px = t2x(Math.min(T, MAXW));
+  if (T < MAXW) {
+    ctx.strokeStyle = INK; ctx.globalAlpha = 0.45; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(px + 0.5, 0); ctx.lineTo(px + 0.5, y - 4); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+}
+
+// fixed playhead override for deterministic frame grabs (?t=seconds)
+const q = new URLSearchParams(location.search);
+const fixedT = q.has('t') ? Math.max(0, +q.get('t') || 0) : null;
+
+let t0 = null;
+function frame(ts) {
+  if (fixedT !== null) { draw(fixedT); return; }
+  if (t0 === null) t0 = ts;
+  const phase = ((ts - t0) / 1000) % LOOP;
+  draw(Math.min(phase / SWEEP, 1) * MAXW);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

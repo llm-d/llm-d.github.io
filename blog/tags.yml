@@ -193,3 +193,11 @@ code-assistants:
   label: Code Assistants
   permalink: /code-assistants
   description: AI code assistants and AI-assisted development workflows
+vllm:
+  label: vLLM
+  permalink: /vllm
+  description: vLLM inference engine integration and performance
+rl:
+  label: RL
+  permalink: /rl
+  description: Reinforcement learning and post-training on llm-d

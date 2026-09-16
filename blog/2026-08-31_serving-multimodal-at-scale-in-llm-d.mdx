@@ -1,0 +1,341 @@
+---
+title: "Serving Multimodal at Scale in llm-d"
+description: "A multimodal request is not a text request with a picture attached. Walking the two side by side — payload, token accounting, cache identity, cost variance, and the encode stage — and showing what llm-d does about each difference. Sub-second TTFT p90 across a 5-40 req/s ladder and +44% throughput over round-robin on 16 H200s."
+slug: serving-multimodal-at-scale-in-llm-d
+date: 2026-08-31T09:00
+
+authors:
+  - xiyue
+  - alexey
+  - guygir
+  - revitale
+  - kaushikmitra
+  - rahul
+
+tags: [blog, multimodal, vlm, inference, disaggregation, scheduling, kv-cache, vllm]
+---
+
+# Serving Multimodal at Scale in llm-d
+
+Text inference has a comfortable shape in llm-d. A request arrives as a few thousand tokens, prefill and decode run back to back on one replica, and a prefix-aware router keeps the KV cache warm. Every layer of the stack — scheduler, load balancer, autoscaler — is calibrated against that shape.
+
+Then someone attaches an image, and it is tempting to think of the result as the same request with a picture bolted on.
+It is not. A multimodal request differs from a text-only one in almost every property a serving system actually reads: how big it is, how much it costs, how long it takes before the first output token, what identity its cache entries have, and how many stages it has to move through.
+The parts of the stack that were calibrated on text keep working, silently, on numbers that no longer mean what they used to.
+
+This post walks those differences deliberately. First what makes media *content* different from text content.
+Then what that does to an inference *request*, difference by difference. Then, for each one, what llm-d actually does about it — the token estimator, the content-hash routing path, the retuned affinity gate, and the encode tier.
+Model server like vllm is the engine throughout; its per-replica mechanisms are the floor, not the answer.
+
+<!-- truncate -->
+
+## Two Kinds of Content
+
+Text arrives already discretized. A prompt is a string, the tokenizer is deterministic and cheap, and the number of tokens is a property of the string itself — you can compute it in microseconds on a CPU, in a proxy, without a GPU or a model.
+
+Media arrives as a continuous signal that has not been discretized yet. Pixels become tokens only after a learned encoder — a Vision Transformer — patches, projects, and merges them. Everything downstream follows from that one fact.
+
+| | Text content | Media content |
+| :---- | :---- | :---- |
+| Representation | Discrete symbols | Continuous signal (pixels, samples, frames) |
+| Tokenization | Deterministic, CPU-cheap, model-adjacent | Requires a learned encoder on an accelerator |
+| Token count | A function of the string | A function of *resolution and model config*, not of byte size |
+| Size on the wire | Proportional to token count | Uncorrelated with token count |
+| Delivery | Always by value | By value (base64) **or by reference** (URL) |
+| Identity | The string, and every prefix of it | A content hash of the whole asset |
+
+Two consequences deserve to be stated on their own, because nearly everything llm-d does about multimodal traffic exists to handle them.
+
+**The request body does not tell you the prefill cost.** For text, the length of the body is a decent proxy for the work a replica is about to do: bytes in, tokens out, roughly proportional, and the token count is what prefill is billed in.
+For media that proxy breaks completely. A 1280x720 image is worth roughly 880 visual tokens to Qwen3-VL — more than most text prompts — whether it arrives as a 200 KB JPEG, a 2 MB PNG, or a 60-byte URL.
+Meanwhile the same 200 KB of bytes could be a thumbnail worth 40 tokens or a document scan worth 4,000.
+Byte count and token count are simply unrelated quantities.
+
+**Identity is content-addressed, not prefix-addressed.** Text caching works because prompts share prefixes — a system prompt is a literal prefix of every request that uses it, and every intermediate prefix is itself a cache key.
+Media has no prefixes as text: half a JPEG is not a smaller JPEG. An image is one atomic unit that either matches or does not, keyed by a hash of its content.
+That is a weaker matching structure than text's, but it has one very useful property: a content hash means the same thing on every pod in the fleet.
+
+## Two Kinds of Requests
+
+Now put a text-only request and a multimodal request next to each other on the same OpenAI-compatible endpoint, served by the same model.
+
+```json
+// Text-only
+{"model": "Qwen/Qwen3-VL-32B-Instruct",
+ "messages": [{"role": "user", "content": [
+   {"type": "text", "text": "Describe Seattle?"}]}]}
+
+// Multimodal
+{"model": "Qwen/Qwen3-VL-32B-Instruct",
+ "messages": [{"role": "user", "content": [
+   {"type": "image_url", "image_url": {"url": "https://example.com/photo.jpg"}},
+   {"type": "text", "text": "What is in this image?"}]}]}
+```
+
+Both are valid chat completions against the same deployment. From the router's point of view they have almost nothing in common.
+
+**1. The payload introduces complex asset types and external references, not just tokenizable text.** While a standard router can easily read and tokenize a `text` part, introducing multimodal elements means the router suddenly encounters non-text structures. The heaviest and most expensive part of the request may not even be present in the payload: as seen in the multimodal example, an `image_url` is merely a reference, meaning the actual bytes live somewhere else.
+
+**2. Token accounting requires model knowledge the tokenizer does not have.** To price the text half you run a tokenizer. To price the image half you need the model's patch size and spatial merge strategy — and different model families answer differently enough that the same image is worth 900 tokens to one and 280 to another. There is no universal answer to "how many tokens is this image."
+
+**3. There is a third stage, and it runs before anything else.** A text request is prefill then decode. A multimodal request is encode, then prefill, then decode. The encode stage is a full ViT pass over every asset, and it is one-shot, compute-bound, and highly parallel across items — a different character from both of its neighbors:
+
+| Stage | Character | Scales with |
+| :---- | :---- | :---- |
+| **Encode (E)** | One-shot, compute-bound, parallel across assets | Number and resolution of media assets |
+| **Prefill (P)** | Large GEMMs, bandwidth-heavy | Total context length (text + visual tokens) |
+| **Decode (D)** | Memory-bound, sequential | Output length, batch size |
+
+Nothing can be emitted until the encoder finishes, so encode time lands directly on TTFT. And while a replica is running a ViT over four 1080p images, it is not making progress on anyone else's decode — one image-heavy request stalls the whole batch.
+
+**4. Cost variance within a single endpoint explodes.** Text requests to a given endpoint are usually within an order of magnitude of each other. The two requests above are not: one is a handful of tokens with no encoder pass, the other is ~900 tokens of visual context plus a full ViT run. Both arrive at the same pool, and the same scheduler has to place them. Round-robin assumes requests are interchangeable. Here they differ by two orders of magnitude in cost, and the difference is invisible in the byte count.
+
+**5. There are two caches to hit, not one.** Text has the KV cache. Multimodal has the KV cache *plus* an encoder cache holding output embeddings keyed by media hash, and, upstream of that, a processor cache holding preprocessed pixel values. A request can miss the KV cache and still save the entire ViT pass by hitting the encoder cache. Cache-aware placement has more to win — and more ways to get it wrong.
+
+Differences 1 through 5 are each individually survivable on one replica. On a fleet they compound, because every cache in the list above is per-instance. Deploy eight replicas behind a plain Kubernetes Service and round-robin will scatter five requests that share a system prompt and a product photo across five different pods: five ViT runs, five prefills, one cache hit's worth of value out of eight caches' worth of memory. Scaling out does not merely fail to help — every replica you add makes any given pod less likely to hold what the next request needs. Raising `--mm-processor-cache-gb` on a fleet that routes at random is buying more shelves for a warehouse whose orders arrive by lottery.
+
+## How llm-d Handles a Multimodal Request
+
+Each of the five differences maps to something concrete in the llm-d router (EPP) or in the deployment topology. Taking them in order.
+
+### Reading a payload the router cannot see (difference 1)
+
+EPP parses the content-part array and resolves per-asset metadata before it can do anything else. How it gets that metadata depends on how the asset was delivered:
+
+- **Inline images** (raw bytes, base64 data URI) — EPP reads width and height directly out of the image content. Exact, no network call.
+- **Image URLs** — EPP does **not** fetch the remote content. It falls back to a configured `defaultResolution`. This is a deliberate trade: fetching would put an unbounded external round-trip on the routing hot path. But it means URL-heavy traffic is being priced at a constant, and that constant should reflect your actual traffic.
+- **Video** — EPP cannot inspect video at all, so clients supply metadata via headers: `x-llm-d-video-fps`, `x-llm-d-video-duration-seconds`, and `x-llm-d-video-resolution` (as `WIDTHxHEIGHT`). Anything omitted falls back to a configured default.
+
+### Pricing a multimodal asset with metadata alone (difference 2)
+
+With metadata in hand, the `token-producer` plugin has to put a token count on each asset. How it gets there depends on which backend the plugin is configured with, and the distinction matters because only one of the two paths needs any of the tuning below:
+
+- **With a real tokenizer** — the `vllm` backend, where EPP calls vLLM's `/v1/chat/completions/render` endpoint (typically a GPU-less `vllm launch render` sidecar in the EPP pod or a standalone render deployment in llm-d) — there is nothing to estimate. vLLM runs the model's own processor and returns exact token IDs along with the multimodal placeholder counts, so none of the `estimate` configuration below is read at all. This is also what precise prefix-cache-aware routing requires, since block keys have to line up with the engine's real tokens.
+- **Without one** — the default `estimate` backend, which is tokenizer-free byte-packing and needs no model, no sidecar, and no network hop — EPP has no processor to ask. It approximates the placeholder count from the metadata it just resolved, and everything in the rest of this section applies to that path only.
+
+So the estimator is the price you pay for skipping the tokenizer. It keeps routing decisions cheap and dependency-free, at the cost of having to encode a bit of the model's own arithmetic in EPP config. Models fall into two families, and the strategy is configurable per EPP.
+
+**Dimension-based** (Qwen-VL style) derives the count from resolution:
+
+```text
+tokens = (width × height) / factor
+```
+
+with `factor = 1024` (32x32) for Qwen3-VL — one visual token per 32x32-pixel region, from patch size 16 and spatial merge 2. Video multiplies per-frame tokens by a sampled frame count: sample at `sampleFPS`, clamp to `[minFrames, maxFrames]`, divide by `temporalPatchSize`, then cap the total at `maxVideoTokens`.
+
+```yaml
+- type: token-producer
+  parameters:
+    estimate:
+      image:
+        mode: dynamic
+        defaultResolution:
+          width: 1280
+          height: 720
+        dynamic:
+          factor: 1024
+      video:
+        defaultResolution:
+          width: 1280
+          height: 720
+        defaultDuration: 10
+        tokensPerFrame:
+          mode: dynamic
+          dynamic:
+            factor: 1024
+        frames:
+          mode: sampled
+          minFrames: 4
+          maxFrames: 768
+          sampled:
+            sampleFPS: 2
+            temporalPatchSize: 2
+        maxVideoTokens: 12288
+```
+
+**Fixed allocation** (Gemma 4 style) ignores resolution entirely. The model allocates a fixed budget per image from a small set of supported values — 70, 140, 280, 560, or 1120, with 280 the default — and video uses a static per-frame count with strided frame selection.
+
+```yaml
+- type: token-producer
+  parameters:
+    estimate:
+      image:
+        mode: static
+        static:
+          staticToken: 280
+      video:
+        defaultResolution:
+          width: 1280
+          height: 720
+        defaultDuration: 10
+        tokensPerFrame:
+          mode: static
+          static:
+            numTokensPerFrame: 280
+        frames:
+          mode: strided
+          minFrames: 1
+          maxFrames: 8
+          strided:
+            frameStride: 4
+        maxVideoTokens: 12288
+```
+
+Getting this wrong is a silent failure, which is why the guide calls it out in bold. Point the resolution-based estimator at `google/gemma-4-31B-it` and it prices a 1280x720 image at 900 tokens instead of 280. Every multimodal request is mis-priced, routing skews, and nothing in the logs says so. **The estimator must match the served model** — or configure the `vllm` render backend and let the model's own processor answer the question instead.
+
+### Balancing requests that are not interchangeable (differences 3 and 4)
+
+Affinity alone would pin traffic onto hotspots, so it composes with load. The `token-load-scorer` picks within the affinity-selected endpoint set on queued prefill token load — and this is precisely why the multimodal `token-producer` has to stay in the pipeline even when you are not using prefix routing.
+The scorer needs a per-request token count, and an image input has no text length to read. Underneath, EPP scrapes each endpoint's `/metrics` every 50 ms by default and scores on queue depth, running requests, and KV-cache utilization.
+
+### Matching on content identity (difference 5)
+
+Difference 5 said there are two caches to hit, not one. llm-d has a distinct routing signal for each, and they are worth keeping separate in your head because they answer different questions: *does this pod hold the KV blocks for this prompt*, and *does this pod hold the encoder embeddings for this image*.
+
+The content-hash property is what makes either work across a fleet: the same image produces the same key on every pod, so "who already has this" is a question EPP can answer without touching a GPU. (vLLM hashes each media item by content, and clients can supply stable `multi_modal_uuids` to make the identity explicit.)
+
+**KV / prefix affinity.** Once assets have footprints and hashes, they participate in the same two routing modes llm-d uses for text:
+
+- **Approximate prefix-cache-aware routing.** EPP keeps an in-memory view of each endpoint's prefix-cache state covering both text and media assets, and prefers endpoints with a high match.
+- **Precise prefix-cache-aware routing.** EPP tokenizes the input and subscribes to each model server's KV-event channel, maintaining an indexer that maps `block key → endpoints`. Multimodal assets are converted to block keys from asset hash and size, so they take part in longest-prefix matching alongside text blocks.
+
+**Encoder-cache affinity.** The prefix path treats a media asset as one more contributor to a token prefix. The encoder cache is a separate cache with its own hit condition: it is keyed on the asset hash alone, and hitting it saves the entire ViT pass regardless of what the surrounding text looks like. Two requests that share an image but no prompt prefix get nothing from prefix affinity and could still skip encoding entirely — if they land on the same pod.
+
+llm-d exposes that as its own plugin pair. `mm-embeddings-cache-producer` extracts stable multimodal item hashes from `TokenizedPrompt.MultiModalFeatures` when a `token-producer` is configured, and otherwise falls back to reading typed OpenAI chat-completions media blocks directly — so it stays tokenizer-free for request shapes where the structured blocks are enough. It keeps a per-pod LRU of hashes that pod recently handled, and after each scheduling decision its `PreRequest` hook records the chosen endpoints for every hash in the request, asynchronously so it never blocks the request path. Repeated references to the same hash within one request count once.
+
+`mm-embeddings-cache-scorer` then converts that match data into a normalized score:
+
+```text
+score = matchedItemSize / totalRequestItemSize
+```
+
+You can tell whether it is earning its weight from `encoder_cache_queries_total`, `encoder_cache_hits_total` (labelled by pod and modality), and the `encoder_cache_hit_ratio` histogram.
+Note that the shipped multimodal guides do not enable this pair — they route on the prefix stack alone, which on their shared-prefix benchmark workload already co-locates the images with the prefixes.
+Reach for encoder-cache affinity when your traffic reuses *assets* without reusing *prompts*: the same product photo behind many different questions, a document image revisited across a session, a template frame shared by unrelated requests.
+
+## What Cache-Aware Placement Is Worth
+
+The aggregation guide's [benchmarking report](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/aggregation#benchmarking-report) isolates the routing half of the above. Qwen3-VL-32B-Instruct on 16 H200 GPUs — 8 model servers, 2 H200s each at TP=2 — driven by a shared-prefix multimodal workload: three 720p images plus ~1.3K text tokens per request, 300-token completions, 600 prefix groups of 5 prompts, on a constant-rate ladder from 5 to 40 req/s with the `llm-d-benchmark` harness v0.7.0. The comparison is a stock Kubernetes Service round-robining across the same eight vLLM pods — no EPP, no scoring. Both configurations ran back-to-back on the identical fleet, with the token-based routing stack the guide now ships.
+
+Output tokens/sec, higher is better; TTFT in seconds, lower is better.
+
+| Rate (req/s) | k8s output tok/s | llm-d output tok/s | k8s TTFT p50 | llm-d TTFT p50 | k8s TTFT p90 | llm-d TTFT p90 |
+| -----: | -----: | -----: | -----: | -----: | -----: | -----: |
+| 5 | 1,408 | 1,421 | 0.401 | 0.133 | 0.487 | 0.148 |
+| 10 | 2,794 | 2,836 | 0.425 | 0.078 | 0.676 | 0.147 |
+| 15 | 4,241 | 4,259 | 0.420 | 0.079 | 0.788 | 0.153 |
+| 20 | 5,535 | 5,634 | 0.501 | 0.080 | 1.358 | 0.158 |
+| 25 | 6,782 | 7,046 | 0.849 | 0.081 | 2.330 | 0.157 |
+| 30 | 7,307 | 8,444 | 1.777 | 0.083 | 7.792 | 0.225 |
+| 35 | 7,272 | 9,782 | 11.060 | 0.153 | 21.192 | 0.350 |
+| 40 | 7,712 | 11,128 | 19.245 | 0.155 | 39.813 | 0.399 |
+
+Read down the ladder and the two systems separate in a specific place. Through 25 req/s they are within a few percent on throughput — there is spare capacity, and routing has nothing to fix. What is already visible that early is latency: the Service's TTFT p90 has been climbing since rate 15 while llm-d's sits flat around 150 ms.
+
+From ~25 req/s the Service tips into unbounded queueing. Its throughput plateaus near 7,300 tok/s and stays there for the rest of the ladder while its p90 goes 2.3 s → 7.8 s → 21.2 s → 39.8 s. llm-d keeps scaling across the same range, reaching **11,128 tok/s at rate 40, +44% over the Service's 7,712**, and holds **sub-second TTFT p90 across the entire ladder** (0.147–0.399 s). Median TTFT stays at or under 155 ms at every rate — roughly **125x lower** at the top — and the whole run completed with **2 failed requests versus 27**.
+
+The guide's three plots (throughput, latency, and TTFT p90 against QPS) show the divergence more directly than the table does.
+
+The mechanism is worth stating plainly: the affinity filter pins each prefix group's text and image blocks to the pod that already holds them, so repeat traffic prefills almost nothing and re-encodes almost nothing. Note what that implies about the *shape* of the win — it is not a uniform speedup, it is a saturation point moved. **Capacity is a property of an instance; hit rate is a property of placement.**
+
+## When the Encode Stage Needs Its Own Hardware
+
+Cache-Aware Placement eliminates *redundant* encoding and prefill. It does nothing about encoding that genuinely has to happen. A fleet parsing documents with dozens of unique images, or transcribing video, runs the ViT on cold content all day. There the encoder is not a cache problem, it is a capacity problem — and it is sitting on GPUs bought for text generation, stalling decode every time it runs.
+
+At that point difference 3 stops being a scheduling detail and becomes a topology decision. Encode, prefill, and decode have different bottlenecks and want different amounts of hardware; welded into one pod, you buy them in fixed proportion. llm-d ships two topologies that break them apart, with these shipped reference shapes:
+
+- **E/PD** —  the two-stage pipeline, layering encode onto standard PD aggregation
+- **E/P/D** — the full three-stage pipeline, layering encode onto standard P/D disaggregation
+
+Because the encode stage only exists for requests that carry media, **text-only requests skip it entirely regardless of topology** — mixed traffic does not pay for a tier it does not use. And multiple assets in one request can be encoded concurrently across different encode workers, which is impossible when they are queued behind each other on a single replica.
+
+### How embeddings move
+
+The plumbing is vLLM's **EC connector**, the encoder-output analogue of the KV connector. An encode worker computes embeddings and publishes them; a downstream consumer fetches them instead of recomputing. The llm-d guide uses `ECCPUConnector`, which stages encoder outputs through CPU memory-mapped regions, with a **NIXL data plane** for the transfer and a **ZMQ control plane** carrying `XferReq` / `XferAck`.
+
+```text
+Client -> Envoy -> EPP -> Decode Worker Sidecar
+                              |
+                              +-> Encode Worker (multimodal content)
+                              |       |
+                              |       | === EC Connector ===
+                              |       |  ZMQ (control): XferReq / XferAck
+                              |       |  NIXL (data): direct memory write
+                              |       |  v (embedding references)
+                              +-> Decode Worker (prefill + decode locally)
+                              |
+                              v
+                          Response -> Client
+```
+
+EPP's `disagg-profile-handler` picks the decode pod, then an encode decider detects multimodal content and picks an encode pod. The request lands on the decode worker's routing sidecar, which dispatches encoding work to the chosen encode worker via an `x-encoder-hosts-ports` header. The encode worker returns embedding *references*; the consumer pulls the tensors over NIXL. In E/P/D the same pattern runs one hop earlier — the prefill worker consumes the embeddings, then ships KV to decode.
+
+### The engine flags
+
+llm-d wires the tiers together; per-worker behavior is set on the engine. An encode-only worker, from the guide's `encode-deployment.yaml`:
+
+```bash
+vllm serve Qwen/Qwen3-VL-32B-Instruct \
+  --tensor-parallel-size=2 \
+  --trust-remote-code \
+  --mm-processor-cache-gb 20 \
+  --mm-encoder-only \
+  --enforce-eager \
+  --no-enable-prefix-caching \
+  --ec-transfer-config '{"ec_connector": "ECCPUConnector", "ec_role": "ec_producer", "ec_connector_extra_config": {"num_ec_blocks": 1000000}}'
+```
+
+Three of these are requirements rather than choices. `--mm-encoder-only` skips loading the language model, which is the whole point — the encode pod holds ViT weights only. `--enforce-eager` and `--no-enable-prefix-caching` are current constraints of vLLM's encoder-disaggregation path, not tuning knobs. `num_ec_blocks` sizes the shared encoder cache for multimodal items and defaults to 100,000; the guide raises it to 1,000,000 so large or numerous images do not trigger evictions and costly re-encodes.
+
+The consumer side is a one-line change. In E/PD, the combined PD worker runs:
+
+```bash
+  --ec-transfer-config '{"ec_connector": "ECCPUConnector", "ec_role": "ec_consumer"}'
+```
+
+In E/P/D that `ec_consumer` config goes on the **prefill** worker, alongside a `--kv-transfer-config` using `NixlConnector` for the prefill-to-decode hop. The E/P/D decode worker carries the KV config only and no EC config at all — it never touches embeddings.
+
+Encode pods publish their side channel via `VLLM_EC_SIDE_CHANNEL_HOST` (from the pod IP) and `VLLM_EC_SIDE_CHANNEL_PORT`, 5610 in the guide.
+
+### Routing three pools
+
+Disaggregation changes what the router has to do, and the shipped values files show it directly. E/PD defines two scheduling profiles: an `encode` profile that filters to encode pods and scores on queue depth, and a `decode` profile running the full `prefix-cache-affinity-filter` plus `token-load-scorer` stack. E/P/D adds a third `prefill` profile with the same affinity stack and switches decode to an `active-request-scorer` — once prefill is separated, the decode pool is chosen on in-flight load rather than cache affinity.
+
+Note that in E/PD prefill and decode are collocated, so the `decode` profile is deliberately scored like a *prefill* pool. It is an easy thing to get backwards when adapting these manifests.
+
+## Choosing a Topology
+
+| Dimension | Aggregated | Encode-disaggregated |
+| :---- | :---- | :---- |
+| Worker roles | Homogeneous; every pod runs E+P+D | Heterogeneous; encode pool plus PD or P/D pools |
+| Transfer overhead | None — everything is local | Low to medium; embeddings cross the network |
+| Multi-asset parallelism | Sequential on one replica | Parallel across encode workers |
+| Independent scaling | No | Yes, including different hardware per tier |
+| Deployment complexity | Low | High — multiple tiers, sidecars, NIXL overlays |
+| Best for | Small or low-resolution media, smaller models, high cache hit rates | Many or large assets, heavy ViTs, high concurrency |
+
+Start aggregated. It is a single manifest and a router config, and if your traffic has meaningful prefix structure, cache-aware routing captures most of the available win at a fraction of the operational cost — that is what the 16-GPU benchmark measures.
+
+Reach for disaggregation when the encoder is genuinely the bottleneck: a high multimodal-to-text ratio, several large assets per request, or a ViT heavy enough that running it inline visibly stalls decode.
+
+And be honest about the crossover. [SGLang's report](https://www.lmsys.org/blog/2026-01-12-epd/) is blunt on this, and it applies equally here: for image-light workloads the network latency of shipping embeddings can outweigh the time saved by offloading, **raising** TTFT relative to collocation while dedicated encoder GPUs sit idle. Disaggregation is most efficient exactly when visual processing is the primary bottleneck. If it is not, you are paying for a tier and a network hop to solve a problem you do not have.
+
+There is a middle path worth trying first: `--mm-encoder-tp-mode data` buys intra-replica encoder parallelism with no topology change, no extra pods, and no embedding transfer.
+
+## Status and Caveats
+
+Encode disaggregation is under active development in both vLLM and the llm-d router, and the guide is marked experimental. As of llm-d [v0.8.1](https://github.com/llm-d/llm-d/releases/tag/v0.8.1) the e-disaggregation manifests pin a model-server image override pending upstream vLLM support ([llm-d#1891](https://github.com/llm-d/llm-d/issues/1891)), and vLLM's own EPD proxy documents stability for the 1E1P1D configuration. The `x-encoder-hosts-ports` dispatch contract and the EC connector interface are both still moving. Aggregated multimodal serving, by contrast, is the well-lit path — a standard deployment plus router configuration, and where most deployments should begin.
+
+The reference material is all in the llm-d repository:
+
+- [Multimodal serving guide index](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving) — aggregation vs. e-disaggregation, and how to choose
+- [Aggregation guide](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/aggregation) — manifests for NVIDIA GPU, Intel XPU, and TPU v7, plus the full benchmark report
+- [E-disaggregation guide](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/e-disaggregation) — E/PD and E/P/D manifests and request flows
+- [Multimodal workload well-lit path](https://github.com/llm-d/llm-d/blob/main/docs/well-lit-paths/workloads/multimodal-serving.md) — the scheduling and token-estimation reference
+
+## Get Involved with llm-d
+
+* Explore the llm-d Community Quickstart Guide → [Start here](https://github.com/llm-d/llm-d/blob/main/README.md)
+* Join our Slack → [Get your invite](https://inviter.co/llm-d-slack) and connect with maintainers and contributors
+* Explore the code → [Browse our GitHub organization](https://github.com/llm-d)
+* Attend meetings → All meetings are open! Add our [public calendar](https://red.ht/llm-d-public-calendar)

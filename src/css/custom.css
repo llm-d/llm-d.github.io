@@ -377,6 +377,34 @@ small[class*='authorTitle_'] {
   -webkit-line-clamp: 2;
 }
 
+/* Blog layout: Infima's grid gives every column a fixed flex-basis (col--N),
+   so on a post with no right-hand table of contents the article column
+   still stops at its 7/12 (or 9/12 without a sidebar) width, leaving a dead
+   blank strip on the right where the TOC would otherwise sit. Let the
+   article column grow into that leftover space instead, capping prose at a
+   readable width and centering it so the extra room becomes balanced side
+   margins rather than empty space stuck on one edge. */
+.blog-wrapper .row:not(:has(> .col--2)) > main[class*='col--'] {
+  flex: 1 1 0%;
+  max-width: 50rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Infima caps `.container` at 1320px past 1440px viewports, which on a wide
+   monitor leaves large equal margins outside the whole sidebar/article/TOC
+   block. Let the blog container use more of the available width instead. */
+@media (min-width: 1440px) {
+  .blog-wrapper .container {
+    max-width: 1600px;
+  }
+}
+@media (min-width: 1920px) {
+  .blog-wrapper .container {
+    max-width: 1800px;
+  }
+}
+
 /* GLM-5.2 blog figures: size by information density, not source aspect ratio. */
 .glm-figure {
   width: 94%;
