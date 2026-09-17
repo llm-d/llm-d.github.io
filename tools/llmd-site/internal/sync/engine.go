@@ -61,6 +61,11 @@ func runNative(m *manifest.Manifest, opts Options, src *upstream.Source) error {
 		return err
 	}
 
+	fmt.Println("    Generating guide mirror pages...")
+	if err := e.syncGuides(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

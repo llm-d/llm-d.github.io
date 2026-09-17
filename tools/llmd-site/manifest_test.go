@@ -1,6 +1,7 @@
 package manifest_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/manifest"
@@ -59,6 +60,50 @@ func TestManifestCommunityEntries(t *testing.T) {
 		}
 		if c.SiteRoute() == "" {
 			t.Fatalf("community entry %q missing site route", c.From)
+		}
+	}
+}
+
+func TestGuideFileHelpers(t *testing.T) {
+	f := manifest.GuideFile{
+		From:            "guides/optimized-baseline/README.md",
+		To:              "guides/optimized-baseline.md",
+		Title:           "Optimized Baseline",
+		SidebarLabelYAML: "Optimized Baseline",
+		SidebarPosition: 1,
+	}
+	if f.OutputFile() != "optimized-baseline.md" {
+		t.Fatalf("OutputFile: got %q", f.OutputFile())
+	}
+	if f.SitePath() != "/guides/optimized-baseline" {
+		t.Fatalf("SitePath: got %q", f.SitePath())
+	}
+	if f.SiteRoute() != "guides/optimized-baseline" {
+		t.Fatalf("SiteRoute: got %q", f.SiteRoute())
+	}
+	if f.SidebarLabel() != "Optimized Baseline" {
+		t.Fatalf("SidebarLabel: got %q", f.SidebarLabel())
+	}
+}
+
+func TestManifestGuidesEntries(t *testing.T) {
+	root, err := repo.Root()
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, err := manifest.Load(repo.ManifestPath(root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(m.Guides) < 2 {
+		t.Fatalf("expected at least 2 guide entries, got %d", len(m.Guides))
+	}
+	for _, g := range m.Guides {
+		if !strings.HasPrefix(g.From, "guides/") {
+			t.Fatalf("guide entry %q: from must be under guides/", g.From)
+		}
+		if g.SidebarLabel() == "" {
+			t.Fatalf("guide entry %q missing sidebar label/title", g.From)
 		}
 	}
 }

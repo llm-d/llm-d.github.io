@@ -24,6 +24,11 @@ sync-report.json
 /community/security.md
 /community/sigs.md
 
+# Guide mirror pages are synced from llm-d/llm-d guides/<name>/README.md files.
+# The authored guides landing page (index.md) stays committed.
+/guides/*.md
+!/guides/index.md
+
 # Legacy preview subsite generated artifacts (archived; no longer part of active build/deploy).
 /preview/node_modules
 /preview/build

@@ -7,7 +7,11 @@
 # <img src> rewrites resolve. No link/image rewriting happens here; that is done
 # at Docusaurus build time by scripts/lib/preprocess.mjs. The community pages
 # below mirror the upstream repo-root files (wrapped with frontmatter + a source
-# admonition) since they live outside docs/ and are not preprocessed.
+# admonition) since they live outside docs/ and are not preprocessed. The guides
+# below mirror top-level well-lit-path deployment guides (upstream repo-root
+# guides/<name>/README.md) the same way, into their own guides/ section; a guide
+# not listed here still resolves (well-lit-path "Deploy" links fall back to
+# GitHub) so guides can be migrated incrementally.
 version: 1
 sources:
     llm-d:
@@ -38,3 +42,14 @@ community:
       title: Special Interest Groups (SIGs)
       sidebar_label: SIGs
       sidebar_position: 6
+guides:
+    - from: guides/optimized-baseline/README.md
+      to: guides/optimized-baseline.md
+      title: Optimized Baseline
+      sidebar_label: Optimized Baseline
+      sidebar_position: 1
+    - from: guides/multi-model-routing/README.md
+      to: guides/multi-model-routing.md
+      title: Multi-Model Routing
+      sidebar_label: Multi-Model Routing
+      sidebar_position: 2

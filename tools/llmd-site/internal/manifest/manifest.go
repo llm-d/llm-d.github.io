@@ -17,6 +17,11 @@ type Manifest struct {
 
 	Community []CommunityFile `yaml:"community,omitempty"`
 
+	// Guides mirrors a top-level well-lit-path deployment guide (a repo-root
+	// guides/<name>/README.md in llm-d/llm-d) into the site's own guides/
+	// docs-plugin instance, analogous to Community.
+	Guides []GuideFile `yaml:"guides,omitempty"`
+
 	Releases Releases `yaml:"releases,omitempty"`
 
 	// Deprecated: the single-site sync mirrors docs/** verbatim and no longer
@@ -76,6 +81,14 @@ type CommunityFile struct {
 	SidebarPosition  int    `yaml:"sidebar_position,omitempty"`
 	HideSidebar      bool   `yaml:"hide_sidebar,omitempty"`
 	Transform        string `yaml:"transform,omitempty"` // reserved; community transform is built-in
+}
+
+type GuideFile struct {
+	From             string `yaml:"from"`
+	To               string `yaml:"to"`
+	Title            string `yaml:"title,omitempty"`
+	SidebarLabelYAML string `yaml:"sidebar_label,omitempty"`
+	SidebarPosition  int    `yaml:"sidebar_position,omitempty"`
 }
 
 type Copy struct {
