@@ -31,7 +31,7 @@ To maximize ROI, hardware must be shared. However, dynamic sharing of large mode
 The llm-d stack decouples ingestion from execution with a durable queue layer and an intelligent async dispatch processor:
 
 <div style="text-align:center; margin:20px 0">
-  <img src="/img/blogs/multitenant-async/architecture.gif" alt="Animated architecture: two models each with their own worker pool and vLLM; within each, three team/tier lanes flow through a reserved/overflow quota gate and the tier-priority merge; model A saturates and its pool parks while model B keeps flowing" style="width:100%; height:auto" />
+  <img src="/img/blogs/multitenant-async/architecture.jpg" alt="Four-tier architecture: Team Alpha chat and Team Beta document extraction write to per-tenant queues in the persistent backlog layer (GCP Pub/Sub or Redis); the llm-d-async dispatch processor polls them under budget through redis-quota gates and the tier-priority merge policy, stamping priorities and objectives; requests are posted to the llm-d-router / EPP infrastructure gateway for saturation and admission control, then served by vLLM replicas in a shared GKE GPU/TPU compute pool" style="max-width:640px; width:100%; height:auto" />
 </div>
 
 This four-tier architecture provides complete isolation, high utilization, and predictable SLAs:
