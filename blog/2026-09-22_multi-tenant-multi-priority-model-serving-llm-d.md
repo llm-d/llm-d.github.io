@@ -191,6 +191,65 @@ Merge policy (`--request-merge-policy-config-file`):
 
 Now, when Beta's nightly run floods `beta-batch` with 100,000 requests: they queue durably, dequeue at most 600/minute, are classified reserved/overflow against that budget, always yield to Alpha's chat traffic at the merge step, and are shed back to the broker — never onto the GPUs — when the pool saturates. Alpha's users never notice the batch ran.
 
+## Benchmark: Two Teams, One Pool, Three Front Doors
+
+We measured the two-team scenario above on a dedicated GKE cluster to see what each layer actually buys you.
+
+**Setup.** Two NVIDIA A100 40GB nodes, each running one vLLM v0.19.1 replica of Qwen3-8B (`--max-model-len 4000`), behind the llm-d Router (standalone mode). llm-d-async v0.10.0, Redis, and kube-prometheus-stack run on CPU nodes. Prometheus scrapes the router every 10 s. The load generator runs in-cluster.
+
+**Tenants.**
+
+- **Alpha (interactive chat):** open-loop Poisson arrivals at 4 requests/s for 11 minutes, `/v1/chat/completions`, streaming, about 275 input and 128 output tokens per request. Alpha always calls the router directly with `x-llm-d-inference-objective: reserved-interactive` and its fairness ID. We measure time-to-first-token (TTFT).
+- **Beta (document extraction):** a batch of 4,000 `/v1/completions` requests, about 780 input and 256 output tokens each, released 2 minutes into the run. Beta's front door is the variable.
+
+**Pool capacity.** Batch-only calibration showed throughput plateauing at 128 concurrent requests across the two replicas (about 14 requests/s, 3,700 output tokens/s), so we call 128 the pool's saturation concurrency. Beta's direct client opens 128, 384, or 1,280 connections ("1x", "3x", "10x" of saturation) and retries 429s with exponential backoff, the way a real batch job does. In the async configuration Beta simply publishes all 4,000 requests to its Redis queue at once.
+
+**Three front doors for Beta.**
+
+1. **Direct to the router, no flow control.** Default scheduling plugins. This is what most people run today.
+2. **Direct to the router with flow control.** The six `InferenceObjective` priority bands from the multi-tenant guide, Beta sending `reserved-batch`, saturation detected by the guide's `concurrency-detector` with `maxConcurrency` set at the measured knee (64 per replica).
+3. **Queued through llm-d-async.** The exact configuration from this post: `redis-quota` in classifying mode, the `tier-priority` merge policy, and `tier-priority-admission` over `prometheus-saturation` (threshold 0.8) on a 128-worker pool, dispatching into the same flow-control router as door 2.
+
+In every run Alpha's TTFT is identical before Beta starts (p50 61 ms, p99 about 90 ms) and returns to that level within seconds of Beta draining. The table reports the window while Beta's backlog is in flight.
+
+| Beta's front door | Beta offered concurrency | Alpha TTFT p50 (vs idle) | Alpha TTFT p99 | Beta 429s | Beta drain time | Pool output tok/s |
+|---|---|---|---|---|---|---|
+| 1. Direct, no flow control | 1x (128) | 132 ms (2.2x) | 1,428 ms | 0 | 298 s | 3,742 |
+| 1. Direct, no flow control | 3x (384) | 3,748 ms (61.4x) | 13,960 ms | 0 | 296 s | 3,800 |
+| 1. Direct, no flow control | 10x (1,280) | 65,946 ms (1081.1x) | 80,773 ms | 0 | 290 s | 3,726 |
+| 2. Direct + flow control | 1x (128) | 424 ms (7.1x) | 3,649 ms | 0 | 308 s | 3,625 |
+| 2. Direct + flow control | 3x (384) | 427 ms (7.0x) | 3,763 ms | 0 | 308 s | 3,641 |
+| 2. Direct + flow control | 10x (1,280) | 468 ms (7.8x) | 3,810 ms | 10,568 | 307 s | 3,660 |
+| 3. llm-d-async, 128 workers (mean of 3 runs) | whole backlog at once | 480 ms (7.8x) | 5,532 ms | 0 | 392 s | 3,013 |
+| 3. llm-d-async, 96 workers | whole backlog at once | 89 ms (1.5x) | 1,923 ms | 0 | 445 s | 2,740 |
+| 3. llm-d-async, 64 workers | whole backlog at once | 90 ms (1.5x) | 637 ms | 0 | 400 s | 2,971 |
+
+**What the numbers say.**
+
+- **Without admission control, the interactive tenant's latency scales with the size of the batch.** At 3x, Alpha's median TTFT is 61 times its idle value. At 10x, vLLM holds a waiting queue of about 1,000 requests and Alpha waits over a minute for its first token. Beta is perfectly happy throughout: the batch drains in under 5 minutes in every baseline run. That asymmetry is the noisy neighbor problem in one row.
+- **Flow control bounds the damage, but it does not remove it, and it moves the pain to Beta.** Alpha's TTFT is the same at 1x, 3x, and 10x, which is exactly what priority bands are for. But the bound sits at 7 to 8x idle, because once the pool's in-flight count reaches the detector's cap, even priority-100 requests wait for a slot at the gateway (the router's own `flow_control_request_queue_duration_seconds` metric reports a mean of 376 ms for Alpha across these runs). And at 10x, Beta's 4,000 requests cost 14,568 attempts: 10,568 were rejected with 429 when the batch band filled, and Beta's client absorbed the retry storm.
+- **Queuing the batch removes the rejections and the retry storm entirely.** Through llm-d-async, all 4,000 requests complete with zero 429s, zero client retries, and zero failures, and Beta's producer disconnected the moment it published. With the same concurrency-detector router, Alpha sits at the same 7 to 8x floor as door 2, so the async tier inherits the router's gating behavior rather than fixing it. It also drains about 25% slower (392 s versus 307 s): 128 workers overshoot the router's cap before the 10 s Prometheus scrape reports it, so the saturation gate closes late and reopens all at once, and the pool oscillates instead of running flat out.
+
+**Metering the batch below saturation is the lever that isolation actually turns on.** The async tier is the only place in the stack where batch admission can be shaped before it reaches the gateway. Dispatching Beta with 96 workers instead of 128 drops Alpha's median TTFT to 89 ms (1.5x idle); with 64 workers it is 90 ms with a p99 of 637 ms, the best tail in the whole study. The price is drain time: the same 4,000 requests take 400 to 445 s instead of about 300 s, with the pool at roughly 75 to 80% of its peak output. That trade is explicit and tunable per pool, which is the point. (96 workers drained slightly slower than 64 because 96 batch requests plus Alpha's traffic still brushed the router's cap, so the saturation gate kept cycling; 64 never touched it.)
+
+<div style="text-align:center; margin:20px 0">
+  <img src="/img/blogs/multitenant-async/ttft-chart.svg" alt="Bar chart of the interactive tenant's TTFT p50 and p99 during the batch burst for every configuration, log scale: no flow control climbs from 132 ms to 66 s as the batch grows; flow control with the concurrency detector holds 424 to 468 ms; llm-d-async with 96 or 64 workers holds 89 to 90 ms; flow control with the utilization detector jumps to 11 to 16 s at 3x and 10x while llm-d-async on the same router stays at 111 to 164 ms" style="width:100%; height:auto" />
+</div>
+
+**Detector choice matters more than the front door for the direct path.** We repeated doors 2 and 3 with the router's default `utilization-detector` (vLLM queue depth and KV-cache pressure) instead of the concurrency detector.
+
+| Beta's front door | Beta offered concurrency | Alpha TTFT p50 (vs idle) | Alpha TTFT p99 | Beta 429s | Beta drain time | Pool output tok/s |
+|---|---|---|---|---|---|---|
+| 2. Direct + flow control | 1x (128) | 167 ms (2.7x) | 2,098 ms | 0 | 297 s | 3,740 |
+| 2. Direct + flow control | 3x (384) | 11,469 ms (188.0x) | 26,249 ms | 0 | 433 s | 2,737 |
+| 2. Direct + flow control | 10x (1,280) | 15,687 ms (253.0x) | 42,375 ms | 14,453 | 435 s | 2,767 |
+| 3. llm-d-async, 128 workers | whole backlog at once | 164 ms (2.7x) | 2,668 ms | 0 | 304 s | 3,684 |
+| 3. llm-d-async, 96 workers | whole backlog at once | 111 ms (1.9x) | 1,609 ms | 0 | 331 s | 3,440 |
+
+The reactive detector is generous at 1x, letting Alpha through at 2.7x idle. At 3x and 10x it fails: the burst reaches vLLM before the telemetry shows it, a waiting queue of over 100 forms, and the router then holds everyone, including Alpha, whose median TTFT climbs to 11 to 16 seconds. Routing Beta through llm-d-async on the same router avoids that failure completely: the dispatcher never presents the router with a burst, so Alpha stays at 2.7x idle with the whole backlog draining at full pool throughput. The queue makes the router's admission control work as designed no matter which detector you picked.
+
+**Caveats.** One model, one pool, one hardware configuration, one prompt mix. Alpha calls the router directly in all setups, so its TTFT reflects the gateway and the engine rather than the queue; an interactive tenant that also went through `alpha-chat` would see completion latency instead of streaming TTFT. The absolute floor for Alpha is set by vLLM itself: at 130-plus concurrent sequences the engine's own scheduling adds roughly 2x to first-token latency on this hardware, so "within a few percent of idle" is not reachable while the pool is fully utilized.
+
 ## Reliability Is Part of Isolation
 
 Multi-tenancy isn't only about scheduling; it's about what happens when things fail:
@@ -208,9 +267,9 @@ Every gate decision and queue is measurable, which is what makes tenant disputes
 
 By deploying this gated-dispatch architecture, platform engineering teams can expect the following results:
 
-1. **GPU Infrastructure Cost Reductions of 30% to 50%:** By running a single, highly dense, shared GPU/TPU pool rather than dedicated clusters per team, idle capacity is virtually eliminated.
-2. **Guaranteed Interactive SLAs under Extreme Backlog:** Real-world benchmarks show that even when a background batch task scales up to 10x the cluster's aggregate capacity, high-priority interactive requests maintain their time-to-first-token (TTFT) metrics within 3% to 5% of the completely idle baseline.
-3. **Decoupled System Reliability:** Slowdowns or outages on the model servers do not cascade to client microservices. Client applications simply write requests directly to their respective backlog queues and decouple immediately, remaining completely insulated from downstream inference pressure.
+1. **Higher GPU utilization from a single shared pool:** Running one dense, shared GPU/TPU pool rather than dedicated clusters per team removes the idle capacity that static partitioning locks up. How much you save scales with how asymmetric your teams' utilization is; in the benchmark above, a batch tenant filled the capacity an interactive tenant left unused without the interactive tenant paying for it.
+2. **Bounded interactive latency under any size of backlog:** In our measurements, a batch backlog offered at 10x the pool's saturation concurrency pushed the interactive tenant's median time-to-first-token (TTFT) past one minute on a plain router. Queued through llm-d-async with the batch metered at 50 to 75% of saturation, the same backlog completed with zero rejections while interactive TTFT stayed within 1.5x of idle at the median and under 2 s at p99, and the bound did not depend on how large the backlog was.
+3. **Decoupled System Reliability:** Slowdowns or outages on the model servers do not cascade to client microservices. Client applications simply write requests directly to their respective backlog queues and decouple immediately, remaining completely insulated from downstream inference pressure. In the benchmark, the direct batch client needed 14,568 attempts to land 4,000 requests through a saturated gateway; the queued client published once and disconnected.
 
 ## Getting Started
 
