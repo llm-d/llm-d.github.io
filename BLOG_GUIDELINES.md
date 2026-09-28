@@ -1,8 +1,8 @@
 # llm-d Blog Guidelines
 
-Guidance for writing and reviewing llm-d blog posts. It captures the house
-style distilled from the existing posts and defines how a post moves from draft
-to publish.
+Guidance for writing and reviewing llm-d blog posts. It defines the llm-d blog
+style and how to align tone and messaging with previous posts. It also defines
+how a post moves from draft to publish.
 
 For the mechanics of editing, previewing, and opening a PR, see
 [CONTRIBUTING.md](./CONTRIBUTING.md#editing-local-content). This document is
