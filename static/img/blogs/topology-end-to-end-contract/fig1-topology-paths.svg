@@ -107,7 +107,7 @@
 <rect x="389" y="488" width="22" height="3.5" rx="1.75" fill="#a78bfa" opacity="0.95"/>
 <rect x="383" y="521" width="34" height="22" rx="6" fill="#475569" stroke="#3b4757" stroke-width="1"/>
 <rect x="389" y="536" width="22" height="3.5" rx="1.75" fill="#f59e0b" opacity="0.95"/>
-<text x="400" y="582" text-anchor="middle" fill="#52514e" font-size="12.5" font-weight="600">B &#183; cross-rail &#8212; a lane change through the switching fabric to a decode NIC on another rail</text>
+<text x="400" y="582" text-anchor="middle" fill="#52514e" font-size="12.5" font-weight="600">B &#183; cross-rail &#8212; changes rails through the switching fabric to reach a decode NIC</text>
 <rect x="376" y="674" width="48" height="188" rx="12" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
 <rect x="234" y="686" width="332" height="20" rx="10" fill="#3b82f6" opacity="0.13"/>
 <rect x="234" y="734" width="332" height="20" rx="10" fill="#14b8a6" opacity="0.13"/>

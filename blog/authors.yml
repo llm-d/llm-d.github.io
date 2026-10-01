@@ -608,3 +608,15 @@ xiahua:
   socials:
     linkedin: huax
     github: https://github.com/huaxig
+
+jianyang:
+  name: Jian Yang
+  title: Software Engineer, Google
+  image_url: /img/blogs/jianyang.svg
+
+ryanlee:
+  name: Ryan Lee
+  title: Software Engineer, Google
+  image_url: https://github.com/ryannova.png
+  socials:
+    github: https://github.com/ryannova

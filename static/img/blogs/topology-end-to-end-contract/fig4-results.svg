@@ -10,7 +10,7 @@
   <rect x="80" y="240" width="320" height="94" rx="8" fill="#fcfcfb" stroke="#0ca30c" stroke-width="2"/>
   <text x="240" y="270" text-anchor="middle" fill="#0b0b0b" font-size="13.5" font-weight="600">&#10003;  Verified RDMA</text>
   <text x="240" y="294" text-anchor="middle" fill="#006300" font-size="13">5,400 / 5,400 served, zero timeouts</text>
-  <text x="240" y="316" text-anchor="middle" fill="#52514e" font-size="12.5">serves at the ladder&#8217;s 1.16 s TTFT tier (right)</text>
+  <text x="240" y="316" text-anchor="middle" fill="#52514e" font-size="12.5">same channel as the top two rungs (right)</text>
 
   <!-- Panel B -->
   <text x="720" y="40" text-anchor="middle" fill="#0b0b0b" font-size="16" font-weight="700">End-to-end stack &#8212; the TTFT ladder, one cluster</text>
@@ -21,7 +21,7 @@
   <text x="615" y="352" text-anchor="middle" fill="#52514e" font-size="12.5">unconstrained</text>
   <text x="615" y="370" text-anchor="middle" fill="#52514e" font-size="12.5">control</text>
   <rect x="710" y="214" width="70" height="116" rx="4" fill="#86b6ef" opacity="0.9"/>
-  <text x="745" y="204" text-anchor="middle" fill="#0b0b0b" font-size="14" font-weight="600">1.16 s</text>
+  <text x="745" y="204" text-anchor="middle" fill="#0b0b0b" font-size="14" font-weight="600">1.157 s</text>
   <text x="745" y="352" text-anchor="middle" fill="#52514e" font-size="12.5">channel-verified</text>
   <text x="745" y="370" text-anchor="middle" fill="#52514e" font-size="12.5">(DRA + RDMA)</text>
   <rect x="820" y="297" width="70" height="33" rx="4" fill="#2a78d6"/>
