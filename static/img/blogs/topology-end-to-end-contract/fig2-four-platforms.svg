@@ -13,7 +13,7 @@
 <line x1="198" y1="152" x2="198" y2="196" stroke="#16a34a" stroke-width="2.5"/>
 <rect x="36" y="196" width="208" height="20" rx="6" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1"/>
 <text x="140" y="210" text-anchor="middle" fill="#475569" font-size="9.5" font-weight="600">PCIe root</text>
-<text x="140" y="242" text-anchor="middle" fill="#166534" font-size="10" font-weight="600">invariant stated in one claim</text>
+<text x="140" y="242" text-anchor="middle" fill="#166534" font-size="10" font-weight="600">rule stated in one claim</text>
 <text x="140" y="258" text-anchor="middle" fill="#8b8984" font-size="9">matchAttribute: pcieRoot &#183; llm-d#1821</text>
 <text x="400" y="36" text-anchor="middle" fill="#26251f" font-size="12.5" font-weight="700">A4X (GB200)</text>
 <text x="400" y="54" text-anchor="middle" fill="#8b8984" font-size="9.5">NICs under DRA in the tested recipe</text>
@@ -32,7 +32,7 @@
 <text x="400" y="242" text-anchor="middle" fill="#166534" font-size="10" font-weight="600">NICs explicitly DRA-allocated today</text>
 <text x="400" y="258" text-anchor="middle" fill="#8b8984" font-size="9">pcieRoot matching requires GPU and NIC under DRA &#183; llm-d#2043</text>
 <text x="660" y="36" text-anchor="middle" fill="#26251f" font-size="12.5" font-weight="700">A4X Max (GB300)</text>
-<text x="660" y="54" text-anchor="middle" fill="#8b8984" font-size="9.5">same wait + a connectivity rule</text>
+<text x="660" y="54" text-anchor="middle" fill="#8b8984" font-size="9.5">same split as A4X + a connectivity rule</text>
 <rect x="664" y="80" width="108" height="84" rx="10" fill="none" stroke="#16a34a" stroke-width="1.6" stroke-dasharray="5 4"/>
 <text x="671" y="92" fill="#16a34a" font-size="9" font-weight="700">DRA</text>
 <rect x="556" y="96" width="92" height="56" rx="7" fill="#ffffff" stroke="#a09e96" stroke-width="1.2"/>
@@ -51,5 +51,5 @@
 <text x="660" y="210" text-anchor="middle" fill="#475569" font-size="9.5" font-weight="600">PCIe root</text>
 <text x="660" y="242" text-anchor="middle" fill="#166534" font-size="10" font-weight="600">pair bound &#8212; else no link at all</text>
 <text x="660" y="258" text-anchor="middle" fill="#8b8984" font-size="9">firstAvailable + CEL prefix &#183; llm-d#2068</text>
-<text x="400" y="292" text-anchor="middle" fill="#8b8984" font-size="10.5">One invariant &#8212; GPU and NIC on the same PCIe root; each recipe states exactly as much of it as the platform can today.</text>
+<text x="400" y="292" text-anchor="middle" fill="#8b8984" font-size="10.5">One rule &#8212; GPU and NIC on the same PCIe root; each recipe states as much of it as its platform can express.</text>
 </svg>
