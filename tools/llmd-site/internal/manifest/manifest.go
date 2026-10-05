@@ -50,6 +50,12 @@ type Sources struct {
 type SourceRepo struct {
 	Remote RemoteSource `yaml:"remote"`
 	Local  LocalSource  `yaml:"local"`
+	// GuidesManifest is the repo-relative path of the guides publish manifest
+	// (e.g. docs/well-lit-paths/guides.yaml) listing which guides/<name>
+	// READMEs are rendered on the site. Empty disables guide publishing. If
+	// the file is absent in the synced checkout (e.g. an older release
+	// branch) guide publishing is skipped.
+	GuidesManifest string `yaml:"guides_manifest,omitempty"`
 }
 
 type RemoteSource struct {

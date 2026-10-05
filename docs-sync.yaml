@@ -17,6 +17,9 @@ sources:
             docs_root: docs
         local:
             path: ~/repos/llm-d
+        # Guides publish manifest (repo-relative, in the synced llm-d checkout):
+        # lists which guides/<name>/README.md pages are rendered on the site.
+        guides_manifest: docs/well-lit-paths/guides.yaml
 community:
     - from: CONTRIBUTING.md
       to: community/contribute.md
