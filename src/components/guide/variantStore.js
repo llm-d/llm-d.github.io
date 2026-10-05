@@ -19,10 +19,8 @@ import useIsBrowser from '@docusaurus/useIsBrowser';
 export const ACCELERATOR_STORAGE_KEY = 'llmd.guide.accelerator';
 // Same key Docusaurus Tabs use for groupId="engine".
 export const ENGINE_STORAGE_KEY = 'docusaurus.tab.engine';
-export const MODELSERVER_STORAGE_KEY = 'docusaurus.tab.modelserver';
 export const ACCELERATOR_PARAM = 'accelerator';
 export const ENGINE_PARAM = 'engine';
-export const MODELSERVER_PARAM = 'modelserver';
 
 const GuideContext = createContext(null);
 
@@ -103,7 +101,6 @@ export function GuideProvider({ meta, children }) {
   const history = useHistory();
   const [storedAcc, accSlot] = useStorageSlot(ACCELERATOR_STORAGE_KEY);
   const [storedEng, engSlot] = useStorageSlot(ENGINE_STORAGE_KEY);
-  const [, msSlot] = useStorageSlot(MODELSERVER_STORAGE_KEY);
 
   const query = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const requested = isBrowser
@@ -131,9 +128,7 @@ export function GuideProvider({ meta, children }) {
     (acc) => {
       setNoticed(false);
       accSlot.set(acc);
-      const msTab = acc === 'tpu/v7-dynamic-slice' ? 'google-tpu-v7-dynamic-slicing' : 'default';
-      msSlot.set(msTab);
-      const updates = { [ACCELERATOR_PARAM]: acc, [MODELSERVER_PARAM]: msTab };
+      const updates = { [ACCELERATOR_PARAM]: acc };
       if (!isSupported(meta?.support, acc, engine)) {
         const ok = supportedEngines(meta?.support, acc);
         const next = ok.includes(meta?.defaults?.engine) ? meta.defaults.engine : ok[0];
@@ -146,7 +141,7 @@ export function GuideProvider({ meta, children }) {
       }
       writeQuery(updates);
     },
-    [accSlot, engSlot, msSlot, engine, meta, writeQuery],
+    [accSlot, engSlot, engine, meta, writeQuery],
   );
 
   const setEngine = useCallback(
@@ -175,4 +170,44 @@ export function GuideProvider({ meta, children }) {
     [meta, accelerator, engine, fellBack, setAccelerator, setEngine],
   );
   return <GuideContext.Provider value={value}>{children}</GuideContext.Provider>;
+}
+
+/** The tab of `items` ({value, when, default}) that matches `selection`:
+ *  the first item whose `when` matches, else the default (or first) item
+ *  without a `when`. */
+export function pickTab(items, selection) {
+  const hit = items.find((it) => it.when && whenMatches(it.when, selection));
+  if (hit) return hit.value;
+  const plain = items.filter((it) => !it.when);
+  return (plain.find((it) => it.default) || plain[0])?.value;
+}
+
+/**
+ * Keeps a Docusaurus <Tabs groupId={groupId}> group in step with the guide
+ * selector. preprocess.mjs emits it next to tab groups whose README
+ * <details> carry data-when (e.g. data-when="ACCELERATOR_TYPE=tpu/v7-dynamic-slice"),
+ * so the accelerator -> tab mapping comes from the guide content rather than
+ * being hardcoded here. Runs when the selection changes; a tab the reader
+ * clicks afterwards is left alone.
+ */
+export function TabSync({ groupId, items = [] }) {
+  const guide = useGuide();
+  const history = useHistory();
+  const [stored, slot] = useStorageSlot(`docusaurus.tab.${groupId}`);
+  const accelerator = guide?.selection.accelerator;
+  const engine = guide?.selection.engine;
+  useEffect(() => {
+    if (!guide) return;
+    const target = pickTab(items, { accelerator, engine });
+    if (!target) return;
+    if (stored !== target) slot.set(target);
+    // Tabs read ?<groupId>= before storage; only rewrite it when present.
+    const q = new URLSearchParams(window.location.search);
+    if (q.has(groupId) && q.get(groupId) !== target) {
+      q.set(groupId, target);
+      history.replace({ ...history.location, search: `?${q.toString()}` });
+    }
+    // Deliberately not keyed on `stored`: a manual tab click must not be undone.
+  }, [guide != null, accelerator, engine, groupId]);
+  return null;
 }

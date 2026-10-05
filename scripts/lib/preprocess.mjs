@@ -297,7 +297,9 @@ function parseDetailsOpen(line) {
 /**
  * Convert GitHub-renderable guide conventions into MDX components:
  *  - <!-- variants:start --> <details data-when=…> groups -> <VariantGroup>/<Variant>
- *  - <!-- tabs:start group=engine --> <details> groups -> <Tabs>/<TabItem>
+ *  - <!-- tabs:start group=engine --> <details> groups -> <Tabs>/<TabItem>;
+ *    tabs whose <details> carry data-when also get a <TabSync> so the guide
+ *    selector picks the matching tab (the mapping lives in the README)
  *  - <!-- guide:env.static start/end --> fences -> <GuideEnv blocks={[…]} />
  *  - other HTML comments -> {/* … *\/}; prose made MDX-safe (code untouched).
  */
@@ -324,8 +326,15 @@ export function guideToMdx(content, { meta } = {}) {
     if (out.length && out[out.length - 1].trim() !== '') push('');
     push(tag, '');
   };
-  // groups stack: {kind: 'variants'|'tabs', group, itemOpen}
+  // groups stack: {kind: 'variants'|'tabs', group, itemOpen, items}
   const groups = [];
+  const closeGroup = (group) => {
+    if (group.itemOpen) pushBlock(group.kind === 'variants' ? '</Variant>' : '</TabItem>');
+    pushBlock(group.kind === 'variants' ? '</VariantGroup>' : '</Tabs>');
+    if (group.kind === 'tabs' && group.items.some((it) => it.when)) {
+      pushBlock(`<TabSync groupId="${group.group}" items={${JSON.stringify(group.items)}} />`);
+    }
+  };
   let inFence = false;
   let fenceMarker = '';
 
@@ -378,15 +387,13 @@ export function guideToMdx(content, { meta } = {}) {
         pushBlock('<VariantGroup>');
       } else {
         const g = (ts[1].match(/\bgroup=([\w-]+)/) || [])[1] || 'engine';
-        groups.push({ kind: 'tabs', group: g, itemOpen: false });
+        groups.push({ kind: 'tabs', group: g, itemOpen: false, items: [] });
         pushBlock(`<Tabs groupId="${g}" queryString="${g}">`);
       }
       continue;
     }
     if (group && /^\s*<!--\s*(variants|tabs):end\s*-->\s*$/.test(line)) {
-      if (group.itemOpen) pushBlock(group.kind === 'variants' ? '</Variant>' : '</TabItem>');
-      pushBlock(group.kind === 'variants' ? '</VariantGroup>' : '</Tabs>');
-      groups.pop();
+      closeGroup(groups.pop());
       continue;
     }
     if (group) {
@@ -408,7 +415,9 @@ export function guideToMdx(content, { meta } = {}) {
         if (group.kind === 'variants') {
           pushBlock(`<Variant when="${jsxAttr(d.when || '')}" label="${jsxAttr(label)}">`);
         } else {
-          pushBlock(`<TabItem value="${jsxAttr(tabValue(group.group, label))}" label="${jsxAttr(label)}"${d.open ? ' default' : ''}>`);
+          const value = tabValue(group.group, label);
+          group.items.push({ value, when: d.when, default: d.open });
+          pushBlock(`<TabItem value="${jsxAttr(value)}" label="${jsxAttr(label)}"${d.open ? ' default' : ''}>`);
         }
         group.itemOpen = true;
         if (rest.trim()) push(mdxSafeLine(rest));
@@ -439,10 +448,6 @@ export function guideToMdx(content, { meta } = {}) {
 
     push(mdxSafeLine(line));
   }
-  while (groups.length) {
-    const group = groups.pop();
-    if (group.itemOpen) pushBlock(group.kind === 'variants' ? '</Variant>' : '</TabItem>');
-    pushBlock(group.kind === 'variants' ? '</VariantGroup>' : '</Tabs>');
-  }
+  while (groups.length) closeGroup(groups.pop());
   return out.join('\n');
 }

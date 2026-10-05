@@ -2,6 +2,7 @@ import MDXComponents from '@theme-original/MDXComponents';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import { Variant, VariantGroup, GuideEnv } from '@site/src/components/guide';
+import { TabSync } from '@site/src/components/guide/variantStore';
 
 /**
  * Components available to every MDX page without imports. Published guide
@@ -15,4 +16,5 @@ export default {
   Variant,
   VariantGroup,
   GuideEnv,
+  TabSync,
 };

@@ -219,3 +219,42 @@ test('guideToMdx converts deployment-mode tab groups', () => {
   assert.ok(out.includes('<TabItem value="gateway" label="Gateway Mode">'));
   assert.ok(!out.includes('<details'));
 });
+
+test('guideToMdx: tabs with data-when get a TabSync driven by the README', () => {
+  const src = [
+    '<!-- tabs:start group=modelserver -->',
+    '<details open>',
+    '<summary><b>Default</b></summary>',
+    '',
+    'std',
+    '',
+    '</details>',
+    '<details data-when="ACCELERATOR_TYPE=tpu/v7-dynamic-slice">',
+    '<summary><b>Google TPU v7 (dynamic slicing)</b></summary>',
+    '',
+    'ds',
+    '',
+    '</details>',
+    '<!-- tabs:end -->',
+    '',
+    '<!-- tabs:start group=mode -->',
+    '<details open>',
+    '<summary><b>Standalone Mode</b></summary>',
+    '',
+    's',
+    '',
+    '</details>',
+    '<!-- tabs:end -->',
+  ].join('\n');
+  const out = guideToMdx(src, { meta: {} });
+  assert.ok(out.includes('<TabItem value="google-tpu-v7-dynamic-slicing" label="Google TPU v7 (dynamic slicing)">'), out);
+  assert.ok(
+    out.includes(
+      '<TabSync groupId="modelserver" items={[{"value":"default","when":null,"default":true},' +
+        '{"value":"google-tpu-v7-dynamic-slicing","when":"ACCELERATOR_TYPE=tpu/v7-dynamic-slice","default":false}]} />',
+    ),
+    out,
+  );
+  // Groups without data-when stay plain Docusaurus Tabs.
+  assert.equal((out.match(/<TabSync /g) || []).length, 1);
+});
