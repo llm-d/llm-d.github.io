@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { themes as prismThemes } from 'prism-react-renderer';
 import { makeDocsPreprocessor } from './scripts/lib/preprocess.mjs';
 import { loadMenuConfig, makeSidebarItemsGenerator, validateMenuConfig } from './scripts/lib/sidebar.mjs';
-import { docsRedirects, loadRedirects } from './scripts/lib/redirects.mjs';
+import { docsRedirects, latestHasNewTree, loadRedirects } from './scripts/lib/redirects.mjs';
 
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -34,6 +34,11 @@ const releasedVersions = fs.existsSync(versionsFile)
   ? JSON.parse(fs.readFileSync(versionsFile, 'utf8'))
   : [];
 const LATEST_VERSION = releasedVersions[0];
+// The glossary moved from api-reference/ to reference/ in the v0.10 restructure. The
+// navbar must point at whichever path the newest RELEASE uses, not at the dev docs.
+const GLOSSARY_PATH = latestHasNewTree(LATEST_VERSION)
+  ? '/docs/reference/glossary'
+  : '/docs/api-reference/glossary';
 const docsVersions = LATEST_VERSION
   ? {
       lastVersion: LATEST_VERSION,
@@ -251,6 +256,13 @@ const config = {
             to: "/docs",
             position: "left",
             label: "Docs",
+          },
+          {
+            // The glossary is the single most useful page for a reader new to the
+            // project, and it would otherwise sit last inside Reference.
+            to: GLOSSARY_PATH,
+            position: "left",
+            label: "Glossary",
           },
           { to: "/blog", label: "Blog", position: "left" },
           {
