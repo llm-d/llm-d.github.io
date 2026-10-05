@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { themes as prismThemes } from 'prism-react-renderer';
 import { makeDocsPreprocessor } from './scripts/lib/preprocess.mjs';
 import { loadMenuConfig, makeSidebarItemsGenerator, validateMenuConfig } from './scripts/lib/sidebar.mjs';
+import { docsRedirects, loadRedirects } from './scripts/lib/redirects.mjs';
 
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -23,6 +24,9 @@ const siteDir = path.dirname(fileURLToPath(import.meta.url));
 // sync, so loadMenuConfig tolerates a missing file and we only validate when docs/ exists.
 const docsDir = path.join(siteDir, 'docs');
 const menuConfig = loadMenuConfig(path.join(docsDir, 'menu-config.json'));
+// docs/redirects.json is likewise authored upstream and synced into docs/. It maps old
+// doc paths to new ones so a page move does not break existing links.
+const redirectMoves = loadRedirects(path.join(docsDir, 'redirects.json'));
 if (fs.existsSync(docsDir)) validateMenuConfig(menuConfig, docsDir);
 const versionsFile = path.join(siteDir, 'versions.json');
 /** @type {string[]} */
@@ -170,6 +174,8 @@ const config = {
             from: "/blog/bottleneck-aware-scheduling-for-llm-inference",
             to: "/blog/sticky-until-saturated-token-aware-routing",
           },
+          // Page moves declared upstream in docs/redirects.json.
+          ...docsRedirects(redirectMoves, LATEST_VERSION),
         ],
       },
     ],

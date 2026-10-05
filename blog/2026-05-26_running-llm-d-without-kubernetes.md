@@ -93,7 +93,7 @@ And because the plugin sits below the interface, everything above it is unchange
 
 ## A minimal example
 
-The full, deploy-ready path - EPP, Envoy, and vLLM commands, verification, and a Prometheus scrape example - lives in the upstream [No-Kubernetes Deployment guide](https://github.com/llm-d/llm-d/tree/main/guides/no-kubernetes-deployment), with the architecture and design rationale in the companion [no-Kubernetes deployment doc](https://github.com/llm-d/llm-d/blob/main/docs/infrastructure/no-kubernetes-deployment.md). Rather than reproduce it, this section isolates the two pieces that are specific to file discovery, so the guide reads as a concrete instance of an understood pattern.
+The full, deploy-ready path - EPP, Envoy, and vLLM commands, verification, and a Prometheus scrape example - lives in the upstream [No-Kubernetes Deployment guide](https://github.com/llm-d/llm-d/tree/main/guides/no-kubernetes-deployment), with the architecture and design rationale in the companion [no-Kubernetes deployment doc](https://github.com/llm-d/llm-d/blob/main/docs/platform/without-kubernetes.md). Rather than reproduce it, this section isolates the two pieces that are specific to file discovery, so the guide reads as a concrete instance of an understood pattern.
 
 ### 1. The endpoints file
 
