@@ -218,9 +218,12 @@ const config = {
         respectPrefersColorScheme: true,
       },
       announcementBar: {
-        id: "llm-d-0-9-0",
+        // Bump the id on every release so the banner reappears for readers who
+        // dismissed the previous one. The link goes to /docs, which always resolves
+        // to the newest released version.
+        id: "llm-d-0-10-0",
         content:
-          '🎉 <b>llm-d 0.9 is here!</b> Hardened for scale with router HA, enhanced autoscaling, end-to-end observability and expanded hardware support. <a href="/blog/llm-d-v0.9-hardened-for-scale"><b>Read the release blog →</b></a>',
+          '🎉 <b>llm-d 0.10 is here!</b> Operational hardening and production readiness: safer rollouts, signed release images, vLLM 0.30, and a published test matrix for every well-lit path. <a href="/docs"><b>Read the docs →</b></a>',
         textColor: "#ffffff",
         isCloseable: true,
       },
