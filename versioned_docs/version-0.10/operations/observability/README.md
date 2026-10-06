@@ -18,4 +18,4 @@ Every well-lit path guide links here for observability setup. Install the stack 
 
 ## Runnable assets
 
-Scripts, Grafana dashboard JSON, alerting rules, and tracing manifests live in [`guides/recipes/observability/`](https://github.com/llm-d/llm-d/tree/main/guides/recipes/observability/) in the llm-d repository (not published as website pages).
+Scripts, Grafana dashboard JSON, alerting rules, and tracing manifests live in [`guides/recipes/observability/`](https://github.com/llm-d/llm-d/tree/v0.10/guides/recipes/observability/) in the llm-d repository (not published as website pages).

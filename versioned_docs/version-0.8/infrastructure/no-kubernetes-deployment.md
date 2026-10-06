@@ -16,7 +16,7 @@ the [parity caveats][blog-parity] for the full list.
 
 ## Deploy
 
-See the [no-Kubernetes deployment guide](https://github.com/llm-d/llm-d/tree/main/guides/no-kubernetes-deployment) for manifests and step-by-step deployment.
+See the [no-Kubernetes deployment guide](https://github.com/llm-d/llm-d/tree/v0.8/guides/no-kubernetes-deployment) for manifests and step-by-step deployment.
 
 ## Architecture
 

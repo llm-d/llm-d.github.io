@@ -6,7 +6,7 @@ This directory contains documentation specific to each Kubernetes provider for d
 
 To add a new infrastructure provider to our well-lit paths, we request the following support:
 
-* Documentation on configuring the platform to support one or more [well-lit path guides](https://github.com/llm-d/llm-d/tree/main/guides)
+* Documentation on configuring the platform to support one or more [well-lit path guides](https://github.com/llm-d/llm-d/tree/v0.10/guides)
 * The appropriate configuration contributed to the guide to deal with provider-specific variations
 * An automated test environment that validates the supported guides
 * At least one documented platform maintainer who responds to GitHub issues and is available for regular discussion in the llm-d slack channel `#sig-installation`.

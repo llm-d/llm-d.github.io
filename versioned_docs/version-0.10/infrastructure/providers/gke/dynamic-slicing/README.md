@@ -2,8 +2,8 @@
 
 This document covers the llm-d-specific configuration for serving model servers on GKE TPU7x dynamic sub-slices. Cluster preparation is documented by Google Cloud and linked below rather than repeated here. It is the infrastructure prerequisite for the dynamic-slice recipes in the well-lit path guides:
 
-* [Optimized Baseline on TPU sub-slices](https://github.com/llm-d/llm-d/tree/main/guides/optimized-baseline/modelserver/tpu/v7/vllm-dynamic-slice)
-* [P/D Disaggregation on TPU sub-slices](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation#dynamic-sub-slices-tpu7x)
+* [Optimized Baseline on TPU sub-slices](https://github.com/llm-d/llm-d/tree/v0.10/guides/optimized-baseline/modelserver/tpu/v7/vllm-dynamic-slice)
+* [P/D Disaggregation on TPU sub-slices](https://github.com/llm-d/llm-d/tree/v0.10/guides/pd-disaggregation#dynamic-sub-slices-tpu7x)
 
 ## Overview
 

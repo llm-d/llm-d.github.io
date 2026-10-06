@@ -26,7 +26,7 @@ llm-d uses the APIs defined in the Gateway API Inference Extension (GAIE) projec
 | [InferenceObjective](../api-reference/inferenceobjective.md) | Defines performance goals (priority, latency) for specific model workloads within a pool. | `llm-d/llm-d-router` |
 | [InferenceModelRewrite](../api-reference/inferencemodelrewrite.md) | Specifies rules for rewriting model names in request bodies, enabling traffic splitting and canary rollouts. | `llm-d/llm-d-router` |
 
-The versions for the GAIE CRDs are derived from the [env.sh file](https://github.com/llm-d/llm-d/tree/main/guides/env.sh). This makes upgrades easy as they are stored in a common location across guides.
+The versions for the GAIE CRDs are derived from the [env.sh file](https://github.com/llm-d/llm-d/tree/v0.10/guides/env.sh). This makes upgrades easy as they are stored in a common location across guides.
 
 ```bash
 export REPO_ROOT=$(realpath $(git rev-parse --show-toplevel))
@@ -152,11 +152,11 @@ llm-d Router supports optional integration with Kubernetes Gateways. These are t
 | Istio | `1.29.x` | Default gateway provider |
 | AgentGateway | `v1.4.x` | Preferred for new deployments |
 
-Install instructions live under [`guides/recipes/gateway/`](https://github.com/llm-d/llm-d/tree/main/guides/recipes/gateway).
+Install instructions live under [`guides/recipes/gateway/`](https://github.com/llm-d/llm-d/tree/v0.10/guides/recipes/gateway).
 
 ## 6. Async Processor
 
-The [Async Processor](https://github.com/llm-d/llm-d-async) is an optional component that pulls inference requests from a message queue, gates dispatch on pool capacity, and forwards them to llm-d Router. It is deployed via Helm — see the [asynchronous processing guide](https://github.com/llm-d/llm-d/tree/main/guides/batch-serving/asynchronous-processing) and the [operations guide](../operations/async-processor.md).
+The [Async Processor](https://github.com/llm-d/llm-d-async) is an optional component that pulls inference requests from a message queue, gates dispatch on pool capacity, and forwards them to llm-d Router. It is deployed via Helm — see the [asynchronous processing guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/batch-serving/asynchronous-processing) and the [operations guide](../operations/async-processor.md).
 
 | Chart | Version | OCI Registry | Description |
 |-------|---------|--------------|-------------|
