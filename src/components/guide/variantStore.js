@@ -11,14 +11,16 @@
  * <Tabs groupId="engine" queryString="engine">, so engine tab groups and the
  * selector stay in sync in both directions.
  */
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useStorageSlot } from '@docusaurus/theme-common';
 import { useHistory, useLocation } from '@docusaurus/router';
 import useIsBrowser from '@docusaurus/useIsBrowser';
 
 export const ACCELERATOR_STORAGE_KEY = 'llmd.guide.accelerator';
+// Tabs groupId whose storage slot / query param GuideProvider owns.
+export const ENGINE_GROUP = 'engine';
 // Same key Docusaurus Tabs use for groupId="engine".
-export const ENGINE_STORAGE_KEY = 'docusaurus.tab.engine';
+export const ENGINE_STORAGE_KEY = `docusaurus.tab.${ENGINE_GROUP}`;
 export const ACCELERATOR_PARAM = 'accelerator';
 export const ENGINE_PARAM = 'engine';
 
@@ -187,27 +189,36 @@ export function pickTab(items, selection) {
  * selector. preprocess.mjs emits it next to tab groups whose README
  * <details> carry data-when (e.g. data-when="ACCELERATOR_TYPE=tpu/v7-dynamic-slice"),
  * so the accelerator -> tab mapping comes from the guide content rather than
- * being hardcoded here. Runs when the selection changes; a tab the reader
- * clicks afterwards is left alone.
+ * being hardcoded here. Runs when the selection (or the mapping) changes; a
+ * tab the reader clicks afterwards is left alone.
+ *
+ * The engine group is never synced here: GuideProvider owns the
+ * docusaurus.tab.engine slot and ?engine= param, and two writers would thrash.
  */
 export function TabSync({ groupId, items = [] }) {
   const guide = useGuide();
   const history = useHistory();
   const [stored, slot] = useStorageSlot(`docusaurus.tab.${groupId}`);
+  const hasGuide = guide != null;
   const accelerator = guide?.selection.accelerator;
   const engine = guide?.selection.engine;
+  // Stable identity for the mapping: MDX passes a fresh array each render.
+  const itemsKey = JSON.stringify(items);
+  // Read the stored tab through a ref: the effect must not re-run when the
+  // reader clicks a tab, or the click would be undone.
+  const storedRef = useRef(stored);
+  storedRef.current = stored;
   useEffect(() => {
-    if (!guide) return;
-    const target = pickTab(items, { accelerator, engine });
+    if (!hasGuide || groupId === ENGINE_GROUP) return;
+    const target = pickTab(JSON.parse(itemsKey), { accelerator, engine });
     if (!target) return;
-    if (stored !== target) slot.set(target);
+    if (storedRef.current !== target) slot.set(target);
     // Tabs read ?<groupId>= before storage; only rewrite it when present.
     const q = new URLSearchParams(window.location.search);
     if (q.has(groupId) && q.get(groupId) !== target) {
       q.set(groupId, target);
       history.replace({ ...history.location, search: `?${q.toString()}` });
     }
-    // Deliberately not keyed on `stored`: a manual tab click must not be undone.
-  }, [guide != null, accelerator, engine, groupId]);
+  }, [hasGuide, groupId, itemsKey, accelerator, engine, slot, history]);
   return null;
 }

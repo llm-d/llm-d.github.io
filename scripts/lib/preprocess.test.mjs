@@ -15,7 +15,7 @@ function setup() {
   write('architecture/README.md');
   write('infrastructure/gateway/README.md');
   write('well-lit-paths/foundations/demo/index.mdx');
-  write('well-lit-paths/foundations/demo/benchmark-run1.md');
+  write('well-lit-paths/foundations/demo/benchmark-run1.mdx');
   write('operations/x.md');
   fs.writeFileSync(
     path.join(docsDir, '.sync-map.json'),
@@ -24,7 +24,7 @@ function setup() {
       repo: 'https://github.com/llm-d/llm-d',
       pages: {
         'well-lit-paths/foundations/demo/index.mdx': 'guides/demo/README.md',
-        'well-lit-paths/foundations/demo/benchmark-run1.md': 'guides/demo/bench/run1/README.md',
+        'well-lit-paths/foundations/demo/benchmark-run1.mdx': 'guides/demo/bench/run1/README.md',
       },
       guides: { 'guides/demo': { docs: 'well-lit-paths/foundations/demo', img: '/img/docs/guides/demo' } },
     }),
@@ -65,7 +65,7 @@ test('guide page links resolve against original repo location', () => {
   assert.ok(out.includes(`[values](${GH}/tree/release-0.9/guides/demo/router/values.yaml)`));
   assert.ok(out.includes(`[other](${GH}/tree/release-0.9/guides/flow-control/tuning.md)`));
   assert.ok(out.includes(`[helpers](${GH}/tree/release-0.9/helpers/hf-token.md)`));
-  assert.ok(out.includes('[bench](./benchmark-run1.md#results)'));
+  assert.ok(out.includes('[bench](./benchmark-run1.mdx#results)'));
   assert.ok(out.includes('![chart](/img/docs/guides/demo/bench/run1/chart.png)'));
   assert.ok(out.includes('<img src="/img/docs/guides/demo/bench/run1/x.svg" />'));
   assert.ok(out.includes('[anchor](#foo)'));
@@ -73,10 +73,10 @@ test('guide page links resolve against original repo location', () => {
 
 test('child guide page images and links', () => {
   const { run } = setup();
-  const out = run('well-lit-paths/foundations/demo/benchmark-run1.md', '![l](latency.png)\n[up](../../README.md)\n{x}');
+  const out = run('well-lit-paths/foundations/demo/benchmark-run1.mdx', '![l](latency.png)\n[up](../../README.md)\n{x}');
   assert.ok(out.includes('![l](/img/docs/guides/demo/bench/run1/latency.png)'));
   assert.ok(out.includes('[up](./index.mdx)'));
-  assert.ok(out.includes('&#123;x&#125;'), '.md pages keep brace escaping');
+  assert.ok(out.includes('&#123;x&#125;'), 'mapped child pages are MDX-escaped');
 });
 
 test('regular docs link to published guides in-site, other guides to GitHub at ref', () => {
@@ -257,4 +257,134 @@ test('guideToMdx: tabs with data-when get a TabSync driven by the README', () =>
   );
   // Groups without data-when stay plain Docusaurus Tabs.
   assert.equal((out.match(/<TabSync /g) || []).length, 1);
+});
+
+test('mdxSafeLine escapes angle-bracket placeholders and comparisons', () => {
+  assert.equal(mdxSafeLine('kubectl -n <your-namespace> get pods'), 'kubectl -n &lt;your-namespace> get pods');
+  assert.equal(mdxSafeLine('set <HF_TOKEN> first'), 'set &lt;HF_TOKEN> first');
+  assert.equal(mdxSafeLine('if a<b then'), 'if a&lt;b then');
+  assert.equal(mdxSafeLine('if a<b'), 'if a&lt;b');
+  assert.equal(mdxSafeLine('<model-name>/<revision>'), '&lt;model-name>/&lt;revision>');
+  // Known HTML tags (complete) are kept, closing tags too.
+  assert.equal(mdxSafeLine('<a href="x">y</a> <kbd>k</kbd>'), '<a href="x">y</a> <kbd>k</kbd>');
+  assert.equal(mdxSafeLine('<p align="center"><br></p>'), '<p align="center"><br /></p>');
+  // Capitalized components: kept only when self-closed or closed.
+  assert.equal(mdxSafeLine('<Foo a="1" />'), '<Foo a="1" />');
+  assert.equal(mdxSafeLine('<Foo>x</Foo>'), '<Foo>x</Foo>');
+  assert.equal(mdxSafeLine('<Foo> alone'), '&lt;Foo> alone');
+  assert.equal(mdxSafeLine('<Foo>', { components: new Set(['Foo']) }), '<Foo>');
+  // Inline code and CommonMark <destination> links untouched.
+  assert.equal(mdxSafeLine('run `kubectl -n <ns>` now'), 'run `kubectl -n <ns>` now');
+  assert.equal(mdxSafeLine('[doc](<a b.md>)'), '[doc](<a b.md>)');
+});
+
+test('mapped child pages get the full MDX-safety pass', () => {
+  const { run } = setup();
+  const out = run(
+    'well-lit-paths/foundations/demo/benchmark-run1.mdx',
+    ['---', 'title: "Run 1"', '---', '<!-- note -->', 'Use <your-namespace> and <HF_TOKEN><br>', 'See <https://x.io>.'].join('\n'),
+  );
+  assert.ok(out.startsWith('---\ntitle: "Run 1"\n---\n'), out);
+  assert.ok(out.includes('{/* note */}'), out);
+  assert.ok(out.includes('Use &lt;your-namespace> and &lt;HF_TOKEN><br />'), out);
+  assert.ok(out.includes('See [https://x.io](https://x.io).'), out);
+});
+
+const tabsGroup = (group, items, { end = true } = {}) => [
+  `<!-- tabs:start group=${group} -->`,
+  ...items.flatMap(([attrs, label, body]) => [`<details${attrs}>`, `<summary><b>${label}</b></summary>`, '', body, '', '</details>']),
+  ...(end ? ['<!-- tabs:end -->'] : []),
+];
+
+test('guideToMdx closes and warns about a group missing its end marker', () => {
+  const warnings = [];
+  const src = [
+    ...tabsGroup('mode', [[' open', 'Standalone Mode', 's'], ['', 'Gateway Mode', 'g']], { end: false }),
+    '',
+    '## Next section',
+    'prose',
+  ].join('\n');
+  const out = guideToMdx(src, { meta: {}, file: 'docs/x/index.mdx', warn: (m) => warnings.push(m) });
+  assert.equal(warnings.length, 1, warnings.join('\n'));
+  assert.match(warnings[0], /docs\/x\/index\.mdx: missing <!-- tabs:end --> for <!-- tabs:start group=mode --> \(line 1\); closing the group before line 15/);
+  const close = out.indexOf('</Tabs>');
+  assert.ok(close !== -1 && close < out.indexOf('## Next section'), out);
+  assert.equal((out.match(/<\/Tabs>/g) || []).length, 1);
+});
+
+test('guideToMdx warns about groups still open at end of file and stray end markers', () => {
+  const warnings = [];
+  const src = [
+    '<!-- variants:end -->',
+    '<!-- variants:start -->',
+    '<details data-when="ACCELERATOR_TYPE=gpu">',
+    '<summary>GPU</summary>',
+    '',
+    'g',
+  ].join('\n');
+  const out = guideToMdx(src, { meta: {}, warn: (m) => warnings.push(m) });
+  assert.equal(warnings.length, 2, warnings.join('\n'));
+  assert.match(warnings[0], /<!-- variants:end --> at line 1 has no matching start/);
+  assert.match(warnings[1], /missing <!-- variants:end --> .*closing it at end of file/);
+  assert.ok(/<\/Variant>\s*<\/VariantGroup>\s*$/.test(out), out);
+});
+
+test('guideToMdx closes an inner group missing its end at the outer end marker', () => {
+  const warnings = [];
+  const src = [
+    '<!-- variants:start -->',
+    '<details data-when="ACCELERATOR_TYPE=gpu">',
+    '<summary>GPU</summary>',
+    '',
+    ...tabsGroup('mode', [[' open', 'Standalone Mode', 's']], { end: false }),
+    '',
+    '</details>',
+    '<!-- variants:end -->',
+  ].join('\n');
+  const out = guideToMdx(src, { meta: {}, warn: (m) => warnings.push(m) });
+  assert.equal(warnings.length, 1, warnings.join('\n'));
+  const order = ['<TabItem', '</TabItem>', '</Tabs>', '</Variant>', '</VariantGroup>'].map((t) => out.indexOf(t));
+  assert.deepEqual([...order].sort((a, b) => a - b), order, out);
+});
+
+test('guideToMdx accepts single-quoted and unquoted data-when', () => {
+  const src = [
+    '<!-- variants:start -->',
+    "<details open data-when='ACCELERATOR_TYPE=gpu'>",
+    '<summary>GPU</summary>',
+    '',
+    'g',
+    '',
+    '</details>',
+    '<details data-when=ACCELERATOR_TYPE=tpu/v7>',
+    '<summary>TPU</summary>',
+    '',
+    't',
+    '',
+    '</details>',
+    '<!-- variants:end -->',
+  ].join('\n');
+  const out = guideToMdx(src, { meta: {}, warn: assert.fail });
+  assert.ok(out.includes('<Variant when="ACCELERATOR_TYPE=gpu" label="GPU">'), out);
+  assert.ok(out.includes('<Variant when="ACCELERATOR_TYPE=tpu/v7" label="TPU">'), out);
+});
+
+test('guideToMdx de-duplicates tab values within a group', () => {
+  const src = [
+    '<!-- tabs:start group=mode -->',
+    '<details open>', '', 'a', '', '</details>',
+    '<details>', '', 'b', '', '</details>',
+    '<details>', '', 'c', '', '</details>',
+    '<!-- tabs:end -->',
+  ].join('\n');
+  const out = guideToMdx(src, { meta: {}, warn: assert.fail });
+  const values = [...out.matchAll(/<TabItem value="([^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(values, ['option', 'option-2', 'option-3']);
+});
+
+test('guideToMdx never emits a TabSync for the engine group', () => {
+  const src = tabsGroup('engine', [[' open', 'vLLM', 'v'], [' data-when="ACCELERATOR_TYPE=tpu/v7"', 'SGLang', 's']]).join('\n');
+  const out = guideToMdx(src, { meta: { engine_labels: { vllm: 'vLLM', sglang: 'SGLang' } }, warn: assert.fail });
+  assert.ok(out.includes('<TabItem value="sglang" label="SGLang">'), out);
+  assert.ok(!out.includes('<TabSync'), out);
 });

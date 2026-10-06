@@ -93,16 +93,52 @@ func TestSyncGuidesPages(t *testing.T) {
 		t.Error("body is not verbatim README content")
 	}
 
-	// Child page -> .md with its own edit URL.
-	child, err := os.ReadFile(filepath.Join(gdir, "benchmark-run1.md"))
+	// Child page -> always .mdx, with its own edit URL. Its upstream
+	// frontmatter is merged: our title wins, other keys are kept, no
+	// duplicates.
+	if fileExists(filepath.Join(gdir, "benchmark-run1.md")) {
+		t.Error("child page must be written as .mdx, not .md")
+	}
+	child, err := os.ReadFile(filepath.Join(gdir, "benchmark-run1.mdx"))
 	if err != nil {
 		t.Fatalf("child page: %v", err)
 	}
-	if !strings.Contains(string(child), `custom_edit_url: "https://github.com/llm-d/llm-d/edit/release-9.9/guides/demo/bench/run1/README.md"`) {
+	cs := string(child)
+	if !strings.Contains(cs, `custom_edit_url: "https://github.com/llm-d/llm-d/edit/release-9.9/guides/demo/bench/run1/README.md"`) {
 		t.Errorf("child edit url missing:\n%s", child)
 	}
-	if strings.Contains(string(child), "llmd_guide") {
+	if strings.Contains(cs, "llmd_guide") {
 		t.Error("child page should not carry llmd_guide")
+	}
+	cparts := strings.SplitN(cs, "\n---\n", 2)
+	if len(cparts) != 2 {
+		t.Fatalf("child page frontmatter not closed:\n%s", cs)
+	}
+	var cfm yaml.Node
+	if err := yaml.Unmarshal([]byte(strings.TrimPrefix(cparts[0], "---\n")), &cfm); err != nil {
+		t.Fatalf("child frontmatter not valid YAML: %v\n%s", err, cparts[0])
+	}
+	keys := map[string]int{}
+	m := cfm.Content[0]
+	for i := 0; i+1 < len(m.Content); i += 2 {
+		keys[m.Content[i].Value]++
+	}
+	for k, n := range keys {
+		if n != 1 {
+			t.Errorf("frontmatter key %q appears %d times", k, n)
+		}
+	}
+	if v := mappingValue(m, "title"); v == nil || v.Value != "Benchmark: run1" {
+		t.Errorf("manifest title must win over upstream title:\n%s", cparts[0])
+	}
+	if v := mappingValue(m, "description"); v == nil || v.Value != "Results of benchmark run 1" {
+		t.Errorf("upstream description not kept:\n%s", cparts[0])
+	}
+	if v := mappingValue(m, "tags"); v == nil || len(v.Content) != 2 {
+		t.Errorf("upstream tags not kept:\n%s", cparts[0])
+	}
+	if strings.Contains(cparts[1], "Upstream run title") || !strings.HasPrefix(cparts[1], "# Run 1\n") {
+		t.Errorf("child body should be the README body after its frontmatter:\n%s", cparts[1])
 	}
 
 	// Superseded stub removed.
@@ -168,8 +204,8 @@ func TestSyncGuidesMenuAndMap(t *testing.T) {
 		t.Errorf("sync map ref/repo = %q %q", sm.Ref, sm.Repo)
 	}
 	want := map[string]string{
-		"well-lit-paths/foundations/demo/index.mdx":         "guides/demo/README.md",
-		"well-lit-paths/foundations/demo/benchmark-run1.md": "guides/demo/bench/run1/README.md",
+		"well-lit-paths/foundations/demo/index.mdx":          "guides/demo/README.md",
+		"well-lit-paths/foundations/demo/benchmark-run1.mdx": "guides/demo/bench/run1/README.md",
 	}
 	for k, v := range want {
 		if sm.Pages[k] != v {
@@ -189,16 +225,76 @@ func TestSyncGuidesMissingManifest(t *testing.T) {
 }
 
 func TestGuidesManifestValidate(t *testing.T) {
-	bad := []GuidesManifest{
-		{Version: 2},
-		{Version: 1, Sections: map[string]GuideSection{"a": {Target: "../x"}}},
-		{Version: 1, Sections: map[string]GuideSection{"a": {Target: "x", Guides: []GuideEntry{{Dir: "docs/x", Slug: "x", Title: "X"}}}}},
-		{Version: 1, Sections: map[string]GuideSection{"a": {Target: "x", Guides: []GuideEntry{{Dir: "guides/x", Slug: "a/b", Title: "X"}}}}},
-		{Version: 1, Sections: map[string]GuideSection{"a": {Target: "x", Guides: []GuideEntry{{Dir: "guides/x", Slug: "x", Title: "X", Pages: []GuidePage{{From: "../y.md", To: "y", Title: "Y"}}}}}}},
+	sec := func(target string, g GuideEntry) GuidesManifest {
+		return GuidesManifest{Version: 1, Sections: map[string]GuideSection{"a": {Target: target, Guides: []GuideEntry{g}}}}
 	}
-	for i, gm := range bad {
+	ok := GuideEntry{Dir: "guides/x", Slug: "x", Title: "X", Pages: []GuidePage{{From: "b/README.md", To: "b", Title: "B"}}}
+	good := sec("well-lit-paths/foundations", ok)
+	if err := good.validate(); err != nil {
+		t.Fatalf("valid manifest rejected: %v", err)
+	}
+	withSlug := func(s string) GuideEntry { g := ok; g.Slug = s; return g }
+	withDir := func(d string) GuideEntry { g := ok; g.Dir = d; return g }
+	withPage := func(from, to string) GuideEntry {
+		g := ok
+		g.Pages = []GuidePage{{From: from, To: to, Title: "B"}}
+		return g
+	}
+	bad := map[string]GuidesManifest{
+		"version":        {Version: 2},
+		"target ..":      sec("../x", ok),
+		"target .":       sec(".", ok),
+		"target a/./b":   sec("a/./b", ok),
+		"target a/..":    sec("a/..", ok),
+		"target empty":   sec("", ok),
+		"target abs":     sec("/x", ok),
+		"dir not guides": sec("x", withDir("docs/x")),
+		"dir guides/..":  sec("x", withDir("guides/..")),
+		"dir guides/./x": sec("x", withDir("guides/./x")),
+		"slug a/b":       sec("x", withSlug("a/b")),
+		"slug ..":        sec("x", withSlug("..")),
+		"slug .":         sec("x", withSlug(".")),
+		"slug empty":     sec("x", withSlug("")),
+		"slug backslash": sec("x", withSlug(`a\b`)),
+		"from ..":        sec("x", withPage("../y.md", "y")),
+		"to ..":          sec("x", withPage("y.md", "..")),
+		"to .":           sec("x", withPage("y.md", ".")),
+		"to a/b":         sec("x", withPage("y.md", "a/b")),
+		"to index":       sec("x", withPage("y.md", "index")),
+	}
+	for name, gm := range bad {
 		if err := gm.validate(); err == nil {
-			t.Errorf("case %d: expected validation error", i)
+			t.Errorf("%s: expected validation error", name)
 		}
+	}
+}
+
+func TestMergeFrontMatter(t *testing.T) {
+	ours := []fmField{{"title", `"Ours"`}, {"custom_edit_url", `"https://e"`}}
+	cases := []struct {
+		name, in, want string
+	}{
+		{"none", "# Hi\n", "---\ntitle: \"Ours\"\ncustom_edit_url: \"https://e\"\n---\n\n# Hi\n"},
+		{"owned keys replaced", "---\ntitle: Theirs\ncustom_edit_url: x\n---\n# Hi\n",
+			"---\ntitle: \"Ours\"\ncustom_edit_url: \"https://e\"\n---\n# Hi\n"},
+		{"other keys kept", "---\ntitle: Theirs\nsidebar_class_name: foo\n---\n\n# Hi\n",
+			"---\ntitle: \"Ours\"\ncustom_edit_url: \"https://e\"\nsidebar_class_name: foo\n---\n\n# Hi\n"},
+		{"crlf", "---\r\ntitle: Theirs\r\nkeep: 1\r\n---\r\n# Hi\r\n",
+			"---\ntitle: \"Ours\"\ncustom_edit_url: \"https://e\"\nkeep: 1\n---\n# Hi\r\n"},
+		{"empty block", "---\n---\n# Hi\n", "---\ntitle: \"Ours\"\ncustom_edit_url: \"https://e\"\n---\n# Hi\n"},
+		{"unclosed is body", "---\n# Hi\n", "---\ntitle: \"Ours\"\ncustom_edit_url: \"https://e\"\n---\n\n---\n# Hi\n"},
+	}
+	for _, c := range cases {
+		got, err := mergeFrontMatter(ours, c.in)
+		if err != nil {
+			t.Errorf("%s: %v", c.name, err)
+			continue
+		}
+		if got != c.want {
+			t.Errorf("%s:\ngot  %q\nwant %q", c.name, got, c.want)
+		}
+	}
+	if _, err := mergeFrontMatter(ours, "---\n- a\n- b\n---\n# Hi\n"); err == nil {
+		t.Error("non-mapping frontmatter should be an error")
 	}
 }

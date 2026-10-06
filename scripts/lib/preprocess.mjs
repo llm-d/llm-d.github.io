@@ -232,7 +232,7 @@ export function makeDocsPreprocessor({ docsDir, syncMap: syncMapOverride } = {})
       })
       .join('\n');
 
-    if (isMdx && mapped) content = guideToMdx(content, { meta: guideMetaFromFrontMatter(frontMatter) });
+    if (isMdx && mapped) content = guideToMdx(content, { meta: guideMetaFromFrontMatter(frontMatter), file: `docs/${docsRelFile}` });
     return frontMatter + content;
   };
 }
@@ -255,18 +255,69 @@ function guideMetaFromFrontMatter(fm) {
 // ---------------------------------------------------------------------------
 
 const VOID_TAGS = ['br', 'hr', 'img', 'input', 'source', 'wbr', 'col', 'area', 'meta', 'link'];
+// Lowercase HTML elements a README may use (GitHub's sanitizer allow-list,
+// roughly). Anything else after `<` is prose, e.g. <your-namespace>, <HF_TOKEN>.
+const HTML_TAGS = new Set([
+  ...VOID_TAGS,
+  'a', 'abbr', 'b', 'bdi', 'bdo', 'blockquote', 'caption', 'center', 'cite', 'code', 'colgroup', 'dd', 'del',
+  'details', 'dfn', 'div', 'dl', 'dt', 'em', 'figcaption', 'figure', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'i',
+  'ins', 'kbd', 'li', 'mark', 'ol', 'p', 'picture', 'pre', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'small',
+  'span', 'strike', 'strong', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead', 'time',
+  'tr', 'tt', 'u', 'ul', 'var', 'video',
+]);
 const KNOWN_ENGINE_VALUES = { vllm: 'vllm', sglang: 'sglang', 'tensorrt-llm': 'trtllm', trtllm: 'trtllm' };
 
 const jsxAttr = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\{/g, '&#123;').replace(/\}/g, '&#125;');
 const stripTags = (s) => s.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
 const commentToMdx = (text) => `{/* ${text.trim().replace(/\*\//g, '* /')} */}`;
 
+// A complete tag starting at the match position: <name attrs?> / </name> / <name attrs? />.
+const TAG_AT_RE = /^<(\/?)([A-Za-z][\w.:-]*)((?:\s+[^<>]*?)?)\s*(\/?)>/;
+
+/**
+ * Whether the `<` at s[i] starts markup MDX should see as JSX: a complete
+ * known lowercase HTML tag, or a Capitalized component that is self-closed,
+ * or opened and closed on this line, or listed in `components` (closed
+ * elsewhere in the document). Everything else is prose and gets escaped.
+ */
+function isMarkupAt(s, i, components) {
+  const m = s.slice(i).match(TAG_AT_RE);
+  if (!m) return false;
+  const [, closing, name, , selfClose] = m;
+  if (/^[a-z]/.test(name)) return HTML_TAGS.has(name);
+  if (!/^[A-Z]/.test(name)) return false;
+  if (selfClose || components?.has(name)) return true;
+  if (closing) return new RegExp(`<${name}(?:[\\s/>]|$)`).test(s.slice(0, i));
+  return s.indexOf(`</${name}>`, i) !== -1;
+}
+
+/**
+ * Capitalized component names that are both opened and closed in `content`
+ * (outside code), so a multi-line <Foo>…</Foo> is kept as JSX.
+ */
+export function closedComponents(content) {
+  const names = new Set();
+  let inFence = false;
+  const opened = new Set();
+  const closed = new Set();
+  for (const line of content.split('\n')) {
+    if (FENCE_RE.test(line)) { inFence = !inFence; continue; }
+    if (inFence) continue;
+    const prose = line.replace(/`+[^`]*`+/g, '');
+    for (const m of prose.matchAll(/<(\/?)([A-Z][\w.]*)[\s/>]/g)) (m[1] ? closed : opened).add(m[2]);
+  }
+  for (const n of opened) if (closed.has(n)) names.add(n);
+  return names;
+}
+
 /**
  * Make one prose line MDX-safe: escape braces and stray `<` outside inline
  * code, turn autolinks into links, self-close void tags, class -> className,
  * and convert single-line HTML comments.
+ * @param {{components?: Set<string>}} [opts] Capitalized components closed
+ *   elsewhere in the document (see closedComponents).
  */
-export function mdxSafeLine(line) {
+export function mdxSafeLine(line, { components } = {}) {
   return line
     .split(/(`+[^`]*`+)/g)
     .map((seg) => {
@@ -275,8 +326,11 @@ export function mdxSafeLine(line) {
       s = s.replace(/\{/g, '&#123;').replace(/\}/g, '&#125;');
       // Autolinks are not supported by MDX.
       s = s.replace(/<((?:https?|mailto):[^\s>]+)>/g, (_, u) => `[${u}](${u})`);
-      // Stray `<` that does not start a tag.
-      s = s.replace(/<(?!\/?[A-Za-z][\w.:-]*(?:\s|\/?>|$))/g, '&lt;');
+      // Stray `<` (placeholders like <your-namespace>, comparisons like a<b).
+      // `](<url>)` is CommonMark link-destination syntax and is left alone.
+      s = s.replace(/</g, (lt, i, str) =>
+        (i >= 2 && str.slice(i - 2, i) === '](') || isMarkupAt(str, i, components) ? lt : '&lt;',
+      );
       // Void tags must self-close.
       s = s.replace(new RegExp(`<(${VOID_TAGS.join('|')})\\b([^>]*?)\\s*/?>`, 'gi'), (_, t, attrs) => `<${t}${attrs} />`);
       s = s.replace(/(<[A-Za-z][^>]*?\s)class=/g, '$1className=');
@@ -286,12 +340,19 @@ export function mdxSafeLine(line) {
     .join('');
 }
 
+// name="v" | name='v' | name=v. Unquoted values run to the next whitespace
+// and may contain "=" (data-when=ACCELERATOR_TYPE=gpu), which strict HTML
+// forbids but browsers and GitHub accept.
+const attrValueRe = (name) => new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s"'<>\`]+))`, 'i');
+
 function parseDetailsOpen(line) {
   const m = line.match(/^\s*<details\b([^>]*)>(.*)$/i);
   if (!m) return null;
   const attrs = m[1];
-  const when = (attrs.match(/\bdata-when\s*=\s*"([^"]*)"/i) || [])[1] || null;
-  return { open: /\bopen\b/i.test(attrs.replace(/data-when\s*=\s*"[^"]*"/i, '')), when, rest: m[2] };
+  const re = attrValueRe('data-when');
+  const wm = attrs.match(re);
+  const when = (wm && (wm[1] ?? wm[2] ?? wm[3])) || null;
+  return { open: /(?:^|\s)open(?:[\s=]|$)/i.test(attrs.replace(re, '')), when, rest: m[2] };
 }
 
 /**
@@ -299,11 +360,20 @@ function parseDetailsOpen(line) {
  *  - <!-- variants:start --> <details data-when=…> groups -> <VariantGroup>/<Variant>
  *  - <!-- tabs:start group=engine --> <details> groups -> <Tabs>/<TabItem>;
  *    tabs whose <details> carry data-when also get a <TabSync> so the guide
- *    selector picks the matching tab (the mapping lives in the README)
+ *    selector picks the matching tab (the mapping lives in the README). The
+ *    engine group is excluded: the guide selector owns that tab slot.
  *  - <!-- guide:env.static start/end --> fences -> <GuideEnv blocks={[…]} />
  *  - other HTML comments -> {/* … *\/}; prose made MDX-safe (code untouched).
+ *
+ * A group whose end marker is missing is closed (with a warning) before the
+ * first content that is not one of its <details> items, or at end of file,
+ * so <Tabs>/<VariantGroup> only ever get <TabItem>/<Variant> children.
+ *
+ * @param {string} content
+ * @param {{meta?: object, file?: string, warn?: (msg: string) => void}} [opts]
  */
-export function guideToMdx(content, { meta } = {}) {
+export function guideToMdx(content, { meta, file, warn = console.warn } = {}) {
+  const report = (msg) => warn(`[preprocess] ${file || 'guide page'}: ${msg}`);
   const labelToEngine = {};
   for (const [k, v] of Object.entries(meta?.engine_labels || {})) labelToEngine[String(v).toLowerCase()] = k;
   const engineValue = (label) => {
@@ -318,7 +388,20 @@ export function guideToMdx(content, { meta } = {}) {
     const base = label.replace(/\s+mode\s*$/i, '') || label;
     return base.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   };
+  // Tab values must be unique within a group: foo, foo-2, foo-3, …
+  const uniqueValue = (group, value) => {
+    let v = value || 'option';
+    if (group.values.has(v)) {
+      let n = 2;
+      while (group.values.has(`${v}-${n}`)) n++;
+      v = `${v}-${n}`;
+    }
+    group.values.add(v);
+    return v;
+  };
 
+  const components = closedComponents(content);
+  const safe = (s) => mdxSafeLine(s, { components });
   const lines = content.split('\n');
   const out = [];
   const push = (...ls) => out.push(...ls);
@@ -326,15 +409,18 @@ export function guideToMdx(content, { meta } = {}) {
     if (out.length && out[out.length - 1].trim() !== '') push('');
     push(tag, '');
   };
-  // groups stack: {kind: 'variants'|'tabs', group, itemOpen, items}
+  // groups stack: {kind: 'variants'|'tabs', group, start, itemOpen, items, values}
   const groups = [];
+  const marker = (g) => `<!-- ${g.kind}:start${g.kind === 'tabs' ? ` group=${g.group}` : ''} --> (line ${g.start})`;
   const closeGroup = (group) => {
     if (group.itemOpen) pushBlock(group.kind === 'variants' ? '</Variant>' : '</TabItem>');
     pushBlock(group.kind === 'variants' ? '</VariantGroup>' : '</Tabs>');
-    if (group.kind === 'tabs' && group.items.some((it) => it.when)) {
+    if (group.kind === 'tabs' && group.group !== 'engine' && group.items.some((it) => it.when)) {
       pushBlock(`<TabSync groupId="${group.group}" items={${JSON.stringify(group.items)}} />`);
     }
   };
+  const isGroupStart = (l) => /^\s*<!--\s*(variants|tabs):start\b.*-->\s*$/.test(l);
+  const isComment = (l) => /^\s*<!--.*-->\s*$/.test(l);
   let inFence = false;
   let fenceMarker = '';
 
@@ -348,6 +434,19 @@ export function guideToMdx(content, { meta } = {}) {
       if (f && f[1][0] === fenceMarker[0] && f[1].length >= fenceMarker.length && line.trim() === f[1]) inFence = false;
       continue;
     }
+
+    const end = line.match(/^\s*<!--\s*(variants|tabs):end\s*-->\s*$/);
+
+    // Content between items of a group (not a <details> item, a comment or
+    // the end marker) means the end marker is missing: close the group here
+    // and handle the line in the enclosing context.
+    if (group && !group.itemOpen && line.trim() !== '' && !end && !parseDetailsOpen(line) && (isGroupStart(line) || !isComment(line))) {
+      report(`missing <!-- ${group.kind}:end --> for ${marker(group)}; closing the group before line ${i + 1}`);
+      closeGroup(groups.pop());
+      i--;
+      continue;
+    }
+
     const f = line.match(FENCE_RE);
     if (f) {
       inFence = true;
@@ -372,7 +471,7 @@ export function guideToMdx(content, { meta } = {}) {
         }
         if (cur !== null) cur.push(l);
       }
-      if (j >= lines.length) { push(mdxSafeLine(line)); continue; } // unterminated: leave as-is
+      if (j >= lines.length) { push(safe(line)); continue; } // unterminated: leave as-is
       pushBlock(`<GuideEnv blocks={${JSON.stringify(blocks)}} />`);
       i = j;
       continue;
@@ -383,16 +482,26 @@ export function guideToMdx(content, { meta } = {}) {
     const ts = line.match(/^\s*<!--\s*tabs:start\b(.*?)-->\s*$/);
     if (vs || ts) {
       if (vs) {
-        groups.push({ kind: 'variants', itemOpen: false });
+        groups.push({ kind: 'variants', start: i + 1, itemOpen: false });
         pushBlock('<VariantGroup>');
       } else {
         const g = (ts[1].match(/\bgroup=([\w-]+)/) || [])[1] || 'engine';
-        groups.push({ kind: 'tabs', group: g, itemOpen: false, items: [] });
+        groups.push({ kind: 'tabs', group: g, start: i + 1, itemOpen: false, items: [], values: new Set() });
         pushBlock(`<Tabs groupId="${g}" queryString="${g}">`);
       }
       continue;
     }
-    if (group && /^\s*<!--\s*(variants|tabs):end\s*-->\s*$/.test(line)) {
+    if (end) {
+      const at = groups.map((g) => g.kind).lastIndexOf(end[1]);
+      if (at === -1) {
+        report(`<!-- ${end[1]}:end --> at line ${i + 1} has no matching start; ignoring it`);
+        continue;
+      }
+      while (groups.length > at + 1) {
+        const inner = groups.pop();
+        report(`missing <!-- ${inner.kind}:end --> for ${marker(inner)}; closing it at line ${i + 1}`);
+        closeGroup(inner);
+      }
       closeGroup(groups.pop());
       continue;
     }
@@ -415,12 +524,12 @@ export function guideToMdx(content, { meta } = {}) {
         if (group.kind === 'variants') {
           pushBlock(`<Variant when="${jsxAttr(d.when || '')}" label="${jsxAttr(label)}">`);
         } else {
-          const value = tabValue(group.group, label);
+          const value = uniqueValue(group, tabValue(group.group, label));
           group.items.push({ value, when: d.when, default: d.open });
           pushBlock(`<TabItem value="${jsxAttr(value)}" label="${jsxAttr(label)}"${d.open ? ' default' : ''}>`);
         }
         group.itemOpen = true;
-        if (rest.trim()) push(mdxSafeLine(rest));
+        if (rest.trim()) push(safe(rest));
         continue;
       }
       if (/^\s*<\/details>\s*$/.test(line) && group.itemOpen) {
@@ -440,14 +549,18 @@ export function guideToMdx(content, { meta } = {}) {
         const endLine = lines[j];
         const idx = endLine.indexOf('-->');
         parts.push(endLine.slice(0, idx));
-        push(mdxSafeLine(mc[1]) + commentToMdx(parts.join('\n')) + mdxSafeLine(endLine.slice(idx + 3)));
+        push(safe(mc[1]) + commentToMdx(parts.join('\n')) + safe(endLine.slice(idx + 3)));
         i = j;
         continue;
       }
     }
 
-    push(mdxSafeLine(line));
+    push(safe(line));
   }
-  while (groups.length) closeGroup(groups.pop());
+  while (groups.length) {
+    const g = groups.pop();
+    report(`missing <!-- ${g.kind}:end --> for ${marker(g)}; closing it at end of file`);
+    closeGroup(g);
+  }
   return out.join('\n');
 }

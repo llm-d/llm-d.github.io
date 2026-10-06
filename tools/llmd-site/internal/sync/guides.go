@@ -7,17 +7,18 @@ package sync
 // docs/well-lit-paths/guides.yaml) lists, per site section, the guides to
 // publish, their slug/title/position and optional child pages. For each guide:
 //
-//   - README.md -> docs/<target>/<slug>/index.md(x), verbatim except for a
-//     prepended frontmatter (title, custom_edit_url, llmd_guide metadata);
-//   - child pages -> docs/<target>/<slug>/<to>.md(x);
+//   - README.md -> docs/<target>/<slug>/index.mdx, verbatim except for the
+//     frontmatter (title, custom_edit_url, llmd_guide metadata) merged into
+//     any frontmatter the README already has;
+//   - child pages -> docs/<target>/<slug>/<to>.mdx;
 //   - images under the guide dir -> static/img/docs/guides/<slug>/<rel>
 //     (never under docs/, which would create sidebar categories);
 //   - sidebar metadata is merged into the synced docs/menu-config.json;
 //   - docs/.sync-map.json maps every published page back to its repo path and
 //     records the synced ref, for build-time link rewriting (preprocess.mjs).
 //
-// Pages that contain variant/tab groups or the guide env block are written as
-// .mdx so the preprocessor can turn the GitHub-friendly markers into JSX.
+// Pages are always .mdx so the preprocessor makes them MDX-safe and turns the
+// GitHub-friendly markers (variant/tab groups, env block) into JSX.
 
 import (
 	"bytes"
@@ -83,17 +84,12 @@ var guideImageExts = map[string]bool{
 	".png": true, ".svg": true, ".jpg": true, ".jpeg": true, ".gif": true, ".webp": true,
 }
 
-// mdxMarkers make a page compile as MDX.
-var mdxMarkers = []string{"<!-- variants:start", "<!-- tabs:start", "<!-- guide:env.static start"}
-
-func needsMDX(content string) bool {
-	for _, m := range mdxMarkers {
-		if strings.Contains(content, m) {
-			return true
-		}
-	}
-	return false
-}
+// pageExt is the extension of every published guide page. Pages are always
+// written as .mdx, never .md: preprocess.mjs makes mapped .mdx pages
+// MDX-safe (HTML comments, void tags, autolinks, <placeholder> text, braces)
+// and turns the guide markers into components. A .md page would skip that
+// pass, yet Docusaurus still compiles it with the MDX toolchain.
+const pageExt = ".mdx"
 
 type guideSyncer struct {
 	repoRoot  string // upstream checkout
@@ -190,8 +186,8 @@ func (gm *GuidesManifest) validate() error {
 			if g.Dir == "" || !cleanRel(g.Dir) || !strings.HasPrefix(g.Dir, "guides/") {
 				return fmt.Errorf("sections.%s.guides[%d]: dir must be under guides/", name, i)
 			}
-			if g.Slug == "" || strings.Contains(g.Slug, "/") {
-				return fmt.Errorf("sections.%s.guides[%d]: slug is required and must not contain /", name, i)
+			if !validSegment(g.Slug) {
+				return fmt.Errorf("sections.%s.guides[%d]: slug is required and must be a single path segment (no /, . or ..)", name, i)
 			}
 			if g.Title == "" {
 				return fmt.Errorf("sections.%s.guides[%d]: title is required", name, i)
@@ -201,8 +197,8 @@ func (gm *GuidesManifest) validate() error {
 			}
 			seen[g.Slug] = true
 			for j, p := range g.Pages {
-				if p.From == "" || !cleanRel(p.From) || p.To == "" || strings.Contains(p.To, "/") || p.Title == "" {
-					return fmt.Errorf("sections.%s.guides[%d].pages[%d]: from/to/title required (to is a file stem)", name, i, j)
+				if p.From == "" || !cleanRel(p.From) || !validSegment(p.To) || p.To == "index" || p.Title == "" {
+					return fmt.Errorf("sections.%s.guides[%d].pages[%d]: from/to/title required (to is a file stem other than index; no /, . or ..)", name, i, j)
 				}
 			}
 		}
@@ -210,12 +206,23 @@ func (gm *GuidesManifest) validate() error {
 	return nil
 }
 
+// cleanRel reports whether p is a clean, relative, slash-separated path with
+// no empty, "." or ".." components.
 func cleanRel(p string) bool {
-	if strings.HasPrefix(p, "/") {
+	if p == "" || strings.HasPrefix(p, "/") || path.Clean(p) != p {
 		return false
 	}
-	c := path.Clean(p)
-	return c == p && c != ".." && !strings.HasPrefix(c, "../")
+	for _, seg := range strings.Split(p, "/") {
+		if !validSegment(seg) {
+			return false
+		}
+	}
+	return true
+}
+
+// validSegment reports whether s is usable as a single path component.
+func validSegment(s string) bool {
+	return s != "" && s != "." && s != ".." && !strings.ContainsAny(s, `/\`)
 }
 
 func (gs *guideSyncer) syncGuide(target string, g GuideEntry) (int, error) {
@@ -246,18 +253,14 @@ func (gs *guideSyncer) syncGuide(target string, g GuideEntry) (int, error) {
 		return 0, err
 	}
 	content := string(raw)
-	ext := ".md"
-	if needsMDX(content) {
-		ext = ".mdx"
+	fm := []fmField{
+		{"title", jsonString(g.Title)},
+		{"custom_edit_url", jsonString(gs.editURL(g.Dir, "README.md"))},
+		{"llmd_guide", meta},
 	}
-	fm := []string{
-		"title: " + jsonString(g.Title),
-		"custom_edit_url: " + jsonString(gs.editURL(g.Dir, "README.md")),
-		"llmd_guide: " + meta,
-	}
-	outRel := path.Join(docsRel, "index"+ext)
+	outRel := path.Join(docsRel, "index"+pageExt)
 	if err := gs.writePage(outRel, fm, content); err != nil {
-		return 0, err
+		return 0, fmt.Errorf("README.md: %w", err)
 	}
 	gs.syncMap.Pages[outRel] = path.Join(g.Dir, "README.md")
 	count := 1
@@ -268,18 +271,13 @@ func (gs *guideSyncer) syncGuide(target string, g GuideEntry) (int, error) {
 		if err != nil {
 			return count, fmt.Errorf("page %s: %w", p.From, err)
 		}
-		c := string(b)
-		pext := ".md"
-		if needsMDX(c) {
-			pext = ".mdx"
+		prel := path.Join(docsRel, p.To+pageExt)
+		pfm := []fmField{
+			{"title", jsonString(p.Title)},
+			{"custom_edit_url", jsonString(gs.editURL(g.Dir, p.From))},
 		}
-		prel := path.Join(docsRel, p.To+pext)
-		pfm := []string{
-			"title: " + jsonString(p.Title),
-			"custom_edit_url: " + jsonString(gs.editURL(g.Dir, p.From)),
-		}
-		if err := gs.writePage(prel, pfm, c); err != nil {
-			return count, err
+		if err := gs.writePage(prel, pfm, string(b)); err != nil {
+			return count, fmt.Errorf("page %s: %w", p.From, err)
 		}
 		gs.syncMap.Pages[prel] = path.Join(g.Dir, p.From)
 		gs.menuPages[path.Join(docsRel, p.To)] = map[string]any{"label": p.Title, "position": i + 1}
@@ -299,19 +297,102 @@ func (gs *guideSyncer) editURL(dir, file string) string {
 	return fmt.Sprintf("%s/edit/%s/%s", gs.repoURL, gs.ref, path.Join(dir, file))
 }
 
-func (gs *guideSyncer) writePage(docsRel string, fm []string, content string) error {
+// fmField is one frontmatter entry the sync owns; Value is already valid
+// YAML (a JSON scalar or single-line JSON object).
+type fmField struct {
+	Key, Value string
+}
+
+func (gs *guideSyncer) writePage(docsRel string, fm []fmField, content string) error {
 	dst := filepath.Join(gs.docsDir, filepath.FromSlash(docsRel))
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		return err
 	}
-	var out string
-	if strings.HasPrefix(content, "---\n") {
-		// Merge into existing frontmatter: our keys go first.
-		out = "---\n" + strings.Join(fm, "\n") + "\n" + strings.TrimPrefix(content, "---\n")
-	} else {
-		out = "---\n" + strings.Join(fm, "\n") + "\n---\n\n" + content
+	out, err := mergeFrontMatter(fm, content)
+	if err != nil {
+		return err
 	}
 	return os.WriteFile(dst, []byte(out), 0o644)
+}
+
+// mergeFrontMatter returns content with the sync-owned fields as its
+// frontmatter. If content already starts with a frontmatter block, its other
+// keys are kept (after ours) and any key we own (e.g. an upstream title:) is
+// dropped, so the result never has duplicate keys. The body is verbatim.
+func mergeFrontMatter(fm []fmField, content string) (string, error) {
+	var b strings.Builder
+	b.WriteString("---\n")
+	for _, f := range fm {
+		b.WriteString(f.Key + ": " + f.Value + "\n")
+	}
+	block, body, ok := splitFrontMatter(content)
+	if !ok {
+		b.WriteString("---\n\n")
+		b.WriteString(content)
+		return b.String(), nil
+	}
+	var doc yaml.Node
+	if err := yaml.Unmarshal([]byte(block), &doc); err != nil {
+		return "", fmt.Errorf("parse existing frontmatter: %w", err)
+	}
+	if len(doc.Content) > 0 {
+		m := doc.Content[0]
+		if m.Kind != yaml.MappingNode {
+			return "", fmt.Errorf("existing frontmatter is not a mapping")
+		}
+		owned := map[string]bool{}
+		for _, f := range fm {
+			owned[f.Key] = true
+		}
+		kept := make([]*yaml.Node, 0, len(m.Content))
+		for i := 0; i+1 < len(m.Content); i += 2 {
+			if !owned[m.Content[i].Value] {
+				kept = append(kept, m.Content[i], m.Content[i+1])
+			}
+		}
+		if len(kept) > 0 {
+			m.Content = kept
+			var buf bytes.Buffer
+			enc := yaml.NewEncoder(&buf)
+			enc.SetIndent(2)
+			if err := enc.Encode(m); err != nil {
+				return "", err
+			}
+			if err := enc.Close(); err != nil {
+				return "", err
+			}
+			b.Write(buf.Bytes())
+		}
+	}
+	b.WriteString("---\n")
+	b.WriteString(body)
+	return b.String(), nil
+}
+
+// splitFrontMatter splits a leading "---" ... "---" block from content.
+// block is the YAML between the fences; body is everything after the closing
+// fence line.
+func splitFrontMatter(content string) (block, body string, ok bool) {
+	first, rest, found := strings.Cut(content, "\n")
+	if !found || strings.TrimRight(first, "\r") != "---" {
+		return "", content, false
+	}
+	off := 0
+	for off <= len(rest) {
+		line, _, more := strings.Cut(rest[off:], "\n")
+		if strings.TrimRight(line, "\r \t") == "---" {
+			end := off + len(line)
+			if more {
+				end++
+			}
+			return rest[:off], rest[end:], true
+		}
+		if !more {
+			break
+		}
+		off += len(line) + 1
+	}
+	return "", content, false
 }
 
 // guideYAML is the subset of guides/<name>/guide.yaml the site needs.
