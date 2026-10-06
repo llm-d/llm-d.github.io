@@ -164,12 +164,28 @@ export function applyMenuConfig(items, config) {
 }
 
 /**
+ * The sidebar generator. Each docs version uses the menu-config.json in its own
+ * content dir (versioned_docs/version-X/menu-config.json is frozen by
+ * `docusaurus docs:version` at cut time), so menu changes on dev never reshape
+ * a released version's sidebar. `menuConfig` (the dev docs/ config) is the
+ * fallback for versions without a snapshot.
+ *
  * @param {{ categories: Record<string, object>, pages: Record<string, object> }} menuConfig
  */
 export function makeSidebarItemsGenerator(menuConfig) {
+  /** @type {Map<string, ReturnType<typeof loadMenuConfig>>} */
+  const byContentPath = new Map();
+  const configFor = (contentPath) => {
+    if (!contentPath) return menuConfig;
+    if (!byContentPath.has(contentPath)) {
+      const p = path.join(contentPath, 'menu-config.json');
+      byContentPath.set(contentPath, fs.existsSync(p) ? loadMenuConfig(p) : menuConfig);
+    }
+    return byContentPath.get(contentPath);
+  };
   return async function sidebarItemsGenerator({ defaultSidebarItemsGenerator, ...args }) {
     const items = await defaultSidebarItemsGenerator(args);
-    return applyMenuConfig(items, menuConfig);
+    return applyMenuConfig(items, configFor(args.version?.contentPath));
   };
 }
 
