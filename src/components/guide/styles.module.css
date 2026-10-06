@@ -1,38 +1,11 @@
-/* Guide page chrome: "Run this guide" banner, variant selector, variant blocks. */
+/* Guide page chrome: variant selector, variant blocks. */
 
-.banner,
 .selector {
   border: 1px solid var(--ifm-color-emphasis-300);
   border-radius: var(--ifm-global-radius);
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
   background: var(--ifm-background-surface-color);
-}
-
-.banner {
-  border-left: 4px solid var(--ifm-color-primary);
-}
-
-.banner :global(.theme-code-block) {
-  margin-bottom: 0;
-}
-
-.bannerHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.25rem;
-}
-
-.bannerText {
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-}
-
-.sourceLink {
-  font-size: 0.9rem;
 }
 
 .selectorRow {

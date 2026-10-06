@@ -83,30 +83,6 @@ export function GuideEnv({ blocks = [] }) {
   );
 }
 
-/** "Run this guide" banner: branch-pinned clone + REPO_ROOT reminder. */
-export function RunBanner({ meta }) {
-  const ref = meta.ref || 'main';
-  const repo = meta.repo || 'https://github.com/llm-d/llm-d';
-  const cloneUrl = `${repo}.git`;
-  const repoName = repo.split('/').pop();
-  const cmd = `git clone ${cloneUrl} && cd ${repoName} && git checkout ${ref}\nexport REPO_ROOT=$(pwd)`;
-  return (
-    <div className={styles.banner} data-llmd-guide-banner="">
-      <div className={styles.bannerHeader}>
-        <strong>Run this guide</strong>
-        <Link className={styles.sourceLink} href={`${repo}/tree/${ref}/${meta.dir}`}>
-          View source on GitHub
-        </Link>
-      </div>
-      <p className={styles.bannerText}>
-        The commands below use files from the <code>{repoName}</code> repository at <code>{ref}</code>. Clone it first;
-        every command assumes <code>REPO_ROOT</code> points at that clone.
-      </p>
-      <CodeBlock language="bash">{cmd}</CodeBlock>
-    </div>
-  );
-}
-
 /** Page-level accelerator × engine picker driven by the guide support matrix. */
 export function VariantSelector() {
   const guide = useGuide();
