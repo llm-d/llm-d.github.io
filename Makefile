@@ -1,4 +1,4 @@
-.PHONY: llmd-site test-llmd-site validate-manifest sync-docs build build-all check-links check-images ci golden-capture golden-verify version-cut
+.PHONY: llmd-site test-llmd-site test-preprocess validate-manifest sync-docs build build-all check-links check-images ci golden-capture golden-verify version-cut
 
 LLMD_SITE_DIR := tools/llmd-site
 LLMD_SITE_BIN := bin/llmd-site
@@ -8,6 +8,10 @@ llmd-site:
 
 test-llmd-site:
 	cd $(LLMD_SITE_DIR) && go test ./...
+
+# Unit tests for the Docusaurus markdown preprocessor (no npm deps needed).
+test-preprocess:
+	node --test scripts/lib/preprocess.test.mjs
 
 validate-manifest: llmd-site
 	./$(LLMD_SITE_BIN) validate

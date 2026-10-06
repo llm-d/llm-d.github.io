@@ -17,6 +17,15 @@ func (m *Manifest) Validate() error {
 	if m.Sources.LLMD.Remote.DocsRoot == "" {
 		return fmt.Errorf("sources.llm-d.remote.docs_root is required")
 	}
+	if gm := m.Sources.LLMD.GuidesManifest; gm != "" {
+		clean := filepath.ToSlash(filepath.Clean(gm))
+		if filepath.IsAbs(gm) || strings.HasPrefix(gm, "/") || clean == ".." || strings.HasPrefix(clean, "../") {
+			return fmt.Errorf("sources.llm-d.guides_manifest must be a repo-relative path, got %q", gm)
+		}
+		if ext := strings.ToLower(filepath.Ext(gm)); ext != ".yaml" && ext != ".yml" {
+			return fmt.Errorf("sources.llm-d.guides_manifest must be a .yaml file, got %q", gm)
+		}
+	}
 
 	for i, c := range m.Copies {
 		if c.From == "" {

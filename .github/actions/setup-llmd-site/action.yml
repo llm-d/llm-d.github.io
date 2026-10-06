@@ -14,6 +14,9 @@ inputs:
   go-test:
     description: Run make test-llmd-site before building the CLI
     default: 'true'
+  preprocess-test:
+    description: Run make test-preprocess (needs Node, i.e. a non-empty npm-command)
+    default: 'true'
 
 runs:
   using: composite
@@ -43,3 +46,8 @@ runs:
       if: inputs.go-test == 'true'
       shell: bash
       run: make test-llmd-site
+
+    - name: Run markdown preprocessor tests
+      if: inputs.preprocess-test == 'true' && inputs.npm-command != ''
+      shell: bash
+      run: make test-preprocess

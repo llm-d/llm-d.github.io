@@ -1,0 +1,114 @@
+/* Guide page chrome: variant selector, variant blocks. */
+
+.selector {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: var(--ifm-global-radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--ifm-background-surface-color);
+}
+
+.selectorRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.4rem;
+}
+
+.selectorLabel {
+  font-weight: 600;
+  min-width: 6.5rem;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.button,
+.buttonActive {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--ifm-color-emphasis-400);
+  background: transparent;
+  color: var(--ifm-font-color-base);
+  cursor: pointer;
+}
+
+.button:hover:not(:disabled) {
+  border-color: var(--ifm-color-primary);
+}
+
+.buttonActive {
+  background: var(--ifm-color-primary);
+  border-color: var(--ifm-color-primary);
+  color: var(--ifm-color-white);
+}
+
+.button:disabled,
+.buttonActive:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.status {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  background: var(--ifm-color-emphasis-200);
+}
+
+.status[data-status='validated'] {
+  background: var(--ifm-color-success-contrast-background);
+  color: var(--ifm-color-success-contrast-foreground);
+}
+
+.muted {
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.85rem;
+  margin: 0.25rem 0 0;
+}
+
+.notice {
+  font-size: 0.85rem;
+  margin: 0.4rem 0 0;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  background: var(--ifm-color-warning-contrast-background);
+  color: var(--ifm-color-warning-contrast-foreground);
+}
+
+.variantGroup {
+  margin-bottom: var(--ifm-leading);
+}
+
+.variant {
+  border-left: 3px solid var(--ifm-color-primary-lightest);
+  padding-left: 0.75rem;
+}
+
+.variantLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-700);
+  margin-bottom: 0.25rem;
+}
+
+.variantFallback {
+  margin-bottom: var(--ifm-leading);
+}
+
+.variantFallbackLabel {
+  margin-bottom: 0.25rem;
+}
+
+.guideEnv :global(.theme-code-block) {
+  margin-bottom: 0.5rem;
+}

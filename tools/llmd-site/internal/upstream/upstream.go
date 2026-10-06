@@ -15,7 +15,11 @@ import (
 type Source struct {
 	Root   string // repo root
 	Branch string
-	Temp   bool   // remove Root on cleanup when true
+	Temp   bool // remove Root on cleanup when true
+	// Partial is true only for the tool-owned blob-less clone (cache dir).
+	// Materialize is a no-op otherwise so a user's local checkout
+	// (LLMD_REPO / --local) is never touched.
+	Partial bool
 }
 
 func (s *Source) DocsDir(m *manifest.Manifest) string {
@@ -33,8 +37,10 @@ func (s *Source) Cleanup() {
 }
 
 // Materialize checks out paths from HEAD in a partial (blob-less) clone.
+// It is a no-op unless s.Partial is set: running it against a user's working
+// tree would discard their uncommitted changes.
 func (s *Source) Materialize(paths ...string) error {
-	if len(paths) == 0 {
+	if !s.Partial || len(paths) == 0 {
 		return nil
 	}
 	args := append([]string{"-C", s.Root, "checkout", "HEAD", "--"}, paths...)
@@ -105,7 +111,7 @@ func Resolve(m *manifest.Manifest, opts Options) (*Source, error) {
 			fmt.Fprintf(os.Stderr, "    ! cached upstream clone unusable, re-cloning: %v\n", err)
 			_ = os.RemoveAll(dest)
 		} else {
-			return &Source{Root: dest, Branch: branch, Temp: false}, nil
+			return &Source{Root: dest, Branch: branch, Temp: false, Partial: true}, nil
 		}
 	} else if dirExists(dest) {
 		_ = os.RemoveAll(dest)
@@ -127,7 +133,7 @@ func cloneUpstream(m *manifest.Manifest, branch, url, dest string) (*Source, err
 	if err := cmd.Run(); err != nil {
 		return nil, fmt.Errorf("clone %s @ %s: %w", url, branch, err)
 	}
-	return &Source{Root: dest, Branch: branch, Temp: false}, nil
+	return &Source{Root: dest, Branch: branch, Temp: false, Partial: true}, nil
 }
 
 func dirExists(path string) bool {

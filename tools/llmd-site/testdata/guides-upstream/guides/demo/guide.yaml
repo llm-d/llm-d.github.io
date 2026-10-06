@@ -1,0 +1,26 @@
+name: demo
+_lists:
+  non_gpu: &non_gpu [amd, "tpu/v7"]
+env:
+  static:
+    BRANCH: main
+    ACCELERATOR_TYPE: {default: gpu, values: [gpu, amd, "tpu/v7"]}
+    MODEL_SERVER: {default: vllm, values: [vllm, sglang]}
+support:
+  engines:
+    vllm: vLLM
+    sglang: SGLang
+  accelerators:
+    gpu:
+      label: NVIDIA GPU
+      model: Qwen/Qwen3-32B
+      engines: {vllm: validated, sglang: validated}
+    amd:
+      label: AMD GPU
+      engines: {vllm: community}
+    "tpu/v7":
+      label: Google TPU v7
+      model: Qwen/Qwen3-8B
+      engines:
+        vllm: validated
+        sglang: {status: unsupported, issue: "https://github.com/llm-d/llm-d/issues/1"}

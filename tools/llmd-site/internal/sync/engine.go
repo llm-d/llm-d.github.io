@@ -33,7 +33,10 @@ func runNative(m *manifest.Manifest, opts Options, src *upstream.Source) error {
 	}
 
 	// Partial clones (--filter=blob:none) may not have blobs until checkout.
+	// Materialize is a no-op for local checkouts (LLMD_REPO / --local), so a
+	// developer's uncommitted upstream edits are never discarded.
 	_ = src.Materialize("docs")
+	_ = src.Materialize("guides")
 
 	fmt.Println("    Cleaning docs/ and static/img/docs/ ...")
 	if err := cleanDir(e.docsDir); err != nil {
@@ -49,6 +52,13 @@ func runNative(m *manifest.Manifest, opts Options, src *upstream.Source) error {
 	}
 	if err := e.validateDocCount(); err != nil {
 		return err
+	}
+
+	if gm := m.Sources.LLMD.GuidesManifest; gm != "" {
+		fmt.Println("    Publishing guides listed in " + gm + " ...")
+		if _, err := syncGuides(src.Root, gm, e.docsDir, e.staticDir, m.Sources.LLMD.Remote.URL, e.upstreamRef); err != nil {
+			return err
+		}
 	}
 
 	fmt.Println("    Copying doc images into static/img/docs/ ...")

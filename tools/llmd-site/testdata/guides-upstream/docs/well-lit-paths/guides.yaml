@@ -1,0 +1,16 @@
+version: 1
+sections:
+  foundations:
+    target: well-lit-paths/foundations
+    guides:
+      - dir: guides/demo
+        slug: demo
+        title: Deploy a Demo
+        position: 1
+        pages:
+          - from: bench/run1/README.md
+            to: benchmark-run1
+            title: "Benchmark: run1"
+  operations:
+    target: operations
+    guides: []

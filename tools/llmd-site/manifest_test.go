@@ -73,3 +73,23 @@ func TestSourceMap(t *testing.T) {
 		t.Fatalf("unexpected source map: %v", sm)
 	}
 }
+
+func TestManifestGuidesManifest(t *testing.T) {
+	root, err := repo.Root()
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, err := manifest.Load(repo.ManifestPath(root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if m.Sources.LLMD.GuidesManifest != "docs/well-lit-paths/guides.yaml" {
+		t.Fatalf("guides_manifest = %q", m.Sources.LLMD.GuidesManifest)
+	}
+	for _, bad := range []string{"../guides.yaml", "/abs/guides.yaml", "docs/guides.json"} {
+		m.Sources.LLMD.GuidesManifest = bad
+		if err := m.Validate(); err == nil {
+			t.Errorf("expected validation error for %q", bad)
+		}
+	}
+}
