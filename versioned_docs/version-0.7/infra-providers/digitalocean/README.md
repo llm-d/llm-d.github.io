@@ -266,4 +266,4 @@ helmfile destroy -f istio.helmfile.yaml
 * Only applies platform-specific configurations when explicitly using `-e digitalocean`
 * Follows clean configuration architecture principles with proper environment separation
 
-For detailed configuration options and advanced setups, see the main [llm-d guides](https://github.com/llm-d/llm-d/tree/main/guides/).
+For detailed configuration options and advanced setups, see the main [llm-d guides](https://github.com/llm-d/llm-d/tree/v0.7/guides/).

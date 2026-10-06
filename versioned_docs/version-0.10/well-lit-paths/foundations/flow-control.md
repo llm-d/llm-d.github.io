@@ -46,7 +46,7 @@ In addition to inter-tenant prioritization and fairness, flow control also enabl
 
 ## Deploy
 
-For detailed step-by-step instructions on how to deploy and configure Flow Control, see the [Flow Control Guide](https://github.com/llm-d/llm-d/tree/main/guides/flow-control).
+For detailed step-by-step instructions on how to deploy and configure Flow Control, see the [Flow Control Guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/flow-control).
 
 ## Architecture
 

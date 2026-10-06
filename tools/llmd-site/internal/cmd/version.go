@@ -29,7 +29,13 @@ func newVersionCmd() *cobra.Command {
 
 Before cutting, doc images are copied to static/img/versioned/<x.y>/ and
 preprocess fixups are baked into docs/ (link/image rewrites versioned docs
-need at build time). docs/ is then restored from upstream via sync.
+need at build time), with llm-d/llm-d GitHub links pinned to the release tag
+v<x.y> (the tag must exist upstream before the release is deployed). docs/ is
+then restored from upstream via sync.
+
+Sync docs/ from the release branch first so the frozen docs match the tag:
+
+  llmd-site sync release-0.9 && llmd-site version cut 0.9
 
 Examples:
   llmd-site version cut 0.9

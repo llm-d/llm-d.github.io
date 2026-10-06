@@ -35,7 +35,7 @@ For this quickstart, we will use the **Standalone Mode** deployment, which is th
   kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
   ```
 
-- [Create the `llm-d-hf-token` secret in your target namespace with the key `HF_TOKEN` matching a valid HuggingFace token](https://github.com/llm-d/llm-d/tree/main/helpers/hf-token.md) to pull models.
+- [Create the `llm-d-hf-token` secret in your target namespace with the key `HF_TOKEN` matching a valid HuggingFace token](https://github.com/llm-d/llm-d/tree/v0.9/helpers/hf-token.md) to pull models.
 <!-- llm-d-cicd:skip start -->
   ```bash
   export HF_TOKEN=<your HuggingFace token>

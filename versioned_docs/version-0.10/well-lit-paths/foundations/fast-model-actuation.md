@@ -11,9 +11,9 @@ FMA's value is *actuation speed*, not inference throughput. Resident servers add
 
 ## Deploy
 
-See the [fast model actuation guide](https://github.com/llm-d/llm-d/tree/main/guides/fast-model-actuation-base) for manifests and step-by-step deployment.
+See the [fast model actuation guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/fast-model-actuation-base) for manifests and step-by-step deployment.
 
-For **autoscaled** FMA — see the [fast model actuation + KEDA autoscaling guide](https://github.com/llm-d/llm-d/tree/main/guides/fast-model-actuation-keda), where KEDA scales the requester pool on EPP flow-control saturation metrics and each scale-up drives an FMA hot-wake (resident sleeping instance) or warm-create (new instance on an existing launcher).
+For **autoscaled** FMA — see the [fast model actuation + KEDA autoscaling guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/fast-model-actuation-keda), where KEDA scales the requester pool on EPP flow-control saturation metrics and each scale-up drives an FMA hot-wake (resident sleeping instance) or warm-create (new instance on an existing launcher).
 
 ## Architecture
 

@@ -74,10 +74,10 @@ paths is which EPP metrics the triggers read and how thresholds are derived.
 
 | Signal | EPP metrics | Threshold is | Guide |
 |---|---|---|---|
-| **Queue depth** | `llm_d_epp_flow_control_queue_size`, `llm_d_epp_request_running` | An absolute per-replica target, tuned per deployment | [keda-epp (queue signal)](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling/keda-epp) |
-| **Pool saturation** | `llm_d_epp_flow_control_pool_saturation`, `llm_d_epp_request_running` | A normalized ratio (0.0–1.0+), more portable across hardware | [keda-epp (saturation signal)](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling/keda-epp#choosing-a-scaling-signal) |
-| **Token backlog** | `llm_d_epp_inflight_tokens`, per-pod KV cache occupancy | Seconds of prefill queue wait, derived from a share of the TTFT SLO and a calibrated `peakPrefillThroughput` | [keda-epp-token-aware](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling/keda-epp-token-aware) |
-| **Estimated latency** | EPP predicted/actual TTFT and TPOT histograms | Latency ÷ SLO, with a hysteresis band | [slo-aware](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling/slo-aware) |
+| **Queue depth** | `llm_d_epp_flow_control_queue_size`, `llm_d_epp_request_running` | An absolute per-replica target, tuned per deployment | [keda-epp (queue signal)](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling/keda-epp) |
+| **Pool saturation** | `llm_d_epp_flow_control_pool_saturation`, `llm_d_epp_request_running` | A normalized ratio (0.0–1.0+), more portable across hardware | [keda-epp (saturation signal)](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling/keda-epp#choosing-a-scaling-signal) |
+| **Token backlog** | `llm_d_epp_inflight_tokens`, per-pod KV cache occupancy | Seconds of prefill queue wait, derived from a share of the TTFT SLO and a calibrated `peakPrefillThroughput` | [keda-epp-token-aware](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling/keda-epp-token-aware) |
+| **Estimated latency** | EPP predicted/actual TTFT and TPOT histograms | Latency ÷ SLO, with a hysteresis band | [slo-aware](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling/slo-aware) |
 
 Queue depth and pool saturation are lagging-to-leading counts of unmet demand.
 Token backlog exists because request counts rate an 8192-token prompt the same
@@ -144,7 +144,7 @@ keeps sole ownership of the HPA it generates and the autoscaling configuration
 above is unchanged: over-budget replicas simply stay Pending until quota frees.
 
 See the
-[Kueue-based replica rebalancing guide](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling/kueue-rebalancing).
+[Kueue-based replica rebalancing guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling/kueue-rebalancing).
 It supersedes the experimental
 replica rebalancer (removed in #2498),
 which enforced the same budget from *above* the HPA by patching `maxReplicas` on
@@ -202,6 +202,6 @@ the model to load.
 
 ## Deployment Guides
 
-Start from the [workload autoscaling guides](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling),
+Start from the [workload autoscaling guides](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling),
 which cover the reusable router values, `ScaledObject`s, authentication notes,
 and verification steps for each of the signals in the table above.

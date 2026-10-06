@@ -335,7 +335,7 @@ schedulingProfiles:
 ```
 
 :::note
-To use **precise** prefix-cache routing (exact, KV-event-driven) instead of the approximate default, declare a `precise-prefix-cache-producer` in the top-level `plugins` section and set `prefixMatchInfoProducerName: precise-prefix-cache-producer` on the `prefix-cache-scorer`; otherwise the scorer falls back to the approximate producer. See the [Precise Prefix Cache Routing guide](https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing).
+To use **precise** prefix-cache routing (exact, KV-event-driven) instead of the approximate default, declare a `precise-prefix-cache-producer` in the top-level `plugins` section and set `prefixMatchInfoProducerName: precise-prefix-cache-producer` on the `prefix-cache-scorer`; otherwise the scorer falls back to the approximate producer. See the [Precise Prefix Cache Routing guide](https://github.com/llm-d/llm-d/tree/v0.8/guides/precise-prefix-cache-routing).
 :::
 
 

@@ -18,11 +18,11 @@ Whether operating in a unified topology or a decoupled pencode-prefill-decode la
 
 ### Multimodal Aggregated Guide
 
-See the [multimodal aggregation guide](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/aggregation) for aggregated guide manifests and step-by-step deployment.
+See the [multimodal aggregation guide](https://github.com/llm-d/llm-d/tree/v0.9/guides/multimodal-serving/aggregation) for aggregated guide manifests and step-by-step deployment.
 
 ### Multimodal Disaggregated Guide
 
-See the [multimodal e-disaggregation guide](https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving/e-disaggregation) for disaggregated guide manifests and step-by-step deployment.
+See the [multimodal e-disaggregation guide](https://github.com/llm-d/llm-d/tree/v0.9/guides/multimodal-serving/e-disaggregation) for disaggregated guide manifests and step-by-step deployment.
 
 ---
 

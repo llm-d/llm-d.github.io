@@ -71,11 +71,14 @@ func Cut(opts CutOptions) error {
 
 	bakeScript := filepath.Join(opts.Root, "legacy", "scripts", "bake-docs.mjs")
 	if !opts.SkipBake {
-		fmt.Printf("    Baking preprocess fixups into docs/ (img-base %s)\n", imgBase)
+		// Pin llm-d GitHub links to the release tag so the frozen version keeps
+		// pointing at the sources it documents, not at whatever main becomes.
+		ref := "v" + label
+		fmt.Printf("    Baking preprocess fixups into docs/ (img-base %s, ref %s)\n", imgBase, ref)
 		if _, err := os.Stat(bakeScript); err != nil {
 			return fmt.Errorf("bake script not found at %s", bakeScript)
 		}
-		if err := build.RunNode(opts.Root, bakeScript, "--img-base", imgBase); err != nil {
+		if err := build.RunNode(opts.Root, bakeScript, "--img-base", imgBase, "--ref", ref); err != nil {
 			return err
 		}
 	}

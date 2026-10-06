@@ -64,7 +64,7 @@ Offloaded KV caches can live on several tiers, ordered by read/write latency: fr
 
 ## Deploy
 
-See the [Tiered Prefix Cache guide](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache) for manifests and step-by-step deployment.
+See the [Tiered Prefix Cache guide](https://github.com/llm-d/llm-d/tree/v0.8/guides/tiered-prefix-cache) for manifests and step-by-step deployment.
 
 ## Architecture
 
@@ -96,7 +96,7 @@ The connector does not evict data from the shared tier -- capacity is managed by
 
 ## Further Reading
 
-- [Tiered Prefix Cache guide](https://github.com/llm-d/llm-d/tree/main/guides/tiered-prefix-cache) — manifests and step-by-step deployment.
+- [Tiered Prefix Cache guide](https://github.com/llm-d/llm-d/tree/v0.8/guides/tiered-prefix-cache) — manifests and step-by-step deployment.
 - [vLLM KV offloading connector](https://vllm-project.github.io/2026/01/08/kv-offloading-connector.html) — design of the native `OffloadingConnector` and its tiering.
 - [Multi-tier KV offloading RFC](https://github.com/vllm-project/vllm/issues/38260) — the upstream tiering design.
 - [LMCache](https://lmcache.ai) and [SGLang HiCache](https://github.com/sgl-project/sglang) — alternative offloading implementations supported by this path.

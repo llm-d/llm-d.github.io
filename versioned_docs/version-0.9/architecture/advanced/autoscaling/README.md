@@ -11,7 +11,7 @@ With autoscaling, model servers are added or removed automatically to keep servi
   EPP's predicted/actual latency histograms as the signal — see
   [SLO-Aware Autoscaling with KEDA — the control law](./slo-aware-keda.md) for
   the derivation and the
-  [SLO-aware autoscaling guide](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling/README.slo-aware.md)
+  [SLO-aware autoscaling guide](https://github.com/llm-d/llm-d/tree/v0.9/guides/workload-autoscaling/README.slo-aware.md)
   for the deployable setup.
 
 - **HPA + WVA Metrics** - A global optimizer that, given an inventory of available accelerators, determines how to optimally place model servers — potentially serving different base models — onto those accelerators. WVA consumes supply-side signals (KV cache utilization, model server queue depth) or SLO-driven signals to proactively meet latency targets specified in its configuration. It accounts for heterogeneous hardware, disaggregated serving roles (prefill, decode, or both), and changing traffic patterns. When the accelerator inventory is insufficient to meet all targets, WVA degrades gracefully by prioritizing placement decisions that maximize overall SLO attainment.

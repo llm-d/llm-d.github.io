@@ -11,7 +11,7 @@ FMA's value is *actuation speed*, not inference throughput. Resident servers add
 
 ## Deploy
 
-See the [fast model actuation guide](https://github.com/llm-d/llm-d/tree/main/guides/fast-model-actuation) for manifests and step-by-step deployment.
+See the [fast model actuation guide](https://github.com/llm-d/llm-d/tree/v0.9/guides/fast-model-actuation) for manifests and step-by-step deployment.
 
 ## Architecture
 

@@ -138,7 +138,7 @@ llm-d Router supports optional integration with Kubernetes Gateways. These are t
 | AgentGateway | `v1.0.x` | Preferred for new deployments |
 | kgateway | `v2.2.x` | **Deprecated** — will be removed in the next release |
 
-Install instructions live under [`guides/recipes/gateway/`](https://github.com/llm-d/llm-d/tree/main/guides/recipes/gateway).
+Install instructions live under [`guides/recipes/gateway/`](https://github.com/llm-d/llm-d/tree/v0.8/guides/recipes/gateway).
 
 ## Source Repositories
 

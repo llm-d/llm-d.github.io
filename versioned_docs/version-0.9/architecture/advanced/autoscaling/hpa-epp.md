@@ -110,6 +110,6 @@ if EPP restarts. Plan EPP availability and client retries accordingly.
 ## Deployment Guide
 
 See the
-[KEDA + EPP workload-autoscaling guide](https://github.com/llm-d/llm-d/tree/main/guides/workload-autoscaling/README.hpa-epp.md)
+[KEDA + EPP workload-autoscaling guide](https://github.com/llm-d/llm-d/tree/v0.9/guides/workload-autoscaling/README.hpa-epp.md)
 for the reusable router values, `ScaledObject`, authentication notes, and
 verification steps.
