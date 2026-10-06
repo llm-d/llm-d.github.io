@@ -99,8 +99,12 @@ Or set `LLMD_REPO=/path/to/llm-d`.
 
 - **Dev docs** — `docs/` is mirrored from `llm-d/llm-d` by `./bin/llmd-site sync`.
   Sidebar labels and order come from `docs/menu-config.json` (synced with the docs).
-- **Versioning** — Latest release (**0.8**) at `/docs`; older at `/docs/0.7`; unreleased
-  dev at `/docs/dev`. Cut a release: `./bin/llmd-site version cut 0.9`.
+- **Versioning** — Latest release (newest entry in `versions.json`) at `/docs`; older at
+  `/docs/<x.y>`; unreleased dev at `/docs/dev`. Released versions are frozen snapshots
+  under `versioned_docs/`: each uses its own `menu-config.json` for the sidebar and links
+  to `llm-d/llm-d` at its release tag (`v<x.y>`), so changes on upstream `main` never
+  affect them. Cut a release: `./bin/llmd-site version cut <x.y>` — see
+  [Cutting a docs release](tools/llmd-site/README.md#cutting-a-docs-release).
 - **Community** — `contribute`, `code-of-conduct`, `security`, and `sigs` are generated
   on sync from upstream repo-root files (see `docs-sync.yaml`).
 - **Markdown fixups** — Applied at build time via `scripts/lib/preprocess.mjs` so synced

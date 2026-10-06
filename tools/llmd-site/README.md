@@ -35,6 +35,36 @@ make check-links        # after build
 make ci                 # full pipeline
 ```
 
+## Cutting a docs release
+
+`llmd-site version cut <x.y>` freezes the synced dev `docs/` as version `<x.y>`:
+it copies doc images to `static/img/versioned/<x.y>/`, bakes the build-time
+preprocess fixups into `docs/` with every `llm-d/llm-d` GitHub link (and the
+guide pages' "Run this guide" checkout ref) pinned to the release tag `v<x.y>`,
+runs `docusaurus docs:version` (which also snapshots `docs/menu-config.json`,
+the version's sidebar config), then re-syncs `docs/` from `main`.
+
+1. **Tag llm-d first.** Make sure the `v<x.y>` tag exists in `llm-d/llm-d`
+   before the release is deployed; until it does, the released version's
+   GitHub links 404.
+2. **Sync from the release branch**, so the frozen docs match the tag their
+   links point at (syncing `main` after it has moved on can reference files
+   that are not in the tag):
+
+   ```bash
+   make llmd-site
+   ./bin/llmd-site sync release-<x.y>
+   ./bin/llmd-site version cut <x.y>
+   ```
+
+3. **Review and commit** `versioned_docs/version-<x.y>/`, `versioned_sidebars/`,
+   `versions.json` and `static/img/versioned/<x.y>/`, plus any banner/landing
+   updates, then open the PR.
+
+Released versions never change with upstream: links stay on `v<x.y>` and the
+sidebar comes from `versioned_docs/version-<x.y>/menu-config.json`. To fix a
+released version, edit its files under `versioned_docs/` directly.
+
 ## Link checking
 
 - Default **static file server** (fast); set `serveMode: docusaurus` in `link-checker.config.json` to use `docusaurus serve`
