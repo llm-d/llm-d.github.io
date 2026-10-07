@@ -33,7 +33,7 @@ The precise implementation provides 100% accuracy by leveraging actual token dat
 
 ### Components
 - [**`tokenizer`**](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/requestcontrol/dataproducer/tokenizer) (DataProducer plugin)
-- [**`precise-prefix-cache-scorer`**](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/scheduling/scorer/preciseprefixcache) (Scorer plugin)
+- [**`precise-prefix-cache-scorer`**](https://github.com/llm-d/llm-d-inference-scheduler/tree/v0.9.0/pkg/epp/framework/plugins/scheduling/scorer/preciseprefixcache) (Scorer plugin)
 - **KV-Cache Indexer** (EPP Data Layer component)
 
 ### How it Works
