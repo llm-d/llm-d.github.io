@@ -23,13 +23,13 @@ Only scripts on the build/CI path remain outside `legacy/`:
 | `scripts/build-landing-css.mjs` | Landing Tailwind compile (`npm run landing:css`, called from `llmd-site build`) |
 | `scripts/lib/preprocess.mjs` | Docusaurus markdown preprocessor (imported by `docusaurus.config.js`) |
 | `scripts/lib/sidebar.mjs` | Docs sidebar from `docs/menu-config.json` (imported by `docusaurus.config.js`) |
+| `scripts/bake-docs.mjs` | Called by `llmd-site version cut` — bake preprocess fixups into docs |
+| `scripts/validate-menu-config.mjs` | `npm run validate:menu` — lint `docs/menu-config.json` |
 
 ## Manual / release-only (this directory)
 
 | Path | Purpose |
 |------|---------|
-| `legacy/scripts/bake-docs.mjs` | Called by `llmd-site version cut` — bake preprocess fixups into docs |
-| `legacy/scripts/validate-menu-config.mjs` | `npm run validate:menu` — lint `docs/menu-config.json` |
 | `legacy/scripts/lib/rewrite.mjs` | Link rewriter used by archived `sync-community.mjs` (ported to Go) |
 
 ## Archived layout

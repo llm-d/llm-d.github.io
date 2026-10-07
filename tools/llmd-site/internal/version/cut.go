@@ -1,20 +1,20 @@
 package version
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/build"
 	"github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/manifest"
 	"github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/repo"
+	"github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/srcrefs"
 	"github.com/llm-d/llm-d.github.io/tools/llmd-site/internal/sync"
 )
-
-var semverRE = regexp.MustCompile(`^(\d+\.\d+)(?:\.\d+)?$`)
 
 // CutOptions configures a docs version cut.
 type CutOptions struct {
@@ -29,12 +29,7 @@ type CutOptions struct {
 
 // NormalizeLabel returns the Docusaurus version label (major.minor).
 func NormalizeLabel(version string) (string, error) {
-	v := strings.TrimSpace(version)
-	m := semverRE.FindStringSubmatch(v)
-	if m == nil {
-		return "", fmt.Errorf("invalid version %q (expected x.y or x.y.z, e.g. 0.9 or 0.9.0)", version)
-	}
-	return m[1], nil
+	return srcrefs.NormalizeLabel(version)
 }
 
 // Cut freezes the current dev docs/ as a released Docusaurus version.
@@ -69,16 +64,27 @@ func Cut(opts CutOptions) error {
 		}
 	}
 
-	bakeScript := filepath.Join(opts.Root, "legacy", "scripts", "bake-docs.mjs")
+	bakeScript := filepath.Join(opts.Root, "scripts", "bake-docs.mjs")
 	if !opts.SkipBake {
-		// Pin llm-d GitHub links to the release tag so the frozen version keeps
+		// Pin llm-d GitHub links to immutable refs so the frozen version keeps
 		// pointing at the sources it documents, not at whatever main becomes.
-		ref := "v" + label
-		fmt.Printf("    Baking preprocess fixups into docs/ (img-base %s, ref %s)\n", imgBase, ref)
+		refs, err := resolveRefs(opts.Root, label, docsDir)
+		if err != nil {
+			return err
+		}
+		refJSON, err := json.Marshal(refs)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("    Baking preprocess fixups into docs/ (img-base %s)\n", imgBase)
+		fmt.Printf("    Pinning source links for %s:\n", label)
+		for _, repo := range sortedKeys(refs) {
+			fmt.Printf("      %-34s %s\n", repo, refs[repo])
+		}
 		if _, err := os.Stat(bakeScript); err != nil {
 			return fmt.Errorf("bake script not found at %s", bakeScript)
 		}
-		if err := build.RunNode(opts.Root, bakeScript, "--img-base", imgBase, "--ref", ref); err != nil {
+		if err := build.RunNode(opts.Root, bakeScript, "--img-base", imgBase, "--ref-map", string(refJSON)); err != nil {
 			return err
 		}
 	}
@@ -116,6 +122,45 @@ func Cut(opts CutOptions) error {
 	}
 	fmt.Println()
 	return nil
+}
+
+// resolveRefs returns the immutable source refs for a release and fails if the
+// docs link to an llm-d repo the release does not list. A forgotten repo is the
+// way a frozen version silently keeps a link on main, so this stops the cut
+// rather than warning.
+func resolveRefs(root, label, docsDir string) (map[string]string, error) {
+	path := srcrefs.Path(root)
+	f, err := srcrefs.Load(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("%s not found — it records the refs each released docs version pins its source links to", path)
+		}
+		return nil, err
+	}
+	refs, ok := f.For(label)
+	if !ok {
+		return nil, fmt.Errorf("%s has no entry for release %q (has: %s)\n"+
+			"  add one before cutting, with the refs from that release's component table",
+			srcrefs.FileName, label, strings.Join(f.Labels(), ", "))
+	}
+	links, err := srcrefs.Scan(docsDir)
+	if err != nil {
+		return nil, err
+	}
+	if unmapped := srcrefs.UnmappedRepos(links, refs); len(unmapped) > 0 {
+		return nil, fmt.Errorf("docs/ links to llm-d repos on a moving ref that release %q does not list in %s:%s\n  add a ref for each, then re-run",
+			label, srcrefs.FileName, srcrefs.DescribeUnmapped(unmapped))
+	}
+	return refs, nil
+}
+
+func sortedKeys(m map[string]string) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
 }
 
 func copyTree(src, dst string) error {

@@ -82,7 +82,8 @@ Or set `LLMD_REPO=/path/to/llm-d`.
 ```
 ├── docs/                  # Synced dev docs (gitignored) — "dev" version at /docs/dev
 ├── docs-sync.yaml         # Sync manifest (sources, community mirror pages)
-├── versioned_docs/        # Frozen releases (0.7, 0.8) + versioned_sidebars/ + versions.json
+├── source-refs.yaml       # Immutable source refs each frozen release pins its links to
+├── versioned_docs/        # Frozen releases (0.7–0.10) + versioned_sidebars/ + versions.json
 ├── blog/                  # Posts (.mdx) + authors.yml + tags.yml
 ├── community/             # index/events (authored); mirror pages generated on sync
 ├── src/                   # Landing page, theme swizzles, shared components
@@ -101,9 +102,11 @@ Or set `LLMD_REPO=/path/to/llm-d`.
   Sidebar labels and order come from `docs/menu-config.json` (synced with the docs).
 - **Versioning** — Latest release (newest entry in `versions.json`) at `/docs`; older at
   `/docs/<x.y>`; unreleased dev at `/docs/dev`. Released versions are frozen snapshots
-  under `versioned_docs/`: each uses its own `menu-config.json` for the sidebar and links
-  to `llm-d/llm-d` at its release tag (`v<x.y>`), so changes on upstream `main` never
-  affect them. Cut a release: `./bin/llmd-site version cut <x.y>` — see
+  under `versioned_docs/`: each uses its own `menu-config.json` for the sidebar, and its
+  links into the llm-d repos are pinned to the immutable refs recorded for that release
+  in [`source-refs.yaml`](source-refs.yaml), so changes upstream never affect them.
+  Verify those pins with `./bin/llmd-site check refs`. Cut a release:
+  `./bin/llmd-site version cut <x.y>` — see
   [Cutting a docs release](tools/llmd-site/README.md#cutting-a-docs-release).
 - **Community** — `contribute`, `code-of-conduct`, `security`, and `sigs` are generated
   on sync from upstream repo-root files (see `docs-sync.yaml`).
