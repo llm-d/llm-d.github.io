@@ -2,7 +2,7 @@
 
 Ready-to-use PromQL queries for monitoring llm-d deployments. Use these in the Prometheus UI or as the basis for Grafana panels. For a default set of ready-to-apply alerts built on these metrics, see [Alerting](./alerting.md).
 
-To generate traffic and populate error metrics for testing, use the [traffic generation script](https://github.com/llm-d/llm-d/tree/v0.10/guides/recipes/observability/generate-traffic-basic.sh).
+To generate traffic and populate error metrics for testing, use the [traffic generation script](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/recipes/observability/generate-traffic-basic.sh).
 
 ## Tier 1: Immediate Failure & Saturation Indicators
 
@@ -33,7 +33,7 @@ For example, `tensorcore_utilization{job="kube-system/tpu-metrics-exporter",make
 returns per-series utilization in percent; `memory_used{job="kube-system/tpu-metrics-exporter",make="cloud-tpu"}`
 returns bytes. Substitute the actual scrape job. These gauges do not need `rate()`.
 Keep accelerator and instance labels when displaying them, and do not substitute
-zero for an absent series. The [TPU dashboard](https://github.com/llm-d/llm-d/tree/v0.10/guides/recipes/observability/grafana/dashboards/llm-d-tpu-overview.json)
+zero for an absent series. The [TPU dashboard](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/recipes/observability/grafana/dashboards/llm-d-tpu-overview.json)
 adds instance, model, and topology filters.
 
 ### Basic Model Serving
@@ -73,7 +73,7 @@ adds instance, model, and topology filters.
 
 ### Tiered Prefix Cache
 
-Queries for the [tiered prefix cache guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/tiered-prefix-cache). The `vllm:kv_offload_*` series come from vLLM's native `OffloadingConnector`.
+Queries for the [tiered prefix cache guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/tiered-prefix-cache). The `vllm:kv_offload_*` series come from vLLM's native `OffloadingConnector`.
 
 | Metric Need | PromQL Query |
 | ----------- | ------------ |
@@ -129,4 +129,4 @@ Requires the `flowControl` feature gate enabled on the EPP.
 histogram_quantile(0.99, sum by(le) (rate(metric_name_bucket[5m])))
 ```
 
-**Error metrics** only appear after the first error occurs. Use the [traffic generation script](https://github.com/llm-d/llm-d/tree/v0.10/guides/recipes/observability/generate-traffic-basic.sh) to populate them for testing.
+**Error metrics** only appear after the first error occurs. Use the [traffic generation script](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/recipes/observability/generate-traffic-basic.sh) to populate them for testing.

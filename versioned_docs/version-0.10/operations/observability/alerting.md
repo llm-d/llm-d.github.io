@@ -28,7 +28,7 @@ kubectl apply -n ${NAMESPACE} -f guides/recipes/observability/alerts/epp-alertin
 ```
 
 :::note
-The bundled [`install-prometheus-grafana.sh`](https://github.com/llm-d/llm-d/tree/v0.10/guides/recipes/observability/install-prometheus-grafana.sh) opens Prometheus' `ruleSelector` so any `PrometheusRule` is discovered (central mode). If you run the installer in individual/scoped mode, Prometheus only selects rules carrying the `monitoring-ns: ${NAMESPACE}` label in a namespace with the same label — add that label to the `PrometheusRule` (and its namespace) to match your `ServiceMonitor`. If you bring your own Prometheus, make sure its `ruleSelector` matches the `app: epp-metrics` label on this resource.
+The bundled [`install-prometheus-grafana.sh`](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/recipes/observability/install-prometheus-grafana.sh) opens Prometheus' `ruleSelector` so any `PrometheusRule` is discovered (central mode). If you run the installer in individual/scoped mode, Prometheus only selects rules carrying the `monitoring-ns: ${NAMESPACE}` label in a namespace with the same label — add that label to the `PrometheusRule` (and its namespace) to match your `ServiceMonitor`. If you bring your own Prometheus, make sure its `ruleSelector` matches the `app: epp-metrics` label on this resource.
 :::
 
 
@@ -90,7 +90,7 @@ This fires once per vanished pool, at the cost of a fixed lookback window (a poo
 
 ### Batch Gateway (`batch-gateway.rules`)
 
-These alerts cover the Batch Gateway processor and GC reconciler rather than the request path, so they are shipped as a separate `PrometheusRule` and are only relevant if you deployed the [Batch Gateway guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/batch-serving/batch-gateway).
+These alerts cover the Batch Gateway processor and GC reconciler rather than the request path, so they are shipped as a separate `PrometheusRule` and are only relevant if you deployed the [Batch Gateway guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/batch-serving/batch-gateway).
 
 ```bash
 kubectl apply -n ${NAMESPACE} -f guides/recipes/observability/alerts/batch-gateway-alerting-rules.yaml

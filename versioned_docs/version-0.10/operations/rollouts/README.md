@@ -49,7 +49,7 @@ A Blue-Green Update creates a second complete InferencePool and uses HTTPRoute t
 - Header-based routing (e.g., routing beta users to new version)
 - Updates that need precise traffic control
 
-**Guide:** [Blue-Green Update](https://github.com/llm-d/llm-d/tree/v0.10/guides/rollouts/blue-green-update.md)
+**Guide:** [Blue-Green Update](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/rollouts/blue-green-update.md)
 
 ### LoRA Adapter Rollout
 
@@ -67,7 +67,7 @@ LoRA (Low-Rank Adaptation) adapter rollouts allow you to update model customizat
 - You want to test adapter changes with a subset of traffic
 - You need to maintain multiple adapter versions simultaneously
 
-**Guide:** [LoRA Adapter Rollout](https://github.com/llm-d/llm-d/tree/v0.10/guides/rollouts/adapter-rollout.md)
+**Guide:** [LoRA Adapter Rollout](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/rollouts/adapter-rollout.md)
 
 ## Strategy Comparison
 

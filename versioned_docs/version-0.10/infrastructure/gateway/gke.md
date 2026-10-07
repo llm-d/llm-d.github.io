@@ -150,7 +150,7 @@ helm install ${GUIDE_NAME} \
   -n ${NAMESPACE} --version ${ROUTER_CHART_VERSION}
 ```
 
-Key configuration parameters (see [`values.yaml`](https://github.com/llm-d/llm-d-router/blob/main/config/charts/llm-d-router-gateway/values.yaml)):
+Key configuration parameters (see [`values.yaml`](https://github.com/llm-d/llm-d-router/blob/v0.11.0/config/charts/llm-d-router-gateway/values.yaml)):
 * `preferredReplicas` (Default: `1`): the replica count for active primary pod ordinals pinned to the `PREFERRED` backend preference tier (`epp-0`). Setting a value greater than 1 scales concurrent active routing capacity.
 * `defaultReplicas` (Default: `1`): the replica count for standby pod ordinals pinned to the `DEFAULT` backend preference tier (`epp-1`). Setting a value greater than 1 scales warm standby failover capacity.
 * `balancingMode` (Default: `RATE`): the [calculation mode](https://docs.cloud.google.com/load-balancing/docs/backend-service#traffic_distribution) used to determine load thresholds (`RATE`, `UTILIZATION`, or `CONNECTION`).

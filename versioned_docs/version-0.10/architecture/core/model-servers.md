@@ -63,7 +63,7 @@ and the second starts the iteration-stats loop that populates the dynamic gauges
 (`trtllm_num_requests_waiting`, `trtllm_num_requests_running`, `trtllm_kv_cache_utilization`).
 They require **TensorRT-LLM v1.3.0rc12 or newer** (added in [PR #12545](https://github.com/NVIDIA/TensorRT-LLM/pull/12545)). Earlier releases
 (including 1.2.1 GA) expose only request-lifecycle histograms. See the
-[optimized-baseline TensorRT-LLM recipe](https://github.com/llm-d/llm-d/tree/v0.10/guides/optimized-baseline) for a
+[optimized-baseline TensorRT-LLM recipe](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/optimized-baseline) for a
 working configuration.
 :::
 

@@ -97,6 +97,20 @@ func TestBakeAgreesWithScanner(t *testing.T) {
 	if !strings.Contains(string(baked), "kubernetes-sigs/gateway-api/tree/main/apix") {
 		t.Error("a non-llm-d link was rewritten")
 	}
+
+	// `version cut` rewrites through bake-docs.mjs and `version repin` rewrites
+	// through repinText, so the two are separate implementations of one rule.
+	// If they drift, the two commands produce different snapshots of the same
+	// release and nothing else would catch it, so they are held to byte
+	// equality on the fixtures.
+	repinned, change := repinText(string(src), boundaryRefs)
+	if repinned != string(baked) {
+		t.Errorf("repinText and bake-docs.mjs produced different output:\n  %s",
+			firstDiffLine(repinned, string(baked)))
+	}
+	if change == nil {
+		t.Error("repinText reported no change, but the fixtures contain links to rewrite")
+	}
 }
 
 // blankRefs replaces every llm-d link's ref with a placeholder so two texts can

@@ -187,6 +187,6 @@ helm install llm-d-async \
 ## Related
 
 - [Asynchronous Processing Well-Lit Path](../well-lit-paths/workloads/batch-serving/asynchronous-processing.md) — overview and use cases.
-- [Asynchronous Processing Guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/batch-serving/asynchronous-processing) — deployment instructions for Redis and GCP Pub/Sub.
+- [Asynchronous Processing Guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/batch-serving/asynchronous-processing) — deployment instructions for Redis and GCP Pub/Sub.
 - [Async Processor Architecture](../architecture/advanced/batch/async-processor.md) — internal mechanics, gates, and queue integrations.
 - [llm-d Router Operations Guide](router.md) — sizing for the Router/EPP and standalone proxy.

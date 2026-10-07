@@ -1,6 +1,6 @@
 # Observability and Monitoring in llm-d
 
-Please join [SIG-Observability](https://github.com/llm-d/llm-d/tree/v0.7/SIGS.md#sig-observability) to contribute to monitoring and observability topics within llm-d.
+Please join [SIG-Observability](https://github.com/llm-d/llm-d/tree/v0.7.0/SIGS.md#sig-observability) to contribute to monitoring and observability topics within llm-d.
 
 ## Enable Metrics Collection in llm-d Deployments
 
@@ -52,7 +52,7 @@ kubectl get configmap prometheus-web-tls-ca -n llm-d-monitoring -o jsonpath='{.d
 
 ### Helmfile Integration
 
-All [llm-d guides](https://github.com/llm-d/llm-d/tree/v0.7/guides) have monitoring enabled by default, supporting multiple monitoring stacks depending on the environment. We provide out of box monitoring configurations for scraping the [Endpoint Picker (EPP)](https://github.com/kubernetes-sigs/gateway-api-inference-extension/tree/main/docs/proposals/004-endpoint-picker-protocol) metrics, and vLLM metrics.
+All [llm-d guides](https://github.com/llm-d/llm-d/tree/v0.7.0/guides) have monitoring enabled by default, supporting multiple monitoring stacks depending on the environment. We provide out of box monitoring configurations for scraping the [Endpoint Picker (EPP)](https://github.com/kubernetes-sigs/gateway-api-inference-extension/tree/main/docs/proposals/004-endpoint-picker-protocol) metrics, and vLLM metrics.
 
 See the vLLM Metrics and EPP Metrics sections below for how to further config or disable monitoring.
 

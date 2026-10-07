@@ -54,13 +54,13 @@ spec:
       number: 9002
 ```
 
-When deploying with the [llm-d-router Helm charts](https://github.com/llm-d/llm-d-router/tree/main/config/charts), setting `router.modelServers.protocol=grpc` configures this automatically.
+When deploying with the [llm-d-router Helm charts](https://github.com/llm-d/llm-d-router/tree/v0.11.0/config/charts), setting `router.modelServers.protocol=grpc` configures this automatically.
 
 ---
 
 ## Request Examples
 
-The examples below use [grpcurl](https://github.com/fullstorydev/grpcurl) with the proxy endpoint as `${IP}`, set per the relevant guide's verification steps. They require the [`vllm_engine.proto`](https://github.com/llm-d/llm-d-router/blob/main/pkg/epp/framework/plugins/requesthandling/parsers/vllmgrpc/api/proto/vllm_engine.proto) definition, and a model server that exposes the vLLM gRPC engine API.
+The examples below use [grpcurl](https://github.com/fullstorydev/grpcurl) with the proxy endpoint as `${IP}`, set per the relevant guide's verification steps. They require the [`vllm_engine.proto`](https://github.com/llm-d/llm-d-router/blob/v0.11.0/pkg/epp/framework/plugins/requesthandling/parsers/vllmgrpc/api/proto/vllm_engine.proto) definition, and a model server that exposes the vLLM gRPC engine API.
 
 ### vLLM `VllmEngine/Generate`
 

@@ -66,7 +66,7 @@ and write broken-links-report.md. Posts a PR comment when GITHUB_TOKEN and PR co
 	}
 
 	var refsDir, refsVersion string
-	var refsWarnOnly bool
+	var refsWarnOnly, refsStatic bool
 
 	refs := &cobra.Command{
 		Use:   "refs",
@@ -83,7 +83,8 @@ The second is the one that matters. A ref from the wrong release still resolves
 for most paths, so a wrong pin looks fine until a reader follows a link into
 code that moved.
 
-Reads the GitHub API. Set GITHUB_TOKEN for usable rate limits.
+Reads the GitHub API. Set GITHUB_TOKEN for usable rate limits. --static skips
+the API and checks the refs alone, which is what runs in CI.
 
 Only files under a version-<x.y> directory are compared against
 source-refs.yaml. Pointed at a tree without them (--dir docs), there is no
@@ -92,12 +93,14 @@ to find dead links in the dev docs, whose refs track "main" on purpose.
 
 Examples:
   llmd-site check refs
+  llmd-site check refs --static
   llmd-site check refs --version 0.10
   llmd-site check refs --dir docs      # resolve dev-doc links; no ref comparison`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			code, err := check.CheckSourceRefs(rootDir, check.SourceRefOptions{
 				Dir:      refsDir,
 				Version:  refsVersion,
+				Static:   refsStatic,
 				WarnOnly: refsWarnOnly,
 			})
 			if err != nil {
@@ -112,6 +115,7 @@ Examples:
 
 	refs.Flags().StringVar(&refsDir, "dir", "versioned_docs", "tree to scan, relative to the repo root")
 	refs.Flags().StringVar(&refsVersion, "version", "", "limit to one docs version label, e.g. 0.10")
+	refs.Flags().BoolVar(&refsStatic, "static", false, "compare refs against source-refs.yaml only, no network")
 	refs.Flags().BoolVar(&refsWarnOnly, "warn-only", false, "report problems but exit 0")
 
 	checkCmd.AddCommand(links, images, refs)

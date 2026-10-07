@@ -71,7 +71,7 @@ Overall, the Helm-based architecture will simplify onboarding, enable reproducib
 ## Implementation status
 
 An initial prototype of ModelService is
-[available in the llm-d-model-service repository](https://github.com/llm-d/llm-d-model-service/tree/main),
+[available in the llm-d-model-service repository](https://github.com/llm-d/llm-d-model-service/tree/v0.0.15),
 and it was featured as part of the llm-d launch demos at Red Hat Summit, 2025.
 The initial design documented in this repo (as of May 29th, 2025; the time of writing this proposal) is based on a
 ModelService Kubernetes operator (CRD + controller). Our plan is to migrate from the CRD approach to a Helm chart.
@@ -80,7 +80,7 @@ ModelService Kubernetes operator (CRD + controller). Our plan is to migrate from
 `llm-d-incubation/llm-d-modelservice` Helm chart is deprecated and now only
 exists to support legacy helmfile-based guides. New well-lit-path guides
 deploy model servers, schedulers, and gateways via reusable Kustomize base
-layers under [`guides/recipes/`](https://github.com/llm-d/llm-d/tree/v0.7/guides/recipes/),
+layers under [`guides/recipes/`](https://github.com/llm-d/llm-d/tree/v0.7.0/guides/recipes/),
 composed with guide-specific overlays for the target accelerator and
 infrastructure provider. See tracking issue
 [llm-d/llm-d#850](https://github.com/llm-d/llm-d/issues/850).

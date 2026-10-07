@@ -20,7 +20,7 @@ NIXL supports TCP transfer, but high-bandwidth networking
 
 ## Deploy
 
-See the [P/D Disaggregation guide](https://github.com/llm-d/llm-d/tree/v0.9/guides/pd-disaggregation) for manifests and step-by-step deployment.
+See the [P/D Disaggregation guide](https://github.com/llm-d/llm-d/tree/v0.9.0/guides/pd-disaggregation) for manifests and step-by-step deployment.
 
 ## Architecture
 
@@ -45,7 +45,7 @@ During the standard request flow:
 
 ## Observability
 
-P/D disaggregation runs prefill and decode as independently scaled pools joined by a NIXL KV transfer, so the signals that matter are pool **balance** and transfer health rather than a single aggregate latency. The [P/D guide's Observability & Troubleshooting section](https://github.com/llm-d/llm-d/tree/v0.9/guides/pd-disaggregation#4-observability--troubleshooting) covers the key metrics for this path and the common failure modes, backed by the shared [PromQL](../../operations/observability/promql.md#prefilldecode-disaggregation) and [metric](../../operations/observability/metrics.md) references.
+P/D disaggregation runs prefill and decode as independently scaled pools joined by a NIXL KV transfer, so the signals that matter are pool **balance** and transfer health rather than a single aggregate latency. The [P/D guide's Observability & Troubleshooting section](https://github.com/llm-d/llm-d/tree/v0.9.0/guides/pd-disaggregation#4-observability--troubleshooting) covers the key metrics for this path and the common failure modes, backed by the shared [PromQL](../../operations/observability/promql.md#prefilldecode-disaggregation) and [metric](../../operations/observability/metrics.md) references.
 
 ## Further Reading
 

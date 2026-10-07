@@ -16,7 +16,7 @@ the [parity caveats][blog-parity] for the full list.
 
 ## Deploy
 
-See the [no-Kubernetes deployment guide](https://github.com/llm-d/llm-d/tree/v0.9/guides/no-kubernetes-deployment) for manifests and step-by-step deployment.
+See the [no-Kubernetes deployment guide](https://github.com/llm-d/llm-d/tree/v0.9.0/guides/no-kubernetes-deployment) for manifests and step-by-step deployment.
 
 ## Architecture
 
@@ -44,6 +44,6 @@ The EPP's datastore is populated entirely from `endpoints.yaml`. With `watchFile
 - [`file-discovery` plugin source][filediscovery-plugin]
 - ["No Kubernetes? No Problem"][blog] — full background on the design
 
-[filediscovery-plugin]: https://github.com/llm-d/llm-d-router/blob/main/pkg/epp/framework/plugins/datalayer/discovery/file/plugin.go
+[filediscovery-plugin]: https://github.com/llm-d/llm-d-router/blob/v0.10.0/pkg/epp/framework/plugins/datalayer/discovery/file/plugin.go
 [blog]: https://llm-d.ai/blog/running-llm-d-without-kubernetes
 [blog-parity]: https://llm-d.ai/blog/running-llm-d-without-kubernetes#parity-with-the-kubernetes-native-llm-d-deployment
