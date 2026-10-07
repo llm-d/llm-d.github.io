@@ -1,0 +1,260 @@
+<style>
+html, body { margin: 0; padding: 0; background: transparent; }
+*, *::before, *::after { box-sizing: border-box; }
+.schema-section{
+  margin:20px auto 0;
+  border-radius:8px;
+  overflow:hidden;
+  border:1px solid #2a3040;
+  width:100%;
+  max-width:840px;
+}
+.schema-section{
+  --bg:#0f1115; --panel:#161a22; --border:#2a3040;
+  --text:#e6e9ef; --muted2:#9aa4b6; --accent2:#5b9dd9; --accentg:#4fc3a1;
+  /* Per-dataset dot colours live in the DS object in the script below — single source of truth. */
+  background:var(--bg);
+  color:var(--text);
+  font-family:'IBM Plex Sans', sans-serif;
+  padding:clamp(10px,1.4vw,14px) clamp(12px,2vw,18px);
+}
+.schema-section .shead{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--muted2);
+  margin-bottom:8px;
+}
+.schema-section .stitle{
+  font-family:'IBM Plex Sans', sans-serif;
+  font-weight:600;
+  font-size:clamp(15px,1.8vw,18px);
+  margin-bottom:12px;
+  color:var(--text);
+  letter-spacing:-0.005em;
+}
+.ntree{display:flex; flex-direction:column; gap:4px;}
+.ngen{display:flex; gap:clamp(4px,.8vw,7px);}
+.nslot{flex:1 1 0; min-width:0; position:relative;}
+.nslot.wide{flex:1.6 1 0;}
+.nslot.spacer{flex:1 1 0; visibility:hidden;}
+.nbox{border:1.5px solid var(--border); border-radius:6px; background:var(--panel); padding:5px 7px; display:flex; flex-direction:column; min-height:0; height:100%; min-width:0; overflow:hidden;}
+.nbox .nhead{display:flex; align-items:baseline; gap:5px; flex-wrap:wrap;}
+.nbox .nname{font-weight:700; font-size:clamp(11.5px,1.3vw,13px);}
+.nbox.attr .nname{font-weight:600; font-size:clamp(10.5px,1.15vw,11.5px);}
+.nbox .ntag{font-family:'IBM Plex Mono', monospace; font-size:clamp(8.5px,.95vw,9.5px); color:var(--muted2);}
+.nbox .ndesc{font-family:'IBM Plex Mono', monospace; font-size:clamp(8.5px,.9vw,9.5px); color:var(--muted2); margin-top:2px; line-height:1.28;}
+.nbox .ndesc b{color:var(--accent2); font-weight:600;}
+.nbox .ndots{display:flex; flex-wrap:wrap; gap:3px; margin-top:auto; padding-top:4px;}
+.ndots .ddot{width:6px; height:6px; border-radius:50%; flex:0 0 auto; transition:opacity .15s, transform .15s;}
+.ntree.filtering .nbox{transition:opacity .15s, border-color .15s; opacity:.4;}
+.ntree.filtering .nbox.has-match{opacity:1; border-color:var(--accent2);}
+.ntree.filtering .ndots .ddot{opacity:.25; transform:scale(.85);}
+.ntree.filtering .ndots .ddot.match{opacity:1; transform:scale(1.35);}
+.nstack::before, .nstack::after{content:""; position:absolute; border:1.5px solid var(--border); border-radius:7px; background:var(--panel); z-index:0;}
+.nstack::before{inset:4px 4px -4px -4px; opacity:.32;}
+.nstack::after{inset:2px 2px -2px -2px; opacity:.5; z-index:1;}
+.nstack .nbox{position:relative; z-index:2;}
+.diaglegend{display:flex; gap:5px; flex-wrap:wrap; padding-top:10px; margin-top:10px; border-top:1px solid var(--border);}
+.diaglegend .litem{display:flex; align-items:center; gap:5px; font-size:clamp(10px,1.1vw,11px); color:var(--muted2); font-family:'IBM Plex Mono', monospace; padding:4px 8px; border:1px solid transparent; border-radius:20px; cursor:pointer; background:none; transition:background .15s, border-color .15s, color .15s;}
+.diaglegend .litem:hover{border-color:var(--border); color:var(--text);}
+.diaglegend .litem.active{background:rgba(255,255,255,.08); border-color:var(--accent2); color:var(--text);}
+.diaglegend .litem.hint{color:var(--muted2); font-style:italic; cursor:default;}
+.diaglegend .litem.hint:hover{border-color:transparent; color:var(--muted2);}
+.diaglegend .dot{width:9px; height:9px; border-radius:50%; flex:0 0 auto;}
+.diaglegend .obadge{font-size:.75em; text-transform:uppercase; letter-spacing:.03em; padding:1px 6px; border-radius:100px; margin-left:2px; font-weight:700;}
+.diaglegend .obadge.human{color:var(--accent2); border:1px solid rgba(91,157,217,.4); background:rgba(91,157,217,.1);}
+.diaglegend .obadge.benchmark{color:#e0a94f; border:1px solid rgba(224,169,79,.4); background:rgba(224,169,79,.1);}
+.diaglegend .obadge.mixed{color:#e0685f; border:1px solid rgba(224,104,95,.4); background:rgba(224,104,95,.1);}
+.schema-section .snote{font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--muted2); margin-top:8px;}
+
+@media (max-width:640px){
+  .ngen{flex-wrap:wrap;}
+  .nslot{flex:1 1 100%;}
+}
+
+@media (max-width:560px){
+  .wrap{padding:44px 16px 100px;}
+  h1.title{font-size:30px;}
+}
+</style>
+  <div class="schema-section">
+    <div class="shead">Comparing schemas</div>
+    <div class="stitle">What the other efforts actually support</div>
+    <div class="ntree" id="diagram2">
+      <div class="ngen gen-turn">
+        <div class="nslot">
+          <div class="nbox">
+            <div class="nhead"><span class="nname">Turn</span><span class="ntag">claude_code.interaction</span></div>
+            <div class="ndesc">one per <b>user message</b> sent — turn <b>#1, #2, #3…</b> in the session, plus its text</div>
+            <div class="ndots" data-support="swes-partial,bt-partial,exg-partial,tl-partial"></div>
+          </div>
+        </div>
+      </div>
+      <div class="ngen gen-mid">
+        <div class="nslot" style="flex:.7 1 0;">
+          <div class="nbox attr">
+            <div class="nhead"><span class="nname">Who &amp; Where</span></div>
+            <div class="ndesc">which user, which session, <b>terminal type</b> (e.g. VS Code) — on every span</div>
+            <div class="ndots"><span class="ntag" style="opacity:.6;">none capture this</span></div>
+          </div>
+        </div>
+        <div class="nslot nstack" style="flex:1.45 1 0;">
+          <div class="nbox">
+            <div class="nhead"><span class="nname">Request</span><span class="ntag">chat &lt;model&gt;</span></div>
+            <div class="ndesc">one per <b>call to the model</b> — what we sent it + what it replied</div>
+            <div class="ndots" data-support="moon,tl,weka,exg,swes-partial,bt-partial"></div>
+          </div>
+        </div>
+        <div class="nslot wide nstack">
+          <div class="nbox">
+            <div class="nhead"><span class="nname">Tool Call</span><span class="ntag">claude_code.tool</span></div>
+            <div class="ndesc">tool <b>name + args</b>, nested execution</div>
+            <div class="ndots" data-support="swes,tl-partial,exg-partial"></div>
+          </div>
+        </div>
+      </div>
+      <div class="ngen gen-attr">
+        <div class="nslot spacer" style="flex:.7 1 0;"></div>
+        <div class="nslot" style="flex:1.45 1 0; display:flex; flex-wrap:wrap; gap:8px;">
+          <div class="nbox attr" style="flex:1 1 0; min-width:0;">
+            <div class="nhead"><span class="nname">Token Accounting</span></div>
+            <div class="ndesc"><b>input/output token counts</b> per call</div>
+            <div class="ndots" data-support="moon,tl,weka,exg,bt"></div>
+          </div>
+          <div class="nbox attr" style="flex:1 1 0; min-width:0;">
+            <div class="nhead"><span class="nname">Full Message Body</span></div>
+            <div class="ndesc">the actual prompt sent &amp; the <b>model's reply</b>, verbatim; redacted at save time</div>
+            <div class="ndots" data-support="exg,swes-partial,bt-partial"></div>
+          </div>
+          <div class="nbox attr" style="flex:1 1 0; min-width:0;">
+            <div class="nhead"><span class="nname">Request Params</span></div>
+            <div class="ndesc"><b>temperature</b>, max_tokens as sent to the model per call</div>
+            <div class="ndots" data-support="exg"></div>
+          </div>
+          <div class="nbox attr" style="flex:1 1 0; min-width:0;">
+            <div class="nhead"><span class="nname">Prefix / Cache Structure</span></div>
+            <div class="ndesc">shared-prefix or <b>cache-hit</b> signal across requests</div>
+            <div class="ndots" data-support="weka,moon,tl,bt,swes-partial"></div>
+          </div>
+        </div>
+        <div class="nslot wide" style="display:flex; flex-wrap:wrap; gap:8px;">
+          <div class="nbox attr" style="flex:1 1 0;">
+            <div class="nhead"><span class="nname">Timing &amp; Nesting</span></div>
+            <div class="ndesc">span start/end, <b>parent_span_id</b>; subagents nest under caller</div>
+            <div class="ndots" data-support="exg,weka,bt-partial,tl-partial"></div>
+          </div>
+          <div class="nbox" style="flex:1 1 0;">
+            <div class="nhead"><span class="nname">Tool Execution</span><span class="ntag">claude_code.tool.execution</span></div>
+            <div class="ndesc">the tool actually ran — <b>success</b> / <b>error</b></div>
+            <div class="ndots" data-support="tl,swes-partial"></div>
+          </div>
+          <div class="nbox attr" style="flex:1 1 0;">
+            <div class="nhead"><span class="nname">User Gated Decision</span><span class="ntag">tool.blocked_on_user</span></div>
+            <div class="ndesc">permission/clarification prompt + the user's <b>decision</b></div>
+            <div class="ndots"><span class="ntag" style="opacity:.6;">none capture this</span></div>
+          </div>
+          <div class="nbox attr" style="flex:1 1 0;">
+            <div class="nhead"><span class="nname">Tool Definitions</span></div>
+            <div class="ndesc">the full set of tools <b>available</b> to the model on a call, not just which ran</div>
+            <div class="ndots" data-support="exg"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="diaglegend" id="legend2"></div>
+    <div class="snote">"None capture this" — no dataset in this comparison records that field today. A faded dot means partial support. Two entries need a caveat: Baseten's tool-related gaps are inapplicable rather than omitted — it replays <code>/v1/completions</code>, an endpoint with no tool-calling surface to record — and SWE-smith's answers describe its richest <code>tool</code> split, since its <code>xml</code> and <code>ticks</code> splits flatten tool calls into prose. Click a dataset to isolate which boxes it fills; click again to clear.</div>
+  </div>
+
+  <script>
+  (function(){
+    // Order matches the comparison table above: WEKA, SWE-smith, TraceLab, Mooncake, Baseten, Exgentic.
+    var DS = {
+      weka:{label:'WEKA/AgentX', color:'#5b9dd9', origin:'human'},
+      swes:{label:'SWE-smith', color:'#e0a94f', origin:'benchmark'},
+      tl:{label:'TraceLab', color:'#9aa4b6', origin:'human'},
+      moon:{label:'Mooncake', color:'#e0685f', origin:'human'},
+      bt:{label:'Baseten', color:'#6ed0a8', origin:'human'},
+      exg:{label:'Exgentic', color:'#d98fd0', origin:'benchmark'},
+    };
+
+    function renderDots(root){
+      root.querySelectorAll('.ndots').forEach(function(el){
+        var raw = el.getAttribute('data-support');
+        if (!raw) return;
+        el.innerHTML = '';
+        raw.split(',').forEach(function(tok){
+          var isPartial = tok.endsWith('-partial');
+          var key = tok.replace('-partial','');
+          var d = DS[key];
+          if (!d) return;
+          var dot = document.createElement('span');
+          dot.setAttribute('data-key', key);
+          dot.className = 'ddot';
+          dot.style.background = d.color;
+          dot.style.opacity = isPartial ? '0.5' : '1';
+          dot.title = d.label + (isPartial ? ' (partial)' : '');
+          el.appendChild(dot);
+        });
+      });
+    }
+
+    function buildLegend(el){
+      if (!el) return;
+      el.innerHTML = '';
+      var tree = el.previousElementSibling;
+      var activeKey = null;
+
+      function applyFilter(){
+        el.querySelectorAll('.litem').forEach(function(li){ li.classList.toggle('active', li.dataset.key === activeKey); });
+        if (!tree) return;
+        if (!activeKey){
+          tree.classList.remove('filtering');
+          tree.querySelectorAll('.nbox.has-match').forEach(function(b){ b.classList.remove('has-match'); });
+          tree.querySelectorAll('.ddot.match').forEach(function(d){ d.classList.remove('match'); });
+          return;
+        }
+        tree.classList.add('filtering');
+        tree.querySelectorAll('.nbox').forEach(function(box){
+          var hit = box.querySelector('.ddot[data-key="' + activeKey + '"]');
+          box.classList.toggle('has-match', !!hit);
+        });
+        tree.querySelectorAll('.ddot').forEach(function(d){ d.classList.toggle('match', d.getAttribute('data-key') === activeKey); });
+      }
+
+      function makeItem(key, label, dotColor, origin){
+        var item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'litem';
+        item.dataset.key = key;
+        var dot = document.createElement('span');
+        dot.className = 'dot';
+        dot.style.background = dotColor;
+        item.appendChild(dot);
+        item.appendChild(document.createTextNode(label));
+        if (origin){
+          var badge = document.createElement('span');
+          badge.className = 'obadge ' + origin;
+          badge.textContent = origin;
+          item.appendChild(badge);
+        }
+        item.addEventListener('click', function(){
+          activeKey = (activeKey === key) ? null : key;
+          applyFilter();
+        });
+        el.appendChild(item);
+      }
+
+      Object.keys(DS).forEach(function(key){ makeItem(key, DS[key].label, DS[key].color, DS[key].origin); });
+
+      var hint = document.createElement('span');
+      hint.className = 'litem hint';
+      hint.textContent = 'click a dataset to isolate it';
+      el.appendChild(hint);
+    }
+
+    renderDots(document.getElementById('diagram2'));
+    buildLegend(document.getElementById('legend2'));
+  })();
+  </script>

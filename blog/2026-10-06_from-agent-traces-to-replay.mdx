@@ -1,0 +1,201 @@
+---
+title: From agent traces to replay
+description: Teams are starting to ask hard questions about their agentic systems — how they'll load a serving stack, what latency users will see, whether last week's model swap changed behavior. Answering any of them takes two things, not one—a trace dataset that recorded the right signal, and a mechanism that can replay it.
+authors:
+  - michaljacovi
+  - lenadankin
+  - maroonayoub
+  - gitMichal
+date: 2026-10-06
+---
+
+# From agent traces to replay
+*Say you run inference for an agentic product. Sooner or later you have to answer questions like: how will my serving stack hold up when thousands of agents are calling tools at once? What tail latency will a user hit across a long, multi-turn session? Would a different scheduler, a bigger KV cache, or another GPU move those numbers — before I commit to buying it? Did last week's model upgrade quietly change how the agent behaves? Each of these is answerable, but only against real agentic traffic — a synthetic prompt loop won't reproduce the tool calls, the multi-turn structure, or the load shape that make agents behave like agents.*
+
+That traffic has to come from somewhere, and the somewhere is a trace dataset: a recording of what real agents actually did, sessions you can play back instead of inventing. But a dataset is only half the answer. A trace is inert until something replays it, and the replay mechanism decides what you can do with what the dataset kept — turn it into live load, simulate it, or diff two runs. A rich trace no tool can replay the way you need is a dead end; a capable mechanism can't reconstruct detail the trace already threw away. So the real question is never "which dataset" — it's "which dataset *with* which mechanism" — a combination — and the right one depends on what you're trying to learn.
+
+A dataset built to characterize *inference infrastructure load* looks nothing like one built to study *human-agent interaction*, which looks nothing like one built for a *replayable behavior record*. Few public corpora today are shaped anything like one another — pick one that "has agent traces" and you can still discover it can't answer your question, because it was never built to.
+
+This post is a survey of that fragmented field — but a deliberately scoped one. It covers the trace corpora the inference-serving world actually consumes: the ones a replay mechanism (<a href="https://github.com/kubernetes-sigs/inference-perf" target="_blank" rel="noopener">Inference-Perf</a>, <a href="https://docs.nvidia.com/aiperf/latest/" target="_blank" rel="noopener">AIPerf</a>, <a href="https://github.com/vllm-project/guidellm/blob/main/docs/en/guides/trace_replay.md" target="_blank" rel="noopener">GuideLLM</a>, <a href="https://docs.vllm.ai/en/latest/cli/bench/serve/" target="_blank" rel="noopener">vLLM bench serve</a>, <a href="https://github.com/sgl-project/sglang/blob/main/docs/docs/developer_guide/bench_serving.mdx" target="_blank" rel="noopener">SGLang bench_serving</a>, <a href="https://github.com/ai-dynamo/dynamo/blob/main/docs/fern/pages/cli/operations/simulation-with-dynosim/dynosim-replay.mdx" target="_blank" rel="noopener">NVIDIA DynoSim</a>) can turn back into a live or simulated workload. For each, it asks what the dataset keeps, what it throws away, and which questions that leaves answerable. When you line them up, the differences turn out not to be cosmetic — the schema follows the goal, every time.
+
+Concretely, the set below isn't hand-picked — it's derived. We went to each of the six replay mechanisms mentioned above and collected every agentic-trace format it can natively load and re-run; the union of those is exactly the list you see here.
+
+Two terms are worth defining first, since they mean different things. A **session** is the actual run — a developer's coding session, or one benchmark task attempt. A **trace** is what a dataset captured and shipped of it. The gap is the whole story: the linked WEKA release ships 391 traces drawn from real sessions, but they hash the content away, so a rich session doesn't guarantee a rich trace. Each count below uses whichever unit that dataset counts in its own documentation — which is why Mooncake is counted in neither: it publishes no session or trace boundary at all, only individual requests.
+
+## The datasets, side by side
+
+| Dataset | Scale | Origin | Built for | What's captured |
+|----|----|----|----|----|
+| <a href="https://huggingface.co/datasets/semianalysisai/cc-traces-weka-with-subagents-060826" target="_blank" rel="noopener">WEKA / AgentX</a><br /><small><em>SemiAnalysis</em></small> | 391 traces | Human, real usage | Inference-infra workload characterization | WEKA / AgentX nested conversation records with subagent traffic patterns and request shape — content is hashed away, because content was never the point |
+| <a href="https://huggingface.co/datasets/SWE-bench/SWE-smith-trajectories" target="_blank" rel="noopener">SWE-smith</a><br /><small><em>SWE-bench</em></small> | 5,017 traces | Benchmark-generated | Training data for SWE agents (SFT) | SWE-agent trajectory records with full multi-turn conversations plus the resulting code patch. Structured tool calls appear in the `tool` split and are flattened to prose in the others, but there are no token counts or timing. Software-engineering tasks only. |
+| <a href="https://github.com/uw-syfi/TraceLab" target="_blank" rel="noopener">TraceLab</a><br /><small><em>University of Washington</em></small> | 4,265 sessions | Human, real usage | Agent-serving infra (batching, latency) | TraceLab session-and-round records for replayable requests and tool calls, built for serving-system analysis — content is stripped out, and tool calls and cache-prefix structure are heuristically reconstructed rather than captured directly |
+| <a href="https://github.com/kvcache-ai/Mooncake" target="_blank" rel="noopener">Mooncake</a><br /><small><em>Moonshot AI · FAST'25</em></small> | 23,608 requests | Recorded serving traffic | KV-cache reuse & scheduling research | Mooncake captures the serving shape of agentic traffic, not its conversational structure. Timed request records sampled from one hour of a real serving system (Kimi) — timing, token counts, and prefix hashes only. Requests originate from conversation and tool-agent workloads but are published as independent records, with no session or dependency identifiers: shared prefixes stay visible across requests, so KV-cache reuse survives, but session and call-graph boundaries do not |
+| <a href="https://github.com/ai-dynamo/aiperf/blob/main/docs/benchmark-modes/trace-replay.md#large-baseten-parquet-traces" target="_blank" rel="noopener">Baseten Trace</a><br /><small><em>Baseten</em></small> | Not publicly stated | Recorded serving traffic | Large-scale serving / infra benchmarking | Baseten Parquet request-row records grouped by session id — strongest here on KV-cache structure (block hashes and size) and timing, with nothing tool-shaped since they replay `/v1/completions`. Distributed as an AIPerf <a href="https://github.com/ai-dynamo/aiperf/blob/main/docs/tutorials/baseten-trace.md" target="_blank" rel="noopener">loader format</a> rather than a published corpus; its replay schema is documented, but the underlying trace's provenance and scale aren't publicly stated. |
+| <a href="https://huggingface.co/datasets/Exgentic/agent-llm-traces-v2" target="_blank" rel="noopener">Exgentic Agent LLM Traces v2</a><br /><small><em>IBM</em></small> | 10,057 traces | Benchmark-generated | Cross-model / cross-scaffold agent comparison | OpenTelemetry spans following the GenAI semantic conventions, containing full model request and response bodies, tool definitions, and request parameters — no prefix/cache signal, and tool calls live inside message content rather than in their own span. Covers many task domains — software engineering, web, customer care, and deep research — not just one |
+
+
+Disclosure: we build one of the datasets compared here — Exgentic's Agent LLM Traces, introduced in <a href="https://huggingface.co/blog/michalshmu/exgentic-agent-llm-traces-v2" target="_blank" rel="noopener">What Agents Do: A Large-Scale Public Dataset of Agent Runs</a>.
+
+None of these are wrong on their own terms. WEKA and TraceLab hash content away because their question is "what request pattern hits the server." Mooncake keeps timing and prefix shape because KV-cache reuse is a scheduling problem, not a semantics one. Exgentic fixes the task set because its question is "model or scaffold," which needs uniformity more than realism.
+
+**Origin** carries more weight than a skim gives it, and it's also the privacy story. You can't read provenance out of the records themselves — you have to know it going in. WEKA/AgentX, TraceLab, and Baseten are human-sourced, and the first two hash content away by design, so there's nothing session-identifying to leak; Mooncake's production traffic is handled at the infrastructure level rather than published with message content attached. Exgentic and SWE-smith sit at the other pole, entirely benchmark-generated — replayable by construction, no real person's data to protect, but no record of how anyone actually works either.
+
+Where the datasets genuinely divide is on **content**. Exgentic and SWE-smith keep full request and response bodies; WEKA, TraceLab, and Mooncake keep token counts, timing, and prefix shape but discard the text. That asymmetry runs one way only: you can always throw content away to get the lightweight view, but you can never reconstruct content you didn't keep. For the infra questions those three were built for, dropping it is the right call. But it forecloses a whole class of questions permanently — why an agent went down a bad path, whether a prompt change helped. A token-count-only trace tells you a session was expensive, never why.
+
+Two narrower differences are worth naming. **Controlled comparability**: Exgentic's fixed task set is what lets you ask whether a behavior came from the model, the scaffold, or the task — human-sourced corpora can't answer that, because real sessions aren't matched pairs. The grid isn't fully crossed in practice: failed runs left some cells thinner than others, one with 300 traces against 2,000+ elsewhere — so it supports that comparison without guaranteeing balanced cells.
+
+And two fields only Exgentic records: **tool definitions** (every tool the model could have called, not just the one it picked) and **request parameters** (temperature, max_tokens, as sent). Most datasets tell you what happened; those tell you what could have happened — what counterfactual and tool-selection work needs.
+
+## What each dataset actually keeps
+
+The table above is the summary. Underneath it, every dataset is a specific set of fields — and the fields are the real story, because they're what determines whether a question is answerable at all. Click a dataset below to isolate what it actually supports.
+
+<div style={{ width: 'min(840px, calc(100vw - 2rem))', marginLeft: '50%', transform: 'translateX(-50%)' }}>
+  <iframe
+    src="/img/blogs/trace-formats-comparison/schema-comparison.html"
+    title="Interactive comparison of agent trace dataset schemas"
+    scrolling="no"
+    style={{ display: 'block', width: '100%', height: '600px', border: 0 }}
+    onLoad={(event) => {
+      const document = event.currentTarget.contentWindow?.document;
+      if (document) event.currentTarget.style.height = `${document.documentElement.scrollHeight}px`;
+    }}
+  />
+</div>
+
+## From a trace file to a running workload: the replay mechanisms
+
+A trace format is only half of the practical story. To benchmark a serving stack, something has to turn the recording back into requests. Here, *replay* does not always mean resending the original bytes. Some replay paths preserve a session's dependency graph and feed each live model response into the next turn; others preserve only arrival times, input and output lengths, or prefix-sharing relationships and generate substitute payloads with the same serving shape. Those are both useful experiments, but they answer different questions.
+
+| Mechanism | Execution model | Scheduling | Payload construction | Target |
+|----|----|----|----|----|
+| <a href="https://github.com/kubernetes-sigs/inference-perf" target="_blank" rel="noopener">Inference-Perf</a> | Builds a dependency graph for each session and releases calls as their predecessors complete | Controls session concurrency or start rate; dependency-relative waits can be capped | Uses recorded or reconstructed inputs and, where supported, substitutes live predecessor outputs. OTel replay can duplicate sessions and add cache-isolating markers. | A live inference endpoint through its chat API |
+| <a href="https://docs.nvidia.com/aiperf/latest/" target="_blank" rel="noopener">AIPerf</a> | Converts each dataset through a format-specific adapter into conversations or independent requests | Supports recorded fixed schedules or closed-loop conversations, plus delay caps and concurrency controls | Uses recorded messages when present; otherwise synthesizes prompts from token lengths and cache-prefix information. Supports filtering, model rewriting, and cache isolation. | A live OpenAI-compatible inference endpoint |
+| <a href="https://github.com/vllm-project/guidellm/blob/main/docs/en/guides/trace_replay.md" target="_blank" rel="noopener">GuideLLM</a> | Converts trace rows into independent requests or multi-turn conversations through a format-specific loader | Uses trace timestamps and conversation dependencies; supports time scaling, wait caps, and minimum session concurrency | Generates prompts from token lengths and hash IDs. Where supported, it models subagents and tool calls with supplied or built-in schemas and placeholder results. | A live OpenAI-compatible inference endpoint |
+| <a href="https://docs.vllm.ai/en/latest/cli/bench/serve/" target="_blank" rel="noopener">vLLM bench serve</a> | Treats each timed-trace row as an independent request | Schedules requests from their timestamps; timestamp units are configurable | Deterministically expands hash IDs into shared token blocks up to the recorded input length; field names and block size are configurable | A live online-serving endpoint, commonly vLLM |
+| <a href="https://github.com/sgl-project/sglang/blob/main/docs/docs/developer_guide/bench_serving.mdx" target="_blank" rel="noopener">SGLang bench_serving</a> | Treats each trace row as the start of a synthetic multi-round session | Can use trace timestamps, adjusted by a slowdown factor; the configured rounds within a session are emitted as a burst | Builds prompts from hash IDs, adds synthetic user turns and placeholder assistant responses, and uses a configurable output length | A supported live serving endpoint, including SGLang and OpenAI-compatible backends |
+| <a href="https://github.com/ai-dynamo/dynamo/blob/main/docs/fern/pages/cli/operations/simulation-with-dynosim/dynosim-replay.mdx" target="_blank" rel="noopener">NVIDIA DynoSim</a> | Runs trace events through simulated engine cores in virtual time | Uses trace timestamps with a configurable speedup and stopping horizon | Maps token lengths and prefix hashes into a configurable model of workers, scheduling, KV capacity, routing, and aggregated or disaggregated serving | Simulated Dynamo engine cores, without HTTP or live workers |
+
+
+Inference-Perf, AIPerf, GuideLLM, vLLM bench serve, and SGLang bench_serving drive live inference endpoints, but their format-specific loaders do not necessarily preserve the same parts of a trace. DynoSim instead evaluates a simulated serving topology. Compare results only where the replay target, preserved trace properties, and reported metric align.
+
+That boundary matters when reading benchmark results. Request-level throughput from two endpoint load generators can be compared if model, hardware, concurrency, timing policy, and payload construction are aligned. It is not directly comparable to end-to-end session latency from a causal graph replay, which includes dependency and branch effects. Nor is either number directly comparable to a DynoSim prediction, where no model is decoding tokens. The mechanisms can share a source trace without measuring the same system.
+
+<table className="cmp">
+<thead>
+<tr>
+<th>Trace dataset</th>
+<th>Replay mechanism</th>
+<th>Dataset-specific replay</th>
+<th>Documentation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td rowSpan="3" className="name">WEKA / AgentX</td>
+<td>Inference-Perf</td>
+<td>Reconstructs WEKA's parent-child turns, subagent branches, live-output flow, and recorded think-time gaps, subject to a configurable cap.</td>
+<td><a href="https://github.com/kubernetes-sigs/inference-perf/blob/main/docs/weka_trace_replay.md" target="_blank" rel="noopener">Weka Trace Replay</a></td>
+</tr>
+<tr>
+<td>AIPerf</td>
+<td>Reconstructs WEKA's parent/subagent graph, infers flattened branches from hash-prefix and timing evidence, synthesizes cache-equivalent prompts, and follows recorded timing.</td>
+<td><a href="https://docs.nvidia.com/aiperf/latest/tutorials/datasets-inputs/replay-weka-agentic-coding-traces" target="_blank" rel="noopener">Replay WEKA Agentic Coding Traces</a></td>
+</tr>
+<tr>
+<td>GuideLLM</td>
+<td>Preserves WEKA conversations and subagent spawn/join topology; tool-call turns use supplied or synthetic tool definitions and placeholder results.</td>
+<td><a href="https://github.com/vllm-project/guidellm/blob/main/docs/en/guides/trace_replay.md#weka" target="_blank" rel="noopener">Trace Replay: WEKA</a></td>
+</tr>
+<tr>
+<td className="name">TraceLab</td>
+<td>AIPerf</td>
+<td>Groups rounds into conversations, synthesizes prompts and prefix-block IDs from token counts, and heuristically attaches subagents by timing containment.</td>
+<td><a href="https://docs.nvidia.com/aiperf/dev/tutorials/datasets-inputs/replay-trace-lab-agentic-coding-traces" target="_blank" rel="noopener">Replay TraceLab Agentic Coding Traces</a></td>
+</tr>
+<tr>
+<td rowSpan="5" className="name">Mooncake</td>
+<td>AIPerf</td>
+<td>Replays timestamps, token lengths, and optional hash IDs; it can instead send exact preformatted messages and tool definitions when a trace provides them.</td>
+<td><a href="https://docs.nvidia.com/aiperf/latest/benchmark-modes/trace-replay-with-mooncake-traces" target="_blank" rel="noopener">Trace Replay with Mooncake Traces</a></td>
+</tr>
+<tr>
+<td>GuideLLM</td>
+<td>Replays each Mooncake row independently, preserving timestamp offsets, token lengths, and shared hash-ID prefixes with generated prompts.</td>
+<td><a href="https://github.com/vllm-project/guidellm/blob/main/docs/en/guides/trace_replay.md#mooncake" target="_blank" rel="noopener">Trace Replay: Mooncake</a></td>
+</tr>
+<tr>
+<td>vLLM bench serve</td>
+<td>Schedules independent rows by timestamp and deterministically expands hash IDs into shared token blocks of the recorded input length.</td>
+<td><a href="https://docs.vllm.ai/en/latest/benchmarking/cli/#running-moonshotai-traces" target="_blank" rel="noopener">Replay Timed Traces: Running MoonshotAI traces</a></td>
+</tr>
+<tr>
+<td>SGLang bench_serving</td>
+<td>Starts each record at its trace timestamp, builds a hash-derived prompt, and emits the configured number of synthetic conversation rounds as a burst.</td>
+<td><a href="https://github.com/sgl-project/sglang/blob/main/docs/docs/developer_guide/bench_serving.mdx#9-evaluating-large-scale-kvcache-sharing-with-mooncake-trace-sglang-only" target="_blank" rel="noopener">Bench Serving: Mooncake</a>; <a href="https://github.com/sgl-project/sglang/blob/main/python/sglang/benchmark/datasets/mooncake.py" target="_blank" rel="noopener">Mooncake loader</a></td>
+</tr>
+<tr>
+<td>NVIDIA DynoSim</td>
+<td>Runs a Mooncake-format trace's timestamps and hash-block demand through simulated Dynamo engine cores to predict routing, scheduling, latency, and prefix-cache reuse.</td>
+<td><a href="https://github.com/ai-dynamo/dynamo/blob/main/docs/fern/pages/cli/operations/simulation-with-dynosim/dynosim-replay.mdx#replay-a-saved-trace" target="_blank" rel="noopener">Run a DynoSim Simulation</a></td>
+</tr>
+<tr>
+<td className="name">SWE-smith</td>
+<td>SGLang bench_serving</td>
+<td>Replays pre-built multi-turn agentic traces round by round via the <code>agentic-trace</code> dataset, feeding the server's live reply back into the next round's history. SWE-smith / OpenHands trajectories are the documented example; the trace JSON is supplied by the user.</td>
+<td><a href="https://github.com/sgl-project/sglang/blob/main/docs/docs/developer_guide/bench_serving.mdx" target="_blank" rel="noopener">Bench Serving: agentic-trace</a></td>
+</tr>
+<tr>
+<td className="name">Baseten Trace</td>
+<td>AIPerf</td>
+<td>Streams large Baseten Parquet traces in bounded batches via the <code>baseten_trace</code> loader, projecting only the columns each replay option needs and replaying recorded prompts without regenerating them.</td>
+<td><a href="https://github.com/ai-dynamo/aiperf/blob/main/docs/benchmark-modes/trace-replay.md#large-baseten-parquet-traces" target="_blank" rel="noopener">Trace Replay: Baseten</a>, <a href="https://github.com/ai-dynamo/aiperf/blob/main/docs/tutorials/baseten-trace.md" target="_blank" rel="noopener">Baseten trace tutorial</a></td>
+</tr>
+<tr>
+<td rowSpan="2" className="name">Exgentic</td>
+<td>Inference-Perf</td>
+<td>Reconstructs Exgentic's OTel dependency graph and, by default, substitutes each live model response into downstream requests. It preserves shared-prefix and tool-call structure, using recorded tool-result messages rather than executing tools, and can duplicate sessions with cache-isolating markers.</td>
+<td><a href="https://github.com/kubernetes-sigs/inference-perf/tree/main/workload-catalog/agentic-trace-replay" target="_blank" rel="noopener">Exgentic workload</a>; <a href="https://github.com/kubernetes-sigs/inference-perf/blob/main/docs/otel_trace_replay.md" target="_blank" rel="noopener">OTel Trace Replay</a></td>
+</tr>
+<tr>
+<td>AIPerf</td>
+<td>Sends self-contained recorded call snapshots, preserving messages, tool definitions, output limits, request controls, and start times. Fixed-schedule mode follows recorded offsets; closed-loop mode waits between calls, but neither mode feeds live responses into later requests. Recorded tool interactions are not executed.</td>
+<td><a href="https://docs.nvidia.com/aiperf/latest/reference/benchmark-datasets#exgentic-agent-trace-replay" target="_blank" rel="noopener">Exgentic Agent Trace Replay</a></td>
+</tr>
+</tbody>
+</table>
+
+
+Native loaders only; generic JSON/CSV conversion paths are excluded. These entries describe dataset-specific behavior, while the mechanism table above identifies each system under test.
+
+## So which combination do you actually want?
+
+It depends on the stage. A serving feature moves from a proof of concept on a few GPUs to sizing, a pre-production gate and production. Each stage asks a different question, so the trace and the replay mechanism change with it. The table pairs them the way we use them in llm-d and in our own disaggregated serving fleet for agent workloads.
+
+| Stage | Question | What the trace must keep | Trace | Replay |
+|----|----|----|----|----|
+| Proof of concept | Does the mechanism work, and by how much? | A controlled shape: input and output lengths, prefix sharing, concurrency. | Shared-prefix synthetic shapes; Mooncake hash-ID traces. | Inference-Perf for synthetic shapes; vLLM bench serve or AIPerf for Mooncake; DynoSim before the hardware exists. |
+| Sizing | How much hardware, and where does throughput stop growing? | Session shape: prompts that grow turn by turn, subagent fan-out, gaps while tools run. | WEKA / AgentX. | AIPerf or Inference-Perf, swept across concurrency. |
+| Pre-production | Does the full stack behave with real agent requests? | Content: messages, tool definitions, request parameters, and the dependency between calls. | Exgentic. | Inference-Perf's dependency-graph replay; functional checks on the release images; live agents. |
+| Production | Is it still right, and what changed? | Live traffic, measured at the router and at the engines. | Live traffic (no trace). | Controlled load ramps through the same gateway, read against production metrics. |
+
+
+Each row names the pairing we reach for first at that stage.
+
+**Proof of concept.** The point is to change one thing and see what it does, so everything else stays fixed. llm-d's guides run through <a href="https://github.com/llm-d/llm-d-benchmark" target="_blank" rel="noopener">llm-d-benchmark</a>, which drives Inference-Perf, AIPerf, GuideLLM or vLLM bench serve. The <a href="https://github.com/llm-d/llm-d/tree/main/guides/precise-prefix-cache-routing" target="_blank" rel="noopener">prefix-routing guide</a> uses an Inference-Perf shared-prefix synthetic workload, because routing only cares about which prefixes repeat. On our own rigs we fix the trace, seed and concurrency, and give every run a fresh prefix so it never reads another run's cache. That is how we measured a 28% decode speedup from one CUDA-graph setting.
+
+**Sizing.** How much hardware you need depends on how prompts grow over a session, how subagents fan out and how long tools run, so the trace needs real sessions. We replay WEKA / AgentX through AIPerf at rising concurrency, as llm-d's <a href="https://github.com/llm-d/llm-d/blob/main/guides/agentic-serving/glm-5-2-h200.md" target="_blank" rel="noopener">agentic-serving</a> and <a href="https://github.com/llm-d/llm-d/tree/main/guides/p2p-kv-cache-sharing/benchmarking" target="_blank" rel="noopener">P2P</a> guides do. Each session waits for its own responses, so at a given concurrency a slower system finishes fewer requests per second, and raising concurrency to recover throughput costs each user speed. That is why we compare systems on throughput per GPU against speed per user. Our production agent workloads reuse 92% of prompt tokens, and <a href="https://github.com/kubernetes-sigs/inference-perf/tree/main/workload-catalog/agentic-trace-replay" target="_blank" rel="noopener">Inference-Perf's catalog</a> measures Exgentic at about 91% (92% of its calls share a prefix with an earlier one).
+
+**Pre-production.** Now the request content matters. Tool definitions and settings like reasoning effort change how a request turns into tokens, and so whether it hits the cache. Synthetic prompts have neither. By looking at real requests we found rendering issues whose fixes raised prompt reuse from 59% to 96%. Exgentic is the only corpus here that keeps tool definitions and request parameters, and Inference-Perf replays it the way an agent runs, feeding each response into the next call and <a href="https://github.com/kubernetes-sigs/inference-perf/blob/main/docs/otel_trace_replay.md" target="_blank" rel="noopener">keeping the recorded gaps between calls</a>, capped at 15 s by default.
+
+We also ran 500 of our own agents for an hour next to interactive users, to check priority and fairness. Live agents behave like the real thing, but no two runs are the same. Exgentic sits in between: real agent runs on fixed tasks that can be replayed as often as needed.
+
+**Production.** Live traffic is the benchmark here, since no trace matches it. We watch latency and throughput per tenant, compare each release with the one before, and ramp up synthetic agent sessions through the same gateway to see how much headroom is left.
+
+Put together, benchmarking moves from cheap, controlled shapes early on to real agent content close to release, and what production shows feeds the next round. Synthetic and hash-based traces keep the early stages fast and repeatable, and agent traces with full content, like Exgentic replayed through Inference-Perf, cover the last check before a change reaches users.
+
+## Where to get them
+
+Most are public today: <a href="https://huggingface.co/datasets/Exgentic/agent-llm-traces-v2" target="_blank" rel="noopener">Exgentic Agent LLM Traces v2</a>, <a href="https://huggingface.co/datasets/semianalysisai/cc-traces-weka-with-subagents-060826" target="_blank" rel="noopener">WEKA / AgentX</a>, and <a href="https://huggingface.co/datasets/SWE-bench/SWE-smith-trajectories" target="_blank" rel="noopener">SWE-smith</a> on HuggingFace, and <a href="https://github.com/uw-syfi/TraceLab" target="_blank" rel="noopener">TraceLab</a> and <a href="https://github.com/kvcache-ai/Mooncake" target="_blank" rel="noopener">Mooncake</a> on GitHub. Baseten Trace ships as an <a href="https://github.com/ai-dynamo/aiperf/blob/main/docs/benchmark-modes/trace-replay.md#large-baseten-parquet-traces" target="_blank" rel="noopener">AIPerf loader format</a> rather than a published corpus.
+
+This post has been about what each corpus actually lets you learn — which questions it can and can't answer, given what it keeps. There's a separate question we haven't touched at all: *how* the underlying sessions came to exist in the first place — benchmark-generated like Exgentic and SWE-smith, or recorded from real usage like WEKA/AgentX, TraceLab, and Mooncake. That distinction changes what a dataset can honestly claim about the behavior its traces record, independent of how much any single trace captures. It's worth its own post — coming next.
