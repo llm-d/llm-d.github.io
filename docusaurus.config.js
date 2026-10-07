@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { themes as prismThemes } from 'prism-react-renderer';
 import { makeDocsPreprocessor } from './scripts/lib/preprocess.mjs';
 import { loadMenuConfig, makeSidebarItemsGenerator, validateMenuConfig } from './scripts/lib/sidebar.mjs';
+import redirects from './redirects.js';
 
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -161,18 +162,8 @@ const config = {
   ],
 
   plugins: [
-    // Client-side redirects for URLs that have moved (e.g. renamed blog slugs).
-    [
-      "@docusaurus/plugin-client-redirects",
-      {
-        redirects: [
-          {
-            from: "/blog/bottleneck-aware-scheduling-for-llm-inference",
-            to: "/blog/sticky-until-saturated-token-aware-routing",
-          },
-        ],
-      },
-    ],
+    // Client-side redirects for URLs that have moved; the list lives in redirects.js.
+    ["@docusaurus/plugin-client-redirects", { redirects }],
     // Community section as its own docs instance (mirrors docusaurus.io/community).
     [
       "@docusaurus/plugin-content-docs",
