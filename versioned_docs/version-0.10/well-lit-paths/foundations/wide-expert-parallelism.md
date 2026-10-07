@@ -31,7 +31,7 @@ Dispatch/combine uses the **DeepEP** backend over NVSHMEM with GPU-initiated RDM
 
 ## Deploy
 
-See the [Wide Expert Parallelism guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/wide-ep) for manifests and step-by-step deployment. The model servers are deployed as a [`DisaggregatedSet`](https://github.com/llm-d/llm-d/tree/v0.10/guides/wide-ep#2-deploy-the-model-server), which manages the prefill and decode roles as a single versioned unit.
+See the [Wide Expert Parallelism guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/wide-ep) for manifests and step-by-step deployment. The model servers are deployed as a [`DisaggregatedSet`](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/wide-ep#2-deploy-the-model-server), which manages the prefill and decode roles as a single versioned unit.
 
 ## Architecture
 

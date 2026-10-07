@@ -37,7 +37,7 @@ For this quickstart, we will use the **Standalone Mode** deployment, which is th
   kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
   ```
 
-- [Create the `llm-d-hf-token` secret in your target namespace with the key `HF_TOKEN` matching a valid HuggingFace token](https://github.com/llm-d/llm-d/tree/v0.10/helpers/hf-token.md) to pull models.
+- [Create the `llm-d-hf-token` secret in your target namespace with the key `HF_TOKEN` matching a valid HuggingFace token](https://github.com/llm-d/llm-d/tree/v0.10.0/helpers/hf-token.md) to pull models.
 <!-- llm-d-cicd:skip start -->
   ```bash
   export HF_TOKEN=<your HuggingFace token>
@@ -71,7 +71,7 @@ kubectl apply -n ${NAMESPACE} -k guides/optimized-baseline/modelserver/gpu/vllm/
 ```
 
 :::tip
-If you are using different hardware (AMD, Intel, TPU, or CPU), you can find alternative configurations in the `guides/optimized-baseline/modelserver/` directory. Some of these serve a different model (for example, `meta-llama/Llama-3.2-3B-Instruct` on CPU); use the model listed under [Supported Hardware Backends](https://github.com/llm-d/llm-d/tree/v0.10/guides/optimized-baseline#supported-hardware-backends) in the test request below.
+If you are using different hardware (AMD, Intel, TPU, or CPU), you can find alternative configurations in the `guides/optimized-baseline/modelserver/` directory. Some of these serve a different model (for example, `meta-llama/Llama-3.2-3B-Instruct` on CPU); use the model listed under [Supported Hardware Backends](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/optimized-baseline#supported-hardware-backends) in the test request below.
 :::
 
 

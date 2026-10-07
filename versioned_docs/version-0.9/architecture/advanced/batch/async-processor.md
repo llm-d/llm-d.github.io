@@ -220,7 +220,7 @@ Worker pool configurations define dedicated worker concurrency limits and pool a
 ]
 ```
 
-For more detailed configuration options, see the [llm-d-async README](https://github.com/llm-d/llm-d-async/blob/main/README.md).
+For more detailed configuration options, see the [llm-d-async README](https://github.com/llm-d/llm-d-async/blob/v0.9.0/README.md).
 
 ## Concurrency and Retries
 

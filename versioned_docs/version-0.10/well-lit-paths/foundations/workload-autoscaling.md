@@ -11,7 +11,7 @@ the deployment configuration.
 
 ## Deploy
 
-See the [workload autoscaling guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling) for manifests and step-by-step deployment instructions for both paths.
+See the [workload autoscaling guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/workload-autoscaling) for manifests and step-by-step deployment instructions for both paths.
 
 ## Strategies
 
@@ -44,4 +44,4 @@ The Workload Variant Autoscaler (WVA) is designed for operators running multiple
 
 ## Observability
 
-Autoscaling is a closed loop, so it is observed as a composed signal across the model servers, the autoscaler, and the resulting pool rather than as any single metric. The [guide's Observability & Troubleshooting section](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling#observability--troubleshooting) walks the loop end to end (demand, decision, convergence, outcome) and the common failure modes for both scaling paths, backed by the shared [PromQL](../../operations/observability/promql.md) and [metric](../../operations/observability/metrics.md) references plus the WVA metric definitions.
+Autoscaling is a closed loop, so it is observed as a composed signal across the model servers, the autoscaler, and the resulting pool rather than as any single metric. The [guide's Observability & Troubleshooting section](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/workload-autoscaling#observability--troubleshooting) walks the loop end to end (demand, decision, convergence, outcome) and the common failure modes for both scaling paths, backed by the shared [PromQL](../../operations/observability/promql.md) and [metric](../../operations/observability/metrics.md) references plus the WVA metric definitions.

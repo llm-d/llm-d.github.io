@@ -135,11 +135,11 @@ Key properties:
 - **Minimal GPU interference** — Uses GPU DMA by default, reducing interference with compute kernels
 
 :::note
-The storage connector does not handle cleanup or eviction. Storage capacity management must be handled by the underlying storage system or an external controller. A reference implementation, the [PVC Evictor](https://github.com/llm-d/llm-d-kv-cache/tree/main/kv_connectors/pvc_evictor), can automatically clean up old KV-cache files when storage thresholds are exceeded.
+The storage connector does not handle cleanup or eviction. Storage capacity management must be handled by the underlying storage system or an external controller. A reference implementation, the [PVC Evictor](https://github.com/llm-d/llm-d-kv-cache/tree/v0.9.0/kv_connectors/pvc_evictor), can automatically clean up old KV-cache files when storage thresholds are exceeded.
 :::
 
 
-For implementation details and advanced configuration, see the [llm-d FS backend documentation](https://github.com/llm-d/llm-d-kv-cache/tree/main/kv_connectors/llmd_fs_backend).
+For implementation details and advanced configuration, see the [llm-d FS backend documentation](https://github.com/llm-d/llm-d-kv-cache/tree/v0.9.0/kv_connectors/llmd_fs_backend).
 
 ### MooncakeStoreConnector
 
@@ -159,8 +159,8 @@ The `MooncakeStoreConnector` integrates this store with vLLM's V1 Connector API.
 
 The system consists of four components:
 
-- **Mooncake Master** — Centralized metadata service managing keyed objects, their replicas and placement, leases, and eviction. It is unaware of vLLM's KV-cache block semantics. Deployment manifests are provided in [`helpers/mooncake-master-store/`](https://github.com/llm-d/llm-d/tree/v0.10/helpers/mooncake-master-store). Required by both deployment modes.
-- **Mooncake Client** — A standalone process that allocates CPU DRAM and optionally SSD storage, registers those resources with the Master, and serves RDMA read/write requests from vLLM ranks. Only used in standalone-store mode. Deployment manifests are provided in [`helpers/mooncake-client/`](https://github.com/llm-d/llm-d/tree/v0.10/helpers/mooncake-client).
+- **Mooncake Master** — Centralized metadata service managing keyed objects, their replicas and placement, leases, and eviction. It is unaware of vLLM's KV-cache block semantics. Deployment manifests are provided in [`helpers/mooncake-master-store/`](https://github.com/llm-d/llm-d/tree/v0.10.0/helpers/mooncake-master-store). Required by both deployment modes.
+- **Mooncake Client** — A standalone process that allocates CPU DRAM and optionally SSD storage, registers those resources with the Master, and serves RDMA read/write requests from vLLM ranks. Only used in standalone-store mode. Deployment manifests are provided in [`helpers/mooncake-client/`](https://github.com/llm-d/llm-d/tree/v0.10.0/helpers/mooncake-client).
 - **Mooncake Transfer Engine** — Byte-oriented data mover that transfers data between registered GPU or CPU memory regions and the distributed DRAM/SSD pool using RDMA or TCP.
 - **MooncakeStoreConnector** (in each vLLM process) — Converts vLLM content-addressed cache chunks into Mooncake object keys and maps each object to one or more physical memory address-and-size ranges.
 
@@ -175,7 +175,7 @@ Embedded mode is simpler to deploy — the DRAM pool scales automatically with t
 
 #### Mooncake Master
 
-The Mooncake Master handles block metadata, eviction, and snapshots. Key configuration parameters (set in [`configmap.yaml`](https://github.com/llm-d/llm-d/blob/v0.10/helpers/mooncake-master-store/base/configmap.yaml)):
+The Mooncake Master handles block metadata, eviction, and snapshots. Key configuration parameters (set in [`configmap.yaml`](https://github.com/llm-d/llm-d/blob/v0.10.0/helpers/mooncake-master-store/base/configmap.yaml)):
 
 | Parameter | Default | Description |
 | :--- | :--- | :--- |
@@ -186,7 +186,7 @@ The Mooncake Master handles block metadata, eviction, and snapshots. Key configu
 | `enable_snapshot` | `true` | Periodic snapshots to PVC for recovery |
 | `snapshot_interval_seconds` | `60` | Snapshot frequency |
 
-The Master exposes gRPC (port 50051), HTTP metadata (port 8080), and Prometheus metrics (port 9003). See [`helpers/mooncake-master-store/`](https://github.com/llm-d/llm-d/tree/v0.10/helpers/mooncake-master-store) for deployment manifests.
+The Master exposes gRPC (port 50051), HTTP metadata (port 8080), and Prometheus metrics (port 9003). See [`helpers/mooncake-master-store/`](https://github.com/llm-d/llm-d/tree/v0.10.0/helpers/mooncake-master-store) for deployment manifests.
 
 #### Mooncake Client
 
@@ -200,7 +200,7 @@ The two-tier storage within the Client works as follows:
 - **Reads** check DRAM first and fall through to SSD on a DRAM miss.
 - **Eviction** is coordinated by the Master — when the DRAM pool hits the high watermark, the Master instructs the Client to spill blocks to SSD.
 
-Decoupling storage from compute means the pool survives vLLM pod restarts, storage can be placed on nodes without GPUs (e.g., CPU-only nodes with large DRAM and NVMe), and the SSD tier is managed in one place per node rather than per GPU. See [`helpers/mooncake-client/`](https://github.com/llm-d/llm-d/tree/v0.10/helpers/mooncake-client) for deployment manifests.
+Decoupling storage from compute means the pool survives vLLM pod restarts, storage can be placed on nodes without GPUs (e.g., CPU-only nodes with large DRAM and NVMe), and the SSD tier is managed in one place per node rather than per GPU. See [`helpers/mooncake-client/`](https://github.com/llm-d/llm-d/tree/v0.10.0/helpers/mooncake-client) for deployment manifests.
 
 #### Content-Addressable Storage and PYTHONHASHSEED
 
@@ -264,7 +264,7 @@ Each vLLM instance requires a Mooncake configuration file, pointed to by the `MO
 | `MOONCAKE_CONFIG_PATH` | (required) | Path to `mooncake_config.json` |
 | `PYTHONHASHSEED` | (random) | Must be set to same fixed value across all instances sharing the store |
 
-For deployment recipes, see the [Tiered Prefix Cache Guide — Mooncake Store](https://github.com/llm-d/llm-d/tree/v0.10/guides/tiered-prefix-cache/modelserver/gpu/vllm/mooncake-store).
+For deployment recipes, see the [Tiered Prefix Cache Guide — Mooncake Store](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/tiered-prefix-cache/modelserver/gpu/vllm/mooncake-store).
 
 ### Other Connectors
 
@@ -278,7 +278,7 @@ llm-d's deployment guides cover LMCache and Mooncake Store today. The integratio
 :::
 
 
-For deployment recipes, see the [Tiered Prefix Cache Guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/tiered-prefix-cache).
+For deployment recipes, see the [Tiered Prefix Cache Guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/tiered-prefix-cache).
 
 ## Configuration
 
@@ -299,7 +299,7 @@ For advanced use and older vLLM releases, the equivalent `--kv-transfer-config` 
 | `block_size` | integer | `256` | Tokens per file (must be multiple of GPU block size) |
 | `threads_per_gpu` | integer | `64` | I/O worker threads per GPU |
 
-For the full configuration reference including GDS modes and environment variables, see the [llm-d FS backend README](https://github.com/llm-d/llm-d-kv-cache/tree/main/kv_connectors/llmd_fs_backend).
+For the full configuration reference including GDS modes and environment variables, see the [llm-d FS backend README](https://github.com/llm-d/llm-d-kv-cache/tree/v0.9.0/kv_connectors/llmd_fs_backend).
 
 ## Examples
 
@@ -360,7 +360,7 @@ For the full `mooncake_config.json` reference, see [MooncakeStoreConnector — m
 
 ## Metrics
 
-The FS backend populates vLLM's built-in offloading metrics (`vllm:kv_offload_*`) for transfer bytes, time, and size distribution. See the [llm-d FS backend documentation](https://github.com/llm-d/llm-d-kv-cache/tree/main/kv_connectors/llmd_fs_backend#metrics) for the full metrics reference.
+The FS backend populates vLLM's built-in offloading metrics (`vllm:kv_offload_*`) for transfer bytes, time, and size distribution. See the [llm-d FS backend documentation](https://github.com/llm-d/llm-d-kv-cache/tree/v0.9.0/kv_connectors/llmd_fs_backend#metrics) for the full metrics reference.
 
 ## Performance Considerations
 
@@ -381,9 +381,9 @@ Any POSIX filesystem is a candidate; the best choice for a given deployment depe
 
 ## Further Reading
 
-- [Tiered Prefix Cache Guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/tiered-prefix-cache) — Step-by-step deployment guides
+- [Tiered Prefix Cache Guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/tiered-prefix-cache) — Step-by-step deployment guides
 - [llm-d KV-Disaggregation Roadmaps](https://github.com/llm-d/llm-d-kv-cache/issues?q=is%3Aissue%20state%3Aopen%20label%3Aroadmap) — Planned features and improvements across offloading and KV-cache management
-- [llm-d FS Backend](https://github.com/llm-d/llm-d-kv-cache/tree/main/kv_connectors/llmd_fs_backend) — Implementation details, configuration, and metrics
+- [llm-d FS Backend](https://github.com/llm-d/llm-d-kv-cache/tree/v0.9.0/kv_connectors/llmd_fs_backend) — Implementation details, configuration, and metrics
 - [vLLM KV Offloading Connector](https://vllm.ai/blog/kv-offloading-connector) — Deep dive into vLLM's native offloading
 - [Mooncake Store](https://github.com/kvcache-ai/Mooncake) — Upstream Mooncake project and documentation
 - [vLLM MooncakeStoreConnector Usage Guide](https://docs.vllm.ai/en/v0.23.0/features/mooncake_store_connector_usage/) — vLLM-side configuration reference

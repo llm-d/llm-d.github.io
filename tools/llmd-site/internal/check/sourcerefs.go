@@ -20,6 +20,9 @@ type SourceRefOptions struct {
 	Dir string
 	// Version limits the check to one docs version label, e.g. "0.10".
 	Version string
+	// Static compares refs against source-refs.yaml only, with no network. It
+	// is cheap and deterministic, so it is the form that belongs in PR CI.
+	Static bool
 	// WarnOnly reports problems but returns exit code 0.
 	WarnOnly bool
 }
@@ -134,6 +137,16 @@ func CheckSourceRefs(root string, opts SourceRefOptions) (int, error) {
 		}
 	}
 
+	if opts.Static {
+		return reportSourceRefs(report{
+			problems: problemSet,
+			remedies: remedySet,
+			links:    considered,
+			static:   true,
+			warnOnly: opts.WarnOnly,
+		})
+	}
+
 	gh := &githubTrees{
 		client: newHTTPClient(30 * time.Second),
 		token:  os.Getenv("GITHUB_TOKEN"),
@@ -185,14 +198,46 @@ func CheckSourceRefs(root string, opts SourceRefOptions) (int, error) {
 		fmt.Printf("    %-34s %-10s %3d path(s)  %s\n", t.repo, t.ref, len(paths[t]), status)
 	}
 
-	fmt.Printf("\n    %d link(s), %d path(s) verified across %d repo/ref pair(s)\n",
-		considered, checked, len(targets))
+	return reportSourceRefs(report{
+		problems: problemSet,
+		remedies: remedySet,
+		links:    considered,
+		paths:    checked,
+		targets:  len(targets),
+		warnOnly: opts.WarnOnly,
+	})
+}
 
-	if len(problemSet) == 0 {
+// report is the outcome of one CheckSourceRefs run.
+type report struct {
+	problems map[string]bool
+	// remedies holds only the fixes that apply to the problems actually found.
+	// `version repin` is not one of them for an unlisted repo or release: it
+	// rewrites links for repos a release lists, and iterates only the releases
+	// in source-refs.yaml, so it would leave those untouched and send the
+	// reader in a circle.
+	remedies map[string]bool
+	links    int
+	paths    int
+	targets  int
+	static   bool
+	warnOnly bool
+}
+
+// reportSourceRefs prints the outcome and returns the exit code.
+func reportSourceRefs(r report) (int, error) {
+	if r.static {
+		fmt.Printf("    %d link(s) checked against %s (refs only, no network)\n", r.links, srcrefs.FileName)
+	} else {
+		fmt.Printf("\n    %d link(s), %d path(s) verified across %d repo/ref pair(s)\n",
+			r.links, r.paths, r.targets)
+	}
+
+	if len(r.problems) == 0 {
 		fmt.Println("✓ source refs valid")
 		return 0, nil
 	}
-	problems := sortedBoolKeys(problemSet)
+	problems := sortedBoolKeys(r.problems)
 	fmt.Printf("\n%d problem(s):\n", len(problems))
 	const maxShown = 25
 	for i, p := range problems {
@@ -202,13 +247,13 @@ func CheckSourceRefs(root string, opts SourceRefOptions) (int, error) {
 		}
 		fmt.Printf("  - %s\n", p)
 	}
-	if len(remedySet) > 0 {
+	if len(r.remedies) > 0 {
 		fmt.Println("\nTo fix:")
-		for _, m := range sortedBoolKeys(remedySet) {
+		for _, m := range sortedBoolKeys(r.remedies) {
 			fmt.Printf("  - %s\n", m)
 		}
 	}
-	if opts.WarnOnly {
+	if r.warnOnly {
 		return 0, nil
 	}
 	return 1, nil

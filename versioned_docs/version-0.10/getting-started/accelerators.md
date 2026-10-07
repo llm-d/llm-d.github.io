@@ -79,7 +79,7 @@ For P/D disaggregation with RDMA-accelerated KV-cache transfer on Intel XPU, the
 - GPU-NIC PCIe alignment for optimal transfer performance.
 - UCX transport configured with `ib,rc,ze_copy`.
 
-The RDMA overlay (`modelserver/xpu/vllm-rdma/`) reuses the standard XPU vLLM base and adds one RDMA DRA claim per pod plus RDMA-specific UCX transport settings. See the [P/D Disaggregation guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/pd-disaggregation) for deployment instructions.
+The RDMA overlay (`modelserver/xpu/vllm-rdma/`) reuses the standard XPU vLLM base and adds one RDMA DRA claim per pod plus RDMA-specific UCX transport settings. See the [P/D Disaggregation guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/pd-disaggregation) for deployment instructions.
 
 ## Iluvatar
 
@@ -100,7 +100,7 @@ Without `cuda_copy`/`cuda_ipc`, UCX misdetects VRAM as host memory and the prefi
 
 ## MetaX C500X
 
-MetaX C500X GPUs are supported for community-contributed well-lit paths. The device plugin must expose `metax-tech.com/gpu`. P/D disaggregation uses vLLM `NixlConnector` over TCP; see the [P/D Disaggregation guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/pd-disaggregation) MetaX overlay (`modelserver/metax/vllm/`).
+MetaX C500X GPUs are supported for community-contributed well-lit paths. The device plugin must expose `metax-tech.com/gpu`. P/D disaggregation uses vLLM `NixlConnector` over TCP; see the [P/D Disaggregation guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/pd-disaggregation) MetaX overlay (`modelserver/metax/vllm/`).
 
 ## Rebellions NPU
 
@@ -129,7 +129,7 @@ requests in one claim to bind together.
 **Prefix caching is off, so layer the NPU router values.** The runtime disables prefix
 caching for sliding-window models, and `openai/gpt-oss-120b` is one: enabling it reports
 0 hits over every query. The guide's default scheduling profile is prefix-cache aware, so
-apply [`router/npu.rbln.values.yaml`](https://github.com/llm-d/llm-d/tree/v0.10/guides/optimized-baseline/router/npu.rbln.values.yaml)
+apply [`router/npu.rbln.values.yaml`](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/optimized-baseline/router/npu.rbln.values.yaml)
 after the guide's own values to fall back to the load scorer alone. Both the flag and that
 file go away once the runtime supports prefix caching here.
 
@@ -137,7 +137,7 @@ file go away once the runtime supports prefix caching here.
 `openai/gpt-oss-120b`, while the guide defaults `MODEL` to `Qwen/Qwen3-32B`. Export
 `MODEL=openai/gpt-oss-120b` so the validation and benchmark steps address the served model.
 
-**Out of scope for this release:** [fast model actuation](https://github.com/llm-d/llm-d/tree/v0.10/guides/fast-model-actuation-base),
+**Out of scope for this release:** [fast model actuation](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/fast-model-actuation-base),
 because the runtime does not support sleep and wake; LoRA adapters; and multimodal models,
 which on this runtime need a code path that cannot run alongside a KV connector.
 

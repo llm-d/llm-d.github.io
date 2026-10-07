@@ -76,6 +76,41 @@ static/img/versioned/<x.y>/ afterwards.`,
 	cut.Flags().BoolVar(&fetch, "fetch", false, "git fetch upstream clone before post-cut resync")
 	cut.Flags().BoolVar(&allowMissing, "allow-missing", false, "skip minimum doc-count check on post-cut resync")
 
-	cmd.AddCommand(cut)
+	var repinDryRun bool
+
+	repin := &cobra.Command{
+		Use:   "repin [x.y ...]",
+		Short: "Rewrite a released version's source links to the refs in source-refs.yaml",
+		Long: `Make versioned_docs/version-<x.y>/ agree with source-refs.yaml.
+
+Every github.com/llm-d/<repo> link whose repo the release lists is rewritten to
+that repo's configured ref, whatever it points at now — ` + "`main`" + `, a mutable
+minor tag, or a ref from the wrong release. Links to repos the release does not
+list are left alone, so a version can pin one inline.
+
+Idempotent. It settles the ref mismatches ` + "`check refs`" + ` reports; a repo the
+release does not list, or a release missing from source-refs.yaml, needs an edit
+to that file instead. With no arguments it repins every release listed there.
+
+Verify the result against the repositories afterwards:
+
+  llmd-site check refs
+
+Examples:
+  llmd-site version repin --dry-run
+  llmd-site version repin 0.9
+  llmd-site version repin`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return version.Repin(version.RepinOptions{
+				Root:     rootDir,
+				Versions: args,
+				DryRun:   repinDryRun,
+			})
+		},
+	}
+
+	repin.Flags().BoolVar(&repinDryRun, "dry-run", false, "report what would change without writing")
+
+	cmd.AddCommand(cut, repin)
 	return cmd
 }
