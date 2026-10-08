@@ -33,6 +33,18 @@ const redirects = [
     ['operations/serve-external-apis/litellm', 'operations/integrations/litellm'],
     ['operations/serve-external-apis/kong', 'operations/integrations/kong'],
   ].map(([from, to]) => ({ from: `/docs/dev/${from}`, to: `/docs/dev/${to}` })),
+
+  // Follow-up guide moves: Multimodal to Foundations (llm-d/llm-d#2697),
+  // Operations sub-menu refinements (llm-d/llm-d#2705), and the Models pillar
+  // replacing Workloads (llm-d/llm-d#2706).
+  ...[
+    ['well-lit-paths/workloads/multimodal-serving', 'well-lit-paths/foundations/serve-multimodal-models'],
+    ['operations/autoscaling/multi-inference-pool', 'operations/traffic/multi-inference-pool'],
+    ['operations/autoscaling/wva', 'operations/autoscaling'],
+    ['operations/autoscaling/prometheus-adapter', 'operations/autoscaling'],
+    ['well-lit-paths/workloads', 'well-lit-paths/models'],
+    ['well-lit-paths/workloads/agentic-serving', 'well-lit-paths/models'],
+  ].map(([from, to]) => ({ from: `/docs/dev/${from}`, to: `/docs/dev/${to}` })),
 ];
 
 export default redirects;
