@@ -93,7 +93,7 @@ Not all of the plugins listed below are configured by default. Only a curated su
 *   **[`queue-depth-scorer`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/scheduling/scorer/queuedepth/README.md)**: Prefers endpoints with shorter request queues.
 *   **[`running-requests-size-scorer`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/scheduling/scorer/runningrequests/README.md)**: Scores based on the number of currently active requests.
 *   **[`token-load-scorer`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/scheduling/scorer/tokenload/README.md)**: Scores based on the total token load (input + output) handled by the endpoint.
-*   **[`precise-prefix-cache-scorer`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/scheduling/scorer/preciseprefixcache)**: Scores requests based on real-time KV-cache locality. While the `prefix-scorer` relies on historical scheduling estimates, this version tracks actual cache states via model server events to ensure higher precision.
+*   **[`precise-prefix-cache-scorer`](https://github.com/llm-d/llm-d-inference-scheduler/tree/v0.9.0/pkg/epp/framework/plugins/scheduling/scorer/preciseprefixcache)**: Scores requests based on real-time KV-cache locality. While the `prefix-scorer` relies on historical scheduling estimates, this version tracks actual cache states via model server events to ensure higher precision.
 
 :::note
 If you configure this plugin but do not explicitly configure its required data producer (`approx-prefix-cache-producer`), the loader will automatically instantiate it with the same parameters. This was done for historical reasons to simplify configuration when data producers were introduced.
@@ -109,7 +109,7 @@ If you configure this plugin but do not explicitly configure its required data p
 *   **[`weighted-random-picker`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/scheduling/picker/weightedrandom/README.md)**: Selects an endpoint randomly, using the scores as relative probabilities (lottery scheduling).
 
 ### Profile Handlers
-*   **[`single-profile-handler`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/scheduling/profile)**: Runs a single configured primary profile.
+*   **[`single-profile-handler`](https://github.com/llm-d/llm-d-inference-scheduler/tree/v0.9.0/pkg/epp/framework/plugins/scheduling/profilehandler)**: Runs a single configured primary profile.
 *   **[`disagg-profile-handler`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/scheduling/profilehandler/disagg)**: Runs two scheduling profiles, one for prefill and one for decode. The **decode endpoint** is set as the primary destination for the proxy to forward the original request, while the **prefill endpoint** is injected into the request as a specialized header.
 
 ---

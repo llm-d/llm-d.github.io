@@ -4,7 +4,7 @@
 
 ## Summary
 
-[_Config Explorer_](https://github.com/llm-d/llm-d-benchmark/tree/main/config_explorer)
+[_Config Explorer_](https://github.com/llm-d/llm-d-benchmark/tree/v0.5.0/config_explorer)
 is a capacity planning tool within llm-d-benchmark that estimates GPU memory
 requirements, evaluates parallelism strategies, and recommends cost-effective
 hardware configurations using roofline analysis.
