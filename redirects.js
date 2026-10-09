@@ -45,6 +45,13 @@ const redirects = [
     ['well-lit-paths/workloads', 'well-lit-paths/models'],
     ['well-lit-paths/workloads/agentic-serving', 'well-lit-paths/models'],
   ].map(([from, to]) => ({ from: `/docs/dev/${from}`, to: `/docs/dev/${to}` })),
+
+  // Redis and GCP Pub/Sub queue backend pages merged into the
+  // asynchronous-processing guide as tabs (llm-d/llm-d#2724).
+  ...[
+    ['operations/batch-serving/async-redis', 'operations/batch-serving/asynchronous-processing'],
+    ['operations/batch-serving/async-gcp-pubsub', 'operations/batch-serving/asynchronous-processing'],
+  ].map(([from, to]) => ({ from: `/docs/dev/${from}`, to: `/docs/dev/${to}` })),
 ];
 
 export default redirects;
