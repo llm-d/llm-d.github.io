@@ -428,13 +428,21 @@ func (gs *guideSyncer) guideMeta(g GuideEntry, guideDir string) (string, error) 
 	writeKV(false, "source", jsonString(path.Join(g.Dir, "README.md")))
 	writeKV(false, "ref", jsonString(gs.ref))
 	writeKV(false, "repo", jsonString(gs.repoURL))
-	writeKV(false, "defaults", fmt.Sprintf("{%q: %s, %q: %s}",
+	defaults := fmt.Sprintf("{%q: %s, %q: %s",
 		"accelerator", jsonString(staticDefault(gy.Env.Static, "ACCELERATOR_TYPE", "gpu")),
-		"engine", jsonString(staticDefault(gy.Env.Static, "MODEL_SERVER", "vllm"))))
+		"engine", jsonString(staticDefault(gy.Env.Static, "MODEL_SERVER", "vllm")))
+	// INFRA_PROVIDER is optional; only guides that declare it get a default.
+	if p := staticDefault(gy.Env.Static, "INFRA_PROVIDER", ""); p != "" {
+		defaults += fmt.Sprintf(", %q: %s", "provider", jsonString(p))
+	}
+	writeKV(false, "defaults", defaults+"}")
 
 	support := "null"
 	engineLabels := "{}"
 	if gy.Support.Kind != 0 {
+		if err := normalizeProviders(&gy.Support); err != nil {
+			return "", fmt.Errorf("guide.yaml support: %w", err)
+		}
 		s, err := nodeJSON(&gy.Support)
 		if err != nil {
 			return "", fmt.Errorf("guide.yaml support: %w", err)
@@ -450,6 +458,87 @@ func (gs *guideSyncer) guideMeta(g GuideEntry, guideDir string) (string, error) 
 	writeKV(false, "engine_labels", engineLabels)
 	buf.WriteString("}")
 	return buf.String(), nil
+}
+
+// normalizeProviders rewrites every support.accelerators.<acc>.providers
+// entry into the canonical {name, label[, engines]} mapping the site expects:
+// a bare string is the provider name (label defaults to the name), and a
+// mapping without a label gets label = name. engines, when present, must be a
+// list of engine keys (the subset of the accelerator's engines this provider
+// supports).
+func normalizeProviders(support *yaml.Node) error {
+	accs := mappingValue(support, "accelerators")
+	if accs == nil || accs.Kind != yaml.MappingNode {
+		return nil
+	}
+	for i := 0; i+1 < len(accs.Content); i += 2 {
+		accName := accs.Content[i].Value
+		acc := resolveAlias(accs.Content[i+1])
+		provs := mappingValue(acc, "providers")
+		if provs == nil {
+			continue
+		}
+		provs = resolveAlias(provs)
+		if provs.Kind != yaml.SequenceNode {
+			return fmt.Errorf("accelerators.%s.providers must be a list", accName)
+		}
+		out := make([]*yaml.Node, 0, len(provs.Content))
+		for j, item := range provs.Content {
+			item = resolveAlias(item)
+			var name, label string
+			var engines *yaml.Node
+			switch item.Kind {
+			case yaml.ScalarNode:
+				name = item.Value
+			case yaml.MappingNode:
+				if n := mappingValue(item, "name"); n != nil {
+					name = n.Value
+				}
+				if l := mappingValue(item, "label"); l != nil {
+					label = l.Value
+				}
+				if e := mappingValue(item, "engines"); e != nil {
+					engines = resolveAlias(e)
+					if engines.Kind != yaml.SequenceNode {
+						return fmt.Errorf("accelerators.%s.providers[%d].engines must be a list", accName, j)
+					}
+				}
+			default:
+				return fmt.Errorf("accelerators.%s.providers[%d]: expected a name or {name, label, engines}", accName, j)
+			}
+			if name == "" {
+				return fmt.Errorf("accelerators.%s.providers[%d]: name is required", accName, j)
+			}
+			if label == "" {
+				label = name
+			}
+			m := &yaml.Node{Kind: yaml.MappingNode, Tag: "!!map", Content: []*yaml.Node{
+				strNode("name"), strNode(name), strNode("label"), strNode(label),
+			}}
+			if engines != nil {
+				m.Content = append(m.Content, strNode("engines"), engines)
+			}
+			out = append(out, m)
+		}
+		// Replace the providers value inside the accelerator mapping.
+		for k := 0; k+1 < len(acc.Content); k += 2 {
+			if acc.Content[k].Value == "providers" {
+				acc.Content[k+1] = &yaml.Node{Kind: yaml.SequenceNode, Tag: "!!seq", Content: out}
+			}
+		}
+	}
+	return nil
+}
+
+func resolveAlias(n *yaml.Node) *yaml.Node {
+	for n != nil && n.Kind == yaml.AliasNode {
+		n = n.Alias
+	}
+	return n
+}
+
+func strNode(v string) *yaml.Node {
+	return &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: v}
 }
 
 func staticDefault(static map[string]yaml.Node, key, fallback string) string {

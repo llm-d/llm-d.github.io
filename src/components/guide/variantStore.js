@@ -10,6 +10,14 @@
  * The engine is stored in the same storage slot / query param as Docusaurus
  * <Tabs groupId="engine" queryString="engine">, so engine tab groups and the
  * selector stay in sync in both directions.
+ *
+ * Accelerators may also list infrastructure providers
+ * (support.accelerators.<acc>.providers: [{name, label, engines?}]). The
+ * provider (?provider=, llmd.guide.provider) sits between accelerator and
+ * engine: it is only meaningful for accelerators that list providers, and a
+ * provider with `engines` restricts the engines that can be selected with it.
+ * It only rewrites INFRA_PROVIDER in the env block; it is not a Variant `when`
+ * dimension.
  */
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useStorageSlot } from '@docusaurus/theme-common';
@@ -23,6 +31,8 @@ export const ENGINE_GROUP = 'engine';
 export const ENGINE_STORAGE_KEY = `docusaurus.tab.${ENGINE_GROUP}`;
 export const ACCELERATOR_PARAM = 'accelerator';
 export const ENGINE_PARAM = 'engine';
+export const PROVIDER_STORAGE_KEY = 'llmd.guide.provider';
+export const PROVIDER_PARAM = 'provider';
 
 const GuideContext = createContext(null);
 
@@ -56,9 +66,57 @@ export function supportedEngines(support, accelerator) {
   return engineKeys(support).filter((e) => isSupported(support, accelerator, e));
 }
 
+/** Providers ([{name, label, engines?}]) listed for an accelerator; [] if none. */
+export function providersFor(support, accelerator) {
+  const p = support?.accelerators?.[accelerator]?.providers;
+  return Array.isArray(p) ? p.filter((x) => x && x.name) : [];
+}
+
+export function findProvider(support, accelerator, name) {
+  return providersFor(support, accelerator).find((p) => p.name === name);
+}
+
+/** A provider without an `engines` list supports every engine. */
+export function providerSupportsEngine(provider, engine) {
+  return !provider || !Array.isArray(provider.engines) || provider.engines.includes(engine);
+}
+
+/** Engines selectable for accelerator + provider (provider may be undefined). */
+export function supportedEnginesFor(support, accelerator, providerName) {
+  const prov = findProvider(support, accelerator, providerName);
+  return supportedEngines(support, accelerator).filter((e) => providerSupportsEngine(prov, e));
+}
+
 /**
- * Pick a supported {accelerator, engine} given the requested values and the
- * guide defaults. Returns {accelerator, engine, fellBack}.
+ * Default provider for an accelerator: the guide's INFRA_PROVIDER default if
+ * the accelerator lists it, else the first listed one; undefined when the
+ * accelerator has no providers.
+ */
+export function defaultProvider(meta, accelerator) {
+  const provs = providersFor(meta?.support, accelerator);
+  if (!provs.length) return undefined;
+  const d = meta?.defaults?.provider;
+  return (provs.find((p) => p.name === d) ?? provs[0]).name;
+}
+
+/** Preferred engine if selectable, else the guide default, else the first selectable one. */
+function pickEngine(meta, accelerator, provider, preferred) {
+  const ok = supportedEnginesFor(meta?.support, accelerator, provider);
+  if (ok.includes(preferred)) return preferred;
+  const d = meta?.defaults?.engine;
+  return ok.includes(d) ? d : ok[0];
+}
+
+/**
+ * Pick a supported {accelerator, provider, engine} given the requested values
+ * and the guide defaults. Returns {accelerator, provider, engine, fellBack}.
+ * provider is undefined when the accelerator lists no providers. When the
+ * requested engine is not supported by the provider, the provider (the
+ * higher-level choice) wins and the engine falls back.
+ *
+ * Provider names are guide-specific, so a remembered provider that this
+ * guide/accelerator doesn't list falls back silently; only an explicit
+ * request (requested.providerFromUrl !== false, i.e. ?provider=) sets fellBack.
  */
 export function resolveSelection(meta, requested) {
   const support = meta?.support;
@@ -70,14 +128,32 @@ export function resolveSelection(meta, requested) {
     if (requested.accelerator != null) fellBack = true;
     accelerator = accs.includes(defaults.accelerator) ? defaults.accelerator : accs[0];
   }
+  const provs = providersFor(support, accelerator);
+  let provider;
+  if (provs.length) {
+    provider = requested.provider ?? defaultProvider(meta, accelerator);
+    if (!provs.some((p) => p.name === provider)) {
+      if (requested.provider != null && requested.providerFromUrl !== false) fellBack = true;
+      provider = defaultProvider(meta, accelerator);
+    }
+    // A provider none of whose engines work on this accelerator is unusable.
+    if (!supportedEnginesFor(support, accelerator, provider).length) {
+      const usable = provs.find((p) => supportedEnginesFor(support, accelerator, p.name).length);
+      if (usable) provider = usable.name;
+    }
+  }
   let engine = requested.engine ?? defaults.engine;
   const engs = engineKeys(support);
-  if (support?.accelerators && (!engs.includes(engine) || !isSupported(support, accelerator, engine))) {
+  if (
+    support?.accelerators &&
+    (!engs.includes(engine) ||
+      !isSupported(support, accelerator, engine) ||
+      !providerSupportsEngine(findProvider(support, accelerator, provider), engine))
+  ) {
     if (requested.engine != null) fellBack = true;
-    const ok = supportedEngines(support, accelerator);
-    engine = ok.includes(defaults.engine) ? defaults.engine : ok[0] ?? defaults.engine;
+    engine = pickEngine(meta, accelerator, provider, undefined) ?? defaults.engine;
   }
-  return { accelerator, engine, fellBack };
+  return { accelerator, provider, engine, fellBack };
 }
 
 /** Parse a data-when string: "ACCELERATOR_TYPE=a,b;MODEL_SERVER=vllm". */
@@ -103,15 +179,18 @@ export function GuideProvider({ meta, children }) {
   const history = useHistory();
   const [storedAcc, accSlot] = useStorageSlot(ACCELERATOR_STORAGE_KEY);
   const [storedEng, engSlot] = useStorageSlot(ENGINE_STORAGE_KEY);
+  const [storedProv, provSlot] = useStorageSlot(PROVIDER_STORAGE_KEY);
 
   const query = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const requested = isBrowser
     ? {
         accelerator: query.get(ACCELERATOR_PARAM) ?? storedAcc ?? undefined,
         engine: query.get(ENGINE_PARAM) ?? storedEng ?? undefined,
+        provider: query.get(PROVIDER_PARAM) ?? storedProv ?? undefined,
+        providerFromUrl: query.has(PROVIDER_PARAM),
       }
     : {};
-  const { accelerator, engine, fellBack: fellBackNow } = resolveSelection(meta, requested);
+  const { accelerator, provider, engine, fellBack: fellBackNow } = resolveSelection(meta, requested);
   // Keep the notice once shown (the URL is rewritten below, after which the
   // request itself no longer falls back).
   const [noticed, setNoticed] = useState(false);
@@ -120,7 +199,10 @@ export function GuideProvider({ meta, children }) {
   const writeQuery = useCallback(
     (updates) => {
       const q = new URLSearchParams(window.location.search);
-      for (const [k, v] of Object.entries(updates)) q.set(k, v);
+      for (const [k, v] of Object.entries(updates)) {
+        if (v == null) q.delete(k);
+        else q.set(k, v);
+      }
       history.replace({ ...history.location, search: `?${q.toString()}` });
     },
     [history],
@@ -130,29 +212,44 @@ export function GuideProvider({ meta, children }) {
     (acc) => {
       setNoticed(false);
       accSlot.set(acc);
-      const updates = { [ACCELERATOR_PARAM]: acc };
-      if (!isSupported(meta?.support, acc, engine)) {
-        const ok = supportedEngines(meta?.support, acc);
-        const next = ok.includes(meta?.defaults?.engine) ? meta.defaults.engine : ok[0];
-        if (next) {
-          engSlot.set(next);
-          updates[ENGINE_PARAM] = next;
-        }
+      // Keep the provider if the new accelerator lists it, else its default.
+      const prov = findProvider(meta?.support, acc, provider) ? provider : defaultProvider(meta, acc);
+      const updates = { [ACCELERATOR_PARAM]: acc, [PROVIDER_PARAM]: prov };
+      if (prov !== provider && prov != null) provSlot.set(prov);
+      const next = pickEngine(meta, acc, prov, engine);
+      if (next) {
+        if (next !== engine) engSlot.set(next);
+        updates[ENGINE_PARAM] = next;
       } else {
         updates[ENGINE_PARAM] = engine;
       }
       writeQuery(updates);
     },
-    [accSlot, engSlot, engine, meta, writeQuery],
+    [accSlot, engSlot, provSlot, engine, provider, meta, writeQuery],
+  );
+
+  const setProvider = useCallback(
+    (prov) => {
+      setNoticed(false);
+      provSlot.set(prov);
+      const updates = { [ACCELERATOR_PARAM]: accelerator, [PROVIDER_PARAM]: prov, [ENGINE_PARAM]: engine };
+      const next = pickEngine(meta, accelerator, prov, engine);
+      if (next && next !== engine) {
+        engSlot.set(next);
+        updates[ENGINE_PARAM] = next;
+      }
+      writeQuery(updates);
+    },
+    [provSlot, engSlot, accelerator, engine, meta, writeQuery],
   );
 
   const setEngine = useCallback(
     (eng) => {
       setNoticed(false);
       engSlot.set(eng);
-      writeQuery({ [ACCELERATOR_PARAM]: accelerator, [ENGINE_PARAM]: eng });
+      writeQuery({ [ACCELERATOR_PARAM]: accelerator, [PROVIDER_PARAM]: provider, [ENGINE_PARAM]: eng });
     },
-    [engSlot, accelerator, writeQuery],
+    [engSlot, accelerator, provider, writeQuery],
   );
 
   // When the requested selection fell back (unsupported here), pin the
@@ -162,14 +259,18 @@ export function GuideProvider({ meta, children }) {
   useEffect(() => {
     if (!isBrowser || !fellBackNow) return;
     setNoticed(true);
-    if (query.get(ENGINE_PARAM) !== engine || query.get(ACCELERATOR_PARAM) !== accelerator) {
-      writeQuery({ [ACCELERATOR_PARAM]: accelerator, [ENGINE_PARAM]: engine });
+    if (
+      query.get(ENGINE_PARAM) !== engine ||
+      query.get(ACCELERATOR_PARAM) !== accelerator ||
+      (query.get(PROVIDER_PARAM) ?? undefined) !== provider
+    ) {
+      writeQuery({ [ACCELERATOR_PARAM]: accelerator, [PROVIDER_PARAM]: provider, [ENGINE_PARAM]: engine });
     }
-  }, [isBrowser, fellBackNow, query, engine, accelerator, writeQuery]);
+  }, [isBrowser, fellBackNow, query, engine, accelerator, provider, writeQuery]);
 
   const value = useMemo(
-    () => ({ meta, selection: { accelerator, engine }, fellBack, setAccelerator, setEngine }),
-    [meta, accelerator, engine, fellBack, setAccelerator, setEngine],
+    () => ({ meta, selection: { accelerator, provider, engine }, fellBack, setAccelerator, setProvider, setEngine }),
+    [meta, accelerator, provider, engine, fellBack, setAccelerator, setProvider, setEngine],
   );
   return <GuideContext.Provider value={value}>{children}</GuideContext.Provider>;
 }

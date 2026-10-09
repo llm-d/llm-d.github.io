@@ -6,6 +6,7 @@ env:
     BRANCH: main
     ACCELERATOR_TYPE: {default: gpu, values: [gpu, amd, "tpu/v7"]}
     MODEL_SERVER: {default: vllm, values: [vllm, sglang]}
+    INFRA_PROVIDER: {default: base, values: [base, gke/a4x, cks-mooncake]}
 support:
   engines:
     vllm: vLLM
@@ -15,6 +16,10 @@ support:
       label: NVIDIA GPU
       model: Qwen/Qwen3-32B
       engines: {vllm: validated, sglang: validated}
+      providers:
+        - base
+        - {name: gke/a4x, label: "GKE A4X"}
+        - {name: cks-mooncake, label: "CKS + Mooncake", engines: [vllm]}
     amd:
       label: AMD GPU
       engines: {vllm: community}
