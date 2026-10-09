@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="634" viewBox="0 0 900 634" font-family="Inter, Helvetica, Arial, sans-serif" font-size="13">
+<rect width="900" height="634" fill="white"/>
+<text x="230" y="28" font-size="17" font-weight="600">Interactive tenant TTFT while the batch tenant floods the pool</text>
+<text x="230" y="47" fill="#555">Bars: p50 (solid) and p99 (hatched), log scale. Dashed line: TTFT with the pool idle (60 ms).</text>
+<line x1="292.7" y1="60" x2="292.7" y2="564" stroke="#eee"/>
+<text x="292.7" y="582" text-anchor="middle" fill="#666">50 ms</text>
+<line x1="340.1" y1="60" x2="340.1" y2="564" stroke="#eee"/>
+<text x="340.1" y="582" text-anchor="middle" fill="#666">100 ms</text>
+<line x1="450.2" y1="60" x2="450.2" y2="564" stroke="#eee"/>
+<text x="450.2" y="582" text-anchor="middle" fill="#666">500 ms</text>
+<line x1="497.6" y1="60" x2="497.6" y2="564" stroke="#eee"/>
+<text x="497.6" y="582" text-anchor="middle" fill="#666">1 s</text>
+<line x1="607.7" y1="60" x2="607.7" y2="564" stroke="#eee"/>
+<text x="607.7" y="582" text-anchor="middle" fill="#666">5 s</text>
+<line x1="655.1" y1="60" x2="655.1" y2="564" stroke="#eee"/>
+<text x="655.1" y="582" text-anchor="middle" fill="#666">10 s</text>
+<line x1="765.2" y1="60" x2="765.2" y2="564" stroke="#eee"/>
+<text x="765.2" y="582" text-anchor="middle" fill="#666">50 s</text>
+<line x1="812.6" y1="60" x2="812.6" y2="564" stroke="#eee"/>
+<text x="812.6" y="582" text-anchor="middle" fill="#666">100 s</text>
+<text x="545.0" y="606" text-anchor="middle" fill="#444">time to first token during the burst</text>
+<defs><pattern id="hatch" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" stroke-width="2"/></pattern></defs>
+<text x="12" y="76.0" font-weight="600" fill="#222">Direct to router</text>
+<text x="12" y="91.0" font-weight="600" fill="#222">no flow control</text>
+<text x="222" y="82.3" text-anchor="end" fill="#333">1x</text>
+<rect x="230" y="65.4" width="129.1" height="10.8" fill="#c0392b"/>
+<text x="364.1" y="73.8" fill="#222">132 ms · 2.16x idle</text>
+<rect x="230" y="78.7" width="292.0" height="10.8" fill="#c0392b" opacity="0.35"/>
+<rect x="230" y="78.7" width="292.0" height="10.8" fill="url(#hatch)" color="#c0392b" opacity="0.6"/>
+<text x="527.0" y="87.1" fill="#555">p99 1,428 ms</text>
+<text x="222" y="118.3" text-anchor="end" fill="#333">3x</text>
+<rect x="230" y="101.4" width="358.0" height="10.8" fill="#c0392b"/>
+<text x="593.0" y="109.8" fill="#222">3,748 ms · 61.44x idle</text>
+<rect x="230" y="114.7" width="447.9" height="10.8" fill="#c0392b" opacity="0.35"/>
+<rect x="230" y="114.7" width="447.9" height="10.8" fill="url(#hatch)" color="#c0392b" opacity="0.6"/>
+<text x="682.9" y="123.1" fill="#555">p99 13,960 ms</text>
+<text x="222" y="154.3" text-anchor="end" fill="#333">10x</text>
+<rect x="230" y="137.4" width="554.1" height="10.8" fill="#c0392b"/>
+<text x="789.1" y="145.8" fill="#222">65,946 ms · 1081.08x idle</text>
+<rect x="230" y="150.7" width="568.0" height="10.8" fill="#c0392b" opacity="0.35"/>
+<rect x="230" y="150.7" width="568.0" height="10.8" fill="url(#hatch)" color="#c0392b" opacity="0.6"/>
+<text x="803.0" y="159.1" fill="#555">p99 80,773 ms</text>
+<line x1="10" y1="168.0" x2="860" y2="168.0" stroke="#ddd"/>
+<text x="12" y="184.0" font-weight="600" fill="#222">Direct to router</text>
+<text x="12" y="199.0" font-weight="600" fill="#222">+ flow control</text>
+<text x="12" y="214.0" font-weight="600" fill="#222">(concurrency detector)</text>
+<text x="222" y="190.3" text-anchor="end" fill="#333">1x</text>
+<rect x="230" y="173.4" width="208.9" height="10.8" fill="#d68910"/>
+<text x="443.9" y="181.8" fill="#222">424 ms · 7.07x idle</text>
+<rect x="230" y="186.7" width="356.1" height="10.8" fill="#d68910" opacity="0.35"/>
+<rect x="230" y="186.7" width="356.1" height="10.8" fill="url(#hatch)" color="#d68910" opacity="0.6"/>
+<text x="591.1" y="195.1" fill="#555">p99 3,649 ms</text>
+<text x="222" y="226.3" text-anchor="end" fill="#333">3x</text>
+<rect x="230" y="209.4" width="209.4" height="10.8" fill="#d68910"/>
+<text x="444.4" y="217.8" fill="#222">427 ms · 7.0x idle</text>
+<rect x="230" y="222.7" width="358.2" height="10.8" fill="#d68910" opacity="0.35"/>
+<rect x="230" y="222.7" width="358.2" height="10.8" fill="url(#hatch)" color="#d68910" opacity="0.6"/>
+<text x="593.2" y="231.1" fill="#555">p99 3,763 ms</text>
+<text x="222" y="262.3" text-anchor="end" fill="#333">10x</text>
+<rect x="230" y="245.4" width="215.7" height="10.8" fill="#d68910"/>
+<text x="450.7" y="253.8" fill="#222">468 ms · 7.8x idle</text>
+<rect x="230" y="258.7" width="359.1" height="10.8" fill="#d68910" opacity="0.35"/>
+<rect x="230" y="258.7" width="359.1" height="10.8" fill="url(#hatch)" color="#d68910" opacity="0.6"/>
+<text x="594.1" y="267.1" fill="#555">p99 3,810 ms</text>
+<line x1="10" y1="276.0" x2="860" y2="276.0" stroke="#ddd"/>
+<text x="12" y="292.0" font-weight="600" fill="#222">Queued via llm-d-async</text>
+<text x="12" y="307.0" font-weight="600" fill="#222">(concurrency detector)</text>
+<text x="222" y="298.3" text-anchor="end" fill="#333">128 workers</text>
+<rect x="230" y="281.4" width="213.3" height="10.8" fill="#1e8449"/>
+<text x="448.3" y="289.8" fill="#222">452 ms · 7.41x idle</text>
+<rect x="230" y="294.7" width="378.4" height="10.8" fill="#1e8449" opacity="0.35"/>
+<rect x="230" y="294.7" width="378.4" height="10.8" fill="url(#hatch)" color="#1e8449" opacity="0.6"/>
+<text x="613.4" y="303.1" fill="#555">p99 5,050 ms</text>
+<text x="222" y="334.3" text-anchor="end" fill="#333">96 workers</text>
+<rect x="230" y="317.4" width="102.1" height="10.8" fill="#1e8449"/>
+<text x="337.1" y="325.8" fill="#222">89 ms · 1.46x idle</text>
+<rect x="230" y="330.7" width="312.3" height="10.8" fill="#1e8449" opacity="0.35"/>
+<rect x="230" y="330.7" width="312.3" height="10.8" fill="url(#hatch)" color="#1e8449" opacity="0.6"/>
+<text x="547.3" y="339.1" fill="#555">p99 1,923 ms</text>
+<text x="222" y="370.3" text-anchor="end" fill="#333">64 workers</text>
+<rect x="230" y="353.4" width="102.9" height="10.8" fill="#1e8449"/>
+<text x="337.9" y="361.8" fill="#222">90 ms · 1.48x idle</text>
+<rect x="230" y="366.7" width="236.7" height="10.8" fill="#1e8449" opacity="0.35"/>
+<rect x="230" y="366.7" width="236.7" height="10.8" fill="url(#hatch)" color="#1e8449" opacity="0.6"/>
+<text x="471.7" y="375.1" fill="#555">p99 637 ms</text>
+<line x1="10" y1="384.0" x2="860" y2="384.0" stroke="#ddd"/>
+<text x="12" y="400.0" font-weight="600" fill="#222">Direct to router</text>
+<text x="12" y="415.0" font-weight="600" fill="#222">+ flow control</text>
+<text x="12" y="430.0" font-weight="600" fill="#222">(utilization detector)</text>
+<text x="222" y="406.3" text-anchor="end" fill="#333">1x</text>
+<rect x="230" y="389.4" width="145.2" height="10.8" fill="#b9770e"/>
+<text x="380.2" y="397.8" fill="#222">167 ms · 2.69x idle</text>
+<rect x="230" y="402.7" width="318.3" height="10.8" fill="#b9770e" opacity="0.35"/>
+<rect x="230" y="402.7" width="318.3" height="10.8" fill="url(#hatch)" color="#b9770e" opacity="0.6"/>
+<text x="553.3" y="411.1" fill="#555">p99 2,098 ms</text>
+<text x="222" y="442.3" text-anchor="end" fill="#333">3x</text>
+<rect x="230" y="425.4" width="434.5" height="10.8" fill="#b9770e"/>
+<text x="669.5" y="433.8" fill="#222">11,469 ms · 188.02x idle</text>
+<rect x="230" y="438.7" width="491.1" height="10.8" fill="#b9770e" opacity="0.35"/>
+<rect x="230" y="438.7" width="491.1" height="10.8" fill="url(#hatch)" color="#b9770e" opacity="0.6"/>
+<text x="726.1" y="447.1" fill="#555">p99 26,249 ms</text>
+<text x="222" y="478.3" text-anchor="end" fill="#333">10x</text>
+<rect x="230" y="461.4" width="455.9" height="10.8" fill="#b9770e"/>
+<text x="690.9" y="469.8" fill="#222">15,687 ms · 253.02x idle</text>
+<rect x="230" y="474.7" width="523.9" height="10.8" fill="#b9770e" opacity="0.35"/>
+<rect x="230" y="474.7" width="523.9" height="10.8" fill="url(#hatch)" color="#b9770e" opacity="0.6"/>
+<text x="758.9" y="483.1" fill="#555">p99 42,375 ms</text>
+<line x1="10" y1="492.0" x2="860" y2="492.0" stroke="#ddd"/>
+<text x="12" y="508.0" font-weight="600" fill="#222">Queued via llm-d-async</text>
+<text x="12" y="523.0" font-weight="600" fill="#222">(utilization detector)</text>
+<text x="222" y="514.3" text-anchor="end" fill="#333">128 workers</text>
+<rect x="230" y="497.4" width="143.9" height="10.8" fill="#117a65"/>
+<text x="378.9" y="505.8" fill="#222">164 ms · 2.69x idle</text>
+<rect x="230" y="510.7" width="334.7" height="10.8" fill="#117a65" opacity="0.35"/>
+<rect x="230" y="510.7" width="334.7" height="10.8" fill="url(#hatch)" color="#117a65" opacity="0.6"/>
+<text x="569.7" y="519.1" fill="#555">p99 2,668 ms</text>
+<text x="222" y="550.3" text-anchor="end" fill="#333">96 workers</text>
+<rect x="230" y="533.4" width="117.2" height="10.8" fill="#117a65"/>
+<text x="352.2" y="541.8" fill="#222">111 ms · 1.85x idle</text>
+<rect x="230" y="546.7" width="300.1" height="10.8" fill="#117a65" opacity="0.35"/>
+<rect x="230" y="546.7" width="300.1" height="10.8" fill="url(#hatch)" color="#117a65" opacity="0.6"/>
+<text x="535.1" y="555.1" fill="#555">p99 1,609 ms</text>
+<line x1="305.1" y1="60" x2="305.1" y2="564" stroke="#333" stroke-dasharray="4 3"/>
+</svg>
