@@ -73,8 +73,32 @@ func TestSyncGuidesPages(t *testing.T) {
 	if g.Dir != "guides/demo" || g.Source != "guides/demo/README.md" || g.Ref != "release-9.9" || g.Repo != "https://github.com/llm-d/llm-d" {
 		t.Errorf("llmd_guide basics wrong: %+v", g)
 	}
-	if g.Defaults["accelerator"] != "gpu" || g.Defaults["engine"] != "vllm" {
+	if g.Defaults["accelerator"] != "gpu" || g.Defaults["engine"] != "vllm" || g.Defaults["provider"] != "base" {
 		t.Errorf("defaults = %v", g.Defaults)
+	}
+	// Providers are normalized to {name, label[, engines]}; accelerators
+	// without providers stay without them.
+	var sup struct {
+		Accelerators map[string]struct {
+			Providers []struct {
+				Name    string   `yaml:"name"`
+				Label   string   `yaml:"label"`
+				Engines []string `yaml:"engines"`
+			} `yaml:"providers"`
+		} `yaml:"accelerators"`
+	}
+	if err := g.Support.Decode(&sup); err != nil {
+		t.Fatalf("decode support: %v", err)
+	}
+	gp := sup.Accelerators["gpu"].Providers
+	if len(gp) != 3 ||
+		gp[0].Name != "base" || gp[0].Label != "base" || gp[0].Engines != nil ||
+		gp[1].Name != "gke/a4x" || gp[1].Label != "GKE A4X" ||
+		gp[2].Name != "cks-mooncake" || gp[2].Label != "CKS + Mooncake" || len(gp[2].Engines) != 1 || gp[2].Engines[0] != "vllm" {
+		t.Errorf("gpu providers not normalized: %+v", gp)
+	}
+	if p := sup.Accelerators["amd"].Providers; p != nil {
+		t.Errorf("amd should have no providers, got %+v", p)
 	}
 	if g.Engines["sglang"] != "SGLang" {
 		t.Errorf("engine_labels = %v", g.Engines)
@@ -296,5 +320,47 @@ func TestMergeFrontMatter(t *testing.T) {
 	}
 	if _, err := mergeFrontMatter(ours, "---\n- a\n- b\n---\n# Hi\n"); err == nil {
 		t.Error("non-mapping frontmatter should be an error")
+	}
+}
+
+func TestGuideMetaWithoutProvider(t *testing.T) {
+	dir := t.TempDir()
+	y := "env:\n  static:\n    ACCELERATOR_TYPE: {default: amd}\nsupport:\n  accelerators:\n    amd: {label: AMD, engines: {vllm: validated}}\n"
+	if err := os.WriteFile(filepath.Join(dir, "guide.yaml"), []byte(y), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gs := &guideSyncer{repoURL: "https://github.com/llm-d/llm-d", ref: "main"}
+	meta, err := gs.guideMeta(GuideEntry{Dir: "guides/x"}, dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var m struct {
+		Defaults map[string]string `json:"defaults"`
+	}
+	if err := json.Unmarshal([]byte(meta), &m); err != nil {
+		t.Fatalf("meta not JSON: %v\n%s", err, meta)
+	}
+	if _, ok := m.Defaults["provider"]; ok || m.Defaults["accelerator"] != "amd" || m.Defaults["engine"] != "vllm" {
+		t.Errorf("defaults = %v", m.Defaults)
+	}
+	if strings.Contains(meta, "providers") {
+		t.Errorf("unexpected providers in meta: %s", meta)
+	}
+}
+
+func TestNormalizeProvidersErrors(t *testing.T) {
+	for name, y := range map[string]string{
+		"not a list":      "accelerators: {gpu: {providers: base}}",
+		"missing name":    "accelerators: {gpu: {providers: [{label: X}]}}",
+		"engines not seq": "accelerators: {gpu: {providers: [{name: a, engines: vllm}]}}",
+		"nested list":     "accelerators: {gpu: {providers: [[a]]}}",
+	} {
+		var n yaml.Node
+		if err := yaml.Unmarshal([]byte(y), &n); err != nil {
+			t.Fatal(err)
+		}
+		if err := normalizeProviders(n.Content[0]); err == nil {
+			t.Errorf("%s: expected error", name)
+		}
 	}
 }

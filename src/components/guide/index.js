@@ -9,6 +9,10 @@ import {
   isSupported,
   engineCell,
   supportedEngines,
+  providersFor,
+  findProvider,
+  providerSupportsEngine,
+  supportedEnginesFor,
 } from './variantStore';
 import styles from './styles.module.css';
 
@@ -57,6 +61,9 @@ function accLabel(meta, acc) {
 function engLabel(meta, eng) {
   return meta?.support?.engines?.[eng] ?? meta?.engine_labels?.[eng] ?? eng;
 }
+function provLabel(meta, acc, prov) {
+  return findProvider(meta?.support, acc, prov)?.label ?? prov;
+}
 
 /** Rewrite the export lines of the guide env block for the current selection. */
 export function applySelectionToEnv(block, meta, selection) {
@@ -66,6 +73,7 @@ export function applySelectionToEnv(block, meta, selection) {
     .replace(/^(\s*export\s+MODEL_SERVER=)(\S*)/m, `$1${selection.engine}`);
   const model = meta?.support?.accelerators?.[selection.accelerator]?.model;
   if (model) out = out.replace(/^(\s*export\s+MODEL=)(\S*)/m, `$1${model}`);
+  if (selection.provider) out = out.replace(/^(\s*export\s+INFRA_PROVIDER=)(\S*)/m, `$1${selection.provider}`);
   return out;
 }
 
@@ -83,14 +91,20 @@ export function GuideEnv({ blocks = [] }) {
   );
 }
 
-/** Page-level accelerator × engine picker driven by the guide support matrix. */
+/**
+ * Page-level accelerator × provider × engine picker driven by the guide
+ * support matrix. The provider row only appears for accelerators that list
+ * providers.
+ */
 export function VariantSelector() {
   const guide = useGuide();
   if (!guide?.meta?.support?.accelerators) return null;
-  const { meta, selection, fellBack, setAccelerator, setEngine } = guide;
+  const { meta, selection, fellBack, setAccelerator, setProvider, setEngine } = guide;
   const support = meta.support;
   const accs = acceleratorKeys(support);
   const engs = engineKeys(support);
+  const provs = providersFor(support, selection.accelerator);
+  const curProv = findProvider(support, selection.accelerator, selection.provider);
   const cell = engineCell(support, selection.accelerator, selection.engine);
   const blocked = engs.filter((e) => !isSupported(support, selection.accelerator, e));
 
@@ -116,11 +130,42 @@ export function VariantSelector() {
           })}
         </div>
       </div>
+      {provs.length > 0 && (
+        <div className={styles.selectorRow} role="group" aria-label="Provider">
+          <span className={styles.selectorLabel}>Provider</span>
+          <div className={styles.buttons}>
+            {provs.map((p) => {
+              const usable = supportedEnginesFor(support, selection.accelerator, p.name).length > 0;
+              const ok = usable && providerSupportsEngine(p, selection.engine);
+              const label = p.label ?? p.name;
+              return (
+                <button
+                  key={p.name}
+                  type="button"
+                  className={p.name === selection.provider ? styles.buttonActive : styles.button}
+                  aria-pressed={p.name === selection.provider}
+                  disabled={!ok}
+                  title={
+                    ok
+                      ? label
+                      : usable
+                        ? `${label} does not support ${engLabel(meta, selection.engine)}`
+                        : `${label} is not supported on ${accLabel(meta, selection.accelerator)}`
+                  }
+                  onClick={() => setProvider(p.name)}>
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
       <div className={styles.selectorRow} role="group" aria-label="Engine">
         <span className={styles.selectorLabel}>Engine</span>
         <div className={styles.buttons}>
           {engs.map((e) => {
-            const ok = isSupported(support, selection.accelerator, e);
+            const accOk = isSupported(support, selection.accelerator, e);
+            const ok = accOk && providerSupportsEngine(curProv, e);
             const issue = engineCell(support, selection.accelerator, e)?.issue;
             return (
               <button
@@ -132,7 +177,9 @@ export function VariantSelector() {
                 title={
                   ok
                     ? engLabel(meta, e)
-                    : `${engLabel(meta, e)} is not supported on ${accLabel(meta, selection.accelerator)}${issue ? ` (tracking: ${issue})` : ''}`
+                    : accOk
+                      ? `${engLabel(meta, e)} is not supported with ${curProv?.label ?? selection.provider}`
+                      : `${engLabel(meta, e)} is not supported on ${accLabel(meta, selection.accelerator)}${issue ? ` (tracking: ${issue})` : ''}`
                 }
                 onClick={() => setEngine(e)}>
                 {engLabel(meta, e)}
@@ -165,6 +212,7 @@ export function VariantSelector() {
       {fellBack && (
         <p className={styles.notice} role="status">
           Your saved selection isn&apos;t supported by this guide; showing {accLabel(meta, selection.accelerator)} ·{' '}
+          {selection.provider && <>{provLabel(meta, selection.accelerator, selection.provider)} · </>}
           {engLabel(meta, selection.engine)} instead.
         </p>
       )}
