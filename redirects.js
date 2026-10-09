@@ -24,7 +24,7 @@ const redirects = [
     ['well-lit-paths/workloads/batch-serving', 'operations/batch-serving'],
     ['well-lit-paths/workloads/batch-serving/asynchronous-processing', 'operations/batch-serving/asynchronous-processing'],
     ['well-lit-paths/workloads/batch-serving/batch-gateway', 'operations/batch-serving/batch-gateway'],
-    ['operations/async-processor', 'operations/components/async-processor'],
+    ['operations/async-processor', 'operations/batch-serving/asynchronous-processing'],
     ['operations/model-loading-and-startup', 'operations/startup/model-loading-and-startup'],
     ['operations/router', 'operations/components/router'],
     ['operations/graceful-shutdown', 'operations/lifecycle/graceful-shutdown'],
@@ -44,6 +44,12 @@ const redirects = [
     ['operations/autoscaling/prometheus-adapter', 'operations/autoscaling'],
     ['well-lit-paths/workloads', 'well-lit-paths/models'],
     ['well-lit-paths/workloads/agentic-serving', 'well-lit-paths/models'],
+  ].map(([from, to]) => ({ from: `/docs/dev/${from}`, to: `/docs/dev/${to}` })),
+
+  // Async Processor operations page merged into the asynchronous-processing
+  // guide (llm-d/llm-d#2665).
+  ...[
+    ['operations/components/async-processor', 'operations/batch-serving/asynchronous-processing'],
   ].map(([from, to]) => ({ from: `/docs/dev/${from}`, to: `/docs/dev/${to}` })),
 ];
 
