@@ -42,6 +42,16 @@ Examples:
 				return err
 			}
 
+			// Released versions are frozen content, so their source links must
+			// stay pinned to the refs source-refs.yaml records. Static: no
+			// network, so it cannot flake, and it runs before the build so a
+			// regression fails fast.
+			if code, err := check.CheckSourceRefs(rootDir, check.SourceRefOptions{Static: true}); err != nil {
+				return err
+			} else if code != 0 {
+				return ExitError{Code: code}
+			}
+
 			if _, err := syncpkg.Run(m, syncpkg.Options{
 				RepoRoot:        rootDir,
 				Branch:          branch,

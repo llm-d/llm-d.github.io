@@ -2,7 +2,7 @@
 
 Ready-to-use PromQL queries for monitoring llm-d deployments. Use these in the Prometheus UI or as the basis for Grafana panels. For a default set of ready-to-apply alerts built on these metrics, see [Alerting](./alerting.md).
 
-To generate traffic and populate error metrics for testing, use the [traffic generation script](https://github.com/llm-d/llm-d/tree/v0.9/guides/recipes/observability/generate-traffic-basic.sh).
+To generate traffic and populate error metrics for testing, use the [traffic generation script](https://github.com/llm-d/llm-d/tree/v0.9.0/guides/recipes/observability/generate-traffic-basic.sh).
 
 ## Tier 1: Immediate Failure & Saturation Indicators
 
@@ -90,4 +90,4 @@ Requires the `flowControl` feature gate enabled on the EPP.
 histogram_quantile(0.99, sum by(le) (rate(metric_name_bucket[5m])))
 ```
 
-**Error metrics** only appear after the first error occurs. Use the [traffic generation script](https://github.com/llm-d/llm-d/tree/v0.9/guides/recipes/observability/generate-traffic-basic.sh) to populate them for testing.
+**Error metrics** only appear after the first error occurs. Use the [traffic generation script](https://github.com/llm-d/llm-d/tree/v0.9.0/guides/recipes/observability/generate-traffic-basic.sh) to populate them for testing.

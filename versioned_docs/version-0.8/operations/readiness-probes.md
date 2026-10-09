@@ -303,7 +303,7 @@ kubectl logs -n llm-d $POD --tail=100
 
 - [Kubernetes Probe Configuration](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/)
 - [vLLM OpenAI-Compatible Server](https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html)
-- [llm-d Getting Started](https://github.com/llm-d/llm-d/tree/v0.8/README.md)
+- [llm-d Getting Started](https://github.com/llm-d/llm-d/tree/v0.8.1/README.md)
 - [llm-d Monitoring Guide](observability/README.md)
 
 ## Related Issues

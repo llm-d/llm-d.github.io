@@ -20,17 +20,17 @@ Four signals share that pipeline, each with its own deployable guide:
 
 | Signal | Scales on | Guide |
 |---|---|---|
-| **Queue depth** | Absolute per-replica queued-request and running-request targets | [keda-epp-queue](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling/keda-epp-queue) |
-| **Pool saturation** | A normalized saturation ratio (0.0–1.0+), more portable across hardware | [keda-epp-saturation](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling/keda-epp-saturation) |
-| **Token backlog** | Seconds of prefill queue wait plus KV cache occupancy — for widely varying prompt sizes | [keda-epp-token-aware](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling/keda-epp-token-aware) |
-| **Estimated latency** | Predicted (or measured) TTFT/TPOT against latency SLOs | [slo-aware](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling/slo-aware) |
+| **Queue depth** | Absolute per-replica queued-request and running-request targets | [keda-epp-queue](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/workload-autoscaling/keda-epp-queue) |
+| **Pool saturation** | A normalized saturation ratio (0.0–1.0+), more portable across hardware | [keda-epp-saturation](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/workload-autoscaling/keda-epp-saturation) |
+| **Token backlog** | Seconds of prefill queue wait plus KV cache occupancy — for widely varying prompt sizes | [keda-epp-token-aware](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/workload-autoscaling/keda-epp-token-aware) |
+| **Estimated latency** | Predicted (or measured) TTFT/TPOT against latency SLOs | [slo-aware](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/workload-autoscaling/slo-aware) |
 
 The latency-driven variant is the one design worth reading separately: it
 collapses its triggers into a single formula whose output is the desired replica
 count. See
 [SLO-Aware Autoscaling with KEDA — the control law](./slo-aware-keda.md) for the
 derivation, and the
-[SLO-aware autoscaling guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling/slo-aware)
+[SLO-aware autoscaling guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/workload-autoscaling/slo-aware)
 for the deployable setup.
 
 ## Workload Variant Autoscaler (Deprecated)
@@ -60,13 +60,13 @@ a different layer than the autoscaler:
 | Capability | WVA (deprecated) | KEDA + EPP |
 |---|---|---|
 | **Multiple variants of one model** | Optimally placed across models and topologies to minimize cost | Each Deployment scales independently; no cost-aware preference between variants |
-| **Limited accelerators** | Fair-share allocation across pools | Handled below the autoscaler by [Kueue](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling/kueue-rebalancing) — per-model quota floors in a shared cohort, with borrowing and preemption |
-| **Pending pods awareness** | Incorporated pending (unscheduled) pods into decisions | Available — a trigger can read replica counts from kube-state-metrics; the [slo-aware](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling/slo-aware) path discounts its ask by `readyReplicas/replicas` |
-| **Strong latency SLOs** | Learned supply/demand dynamics (experimental) | Scales directly on estimated latency vs. SLO ([slo-aware](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling/slo-aware)) |
+| **Limited accelerators** | Fair-share allocation across pools | Handled below the autoscaler by [Kueue](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/workload-autoscaling/kueue-rebalancing) — per-model quota floors in a shared cohort, with borrowing and preemption |
+| **Pending pods awareness** | Incorporated pending (unscheduled) pods into decisions | Available — a trigger can read replica counts from kube-state-metrics; the [slo-aware](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/workload-autoscaling/slo-aware) path discounts its ask by `readyReplicas/replicas` |
+| **Strong latency SLOs** | Learned supply/demand dynamics (experimental) | Scales directly on estimated latency vs. SLO ([slo-aware](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/workload-autoscaling/slo-aware)) |
 | **Scale to zero** | Supported | Supported (KEDA, without the `HPAScaleToZero` feature gate) |
 | **Operational complexity** | Medium — requires the WVA controller (plus a metrics adapter) | Low — KEDA and Prometheus |
 
 If a deployment depends on cost-aware placement across variants or on fair
 sharing of a scarce accelerator pool, stay on WVA for now and track the
-[workload autoscaling guides](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling)
+[workload autoscaling guides](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/workload-autoscaling)
 for a replacement.

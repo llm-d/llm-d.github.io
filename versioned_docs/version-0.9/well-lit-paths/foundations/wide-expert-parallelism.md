@@ -31,10 +31,10 @@ Dispatch/combine uses the **DeepEP** backend over NVSHMEM with GPU-initiated RDM
 
 ## Deploy
 
-See the [Wide Expert Parallelism guide](https://github.com/llm-d/llm-d/tree/v0.9/guides/wide-ep-lws) for manifests and step-by-step deployment:
+See the [Wide Expert Parallelism guide](https://github.com/llm-d/llm-d/tree/v0.9.0/guides/wide-ep-lws) for manifests and step-by-step deployment:
 
-* [Deploy using LeaderWorkerSet](https://github.com/llm-d/llm-d/tree/v0.9/guides/wide-ep-lws#deploy-using-leaderworkerset)
-* [Deploy using DisaggregatedSet](https://github.com/llm-d/llm-d/tree/v0.9/guides/wide-ep-lws#deploy-using-disaggregatedset)
+* [Deploy using LeaderWorkerSet](https://github.com/llm-d/llm-d/tree/v0.9.0/guides/wide-ep-lws#deploy-using-leaderworkerset)
+* [Deploy using DisaggregatedSet](https://github.com/llm-d/llm-d/tree/v0.9.0/guides/wide-ep-lws#deploy-using-disaggregatedset)
 
 ## Architecture
 

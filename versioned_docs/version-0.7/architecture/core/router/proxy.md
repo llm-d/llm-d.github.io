@@ -155,7 +155,7 @@ spec:
 </table>
 
 ### Deployment Guides
-llm-d provides [Gateway Mode deployment guides](https://github.com/llm-d/llm-d/tree/v0.7/guides/prereq/gateways) for the following Gateways:
-- [Istio](https://github.com/llm-d/llm-d/tree/v0.7/guides/prereq/gateways/istio.md)
-- [GKE Gateway](https://github.com/llm-d/llm-d/tree/v0.7/guides/prereq/gateways/gke.md)
-- [Agentgateway](https://github.com/llm-d/llm-d/tree/v0.7/guides/prereq/gateways/agentgateway.md)
+llm-d provides [Gateway Mode deployment guides](https://github.com/llm-d/llm-d/tree/v0.7.0/guides/prereq/gateways) for the following Gateways:
+- [Istio](https://github.com/llm-d/llm-d/tree/v0.7.0/guides/prereq/gateways/istio.md)
+- [GKE Gateway](https://github.com/llm-d/llm-d/tree/v0.7.0/guides/prereq/gateways/gke.md)
+- [Agentgateway](https://github.com/llm-d/llm-d/tree/v0.7.0/guides/prereq/gateways/agentgateway.md)

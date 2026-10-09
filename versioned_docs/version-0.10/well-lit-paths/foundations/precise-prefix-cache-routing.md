@@ -13,7 +13,7 @@ As KV-cache orchestration grows more sophisticated and agentic workloads stretch
 
 ## Deploy
 
-See the [precise prefix cache routing guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/precise-prefix-cache-routing) for manifests and step-by-step deployment.
+See the [precise prefix cache routing guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/precise-prefix-cache-routing) for manifests and step-by-step deployment.
 
 ## Architecture
 

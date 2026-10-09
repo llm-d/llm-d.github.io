@@ -135,11 +135,11 @@ Key properties:
 - **Minimal GPU interference** — Uses GPU DMA by default, reducing interference with compute kernels
 
 :::note
-The storage connector does not handle cleanup or eviction. Storage capacity management must be handled by the underlying storage system or an external controller. A reference implementation, the [PVC Evictor](https://github.com/llm-d/llm-d-kv-cache/tree/main/kv_connectors/pvc_evictor), can automatically clean up old KV-cache files when storage thresholds are exceeded.
+The storage connector does not handle cleanup or eviction. Storage capacity management must be handled by the underlying storage system or an external controller. A reference implementation, the [PVC Evictor](https://github.com/llm-d/llm-d-kv-cache/tree/v0.8.0/kv_connectors/pvc_evictor), can automatically clean up old KV-cache files when storage thresholds are exceeded.
 :::
 
 
-For implementation details and advanced configuration, see the [llm-d FS backend documentation](https://github.com/llm-d/llm-d-kv-cache/tree/main/kv_connectors/llmd_fs_backend).
+For implementation details and advanced configuration, see the [llm-d FS backend documentation](https://github.com/llm-d/llm-d-kv-cache/tree/v0.8.0/kv_connectors/llmd_fs_backend).
 
 ### Other Connectors
 
@@ -153,7 +153,7 @@ llm-d's deployment guides formally cover LMCache today. The integration pattern 
 :::
 
 
-For existing deployment recipes, see the [Tiered Prefix Cache Guide](https://github.com/llm-d/llm-d/tree/v0.7/guides/tiered-prefix-cache).
+For existing deployment recipes, see the [Tiered Prefix Cache Guide](https://github.com/llm-d/llm-d/tree/v0.7.0/guides/tiered-prefix-cache).
 
 ## Configuration
 
@@ -174,7 +174,7 @@ For advanced use and older vLLM releases, the equivalent `--kv-transfer-config` 
 | `block_size` | integer | `256` | Tokens per file (must be multiple of GPU block size) |
 | `threads_per_gpu` | integer | `64` | I/O worker threads per GPU |
 
-For the full configuration reference including GDS modes and environment variables, see the [llm-d FS backend README](https://github.com/llm-d/llm-d-kv-cache/tree/main/kv_connectors/llmd_fs_backend).
+For the full configuration reference including GDS modes and environment variables, see the [llm-d FS backend README](https://github.com/llm-d/llm-d-kv-cache/tree/v0.8.0/kv_connectors/llmd_fs_backend).
 
 ## Examples
 
@@ -216,7 +216,7 @@ volumeMounts:
 
 ## Metrics
 
-The FS backend populates vLLM's built-in offloading metrics (`vllm:kv_offload_*`) for transfer bytes, time, and size distribution. See the [llm-d FS backend documentation](https://github.com/llm-d/llm-d-kv-cache/tree/main/kv_connectors/llmd_fs_backend#metrics) for the full metrics reference.
+The FS backend populates vLLM's built-in offloading metrics (`vllm:kv_offload_*`) for transfer bytes, time, and size distribution. See the [llm-d FS backend documentation](https://github.com/llm-d/llm-d-kv-cache/tree/v0.8.0/kv_connectors/llmd_fs_backend#metrics) for the full metrics reference.
 
 ## Performance Considerations
 
@@ -234,7 +234,7 @@ Any POSIX filesystem is a candidate; the best choice for a given deployment depe
 
 ## Further Reading
 
-- [Tiered Prefix Cache Guide](https://github.com/llm-d/llm-d/tree/v0.7/guides/tiered-prefix-cache) — Step-by-step deployment guides
+- [Tiered Prefix Cache Guide](https://github.com/llm-d/llm-d/tree/v0.7.0/guides/tiered-prefix-cache) — Step-by-step deployment guides
 - [llm-d KV-Disaggregation Roadmaps](https://github.com/llm-d/llm-d-kv-cache/issues?q=is%3Aissue%20state%3Aopen%20label%3Aroadmap) — Planned features and improvements across offloading and KV-cache management
-- [llm-d FS Backend](https://github.com/llm-d/llm-d-kv-cache/tree/main/kv_connectors/llmd_fs_backend) — Implementation details, configuration, and metrics
+- [llm-d FS Backend](https://github.com/llm-d/llm-d-kv-cache/tree/v0.8.0/kv_connectors/llmd_fs_backend) — Implementation details, configuration, and metrics
 - [vLLM KV Offloading Connector](https://vllm.ai/blog/kv-offloading-connector) — Deep dive into vLLM's native offloading

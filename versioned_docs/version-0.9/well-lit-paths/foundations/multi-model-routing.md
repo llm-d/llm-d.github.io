@@ -11,7 +11,7 @@ This capability requires IPP deployment. For simpler deployments serving a singl
 
 ## Deploy
 
-See the [Multi-Model Routing guide](https://github.com/llm-d/llm-d/tree/v0.9/guides/multi-model-routing) for manifests and step-by-step deployment.
+See the [Multi-Model Routing guide](https://github.com/llm-d/llm-d/tree/v0.9.0/guides/multi-model-routing) for manifests and step-by-step deployment.
 
 ## Architecture
 
