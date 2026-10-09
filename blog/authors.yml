@@ -71,7 +71,7 @@ vitabortnikov:
 
 maroonayoub:
   name: Maroon Ayoub
-  title: Research Scientist & Architect, IBM
+  title: Senior Principal ML Engineer, Red Hat
   image_url: /img/blogs/maroonayoub.webp
   socials:
     linkedin: v-maroon
@@ -600,3 +600,25 @@ sunilarora:
   socials:
     linkedin: https://www.linkedin.com/in/sunilarora101/
     github: https://github.com/droot
+
+michaljacovi:
+  name: Michal Jacovi
+  title: Senior Research Scientist, IBM
+  image_url: /img/blogs/michaljacovi.webp
+  socials:
+    linkedin: michaljacovi
+
+lenadankin:
+  name: Lena Dankin
+  title: Research Staff Member, IBM
+  image_url: /img/blogs/lenadankin.webp
+  socials:
+    linkedin: lena-dankin-05980517
+
+gitMichal:
+  name: Michal Shmueli-Scheuer
+  title: Distinguished Engineer, IBM Research
+  url: https://research.ibm.com/people/michal-shmueli-scheuer
+  image_url: /img/blogs/michalshmu.webp
+  socials:
+    linkedin: michal-shmueli-scheuer-4b357a12
