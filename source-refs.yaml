@@ -1,0 +1,102 @@
+# Immutable source refs for released docs versions.
+#
+# A released docs version under versioned_docs/ is frozen content. The GitHub
+# links inside it must be frozen too, or they drift as the source repos move:
+# a link on `main` eventually points at renamed, moved or deleted code. See #504
+# and the dead links fixed alongside it.
+#
+# `llmd-site version cut <x.y>` reads this file and rewrites every
+# github.com/llm-d/<repo>/{tree,blob,raw}/main link in the snapshot to the ref
+# listed for that release. Only `versioned_docs/` is pinned; the dev docs at
+# /docs/dev intentionally track `main`.
+#
+# Adding a release
+# ----------------
+# The cut fails if this file has no entry for the version, or if the docs link
+# to an llm-d repo that the entry does not list. So add the release here first.
+#
+# Refs are NOT derivable from the docs version. Each repo has its own version
+# line: for 0.10 the router is one minor ahead (v0.11.0), async matches
+# (v0.10.0) and batch-gateway is four behind (v0.6.0). Take them from the
+# release's component table, then confirm every link still resolves:
+#
+#   llmd-site check refs
+#
+# That check is the one that matters. A ref from the component table can still
+# be wrong for the docs — see 0.7 below — and a wrong ref is invisible, because
+# the link keeps working while showing different code.
+#
+# Refs must be immutable: a full vX.Y.Z tag (any number of components) or a full
+# 40-character commit SHA. Bare minor tags like `v0.10` are rejected. They move.
+# llm-d's `v0.8` tag was repointed to v0.8.1, and `v0.9` still sits 29 commits
+# short of v0.9.0, so #504 pinned the 0.9 docs to a pre-release commit. Short
+# hex is rejected for the same reason — a branch could be named `deadbeef`.
+#
+# Listed and unlisted repos
+# -------------------------
+# A repo listed under a release shares ONE ref across every link to it. The cut
+# rewrites them all to that ref, and `check refs` fails on any that differ, which
+# is what catches a ref copied from the wrong release.
+#
+# When a release genuinely needs different refs for different links to the same
+# repo, leave that repo OUT of the release. Every link to an unlisted repo must
+# then be pinned inline to an immutable ref — the cut refuses to proceed and
+# `check refs` fails if one still tracks a branch, so leaving a repo out removes
+# the shared ref, not the guarantee.
+#
+# 0.7 uses this for llm-d-benchmark: its one link needs v0.5.0, the last ref that
+# still has config_explorer, which is not the ref the rest of 0.7 would want.
+version: 1
+
+releases:
+  # https://github.com/llm-d/llm-d/releases/tag/v0.7.0
+  #
+  # The 0.7 snapshot was created in #462, in August, not at the May release, so
+  # its content describes a later tree than v0.7.0. Of the 37 EPP plugin paths
+  # it links to, 0 exist at llm-d-router v0.7.0 and 7 at v0.8.0 — the ref the
+  # component table names — but all 37 exist at v0.9.0. The ref that matches
+  # the content wins over the ref the table names.
+  #
+  # One of those 37 was a path that never existed at any ref
+  # (scheduling/profile, corrected to scheduling/profilehandler in #508), so
+  # this only holds on top of that fix.
+  #
+  # llm-d-benchmark is absent on purpose — see "Listed and unlisted repos" above.
+  # Its one link is pinned inline to v0.5.0 (#508), the last ref that still has
+  # config_explorer.
+  "0.7":
+    llm-d/llm-d: v0.7.0
+    llm-d/llm-d-inference-scheduler: v0.9.0
+    llm-d/llm-d-kv-cache: v0.8.0
+    llm-d/llm-d-model-service: v0.0.15
+
+  # https://github.com/llm-d/llm-d/releases/tag/v0.8.1
+  #
+  # v0.8.1 is the final 0.8 patch and the commit llm-d's `v0.8` tag now points
+  # at. batch-gateway is absent from the 0.8 component table — it first shipped
+  # with 0.9 — so v0.2.0 is used: the newest batch-gateway tag (2026-06-02) at
+  # the 0.8.0 release (2026-06-24).
+  "0.8":
+    llm-d/llm-d: v0.8.1
+    llm-d/llm-d-router: v0.9.0
+    llm-d/llm-d-kv-cache: v0.9.0
+    llm-d/llm-d-batch-gateway: v0.2.0
+
+  # https://github.com/llm-d/llm-d/releases/tag/v0.9.0
+  "0.9":
+    llm-d/llm-d: v0.9.0
+    llm-d/llm-d-router: v0.10.0
+    llm-d/llm-d-kv-cache: v0.9.0
+    llm-d/llm-d-batch-gateway: v0.5.0
+    llm-d/llm-d-async: v0.9.0
+
+  # https://github.com/llm-d/llm-d/releases/tag/v0.10.0
+  #
+  # llm-d-kv-cache was folded into llm-d-router during 0.10 and its repo is
+  # being deprecated. v0.9.0 is its last release, so the 0.10 docs pin there.
+  "0.10":
+    llm-d/llm-d: v0.10.0
+    llm-d/llm-d-router: v0.11.0
+    llm-d/llm-d-kv-cache: v0.9.0
+    llm-d/llm-d-batch-gateway: v0.6.0
+    llm-d/llm-d-async: v0.10.0

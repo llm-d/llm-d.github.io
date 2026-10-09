@@ -65,6 +65,55 @@ and write broken-links-report.md. Posts a PR comment when GITHUB_TOKEN and PR co
 		},
 	}
 
-	checkCmd.AddCommand(links, images)
+	var refsDir, refsVersion string
+	var refsWarnOnly bool
+
+	refs := &cobra.Command{
+		Use:   "refs",
+		Short: "Verify source links in released docs versions are pinned and resolve",
+		Long: `Check every github.com/llm-d/... source link under versioned_docs/.
+
+A released docs version is frozen content, so its source links must be pinned
+to immutable refs recorded in source-refs.yaml. This verifies two things:
+
+  - every link's ref matches the one source-refs.yaml lists for that release
+  - every linked path actually exists in that repo at that ref
+
+The second is the one that matters. A ref from the wrong release still resolves
+for most paths, so a wrong pin looks fine until a reader follows a link into
+code that moved.
+
+Reads the GitHub API. Set GITHUB_TOKEN for usable rate limits.
+
+Only files under a version-<x.y> directory are compared against
+source-refs.yaml. Pointed at a tree without them (--dir docs), there is no
+release to compare against, so the links are only resolved — still a useful way
+to find dead links in the dev docs, whose refs track "main" on purpose.
+
+Examples:
+  llmd-site check refs
+  llmd-site check refs --version 0.10
+  llmd-site check refs --dir docs      # resolve dev-doc links; no ref comparison`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			code, err := check.CheckSourceRefs(rootDir, check.SourceRefOptions{
+				Dir:      refsDir,
+				Version:  refsVersion,
+				WarnOnly: refsWarnOnly,
+			})
+			if err != nil {
+				return err
+			}
+			if code != 0 {
+				return ExitError{Code: code}
+			}
+			return nil
+		},
+	}
+
+	refs.Flags().StringVar(&refsDir, "dir", "versioned_docs", "tree to scan, relative to the repo root")
+	refs.Flags().StringVar(&refsVersion, "version", "", "limit to one docs version label, e.g. 0.10")
+	refs.Flags().BoolVar(&refsWarnOnly, "warn-only", false, "report problems but exit 0")
+
+	checkCmd.AddCommand(links, images, refs)
 	return checkCmd
 }
