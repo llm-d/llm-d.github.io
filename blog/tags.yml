@@ -94,6 +94,11 @@ scheduling:
   permalink: /scheduling
   description: Request scheduling and load balancing for LLM inference
 
+autoscaling:
+  label: Autoscaling
+  permalink: /autoscaling
+  description: Autoscaling LLM inference workloads
+
 inference:
   label: Inference
   permalink: /inference

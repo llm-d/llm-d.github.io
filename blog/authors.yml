@@ -582,14 +582,13 @@ rahul:
 
 guygir:
   name: Guy Girmonsky
-  title: AI Platforms Research Engineer , IBM
+  title: AI Platforms Research Engineer, IBM
   url: https://github.com/guygir
   image_url: https://avatars.githubusercontent.com/u/144227974?v=4
 
-
 revitale:
   name: Revital Eres
-  title: Software Engineer at,  IBM
+  title: Software Engineer, IBM
   url: https://github.com/revit13
   image_url: https://avatars.githubusercontent.com/u/16211463?v=4
 
@@ -600,3 +599,21 @@ sunilarora:
   socials:
     linkedin: https://www.linkedin.com/in/sunilarora101/
     github: https://github.com/droot
+
+lionelvillard:
+  name: Lionel Villard
+  title: Senior Technical Staff Member, IBM
+  url: https://github.com/lionelvillard
+  image_url: https://avatars.githubusercontent.com/u/6598801?v=4
+
+asm582:
+  name: Abhishek Malvankar
+  title: Senior Software Engineer, IBM
+  url: https://github.com/asm582
+  image_url: https://avatars.githubusercontent.com/u/5898557?v=4
+
+mamy-CS:
+  name: Mohammed Munir Abdi
+  title: Research Software Engineer, IBM
+  url: https://github.com/mamy-CS
+  image_url: https://avatars.githubusercontent.com/u/48661743?v=4
