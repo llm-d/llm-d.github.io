@@ -489,6 +489,27 @@ rachelbrill:
   socials:
     linkedin: rachel-tzoref-brill-6645a11
 
+dolevadas:
+  name: Dolev Adas
+  title: Research Staff Member, IBM  
+  image_url: /img/blogs/dolevadas.webp
+  socials:
+    linkedin: dolev-felman-adas-7a4a0565
+
+oshritfeder:
+  name: Oshrit Feder
+  title: Research Staff Member, IBM
+  image_url: /img/blogs/oshritfeder.webp
+  socials:
+    linkedin: oshrit-feder-7171b42  
+
+sharonkeidarbarner:
+  name: Sharon Keider-Barner
+  title: Manager, AI Inferencing Optimizations 
+  image_url: /img/blogs/sharonkeidarbarner.webp
+  socials:
+    linkedin: sharon-keidar-barner-0884181
+
 ezrasilvera:
   name: Ezra Silvera
   title: Senior Technical Staff Member, IBM
@@ -543,6 +564,22 @@ alexnails:
     linkedin: alex-nails
     github: https://github.com/alexnails
 
+yangligt2:
+  name: Yang Li
+  title: Software Engineer, Google
+  url: https://github.com/yangligt2
+  image_url: https://avatars.githubusercontent.com/u/210760644?v=4
+  email: yangligt@google.com
+  socials:
+    github: https://github.com/yangligt2
+
+ashokchandrasekar:
+  name: Ashok Chandrasekar
+  title: Staff Software Engineer, Google
+  image_url: /img/blogs/ashokchandrasekar.webp
+  socials:
+    linkedin: ashokchandrasekar
+    github: https://github.com/achandrasekar
 gyliu513:
   name: Guangya Liu
   title: Executive Director, JPMorgan Chase
