@@ -146,20 +146,37 @@ function sortSiblings(items, config) {
 }
 
 /**
+ * @param {import('@docusaurus/plugin-content-docs').SidebarItem} item
+ * @param {{ categories: Record<string, object>, pages: Record<string, object> }} config
+ */
+function isHidden(item, config) {
+  if (item.type === 'category') {
+    const dir = categoryDir(item);
+    return Boolean(dir && config.categories[dir]?.hidden);
+  }
+  if (item.type === 'doc') {
+    return Boolean(config.pages[item.id]?.hidden);
+  }
+  return false;
+}
+
+/**
  * @param {import('@docusaurus/plugin-content-docs').SidebarItem[]} items
  * @param {{ categories: Record<string, object>, pages: Record<string, object> }} config
  */
 export function applyMenuConfig(items, config) {
-  const processed = items.map((item) => {
-    if (item.type === 'category') {
-      const patched = applyCategoryMeta(item, config.categories);
-      return {
-        ...patched,
-        items: sortSiblings(applyMenuConfig(patched.items ?? [], config), config),
-      };
-    }
-    return applyPageMeta(item, config.pages);
-  });
+  const processed = items
+    .filter((item) => !isHidden(item, config))
+    .map((item) => {
+      if (item.type === 'category') {
+        const patched = applyCategoryMeta(item, config.categories);
+        return {
+          ...patched,
+          items: sortSiblings(applyMenuConfig(patched.items ?? [], config), config),
+        };
+      }
+      return applyPageMeta(item, config.pages);
+    });
   return sortSiblings(processed, config);
 }
 

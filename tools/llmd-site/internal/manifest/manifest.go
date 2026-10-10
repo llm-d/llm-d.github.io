@@ -45,6 +45,7 @@ type Manifest struct {
 
 type Sources struct {
 	LLMD SourceRepo `yaml:"llm-d"`
+	LWS  SourceRepo `yaml:"lws,omitempty"`
 }
 
 type SourceRepo struct {
