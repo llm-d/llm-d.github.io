@@ -19,6 +19,7 @@ type Options struct {
 	LocalConfig  string
 	AllowMissing    bool
 	RefreshUpstream bool
+	CacheDir        string
 }
 
 // Result describes sync output.
