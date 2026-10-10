@@ -45,6 +45,37 @@ const redirects = [
     ['well-lit-paths/workloads', 'well-lit-paths/models'],
     ['well-lit-paths/workloads/agentic-serving', 'well-lit-paths/models'],
   ].map(([from, to]) => ({ from: `/docs/dev/${from}`, to: `/docs/dev/${to}` })),
+
+  // Concepts reorg (llm-d/llm-d#2727).
+  ...[
+    ['architecture/core/router', 'architecture/router'],
+    ['architecture/core/router/proxy', 'architecture/router/proxy'],
+    ['architecture/core/router/epp', 'architecture/router/epp'],
+    ['architecture/core/router/epp/request-handling', 'architecture/router/request-handling'],
+    ['architecture/core/router/epp/flow-control', 'architecture/router/flow-control'],
+    ['architecture/core/router/epp/scheduling', 'architecture/router/scheduling'],
+    ['architecture/core/router/epp/datalayer', 'architecture/router/datalayer'],
+    ['architecture/core/router/epp/configuration', 'architecture/router/configuration'],
+    ['architecture/advanced/latency-predictor', 'architecture/router/latency-predictor'],
+    ['architecture/advanced/inference-payload-processing', 'architecture/router/ipp'],
+    ['architecture/core/inferencepool', 'architecture/router/inferencepool'],
+    ['architecture/core/model-servers', 'architecture/model-servers'],
+    ['architecture/advanced/disaggregation', 'architecture/disaggregation/pd-disaggregation'],
+    ['architecture/advanced/wide-expert-parallelism', 'architecture/disaggregation/wide-expert-parallelism'],
+    ['architecture/advanced/kv-management', 'architecture/kv-management'],
+    ['architecture/advanced/kv-management/prefix-cache-aware-routing', 'architecture/kv-management/prefix-cache-aware-routing'],
+    ['architecture/advanced/kv-management/kv-indexer', 'architecture/kv-management/kv-indexer'],
+    ['architecture/advanced/kv-management/kv-offloader', 'architecture/kv-management/kv-offloader'],
+    ['architecture/advanced/kv-management/p2p-kv-cache-sharing', 'architecture/kv-management/p2p-kv-cache-sharing'],
+    ['architecture/advanced/autoscaling', 'architecture/autoscaling'],
+    ['architecture/advanced/autoscaling/keda-epp', 'architecture/autoscaling/keda-epp'],
+    ['architecture/advanced/autoscaling/slo-aware-keda', 'architecture/autoscaling/slo-aware-keda'],
+    ['architecture/advanced/autoscaling/wva', 'architecture/autoscaling/wva'],
+    ['architecture/advanced/batch', 'architecture/batch'],
+    ['architecture/advanced/batch/batch-gateway', 'architecture/batch/batch-gateway'],
+    ['architecture/advanced/batch/async-processor', 'architecture/batch/async-processor'],
+    ['infrastructure/providers/gke/dynamic-slicing', 'infrastructure/providers/gke'],
+  ].map(([from, to]) => ({ from: `/docs/dev/${from}`, to: `/docs/dev/${to}` })),
 ];
 
 export default redirects;

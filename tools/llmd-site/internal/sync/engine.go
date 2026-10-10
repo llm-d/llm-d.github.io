@@ -61,6 +61,10 @@ func runNative(m *manifest.Manifest, opts Options, src *upstream.Source) error {
 		}
 	}
 
+	if err := e.syncLWS(); err != nil {
+		return err
+	}
+
 	fmt.Println("    Copying doc images into static/img/docs/ ...")
 	if err := copyDocImages(e.docsDir, e.staticDir); err != nil {
 		return err
