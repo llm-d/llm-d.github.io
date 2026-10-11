@@ -22,6 +22,7 @@ cd tools/llmd-site && go build -o ../../bin/llmd-site ./cmd/llmd-site
 | `llmd-site golden verify main` | Compare sync output to golden |
 | `llmd-site check links` | Crawl built site, validate links, write report |
 | `llmd-site check images` | Verify images load via HTTP |
+| `llmd-site check refs` | Verify released versions' source links are pinned and resolve |
 | `llmd-site ci [branch]` | Sync + build + link check |
 | `llmd-site version cut <x.y>` | Freeze dev docs as a released version (bake + `docs:version` + resync) |
 | `llmd-site blog stamp [files...]` | Set blog frontmatter `date` on publish |
@@ -39,15 +40,24 @@ make ci                 # full pipeline
 
 `llmd-site version cut <x.y>` freezes the synced dev `docs/` as version `<x.y>`:
 it copies doc images to `static/img/versioned/<x.y>/`, bakes the build-time
-preprocess fixups into `docs/` with every `llm-d/llm-d` GitHub link (and the
-guide pages' "Run this guide" checkout ref) pinned to the release tag `v<x.y>`,
-runs `docusaurus docs:version` (which also snapshots `docs/menu-config.json`,
-the version's sidebar config), then re-syncs `docs/` from `main`.
+preprocess fixups into `docs/` with every llm-d GitHub link (and the guide
+pages' "Run this guide" checkout ref) pinned to the refs in
+[`source-refs.yaml`](../../source-refs.yaml), runs `docusaurus docs:version`
+(which also snapshots `docs/menu-config.json`, the version's sidebar config),
+then re-syncs `docs/` from `main`.
 
-1. **Tag llm-d first.** Make sure the `v<x.y>` tag exists in `llm-d/llm-d`
-   before the release is deployed; until it does, the released version's
-   GitHub links 404.
-2. **Sync from the release branch**, so the frozen docs match the tag their
+1. **Add the release to `source-refs.yaml` first.** It lists the immutable ref
+   each llm-d repo is pinned to for this version. The cut refuses to run
+   without an entry, or when `docs/` links to an llm-d repo the entry does not
+   list — a forgotten repo is how a frozen version keeps a link on `main`.
+
+   The refs are not derivable from the docs version: each repo has its own
+   version line (for 0.10, the router is one minor ahead and batch-gateway is
+   four behind). Take them from the release's component table. Use full
+   `vX.Y.Z` tags — bare minor tags like `v0.10` are rejected because llm-d
+   repoints them.
+
+2. **Sync from the release branch**, so the frozen docs match the refs their
    links point at (syncing `main` after it has moved on can reference files
    that are not in the tag):
 
@@ -57,13 +67,22 @@ the version's sidebar config), then re-syncs `docs/` from `main`.
    ./bin/llmd-site version cut <x.y>
    ```
 
-3. **Review and commit** `versioned_docs/version-<x.y>/`, `versioned_sidebars/`,
+3. **Verify the pins resolve**, which is the check that catches a ref from the
+   wrong release. Such a ref still resolves for most paths, so nothing looks
+   broken until a reader follows a link into code that moved:
+
+   ```bash
+   GITHUB_TOKEN=... ./bin/llmd-site check refs --version <x.y>
+   ```
+
+4. **Review and commit** `versioned_docs/version-<x.y>/`, `versioned_sidebars/`,
    `versions.json` and `static/img/versioned/<x.y>/`, plus any banner/landing
    updates, then open the PR.
 
-Released versions never change with upstream: links stay on `v<x.y>` and the
-sidebar comes from `versioned_docs/version-<x.y>/menu-config.json`. To fix a
-released version, edit its files under `versioned_docs/` directly.
+Released versions never change with upstream: links stay on the refs recorded
+in `source-refs.yaml` and the sidebar comes from
+`versioned_docs/version-<x.y>/menu-config.json`. To fix a released version,
+edit its files under `versioned_docs/` directly.
 
 ## Link checking
 
