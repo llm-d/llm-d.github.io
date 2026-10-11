@@ -64,7 +64,7 @@ Offloaded KV caches can live on several tiers, ordered by read/write latency: fr
 
 ## Deploy
 
-See the [Tiered Prefix Cache guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/tiered-prefix-cache) for manifests and step-by-step deployment.
+See the [Tiered Prefix Cache guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/tiered-prefix-cache) for manifests and step-by-step deployment.
 
 ## Architecture
 
@@ -96,11 +96,11 @@ The connector does not evict data from the shared tier -- capacity is managed by
 
 ## Observability
 
-Offloading only helps when blocks evicted from HBM are loaded back instead of recomputed, so the signals that matter are the offload tier hit rate, store and load volume, and whether the EPP's CPU prefix index matches what the model servers actually hold. The [tiered prefix cache guide's Observability & Troubleshooting section](https://github.com/llm-d/llm-d/tree/v0.10/guides/tiered-prefix-cache#4-observability--troubleshooting) covers the key metrics for this path and the common failure modes, backed by the shared [PromQL](../../operations/observability/promql.md#tiered-prefix-cache) and [metric](../../operations/observability/metrics.md#vllm-kv-offloading-metrics) references.
+Offloading only helps when blocks evicted from HBM are loaded back instead of recomputed, so the signals that matter are the offload tier hit rate, store and load volume, and whether the EPP's CPU prefix index matches what the model servers actually hold. The [tiered prefix cache guide's Observability & Troubleshooting section](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/tiered-prefix-cache#4-observability--troubleshooting) covers the key metrics for this path and the common failure modes, backed by the shared [PromQL](../../operations/observability/promql.md#tiered-prefix-cache) and [metric](../../operations/observability/metrics.md#vllm-kv-offloading-metrics) references.
 
 ## Further Reading
 
-- [Tiered Prefix Cache guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/tiered-prefix-cache) — manifests and step-by-step deployment.
+- [Tiered Prefix Cache guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/tiered-prefix-cache) — manifests and step-by-step deployment.
 - [vLLM KV offloading connector](https://vllm-project.github.io/2026/01/08/kv-offloading-connector.html) — design of the native `OffloadingConnector` and its tiering.
 - [Multi-tier KV offloading RFC](https://github.com/vllm-project/vllm/issues/38260) — the upstream tiering design.
 - [LMCache](https://lmcache.ai) and [SGLang HiCache](https://github.com/sgl-project/sglang) — alternative offloading implementations supported by this path.

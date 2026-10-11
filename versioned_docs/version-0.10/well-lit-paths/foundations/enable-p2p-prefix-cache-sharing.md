@@ -49,7 +49,7 @@ session fingerprint; the guide documents the tensor-parallel and
 model-runner constraints. Size the CPU tier to retain useful blocks;
 making it larger than the per-pod GPU KV cache is the guide's recommended
 starting point, not a correctness requirement. The
-[guide's Best Practices](https://github.com/llm-d/llm-d/tree/v0.10/guides/p2p-kv-cache-sharing#best-practices)
+[guide's Best Practices](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/p2p-kv-cache-sharing#best-practices)
 covers each requirement, its sizing rule, and its failure mode.
 :::
 
@@ -83,11 +83,11 @@ The guide ships prefix affinity plus the pull as the general-purpose
 default. Reach for load-aware placement plus the pull when many
 concurrent sessions contend on their owner pods. Both regimes are
 measured in the
-[benchmark report](https://github.com/llm-d/llm-d/tree/v0.10/guides/p2p-kv-cache-sharing/benchmark-results/gpt-oss-120b-h200.md).
+[benchmark report](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/p2p-kv-cache-sharing/benchmark-results/gpt-oss-120b-h200.md).
 
 ## Deploy
 
-See the [P2P KV Cache Sharing guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/p2p-kv-cache-sharing)
+See the [P2P KV Cache Sharing guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/p2p-kv-cache-sharing)
 for manifests, verification gates, and step-by-step deployment.
 
 ## Architecture
@@ -116,8 +116,8 @@ normal NIXL P/D path transfers the request's KV to the selected decoder.
 
 ## Further Reading
 
-- [P2P KV Cache Sharing guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/p2p-kv-cache-sharing) - manifests, verification gates, benchmarking.
-- [Benchmark report: gpt-oss-120b on H200](https://github.com/llm-d/llm-d/tree/v0.10/guides/p2p-kv-cache-sharing/benchmark-results/gpt-oss-120b-h200.md) - crossover, shared-prefix pools, document Q&A.
-- [Benchmark report: GLM-5.2 on H200](https://github.com/llm-d/llm-d/tree/v0.10/guides/p2p-kv-cache-sharing/benchmark-results/glm-5.2-h200.md) - C64 policy comparison, four-arm observation, and pull mechanism evidence.
+- [P2P KV Cache Sharing guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/p2p-kv-cache-sharing) - manifests, verification gates, benchmarking.
+- [Benchmark report: gpt-oss-120b on H200](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/p2p-kv-cache-sharing/benchmark-results/gpt-oss-120b-h200.md) - crossover, shared-prefix pools, document Q&A.
+- [Benchmark report: GLM-5.2 on H200](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/p2p-kv-cache-sharing/benchmark-results/glm-5.2-h200.md) - C64 policy comparison, four-arm observation, and pull mechanism evidence.
 - [Tiered Prefix Cache](tiered-prefix-cache.md) - the offload tiers P2P serves from.
 - [Precise Prefix Cache Routing](precise-prefix-cache-routing.md) - the index that selects the pull source.

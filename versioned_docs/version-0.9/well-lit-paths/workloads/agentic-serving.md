@@ -52,7 +52,7 @@ stack differently:
 
 ## Deploy
 
-The [agentic-serving guide](https://github.com/llm-d/llm-d/tree/v0.9/guides/agentic-serving) is the operational counterpart. It
+The [agentic-serving guide](https://github.com/llm-d/llm-d/tree/v0.9.0/guides/agentic-serving) is the operational counterpart. It
 composes llm-d's existing well-lit paths into a deployment stack — the
 [optimized baseline](../foundations/optimized-baseline.md) for prefix- and load-aware routing,
 [tiered KV-cache offloading](../foundations/tiered-prefix-cache.md) to keep idle sessions resident,

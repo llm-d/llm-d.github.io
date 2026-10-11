@@ -78,43 +78,43 @@ Not all of the plugins listed below are configured by default. Only a curated su
 
 ### Filters
 
-* **[`prefix-cache-affinity-filter`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/filter/prefixcacheaffinity)**: A probabilistic filter that narrows candidates to "sticky" endpoints (those with high prefix cache scores). It includes a "TTFT load gate" to break stickiness if sticky endpoints are significantly slower than non-sticky ones.
-* **[`slo-headroom-tier-filter`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/filter/sloheadroomtier)**: Filters endpoints based on SLO headroom tiers to ensure quality of service.
-* **[`label-selector-filter`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/filter/bylabel)**: Keeps endpoints that matches a configured label selector.
-* **[`prefill-endpoints-filter`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/filter/bylabel)**: A special instance of `label-selector-filter` that retains only endpoints with a prefill label.
-* **[`decode-endpoints-filter`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/filter/bylabel)**: A special instance of `label-selector-filter` that retains only endpoints with a decode label.
+* **[`prefix-cache-affinity-filter`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/filter/prefixcacheaffinity)**: A probabilistic filter that narrows candidates to "sticky" endpoints (those with high prefix cache scores). It includes a "TTFT load gate" to break stickiness if sticky endpoints are significantly slower than non-sticky ones.
+* **[`slo-headroom-tier-filter`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/filter/sloheadroomtier)**: Filters endpoints based on SLO headroom tiers to ensure quality of service.
+* **[`label-selector-filter`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/filter/bylabel)**: Keeps endpoints that matches a configured label selector.
+* **[`prefill-endpoints-filter`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/filter/bylabel)**: A special instance of `label-selector-filter` that retains only endpoints with a prefill label.
+* **[`decode-endpoints-filter`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/filter/bylabel)**: A special instance of `label-selector-filter` that retains only endpoints with a decode label.
 
 ### Scorers
 
 *For details on exactly how each scorer calculates its score (0.0 to 1.0), please refer to the specific plugin's documentation.*
 
-* **[`kv-cache-utilization-scorer`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/scorer/kvcacheutilization)**: Prefers endpoints with lower KV cache utilization to avoid fragmentation.
-* **[`latency-scorer`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/scorer/latency)**: Scores endpoints based on predicted latency headroom, defined as the gap between the predicted request latency and the user's SLO if set.
-* **[`lora-affinity-scorer`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/scorer/loraaffinity)**: Prefers endpoints that already have the requested LoRA adapter active or have capacity to load it.
-* **[`prefix-scorer`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/scorer/prefix)**: Scores based on the length of the prefix cache match.
-* **[`queue-depth-scorer`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/scorer/queuedepth)**: Prefers endpoints with shorter request queues.
-* **[`running-requests-size-scorer`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/scorer/runningrequests)**: Scores based on the number of currently active requests.
-* **[`token-load-scorer`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/scorer/tokenload)**: Scores based on the total token load (input + output) handled by the endpoint.
-* **[`precise-prefix-cache-producer`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/requestcontrol/dataproducer/preciseprefixcache)** (DataProducer, paired with `prefix-cache-scorer`): Enables scoring on real-time KV-cache locality. While `prefix-scorer` relies on historical scheduling estimates, this tracks actual cache states via model server events for higher precision. Configure the producer and point the scorer at it with `prefixMatchInfoProducerName: precise-prefix-cache-producer`.
+* **[`kv-cache-utilization-scorer`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/scorer/kvcacheutilization)**: Prefers endpoints with lower KV cache utilization to avoid fragmentation.
+* **[`latency-scorer`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/scorer/latency)**: Scores endpoints based on predicted latency headroom, defined as the gap between the predicted request latency and the user's SLO if set.
+* **[`lora-affinity-scorer`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/scorer/loraaffinity)**: Prefers endpoints that already have the requested LoRA adapter active or have capacity to load it.
+* **[`prefix-scorer`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/scorer/prefix)**: Scores based on the length of the prefix cache match.
+* **[`queue-depth-scorer`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/scorer/queuedepth)**: Prefers endpoints with shorter request queues.
+* **[`running-requests-size-scorer`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/scorer/runningrequests)**: Scores based on the number of currently active requests.
+* **[`token-load-scorer`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/scorer/tokenload)**: Scores based on the total token load (input + output) handled by the endpoint.
+* **[`precise-prefix-cache-producer`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/requestcontrol/dataproducer/preciseprefixcache)** (DataProducer, paired with `prefix-cache-scorer`): Enables scoring on real-time KV-cache locality. While `prefix-scorer` relies on historical scheduling estimates, this tracks actual cache states via model server events for higher precision. Configure the producer and point the scorer at it with `prefixMatchInfoProducerName: precise-prefix-cache-producer`.
 
 :::note
 Without an explicit `prefixMatchInfoProducerName`, `prefix-cache-scorer` falls back to the auto-instantiated `approx-prefix-cache-producer`. (The older single-plugin `precise-prefix-cache-scorer` is deprecated in favor of this producer + `prefix-cache-scorer` pair.)
 :::
 
 
-* **[`session-affinity-scorer`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/scorer/sessionaffinity)**: Assigns a maximum score to the specific endpoint that handled previous requests for the same session, while all other endpoints receive the minimum score.
-* **[`no-hit-lru-scorer`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/scorer/nohitlru)**: For cold requests (zero cache hits), the scorer prioritizes endpoints that have never handled one, followed by those used least recently. This ensures an even distribution of the intensive "prefill" workload across the cluster. If a request has existing cache hits, the scorer assigns equal scores to all endpoints (scorer has no impact).
+* **[`session-affinity-scorer`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/scorer/sessionaffinity)**: Assigns a maximum score to the specific endpoint that handled previous requests for the same session, while all other endpoints receive the minimum score.
+* **[`no-hit-lru-scorer`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/scorer/nohitlru)**: For cold requests (zero cache hits), the scorer prioritizes endpoints that have never handled one, followed by those used least recently. This ensures an even distribution of the intensive "prefill" workload across the cluster. If a request has existing cache hits, the scorer assigns equal scores to all endpoints (scorer has no impact).
 
 ### Pickers
 
-* **[`max-score-picker`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/picker/maxscore)**: Selects the endpoint with the absolute highest score. This is the **default picker** — auto-injected into any profile that references no picker with its default `maxNumOfEndpoints: 1` (return the single best endpoint).
-* **[`random-picker`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/picker/random)**: Selects an endpoint randomly from the candidates.
-* **[`weighted-random-picker`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/picker/weightedrandom)**: Selects an endpoint randomly, using the scores as relative probabilities (lottery scheduling).
+* **[`max-score-picker`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/picker/maxscore)**: Selects the endpoint with the absolute highest score. This is the **default picker** — auto-injected into any profile that references no picker with its default `maxNumOfEndpoints: 1` (return the single best endpoint).
+* **[`random-picker`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/picker/random)**: Selects an endpoint randomly from the candidates.
+* **[`weighted-random-picker`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/picker/weightedrandom)**: Selects an endpoint randomly, using the scores as relative probabilities (lottery scheduling).
 
 ### Profile Handlers
 
-* **[`single-profile-handler`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/profilehandler/single)**: Runs a single configured primary profile.
-* **[`disagg-profile-handler`](https://github.com/llm-d/llm-d-router/tree/main/pkg/epp/framework/plugins/scheduling/profilehandler/disagg)**: Runs two scheduling profiles, one for prefill and one for decode. The **decode endpoint** is set as the primary destination for the proxy to forward the original request, while the **prefill endpoint** is injected into the request as a specialized header.
+* **[`single-profile-handler`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/profilehandler/single)**: Runs a single configured primary profile.
+* **[`disagg-profile-handler`](https://github.com/llm-d/llm-d-router/tree/v0.10.0/pkg/epp/framework/plugins/scheduling/profilehandler/disagg)**: Runs two scheduling profiles, one for prefill and one for decode. The **decode endpoint** is set as the primary destination for the proxy to forward the original request, while the **prefill endpoint** is injected into the request as a specialized header.
 
 :::note
 Two older handlers are **deprecated** and kept only for backward compatibility:

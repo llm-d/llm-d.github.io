@@ -2,7 +2,7 @@
 
 This document covers configuring DOKS clusters for running high performance LLM inference with llm-d.
 
-For deployment instructions, see the [well-lit path guides](https://github.com/llm-d/llm-d/tree/v0.8/guides/).
+For deployment instructions, see the [well-lit path guides](https://github.com/llm-d/llm-d/tree/v0.8.1/guides/).
 
 ## Prerequisites
 
@@ -48,7 +48,7 @@ tolerations:
 
 ## Deploying llm-d
 
-Follow the [well-lit path guides](https://github.com/llm-d/llm-d/tree/v0.8/guides/) to deploy llm-d workloads. Each guide includes DigitalOcean-specific steps where applicable.
+Follow the [well-lit path guides](https://github.com/llm-d/llm-d/tree/v0.8.1/guides/) to deploy llm-d workloads. Each guide includes DigitalOcean-specific steps where applicable.
 
 ## Troubleshooting
 

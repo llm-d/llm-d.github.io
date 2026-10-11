@@ -17,7 +17,7 @@ This guide demonstrates one approach to prefix- and load-aware routing. The llm-
 
 ## Deploy
 
-See the [optimized baseline guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/optimized-baseline) for manifests and step-by-step deployment.
+See the [optimized baseline guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/optimized-baseline) for manifests and step-by-step deployment.
 
 ## Architecture
 
@@ -45,7 +45,7 @@ EPP continuously probes each endpoints' metrics by scraping `/metrics` at a regu
 
 ## Observability
 
-The optimized baseline balances two routing objectives, prefix-cache affinity and load-aware spread, so the signals that matter are cache hit rate and per-pod load balance watched together. The [guide's Observability & Troubleshooting section](https://github.com/llm-d/llm-d/tree/v0.10/guides/optimized-baseline#4-observability--troubleshooting) covers the key metrics for this path and the common failure modes (including the `peakPrefillThroughput` calibration trap on non-default hardware), backed by the shared [PromQL](../../operations/observability/promql.md) and [metric](../../operations/observability/metrics.md) references.
+The optimized baseline balances two routing objectives, prefix-cache affinity and load-aware spread, so the signals that matter are cache hit rate and per-pod load balance watched together. The [guide's Observability & Troubleshooting section](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/optimized-baseline#4-observability--troubleshooting) covers the key metrics for this path and the common failure modes (including the `peakPrefillThroughput` calibration trap on non-default hardware), backed by the shared [PromQL](../../operations/observability/promql.md) and [metric](../../operations/observability/metrics.md) references.
 
 ## Further Reading
 

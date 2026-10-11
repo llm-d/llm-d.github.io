@@ -29,7 +29,7 @@ components:
   # - ../../../recipes/modelserver/components/monitoring-pd  # add for prefill/decode disaggregation
 ```
 
-The monitoring component creates PodMonitors that scrape model server metrics. See [`guides/recipes/modelserver/components/monitoring/`](https://github.com/llm-d/llm-d/tree/v0.8/guides/recipes/modelserver/components/monitoring/) for details.
+The monitoring component creates PodMonitors that scrape model server metrics. See [`guides/recipes/modelserver/components/monitoring/`](https://github.com/llm-d/llm-d/tree/v0.8.1/guides/recipes/modelserver/components/monitoring/) for details.
 
 ### Verify PodMonitors
 
@@ -75,7 +75,7 @@ prefill-podmonitor      5m
 
 ## Step 3: Enable EPP Metrics
 
-EPP (Endpoint Picker) metrics are enabled by default. To verify or enable manually, see the [Monitoring & Tracing Configuration](https://github.com/llm-d/llm-d-router/tree/main/config/charts#4-monitoring--tracing-configuration) section in the llm-d-router Helm chart docs.
+EPP (Endpoint Picker) metrics are enabled by default. To verify or enable manually, see the [Monitoring & Tracing Configuration](https://github.com/llm-d/llm-d-router/tree/v0.9.0/config/charts#4-monitoring--tracing-configuration) section in the llm-d-router Helm chart docs.
 
 Verify the ServiceMonitor exists:
 

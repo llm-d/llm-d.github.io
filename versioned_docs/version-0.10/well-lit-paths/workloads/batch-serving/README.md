@@ -9,4 +9,4 @@ Depending on your integration requirements, scale, and operational environment, 
 
 ## Deploy
 
-See the [Batch Serving Guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/batch-serving) for deployment options, comparative analysis, and operational guides.
+See the [Batch Serving Guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/batch-serving) for deployment options, comparative analysis, and operational guides.

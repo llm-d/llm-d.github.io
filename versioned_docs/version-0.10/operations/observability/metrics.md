@@ -17,7 +17,7 @@ export NAMESPACE=<your-llm-d-namespace>
 - Prometheus and Grafana installed — see [Observability Setup](./setup.md)
 
 :::note
-TPU hardware metrics require the [GKE TPU monitoring recipe](https://github.com/llm-d/llm-d/tree/v0.10/guides/recipes/observability/tpu/), which scrapes the GKE device-plugin exporter rather than the model server.
+TPU hardware metrics require the [GKE TPU monitoring recipe](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/recipes/observability/tpu/), which scrapes the GKE device-plugin exporter rather than the model server.
 [GKE TPU Observability](./tpu.md) documents metric names, units, labels, and environment checks. Metric availability depends on the GKE runtime and TPU type; the vLLM image version alone does not determine that interface.
 :::
 
@@ -36,7 +36,7 @@ components:
   # - ../../../recipes/modelserver/components/monitoring-pd  # add for prefill/decode disaggregation
 ```
 
-The monitoring component creates PodMonitors that scrape model server metrics. See [`guides/recipes/modelserver/components/monitoring/`](https://github.com/llm-d/llm-d/tree/v0.10/guides/recipes/modelserver/components/monitoring/) for details.
+The monitoring component creates PodMonitors that scrape model server metrics. See [`guides/recipes/modelserver/components/monitoring/`](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/recipes/modelserver/components/monitoring/) for details.
 
 ### Verify PodMonitors
 
@@ -89,7 +89,7 @@ With tensor parallelism, vLLM pools transfer observations from all TP ranks befo
 
 #### vLLM KV Offloading Metrics
 
-When vLLM uses the native `OffloadingConnector` (the [tiered prefix cache guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/tiered-prefix-cache)), it exports metrics for KV blocks moved between the GPU and the offload tiers. The names below are available in vLLM v0.26.0 and later.
+When vLLM uses the native `OffloadingConnector` (the [tiered prefix cache guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/tiered-prefix-cache)), it exports metrics for KV blocks moved between the GPU and the offload tiers. The names below are available in vLLM v0.26.0 and later.
 
 | Metric | What it measures | Why it matters |
 |--------|------------------|----------------|
@@ -121,7 +121,7 @@ Older dashboards may use `vllm:kv_offload_total_bytes_total`, `vllm:kv_offload_t
 
 #### SGLang HiCache Metrics
 
-When HiCache is enabled (the SGLang path in the [tiered prefix cache guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/tiered-prefix-cache)), SGLang exports metrics for the host (CPU) tier.
+When HiCache is enabled (the SGLang path in the [tiered prefix cache guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/tiered-prefix-cache)), SGLang exports metrics for the host (CPU) tier.
 
 | Metric | What it measures | Why it matters |
 |--------|------------------|----------------|
@@ -134,7 +134,7 @@ When HiCache is enabled (the SGLang path in the [tiered prefix cache guide](http
 
 ## Step 3: Enable EPP Metrics
 
-EPP (Endpoint Picker) metrics are enabled by default. To verify or enable manually, see the [Monitoring & Tracing Configuration](https://github.com/llm-d/llm-d-router/tree/main/config/charts#4-monitoring--tracing-configuration) section in the llm-d-router Helm chart docs.
+EPP (Endpoint Picker) metrics are enabled by default. To verify or enable manually, see the [Monitoring & Tracing Configuration](https://github.com/llm-d/llm-d-router/tree/v0.11.0/config/charts#4-monitoring--tracing-configuration) section in the llm-d-router Helm chart docs.
 
 Verify the ServiceMonitor exists:
 
@@ -270,7 +270,7 @@ When flow control is enabled (`flowControl` feature gate), these additional metr
 
 ### Key Batch Gateway Metrics
 
-Only relevant if you deployed the [Batch Gateway guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/batch-serving/batch-gateway). These are the operationally useful series; the definitional source of truth for names, types, and labels is [`docs/guides/metrics.md`](https://github.com/llm-d/llm-d-batch-gateway/blob/main/docs/guides/metrics.md) in the component repo, which also documents the token, cancellation, and startup-recovery counters not listed here.
+Only relevant if you deployed the [Batch Gateway guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/batch-serving/batch-gateway). These are the operationally useful series; the definitional source of truth for names, types, and labels is [`docs/guides/metrics.md`](https://github.com/llm-d/llm-d-batch-gateway/blob/v0.6.0/docs/guides/metrics.md) in the component repo, which also documents the token, cancellation, and startup-recovery counters not listed here.
 
 Unlike the EPP and vLLM metrics above, these names carry no `llm_d_` prefix, so scope queries by `namespace` to avoid picking up unrelated workloads.
 
@@ -297,7 +297,7 @@ For alerts built on these metrics, see [Alerting](./alerting.md#batch-gateway-ba
 
 ## Step 4: Enable Inference Cost Metrics 
 
-Install [inference cost tracking](https://github.com/llm-d/llm-d/tree/v0.10/guides/recipes/observability/inferencecost) to generate OpenCost metrics and three special Prometheus gauges under the `llm_` prefix. These metrics join Kubernetes allocation costs with vLLM token throughput to produce per-model cost attribution that neither system can produce alone.
+Install [inference cost tracking](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/recipes/observability/inferencecost) to generate OpenCost metrics and three special Prometheus gauges under the `llm_` prefix. These metrics join Kubernetes allocation costs with vLLM token throughput to produce per-model cost attribution that neither system can produce alone.
 
 | Metric | Labels | What it measures | Why it matters |
 |--------|--------|-----------------|----------------|
@@ -326,7 +326,7 @@ kubectl port-forward -n llm-d-monitoring svc/opencost 9003:9003
 curl -s http://localhost:9003/metrics | grep llm_
 ```
 
-For setup instructions, see [Inference Cost Tracking](https://github.com/llm-d/llm-d/tree/v0.10/guides/recipes/observability/inferencecost).
+For setup instructions, see [Inference Cost Tracking](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/recipes/observability/inferencecost).
 
 ## Step 5: View Dashboards
 
@@ -381,7 +381,7 @@ Or import individual dashboard JSON files manually from `guides/recipes/observab
 | ----------- | -------------- |
 | `llm-d-vllm-overview.json` | General vLLM metrics overview |
 | `llm-d-sglang-overview.json` | General SGLang metrics overview |
-| `llm-d-tpu-overview.json` | GKE TPU exporter health and hardware metrics; see the [TPU recipe](https://github.com/llm-d/llm-d/tree/v0.10/guides/recipes/observability/tpu/) |
+| `llm-d-tpu-overview.json` | GKE TPU exporter health and hardware metrics; see the [TPU recipe](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/recipes/observability/tpu/) |
 | `llm-d-failure-saturation-dashboard.json` | Failure and saturation indicators |
 | `llm-d-diagnostic-drilldown-dashboard.json` | Detailed diagnostic metrics for troubleshooting |
 | `llm-d-performance-kv-cache.json` | Performance metrics including KV cache utilization |
@@ -389,9 +389,9 @@ Or import individual dashboard JSON files manually from `guides/recipes/observab
 | `llm-d-batch-gateway-apiserver.json` | Batch Gateway API server request rate, latency, and in-flight requests |
 | `llm-d-batch-gateway-processor.json` | Batch Gateway job throughput, queue wait, worker saturation, and token usage |
 | `llm-d-batch-gateway-gc.json` | Batch Gateway GC reconciler cycles, orphan recovery, and errors |
-| `llm-d-inference-cost.json` | Per-token and hourly infrastructure cost tracking via OpenCost (requires [inference cost tracking](https://github.com/llm-d/llm-d/tree/v0.10/guides/recipes/observability/inferencecost)) |
+| `llm-d-inference-cost.json` | Per-token and hourly infrastructure cost tracking via OpenCost (requires [inference cost tracking](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/recipes/observability/inferencecost)) |
 
-The three Batch Gateway dashboards are only useful if you deployed the [Batch Gateway guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/batch-serving/batch-gateway); each has a `namespace` variable to select the namespace it runs in.
+The three Batch Gateway dashboards are only useful if you deployed the [Batch Gateway guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/batch-serving/batch-gateway); each has a `namespace` variable to select the namespace it runs in.
 
 ## Step 6: Query Metrics
 

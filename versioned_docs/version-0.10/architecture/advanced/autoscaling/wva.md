@@ -7,7 +7,7 @@ design reference for existing deployments; expect no new features, and plan a
 migration.
 
 The recommended path is [KEDA with EPP Metrics](./keda-epp.md), deployed from
-the [workload autoscaling guides](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling).
+the [workload autoscaling guides](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/workload-autoscaling).
 See [Migrating off WVA](#migrating-off-wva) below.
 
 Within the deprecated path, the `VariantAutoscaling` (VA) CRD was itself
@@ -32,7 +32,7 @@ WVA provides two main scaling analyzers:
 - **Saturation Analyzer** -- Scales based on resource saturation signals (KV cache utilization, request queue depth, and token-level capacity). When the system detects that model servers are saturated (running out of KV cache space or building up queues), it triggers scale-up on the cheapest available variant. When spare capacity is detected, it scales down the most expensive variant. This is the default analyzer. It has two sub-variants: `saturation-percentage-based` (default) and `saturation-token-based` (experimental).
 
 :::note
-These two sub-variants are also referred to as the **V1** (`saturation-percentage-based`) and **V2** (`saturation-token-based`) saturation engines. The [HPA + WVA guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling/wva), the WVA configuration keys, and the controller logs (e.g. `V2 saturation analysis completed`) use the V1/V2 names; this document uses the descriptive `saturation-percentage-based` / `saturation-token-based` names for the same engines.
+These two sub-variants are also referred to as the **V1** (`saturation-percentage-based`) and **V2** (`saturation-token-based`) saturation engines. The [HPA + WVA guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/workload-autoscaling/wva), the WVA configuration keys, and the controller logs (e.g. `V2 saturation analysis completed`) use the V1/V2 names; this document uses the descriptive `saturation-percentage-based` / `saturation-token-based` names for the same engines.
 :::
 
 
@@ -355,7 +355,7 @@ data:
 :::note
 There are two equivalent ways to select the token-based (V2) saturation engine.
 The scalar `analyzerName: "saturation"` shown above is the backward-compatible
-form. The newer list form, used in the [HPA + WVA guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling/wva#enabling-saturation-engine-v2-recommended), is equivalent:
+form. The newer list form, used in the [HPA + WVA guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/workload-autoscaling/wva#enabling-saturation-engine-v2-recommended), is equivalent:
 
 ```yaml
 analyzers:
@@ -471,7 +471,7 @@ to satisfy demand on cheaper hardware; see
 stay on WVA for now and track the autoscaling guides for a replacement.
 
 Sharing a contended accelerator budget between pools does *not* need WVA: use
-[Kueue-based replica rebalancing](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling/kueue-rebalancing),
+[Kueue-based replica rebalancing](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/workload-autoscaling/kueue-rebalancing),
 which gates replica pods against per-model quota floors below the HPA and so
 composes with any of the KEDA + EPP signals.
 
@@ -484,7 +484,7 @@ deployments should use [KEDA + EPP](./keda-epp.md) instead.
 :::
 
 
-The [HPA + WVA](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling/wva) approach replaces the `VariantAutoscaling` (VA) CRD with standard Kubernetes HPA objects that consume the `wva_desired_replicas` external metric published by WVA. This removes the need to manage VA resources and makes scaling intent visible through the standard `kubectl get hpa` surface.
+The [HPA + WVA](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/workload-autoscaling/wva) approach replaces the `VariantAutoscaling` (VA) CRD with standard Kubernetes HPA objects that consume the `wva_desired_replicas` external metric published by WVA. This removes the need to manage VA resources and makes scaling intent visible through the standard `kubectl get hpa` surface.
 
 ### Key Differences
 
@@ -556,4 +556,4 @@ Deleting a VA object stops WVA from managing that deployment's replica count. Sc
    kubectl delete crd variantautoscalings.llmd.ai
    ```
 
-See the [HPA + WVA guide](https://github.com/llm-d/llm-d/tree/v0.10/guides/workload-autoscaling/wva) for a complete end-to-end setup walkthrough including Prometheus Adapter and WVA controller installation.
+See the [HPA + WVA guide](https://github.com/llm-d/llm-d/tree/v0.10.0/guides/workload-autoscaling/wva) for a complete end-to-end setup walkthrough including Prometheus Adapter and WVA controller installation.
