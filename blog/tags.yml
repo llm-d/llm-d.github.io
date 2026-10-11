@@ -177,3 +177,8 @@ rl:
   label: RL
   permalink: /rl
   description: Reinforcement learning and post-training on llm-d
+
+multi-tenancy:
+  label: Multi-Tenancy
+  permalink: /multi-tenancy
+  description: Multi-tenant serving, quotas, and priority isolation on llm-d
