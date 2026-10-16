@@ -76,6 +76,11 @@ const redirects = [
     ['architecture/advanced/batch/async-processor', 'architecture/batch/async-processor'],
     ['infrastructure/providers/gke/dynamic-slicing', 'infrastructure/providers/gke'],
   ].map(([from, to]) => ({ from: `/docs/dev/${from}`, to: `/docs/dev/${to}` })),
+
+  // Infrastructure page renamed to mirror the architecture section (llm-d/llm-d#2834).
+  ...[
+    ['infrastructure/multi-node', 'infrastructure/model-server-orchestration'],
+  ].map(([from, to]) => ({ from: `/docs/dev/${from}`, to: `/docs/dev/${to}` })),
 ];
 
 export default redirects;
