@@ -177,3 +177,8 @@ rl:
   label: RL
   permalink: /rl
   description: Reinforcement learning and post-training on llm-d
+
+multi-cluster:
+  label: Multi-Cluster
+  permalink: /multi-cluster
+  description: Routing and serving across multiple llm-d clusters

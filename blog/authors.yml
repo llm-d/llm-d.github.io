@@ -600,3 +600,17 @@ sunilarora:
   socials:
     linkedin: https://www.linkedin.com/in/sunilarora101/
     github: https://github.com/droot
+
+mohammadnassar:
+  name: Mohammad Nassar
+  title: <your title>, IBM Research
+  image_url: /img/blogs/mohammadnassar.webp
+  socials:
+    github: Mohammad-nassar10
+
+ronenkat:
+  name: Ronen Kat
+  title: <title>, IBM Research
+  image_url: /img/blogs/ronenkat.webp
+  socials:
+    github: ronenkat
