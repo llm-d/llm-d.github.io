@@ -8,8 +8,9 @@ name: Docs PR Netlify preview
 #   NETLIFY_AUTH_TOKEN       — Netlify personal access token
 #   NETLIFY_SITE_ID          — Netlify site ID for this project
 #   LLM_D_PR_COMMENT_TOKEN   — fine-grained PAT on llm-d/llm-d with
-#     Issues: Read and write (sticky-comments the preview URL on the docs PR).
-#     Optional: if absent, the preview still deploys; URL is in the job summary.
+#     Issues: Read and write (sticky-comments the preview URL and the
+#     broken-links report on the docs PR). Optional: if absent, the preview
+#     still deploys; URL and report are in the job summary / artifacts.
 
 on:
   repository_dispatch:
@@ -24,12 +25,6 @@ on:
         description: Commit SHA to sync from (defaults to PR head)
         required: false
         type: string
-      head_repo:
-        description: head repo full name (default llm-d/llm-d)
-        required: false
-        default: llm-d/llm-d
-        type: string
-
 concurrency:
   group: docs-pr-preview-${{ github.event.client_payload.pr_number || inputs.pr_number }}
   cancel-in-progress: true
@@ -54,31 +49,25 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           PAYLOAD_PR: ${{ github.event.client_payload.pr_number }}
           PAYLOAD_SHA: ${{ github.event.client_payload.sha }}
-          PAYLOAD_REF: ${{ github.event.client_payload.ref }}
-          PAYLOAD_HEAD_REPO: ${{ github.event.client_payload.head_repo }}
           INPUT_PR: ${{ inputs.pr_number }}
           INPUT_SHA: ${{ inputs.sha }}
-          INPUT_HEAD_REPO: ${{ inputs.head_repo }}
         run: |
           set -euo pipefail
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             PR="$INPUT_PR"
             SHA="${INPUT_SHA:-}"
-            HEAD_REPO="${INPUT_HEAD_REPO:-llm-d/llm-d}"
-            REF=""
           else
             PR="$PAYLOAD_PR"
             SHA="${PAYLOAD_SHA:-}"
-            HEAD_REPO="${PAYLOAD_HEAD_REPO:-llm-d/llm-d}"
-            REF="${PAYLOAD_REF:-}"
           fi
           if [ -z "$PR" ]; then
             echo "pr_number is required" >&2
             exit 1
           fi
+          PR_HEAD="$(gh api "repos/llm-d/llm-d/pulls/${PR}" --jq '[.head.repo.full_name, .head.sha, .head.ref] | @tsv')"
+          IFS=$'\t' read -r HEAD_REPO PR_HEAD_SHA REF <<< "$PR_HEAD"
           if [ -z "$SHA" ]; then
-            SHA="$(gh api "repos/${HEAD_REPO}/pulls/${PR}" --jq .head.sha)"
-            REF="$(gh api "repos/${HEAD_REPO}/pulls/${PR}" --jq .head.ref)"
+            SHA="$PR_HEAD_SHA"
           fi
           ALIAS="docs-pr-${PR}"
           {
@@ -132,12 +121,35 @@ jobs:
       - name: Build site
         run: ./bin/llmd-site build
 
+      # Same as ci-website-test: warn-only so a docs PR still gets a preview.
+      # Built-in PR commenting in llmd-site only works for pull_request on this
+      # repo; we comment on llm-d/llm-d in the comment job below.
+      - name: Check links
+        run: ./bin/llmd-site check links --warn-on-broken-links
+
+      - name: Add broken links to job summary
+        if: always()
+        run: |
+          if [ -f broken-links-report.md ]; then
+            cat broken-links-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "⚠️ Link check produced no report" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Upload built site
         uses: actions/upload-artifact@v7
         with:
           name: docs-pr-site
           path: build/
           if-no-files-found: error
+
+      - name: Upload broken links report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: broken-links-report
+          path: broken-links-report.md
+          if-no-files-found: ignore
 
   deploy:
     name: Deploy Netlify preview
@@ -189,31 +201,61 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   comment:
-    name: Comment preview URL
+    name: Comment preview URL and link report
     needs: [build, deploy]
+    # Still comment the broken-links report if Netlify deploy failed.
+    if: always() && needs.build.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - name: Comment preview URL on llm-d PR
+      - name: Download broken links report
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: broken-links-report
+          path: ${{ runner.temp }}/link-report
+
+      - name: Comment preview URL and broken links on llm-d PR
         env:
           GH_TOKEN: ${{ secrets.LLM_D_PR_COMMENT_TOKEN }}
           PR: ${{ needs.build.outputs.pr_number }}
           URL: ${{ needs.deploy.outputs.url }}
           SHA: ${{ needs.build.outputs.sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REPORT_PATH: ${{ runner.temp }}/link-report/broken-links-report.md
         run: |
           set -euo pipefail
           if [ -z "${GH_TOKEN:-}" ]; then
-            echo "LLM_D_PR_COMMENT_TOKEN not set; skipping PR comment (URL is in the job summary)"
+            echo "LLM_D_PR_COMMENT_TOKEN not set; skipping PR comment (URL/report are in the job summary)"
             exit 0
           fi
-          body_file="$(mktemp)"
+
+          upsert_comment() {
+            local marker="$1"
+            local body_file="$2"
+            existing="$(
+              gh api "repos/llm-d/llm-d/issues/${PR}/comments" --paginate \
+                --jq ".[] | select(.body | contains(\"${marker}\")) | .id" \
+                | head -n1 || true
+            )"
+            if [ -n "$existing" ]; then
+              gh api -X PATCH "repos/llm-d/llm-d/issues/comments/${existing}" -F body=@"$body_file"
+            else
+              gh api -X POST "repos/llm-d/llm-d/issues/${PR}/comments" -F body=@"$body_file"
+            fi
+          }
+
+          preview_file="$(mktemp)"
           {
             echo '<!-- docs-site-preview -->'
             echo '### Website preview (docs PR)'
             echo ''
             echo "Rendered with this PR's docs synced into [llm-d.github.io](https://github.com/llm-d/llm-d.github.io):"
             echo ''
-            echo "**${URL}**"
+            if [ -n "${URL:-}" ]; then
+              echo "**${URL}**"
+            else
+              echo "_Netlify deploy did not produce a URL; see the [workflow run](${RUN_URL})._"
+            fi
             echo ''
             echo '| | |'
             echo '|---|---|'
@@ -221,12 +263,24 @@ jobs:
             echo "| Build | [workflow run](${RUN_URL}) |"
             echo ''
             echo '_Updated automatically when docs paths change. Not the production GitHub Pages deploy._'
-          } > "$body_file"
-          existing="$(gh api "repos/llm-d/llm-d/issues/${PR}/comments" --paginate \
-            --jq '.[] | select(.body | contains("<!-- docs-site-preview -->")) | .id' | head -n1 || true)"
-          if [ -n "$existing" ]; then
-            gh api -X PATCH "repos/llm-d/llm-d/issues/comments/${existing}" -F body=@"$body_file"
-          else
-            gh api -X POST "repos/llm-d/llm-d/issues/${PR}/comments" -F body=@"$body_file"
+          } > "$preview_file"
+          upsert_comment '<!-- docs-site-preview -->' "$preview_file"
+          rm -f "$preview_file"
+
+          if [ ! -f "$REPORT_PATH" ]; then
+            echo "No broken-links-report.md artifact; skipping link-report comment"
+            exit 0
           fi
-          rm -f "$body_file"
+
+          report_file="$(mktemp)"
+          {
+            echo '<!-- check-links-report -->'
+            echo '### Broken links report (docs PR preview)'
+            echo ''
+            echo "From the [docs PR preview build](${RUN_URL}) for \`${SHA}\`."
+            echo ''
+            # Leave room under GitHub's 65536-char comment limit for the header.
+            python3 -c "import pathlib, os; p=pathlib.Path(os.environ['REPORT_PATH']); r=p.read_text(); m=65536-400; print((r if len(r)<=m else r[:m]+'\n\n… _(report truncated)_'), end='')"
+          } > "$report_file"
+          upsert_comment '<!-- check-links-report -->' "$report_file"
+          rm -f "$report_file"
