@@ -1,0 +1,187 @@
+name: Docs PR Netlify preview
+
+# Builds the full site with docs synced from an llm-d/llm-d pull request and
+# deploys a Netlify draft alias. Triggered by repository_dispatch from
+# llm-d/llm-d (event-type: docs-pr-preview).
+#
+# Secrets (on llm-d/llm-d.github.io):
+#   NETLIFY_AUTH_TOKEN       — Netlify personal access token
+#   NETLIFY_SITE_ID          — Netlify site ID for this project
+#   LLM_D_PR_COMMENT_TOKEN   — fine-grained PAT on llm-d/llm-d with
+#     Issues: Read and write (sticky-comments the preview URL on the docs PR).
+#     Optional: if absent, the preview still deploys; URL is in the job summary.
+
+on:
+  repository_dispatch:
+    types: [docs-pr-preview]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: llm-d/llm-d pull request number
+        required: true
+        type: string
+      sha:
+        description: Commit SHA to sync from (defaults to PR head)
+        required: false
+        type: string
+      head_repo:
+        description: head repo full name (default llm-d/llm-d)
+        required: false
+        default: llm-d/llm-d
+        type: string
+
+concurrency:
+  group: docs-pr-preview-${{ github.event.client_payload.pr_number || inputs.pr_number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    name: Build and deploy Netlify preview
+    runs-on: ubuntu-latest
+    if: ${{ github.repository == 'llm-d/llm-d.github.io' }}
+    steps:
+      - name: Resolve payload
+        id: meta
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          PAYLOAD_PR: ${{ github.event.client_payload.pr_number }}
+          PAYLOAD_SHA: ${{ github.event.client_payload.sha }}
+          PAYLOAD_REF: ${{ github.event.client_payload.ref }}
+          PAYLOAD_HEAD_REPO: ${{ github.event.client_payload.head_repo }}
+          INPUT_PR: ${{ inputs.pr_number }}
+          INPUT_SHA: ${{ inputs.sha }}
+          INPUT_HEAD_REPO: ${{ inputs.head_repo }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            PR="$INPUT_PR"
+            SHA="${INPUT_SHA:-}"
+            HEAD_REPO="${INPUT_HEAD_REPO:-llm-d/llm-d}"
+            REF=""
+          else
+            PR="$PAYLOAD_PR"
+            SHA="${PAYLOAD_SHA:-}"
+            HEAD_REPO="${PAYLOAD_HEAD_REPO:-llm-d/llm-d}"
+            REF="${PAYLOAD_REF:-}"
+          fi
+          if [ -z "$PR" ]; then
+            echo "pr_number is required" >&2
+            exit 1
+          fi
+          if [ -z "$SHA" ]; then
+            SHA="$(gh api "repos/${HEAD_REPO}/pulls/${PR}" --jq .head.sha)"
+            REF="$(gh api "repos/${HEAD_REPO}/pulls/${PR}" --jq .head.ref)"
+          fi
+          ALIAS="docs-pr-${PR}"
+          {
+            echo "pr_number=$PR"
+            echo "sha=$SHA"
+            echo "ref=$REF"
+            echo "head_repo=$HEAD_REPO"
+            echo "alias=$ALIAS"
+          } >> "$GITHUB_OUTPUT"
+          echo "Previewing llm-d docs PR #${PR} @ ${HEAD_REPO}@${SHA}"
+
+      - name: Checkout website
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Checkout llm-d PR head
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ steps.meta.outputs.head_repo }}
+          ref: ${{ steps.meta.outputs.sha }}
+          path: _upstream-llm-d
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-llmd-site
+        with:
+          npm-command: npm ci
+          go-test: 'false'
+
+      - name: Sync docs from PR checkout
+        env:
+          # Exact SHA tree checked out above; do not fetch/reset.
+          LLMD_REPO: ${{ github.workspace }}/_upstream-llm-d
+        run: ./bin/llmd-site sync main
+
+      - name: Build site
+        run: ./bin/llmd-site build
+
+      - name: Deploy Netlify alias preview
+        id: netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          ALIAS: ${{ steps.meta.outputs.alias }}
+          PR: ${{ steps.meta.outputs.pr_number }}
+          SHA: ${{ steps.meta.outputs.sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NETLIFY_AUTH_TOKEN:-}" ] || [ -z "${NETLIFY_SITE_ID:-}" ]; then
+            echo "NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID secrets are required on this repo" >&2
+            exit 1
+          fi
+          npx --yes netlify-cli deploy \
+            --dir=build \
+            --alias="$ALIAS" \
+            --message="docs PR #${PR} (${SHA})" \
+            --json > /tmp/netlify-deploy.json
+          url="$(python3 -c 'import json; d=json.load(open("/tmp/netlify-deploy.json")); print(d.get("deploy_url") or d.get("url") or "")')"
+          if [ -z "$url" ]; then
+            site="$(npx --yes netlify-cli api getSite --data "{\"site_id\":\"$NETLIFY_SITE_ID\"}" \
+              | python3 -c 'import json,sys; print(json.load(sys.stdin).get("name",""))')"
+            url="https://${ALIAS}--${site}.netlify.app"
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed preview: $url"
+          {
+            echo "## Docs PR site preview"
+            echo ""
+            echo "- **PR:** https://github.com/llm-d/llm-d/pull/${PR}"
+            echo "- **Docs SHA:** \`${SHA}\`"
+            echo "- **Preview:** $url"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment preview URL on llm-d PR
+        env:
+          GH_TOKEN: ${{ secrets.LLM_D_PR_COMMENT_TOKEN }}
+          PR: ${{ steps.meta.outputs.pr_number }}
+          URL: ${{ steps.netlify.outputs.url }}
+          SHA: ${{ steps.meta.outputs.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "LLM_D_PR_COMMENT_TOKEN not set; skipping PR comment (URL is in the job summary)"
+            exit 0
+          fi
+          body_file="$(mktemp)"
+          {
+            echo '<!-- docs-site-preview -->'
+            echo '### Website preview (docs PR)'
+            echo ''
+            echo "Rendered with this PR's docs synced into [llm-d.github.io](https://github.com/llm-d/llm-d.github.io):"
+            echo ''
+            echo "**${URL}**"
+            echo ''
+            echo '| | |'
+            echo '|---|---|'
+            echo "| Docs SHA | \`${SHA}\` |"
+            echo "| Build | [workflow run](${RUN_URL}) |"
+            echo ''
+            echo '_Updated automatically when docs paths change. Not the production GitHub Pages deploy._'
+          } > "$body_file"
+          existing="$(gh api "repos/llm-d/llm-d/issues/${PR}/comments" --paginate \
+            --jq '.[] | select(.body | contains("<!-- docs-site-preview -->")) | .id' | head -n1 || true)"
+          if [ -n "$existing" ]; then
+            gh api -X PATCH "repos/llm-d/llm-d/issues/comments/${existing}" -F body=@"$body_file"
+          else
+            gh api -X POST "repos/llm-d/llm-d/issues/${PR}/comments" -F body=@"$body_file"
+          fi
+          rm -f "$body_file"
