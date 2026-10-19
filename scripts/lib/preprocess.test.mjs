@@ -106,6 +106,19 @@ test('no sync map: defaults to main', () => {
   assert.equal(out, `[g](${GH}/tree/main/guides/x)`);
 });
 
+test('links to translated home resolve by route in current and frozen docs', () => {
+  const docsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pp-i18n-'));
+  const pp = makeDocsPreprocessor({ docsDir, latestVersion: '0.10', translationLocales: ['zh-Hans'] });
+  const fromCurrent = '[start](../getting-started/README.mdx#overview)';
+  assert.equal(pp({ filePath: path.join(docsDir, 'api-reference', 'glossary.md'), fileContent: fromCurrent }), '[start](/docs/dev#overview)');
+  const translatedPath = path.join(path.dirname(docsDir), 'i18n', 'zh-Hans', 'docusaurus-plugin-content-docs', 'current', 'api-reference', 'glossary.md');
+  assert.equal(pp({ filePath: translatedPath, fileContent: fromCurrent }), '[start](/docs/dev#overview)');
+  const frozenPath = path.join(path.dirname(docsDir), 'versioned_docs', 'version-0.10', 'api-reference', 'glossary.md');
+  assert.equal(pp({ filePath: frozenPath, fileContent: fromCurrent }), '[start](/docs#overview)');
+  const rolloutLink = '[start](../../getting-started/README.mdx)';
+  assert.equal(pp({ filePath: path.join(docsDir, 'operations', 'rollouts', 'index.mdx'), fileContent: rolloutLink }), '[start](/docs/dev)');
+});
+
 test('guideToMdx converts variant, tab and env groups', () => {
   const src = [
     '<!-- guide:env.static start -->',
