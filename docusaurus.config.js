@@ -210,11 +210,11 @@ const config = {
       },
       announcementBar: {
         // Bump the id on every release so the banner reappears for readers who
-        // dismissed the previous one. The link goes to /docs, which always resolves
-        // to the newest released version.
-        id: "llm-d-0-10-0",
+        // dismissed the previous one. For the 1.0 launch the link points at the
+        // release blog post.
+        id: "llm-d-1-0-0",
         content:
-          '🎉 <b>llm-d 0.10 is here!</b> Operational hardening and production readiness: safer rollouts, signed release images, vLLM 0.30, and a published test matrix for every well-lit path. <a href="/docs"><b>Read the docs →</b></a>',
+          '🎉 <b>llm-d 1.0 is here!</b> State-of-the-art inference, ready for production operations: multi-tenant quality of service, zero-downtime upgrades, and agent-aware serving on a stable v1 API. <a href="/blog/llm-d-v1.0-state-of-the-art-inference-ready-for-day-2"><b>Read more →</b></a>',
         textColor: "#ffffff",
         isCloseable: true,
       },
