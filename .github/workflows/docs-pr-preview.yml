@@ -38,10 +38,14 @@ permissions:
   contents: read
 
 jobs:
-  preview:
-    name: Build and deploy Netlify preview
+  build:
+    name: Build Netlify preview
     runs-on: ubuntu-latest
     if: ${{ github.repository == 'llm-d/llm-d.github.io' }}
+    outputs:
+      pr_number: ${{ steps.meta.outputs.pr_number }}
+      sha: ${{ steps.meta.outputs.sha }}
+      alias: ${{ steps.meta.outputs.alias }}
     steps:
       - name: Resolve payload
         id: meta
@@ -90,6 +94,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Checkout llm-d PR head
         uses: actions/checkout@v7
@@ -98,6 +103,7 @@ jobs:
           ref: ${{ steps.meta.outputs.sha }}
           path: _upstream-llm-d
           fetch-depth: 1
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-llmd-site
         with:
@@ -113,14 +119,34 @@ jobs:
       - name: Build site
         run: ./bin/llmd-site build
 
+      - name: Upload built site
+        uses: actions/upload-artifact@v7
+        with:
+          name: docs-pr-site
+          path: build/
+          if-no-files-found: error
+
+  deploy:
+    name: Deploy Netlify preview
+    needs: build
+    runs-on: ubuntu-latest
+    outputs:
+      url: ${{ steps.netlify.outputs.url }}
+    steps:
+      - name: Download built site
+        uses: actions/download-artifact@v8
+        with:
+          name: docs-pr-site
+          path: build
+
       - name: Deploy Netlify alias preview
         id: netlify
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-          ALIAS: ${{ steps.meta.outputs.alias }}
-          PR: ${{ steps.meta.outputs.pr_number }}
-          SHA: ${{ steps.meta.outputs.sha }}
+          ALIAS: ${{ needs.build.outputs.alias }}
+          PR: ${{ needs.build.outputs.pr_number }}
+          SHA: ${{ needs.build.outputs.sha }}
         run: |
           set -euo pipefail
           if [ -z "${NETLIFY_AUTH_TOKEN:-}" ] || [ -z "${NETLIFY_SITE_ID:-}" ]; then
@@ -128,6 +154,7 @@ jobs:
             exit 1
           fi
           npx --yes netlify-cli deploy \
+            --no-build \
             --dir=build \
             --alias="$ALIAS" \
             --message="docs PR #${PR} (${SHA})" \
@@ -148,12 +175,17 @@ jobs:
             echo "- **Preview:** $url"
           } >> "$GITHUB_STEP_SUMMARY"
 
+  comment:
+    name: Comment preview URL
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    steps:
       - name: Comment preview URL on llm-d PR
         env:
           GH_TOKEN: ${{ secrets.LLM_D_PR_COMMENT_TOKEN }}
-          PR: ${{ steps.meta.outputs.pr_number }}
-          URL: ${{ steps.netlify.outputs.url }}
-          SHA: ${{ steps.meta.outputs.sha }}
+          PR: ${{ needs.build.outputs.pr_number }}
+          URL: ${{ needs.deploy.outputs.url }}
+          SHA: ${{ needs.build.outputs.sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
