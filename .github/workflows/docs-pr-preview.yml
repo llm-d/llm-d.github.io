@@ -24,12 +24,6 @@ on:
         description: Commit SHA to sync from (defaults to PR head)
         required: false
         type: string
-      head_repo:
-        description: head repo full name (default llm-d/llm-d)
-        required: false
-        default: llm-d/llm-d
-        type: string
-
 concurrency:
   group: docs-pr-preview-${{ github.event.client_payload.pr_number || inputs.pr_number }}
   cancel-in-progress: true
@@ -54,31 +48,25 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           PAYLOAD_PR: ${{ github.event.client_payload.pr_number }}
           PAYLOAD_SHA: ${{ github.event.client_payload.sha }}
-          PAYLOAD_REF: ${{ github.event.client_payload.ref }}
-          PAYLOAD_HEAD_REPO: ${{ github.event.client_payload.head_repo }}
           INPUT_PR: ${{ inputs.pr_number }}
           INPUT_SHA: ${{ inputs.sha }}
-          INPUT_HEAD_REPO: ${{ inputs.head_repo }}
         run: |
           set -euo pipefail
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             PR="$INPUT_PR"
             SHA="${INPUT_SHA:-}"
-            HEAD_REPO="${INPUT_HEAD_REPO:-llm-d/llm-d}"
-            REF=""
           else
             PR="$PAYLOAD_PR"
             SHA="${PAYLOAD_SHA:-}"
-            HEAD_REPO="${PAYLOAD_HEAD_REPO:-llm-d/llm-d}"
-            REF="${PAYLOAD_REF:-}"
           fi
           if [ -z "$PR" ]; then
             echo "pr_number is required" >&2
             exit 1
           fi
+          PR_HEAD="$(gh api "repos/llm-d/llm-d/pulls/${PR}" --jq '[.head.repo.full_name, .head.sha, .head.ref] | @tsv')"
+          IFS=$'\t' read -r HEAD_REPO PR_HEAD_SHA REF <<< "$PR_HEAD"
           if [ -z "$SHA" ]; then
-            SHA="$(gh api "repos/${HEAD_REPO}/pulls/${PR}" --jq .head.sha)"
-            REF="$(gh api "repos/${HEAD_REPO}/pulls/${PR}" --jq .head.ref)"
+            SHA="$PR_HEAD_SHA"
           fi
           ALIAS="docs-pr-${PR}"
           {
