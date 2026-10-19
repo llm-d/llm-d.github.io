@@ -109,6 +109,7 @@ jobs:
         with:
           npm-command: npm ci
           go-test: 'false'
+          cache: 'false'
 
       - name: Sync docs from PR checkout
         env:

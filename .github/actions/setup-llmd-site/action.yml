@@ -17,6 +17,9 @@ inputs:
   preprocess-test:
     description: Run make test-preprocess (needs Node, i.e. a non-empty npm-command)
     default: 'true'
+  cache:
+    description: Cache Node and Go dependencies
+    default: 'true'
 
 runs:
   using: composite
@@ -25,12 +28,13 @@ runs:
       if: inputs.npm-command != ''
       with:
         node-version: ${{ inputs.node-version }}
-        cache: npm
+        cache: ${{ inputs.cache == 'true' && 'npm' || '' }}
         cache-dependency-path: package-lock.json
 
     - uses: actions/setup-go@v5
       with:
         go-version: ${{ inputs.go-version }}
+        cache: ${{ inputs.cache == 'true' }}
         cache-dependency-path: tools/llmd-site/go.sum
 
     - name: Install npm dependencies
