@@ -90,6 +90,28 @@ releases:
     llm-d/llm-d-batch-gateway: v0.5.0
     llm-d/llm-d-async: v0.9.0
 
+  # https://github.com/llm-d/llm-d/releases/tag/v1.0.0
+  #
+  # v1.0.0 aligned every component on one version, deliberately: "we have
+  # decided to use the opportunity of going v1.0.0 to align all components
+  # across the organization." So unlike earlier releases, every ref here is the
+  # same — but each was still verified against its repository tree.
+  #
+  # llm-d-workload-variant-autoscaler was renamed to llm-d-autoscaling during
+  # 1.0. The docs link to the new name, so that is what is listed.
+  #
+  # Cut from the release-1.0 branch, which is the v1.0.0 tag plus llm-d#2888 —
+  # the cherry-pick that fixed two dead WVA links before they were frozen here.
+  "1.0":
+    llm-d/llm-d: v1.0.0
+    llm-d/llm-d-router: v1.0.0
+    llm-d/llm-d-async: v1.0.0
+    llm-d/llm-d-autoscaling: v1.0.0
+    llm-d/llm-d-batch-gateway: v1.0.0
+    llm-d/llm-d-benchmark: v1.0.0
+    llm-d/llm-d-kv-cache: v1.0.0
+    llm-d/llm-d-prism: v1.0.0
+
   # https://github.com/llm-d/llm-d/releases/tag/v0.10.0
   #
   # llm-d-kv-cache was folded into llm-d-router during 0.10 and its repo is

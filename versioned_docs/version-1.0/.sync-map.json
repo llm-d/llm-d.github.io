@@ -1,0 +1,137 @@
+{
+  "ref": "release-1.0",
+  "repo": "https://github.com/llm-d/llm-d",
+  "pages": {
+    "operations/autoscaling/index.mdx": "guides/workload-autoscaling/README.md",
+    "operations/autoscaling/keda-epp.mdx": "guides/workload-autoscaling/keda-epp/README.md",
+    "operations/autoscaling/kueue-rebalancing.mdx": "guides/workload-autoscaling/kueue-rebalancing/README.md",
+    "operations/autoscaling/slo-aware.mdx": "guides/workload-autoscaling/slo-aware/README.md",
+    "operations/autoscaling/token-aware.mdx": "guides/workload-autoscaling/keda-epp-token-aware/README.md",
+    "operations/batch-serving/async-multitenant.mdx": "guides/batch-serving/asynchronous-processing/multitenant/README.md",
+    "operations/batch-serving/asynchronous-processing.mdx": "guides/batch-serving/asynchronous-processing/README.md",
+    "operations/batch-serving/batch-gateway.mdx": "guides/batch-serving/batch-gateway/README.md",
+    "operations/batch-serving/index.mdx": "guides/batch-serving/README.md",
+    "operations/rollouts/adapter-rollout.mdx": "guides/rollouts/adapter-rollout.md",
+    "operations/rollouts/blue-green-update.mdx": "guides/rollouts/blue-green-update.md",
+    "operations/rollouts/index.mdx": "guides/rollouts/README.md",
+    "operations/startup/fast-model-actuation-keda/index.mdx": "guides/fast-model-actuation/fast-model-actuation-keda/README.md",
+    "operations/startup/fast-model-actuation/index.mdx": "guides/fast-model-actuation/README.md",
+    "operations/startup/modelexpress-p2p/index.mdx": "guides/modelexpress-p2p/README.md",
+    "operations/startup/pod-snapshot/index.mdx": "guides/pod-snapshot/README.md",
+    "operations/traffic/flow-control/index.mdx": "guides/flow-control/README.md",
+    "operations/traffic/multi-inference-pool/index.mdx": "guides/workload-autoscaling/multi-inference-pool/README.md",
+    "operations/traffic/multi-model-routing/index.mdx": "guides/multi-model-routing/README.md",
+    "well-lit-paths/foundations/enable-p2p-prefix-cache-sharing/index.mdx": "guides/p2p-kv-cache-sharing/README.md",
+    "well-lit-paths/foundations/optimized-baseline/index.mdx": "guides/optimized-baseline/README.md",
+    "well-lit-paths/foundations/pd-disaggregation/index.mdx": "guides/pd-disaggregation/README.md",
+    "well-lit-paths/foundations/precise-prefix-cache-routing/index.mdx": "guides/precise-prefix-cache-routing/README.md",
+    "well-lit-paths/foundations/predicted-latency/index.mdx": "guides/predicted-latency-routing/README.md",
+    "well-lit-paths/foundations/serve-multimodal-models/index.mdx": "guides/multimodal-serving/README.md",
+    "well-lit-paths/foundations/serve-omni-models/index.mdx": "guides/omni-serving/README.md",
+    "well-lit-paths/foundations/serve-responses-api/index.mdx": "guides/agentic-api/README.md",
+    "well-lit-paths/foundations/tiered-prefix-cache/index.mdx": "guides/tiered-prefix-cache/README.md",
+    "well-lit-paths/foundations/wide-expert-parallelism/index.mdx": "guides/wide-ep/README.md",
+    "well-lit-paths/models/deepseek-v4/index.mdx": "guides/models/deepseek-v4/README.md",
+    "well-lit-paths/models/glm-5-2/index.mdx": "guides/models/glm-5-2/README.md",
+    "well-lit-paths/models/nemotron-3-ultra/index.mdx": "guides/models/nemotron-3-ultra/README.md",
+    "well-lit-paths/models/qwen3-5-397b/index.mdx": "guides/models/qwen3-5-397b/README.md"
+  },
+  "guides": {
+    "guides/agentic-api": {
+      "docs": "well-lit-paths/foundations/serve-responses-api",
+      "img": "/img/docs/guides/serve-responses-api"
+    },
+    "guides/batch-serving": {
+      "docs": "operations/batch-serving",
+      "img": "/img/docs/guides/batch-serving"
+    },
+    "guides/fast-model-actuation": {
+      "docs": "operations/startup/fast-model-actuation",
+      "img": "/img/docs/guides/fast-model-actuation"
+    },
+    "guides/fast-model-actuation/fast-model-actuation-keda": {
+      "docs": "operations/startup/fast-model-actuation-keda",
+      "img": "/img/docs/guides/fast-model-actuation-keda"
+    },
+    "guides/flow-control": {
+      "docs": "operations/traffic/flow-control",
+      "img": "/img/docs/guides/flow-control"
+    },
+    "guides/modelexpress-p2p": {
+      "docs": "operations/startup/modelexpress-p2p",
+      "img": "/img/docs/guides/modelexpress-p2p"
+    },
+    "guides/models/deepseek-v4": {
+      "docs": "well-lit-paths/models/deepseek-v4",
+      "img": "/img/docs/guides/deepseek-v4"
+    },
+    "guides/models/glm-5-2": {
+      "docs": "well-lit-paths/models/glm-5-2",
+      "img": "/img/docs/guides/glm-5-2"
+    },
+    "guides/models/nemotron-3-ultra": {
+      "docs": "well-lit-paths/models/nemotron-3-ultra",
+      "img": "/img/docs/guides/nemotron-3-ultra"
+    },
+    "guides/models/qwen3-5-397b": {
+      "docs": "well-lit-paths/models/qwen3-5-397b",
+      "img": "/img/docs/guides/qwen3-5-397b"
+    },
+    "guides/multi-model-routing": {
+      "docs": "operations/traffic/multi-model-routing",
+      "img": "/img/docs/guides/multi-model-routing"
+    },
+    "guides/multimodal-serving": {
+      "docs": "well-lit-paths/foundations/serve-multimodal-models",
+      "img": "/img/docs/guides/serve-multimodal-models"
+    },
+    "guides/omni-serving": {
+      "docs": "well-lit-paths/foundations/serve-omni-models",
+      "img": "/img/docs/guides/serve-omni-models"
+    },
+    "guides/optimized-baseline": {
+      "docs": "well-lit-paths/foundations/optimized-baseline",
+      "img": "/img/docs/guides/optimized-baseline"
+    },
+    "guides/p2p-kv-cache-sharing": {
+      "docs": "well-lit-paths/foundations/enable-p2p-prefix-cache-sharing",
+      "img": "/img/docs/guides/enable-p2p-prefix-cache-sharing"
+    },
+    "guides/pd-disaggregation": {
+      "docs": "well-lit-paths/foundations/pd-disaggregation",
+      "img": "/img/docs/guides/pd-disaggregation"
+    },
+    "guides/pod-snapshot": {
+      "docs": "operations/startup/pod-snapshot",
+      "img": "/img/docs/guides/pod-snapshot"
+    },
+    "guides/precise-prefix-cache-routing": {
+      "docs": "well-lit-paths/foundations/precise-prefix-cache-routing",
+      "img": "/img/docs/guides/precise-prefix-cache-routing"
+    },
+    "guides/predicted-latency-routing": {
+      "docs": "well-lit-paths/foundations/predicted-latency",
+      "img": "/img/docs/guides/predicted-latency"
+    },
+    "guides/rollouts": {
+      "docs": "operations/rollouts",
+      "img": "/img/docs/guides/rollouts"
+    },
+    "guides/tiered-prefix-cache": {
+      "docs": "well-lit-paths/foundations/tiered-prefix-cache",
+      "img": "/img/docs/guides/tiered-prefix-cache"
+    },
+    "guides/wide-ep": {
+      "docs": "well-lit-paths/foundations/wide-expert-parallelism",
+      "img": "/img/docs/guides/wide-expert-parallelism"
+    },
+    "guides/workload-autoscaling": {
+      "docs": "operations/autoscaling",
+      "img": "/img/docs/guides/autoscaling"
+    },
+    "guides/workload-autoscaling/multi-inference-pool": {
+      "docs": "operations/traffic/multi-inference-pool",
+      "img": "/img/docs/guides/multi-inference-pool"
+    }
+  }
+}
