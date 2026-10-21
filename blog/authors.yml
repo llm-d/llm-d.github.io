@@ -610,10 +610,11 @@ mohammadnassar:
 
 ronenkat:
   name: Ronen Kat
-  title: <title>, IBM Research
+  title: Senior Technical Staff Member, IBM Research
   image_url: /img/blogs/ronenkat.webp
   socials:
-    github: <github>
+    github: https://github.com/ronenkat
+    linkedin: https://www.linkedin.com/in/ronen-kat-342a2283
 
 sambatschelet:
   name: Sam Batschelet
