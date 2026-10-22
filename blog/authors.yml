@@ -580,6 +580,21 @@ rahul:
   url: https://github.com/rahulgurnani
   image_url: https://avatars.githubusercontent.com/u/6068038?v=4
 
+tyuchn:
+  name: Yuchen Tian
+  title: Software Engineer, Google
+  url: https://github.com/tyuchn
+  image_url: https://avatars.githubusercontent.com/u/37302248?v=4
+  socials:
+    github: https://github.com/tyuchn
+
+nishjain:
+  name: Nishtha Jain
+  title: Software Engineering Manager, Google
+  email: nishjain@google.com
+  socials:
+    linkedin: https://www.linkedin.com/in/nishthaj
+
 guygir:
   name: Guy Girmonsky
   title: AI Platforms Research Engineer , IBM
