@@ -49,14 +49,22 @@ type Sources struct {
 }
 
 type SourceRepo struct {
-	Remote RemoteSource `yaml:"remote"`
-	Local  LocalSource  `yaml:"local"`
+	Remote       RemoteSource      `yaml:"remote"`
+	Local        LocalSource       `yaml:"local"`
+	Translations TranslationSource `yaml:"translations,omitempty"`
 	// GuidesManifest is the repo-relative path of the guides publish manifest
 	// (e.g. docs/well-lit-paths/guides.yaml) listing which guides/<name>
 	// READMEs are rendered on the site. Empty disables guide publishing. If
 	// the file is absent in the synced checkout (e.g. an older release
 	// branch) guide publishing is skipped.
 	GuidesManifest string `yaml:"guides_manifest,omitempty"`
+}
+
+// TranslationSource locates reviewable locale docs in the upstream repository.
+// Each locale mirrors docs/ beneath <root>/<locale>/docs/.
+type TranslationSource struct {
+	Root    string   `yaml:"root,omitempty"`
+	Locales []string `yaml:"locales,omitempty"`
 }
 
 type RemoteSource struct {
@@ -119,8 +127,8 @@ type Replacement struct {
 }
 
 type Stubs struct {
-	Enabled    bool `yaml:"enabled"`
-	FailInCI   bool `yaml:"fail_in_ci,omitempty"`
+	Enabled  bool `yaml:"enabled"`
+	FailInCI bool `yaml:"fail_in_ci,omitempty"`
 }
 
 type ReplacementsMeta struct {

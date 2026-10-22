@@ -76,7 +76,9 @@ then re-syncs `docs/` from `main`.
    ```
 
 4. **Review and commit** `versioned_docs/version-<x.y>/`, `versioned_sidebars/`,
-   `versions.json` and `static/img/versioned/<x.y>/`, plus any banner/landing
+   `versions.json`, any translated pages under
+   `i18n/zh-Hans/docusaurus-plugin-content-docs/version-<x.y>/`, and
+   `static/img/versioned/<x.y>/`, plus any banner/landing
    updates, then open the PR.
 
 Released versions never change with upstream: links stay on the refs recorded
@@ -93,6 +95,8 @@ edit its files under `versioned_docs/` directly.
 ## Sync
 
 - Mirrors upstream `docs/**` verbatim into `docs/` (link fixups run at build time via `scripts/lib/preprocess.mjs`)
+- Copies fresh reviewed `translations/zh-Hans/docs/**` pages into the generated
+  Docusaurus current locale directory. Missing and stale pages use English fallback.
 - Copies doc images to `static/img/docs/`
 - Regenerates `community/*.md` from upstream repo-root files
 - `--refresh-upstream` bypasses shallow-clone cache for remote syncs

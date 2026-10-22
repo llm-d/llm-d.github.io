@@ -20,6 +20,10 @@ sources:
         # Guides publish manifest (repo-relative, in the synced llm-d checkout):
         # lists which guides/<name>/README.md pages are rendered on the site.
         guides_manifest: docs/well-lit-paths/guides.yaml
+        translations:
+            root: translations
+            locales:
+                - zh-Hans
     lws:
         remote:
             url: https://github.com/kubernetes-sigs/lws
