@@ -600,3 +600,25 @@ sunilarora:
   socials:
     linkedin: https://www.linkedin.com/in/sunilarora101/
     github: https://github.com/droot
+
+mohammadnassar:
+  name: Mohammad Nassar
+  title: Research Scientist, IBM Research
+  image_url: /img/blogs/mohammadnassar.webp
+  socials:
+    github: https://github.com/Mohammad-nassar10
+
+ronenkat:
+  name: Ronen Kat
+  title: Senior Technical Staff Member, IBM Research
+  image_url: /img/blogs/ronenkat.webp
+  socials:
+    github: https://github.com/ronenkat
+    linkedin: https://www.linkedin.com/in/ronen-kat-342a2283
+
+sambatschelet:
+  name: Sam Batschelet
+  title: <title>
+  image_url: /img/blogs/sambatschelet.webp
+  socials:
+    github: <github>
