@@ -600,3 +600,18 @@ sunilarora:
   socials:
     linkedin: https://www.linkedin.com/in/sunilarora101/
     github: https://github.com/droot
+
+tyuchn:
+  name: Yuchen Tian
+  title: Software Engineer, Google
+  url: https://github.com/tyuchn
+  image_url: https://avatars.githubusercontent.com/u/37302248?v=4
+  socials:
+    github: https://github.com/tyuchn
+
+nishjain:
+  name: Nishtha Jain
+  title: Software Engineering Manager, Google
+  email: nishjain@google.com
+  socials:
+    linkedin: https://www.linkedin.com/in/nishthaj
