@@ -16,11 +16,11 @@ tags: [blog, multi-cluster, scheduling, inference]
 
 ## Inference Doesn't Live in One Place
 
-With the acceleration in demand, enterprises scale and distribute inference beyond single clusters as it no longer provides sufficient capacity, geographic reach, hardware diversity, or required operational resilience. This creates a serving challenge: while inference capacity is distributed, each cluster operates as an independent environment, requiring applications or platform teams to understand where models are deployed, manage separate access paths, and decide whether requests should be served locally or remotely. As deployments expand across clusters, geographies, and providers, this complexity limits scalability and makes available capacity harder to use efficiently.
+As demand for inference grows, a single cluster is no longer enough. Enterprises spread inference across clusters to gain capacity, geographic reach, hardware diversity, and resilience. This creates a serving challenge: while inference capacity is distributed, each cluster operates as an independent environment, requiring applications or platform teams to understand where models are deployed, manage separate access paths, and decide whether requests should be served locally or remotely. As deployments expand across clusters, geographies, and providers, this complexity limits scalability and makes available capacity harder to use efficiently.
 
-Enterprises need a unified serving layer that can leverage all available inference capacity, regardless of where it is deployed. Requests should use local clusters when they offer the best locality, latency, or data governance, while seamlessly reaching remote clusters when additional capacity, specialized hardware, regional coverage, or failover is required. Applications should not need to understand the underlying infrastructure topology or implement complex cross-cluster routing logic. At the same time, different clusters should retain their operational independence while exposing their combined capacity through a unified routing layer. It aligns with the vision of **AI Grid**: transforming independent inference deployments into a unified, distributed serving fabric.
+Enterprises need a unified serving layer that can leverage all available inference capacity, regardless of where it is deployed. Requests should use local clusters when they offer the best locality, latency, or data governance, while seamlessly reaching remote clusters when additional capacity, specialized hardware, regional coverage, or failover is required. Applications should not need to understand the underlying infrastructure topology or implement complex cross-cluster routing logic. At the same time, different clusters should retain their operational independence while exposing their combined capacity through a unified routing layer. It aligns with the vision of **distributed AI serving**: transforming independent inference deployments into a unified serving fabric.
 
-The new **llm-d Router Hub** extends llm-d routing from a single cluster to distributed inference environments. The Router Hub provides a unified entry point for inference requests and adds the ability to select among multiple inference clusters before endpoint-level routing begins.
+The new **llm-d Router Hub** extends llm-d routing from a single cluster to distributed inference environments. The Router Hub provides a unified entry point for inference requests and adds the ability to select among multiple destination inference clusters. Each cluster still runs an instance of llm-d-router to perform endpoint selection.
 
 <!-- truncate -->
 
@@ -32,6 +32,18 @@ Within each cluster, llm-d continues to evaluate serving endpoints and select th
 </div>
 
 This layered routing model allows enterprises to combine local and remote inference capacity across clusters, geographies, and infrastructure providers. Applications retain a simple, consistent serving interface, while the platform gains the flexibility to expand capacity, improve availability, and optimize request placement without exposing infrastructure complexity.
+
+## Examples of Multi-Cluster Scenarios
+
+Multi-Cluster Routing enables several deployment patterns that are becoming increasingly common in production inference environments.
+
+**Multi-Region Deployments:** Inference infrastructure is often distributed geographically to reduce latency, address locality requirements, and improve resilience. Multi-Cluster Routing enables requests to be routed across regional deployments while presenting a single serving interface.
+
+**Capacity Expansion:** Organizations frequently outgrow a single cluster, e.g., lack of hardware availability, limitations on power and cooling. Multi-Cluster Routing allows additional llm-d deployments to be added as independent serving pools while remaining accessible through a unified routing layer.
+
+**Heterogeneous Infrastructure:** Organizations typically operate multiple hardware generations, and different clusters may be built around different generations of GPUs or accelerators, cost profiles, or workload requirements. For example, one cluster may host large frontier models on top of the line GPUs, while another serves smaller workloads on legacy hardware. Multi-Cluster Routing provides a framework for managing these resources as part of a unified serving platform.
+
+**Operational Isolation:** Teams often require independent operational boundaries for ownership, compliance, security, or lifecycle-management reasons. Multi-Cluster Routing allows independent deployments to remain autonomous while still participating in a shared inference fabric.
 
 ## Adding Multi-Cluster Routing
 
@@ -51,18 +63,6 @@ The architectural approach supports the clear separation of cluster operations a
 </div>
 
 The Multi-Cluster [Routing guide](https://github.com/llm-d/llm-d/pull/2600/) (available in llm-d github) shows how to deploy two llm-d inference pools across two Kubernetes clusters and route requests between them using the llm-d Router Hub. It includes a complete example showing cluster registration, routing-policy configuration, and traffic verification across serving clusters.
-
-## Examples of Multi-Cluster Scenarios
-
-Multi-Cluster Routing enables several deployment patterns that are becoming increasingly common in production inference environments.
-
-**Multi-Region Deployments:** Inference infrastructure is often distributed geographically to reduce latency, address locality requirements, and improve resilience. Multi-Cluster Routing enables requests to be routed across regional deployments while presenting a single serving interface.
-
-**Capacity Expansion:** Organizations frequently outgrow a single cluster, e.g., lack of hardware availability, limitations on power and cooling. Multi-Cluster Routing allows additional llm-d deployments to be added as independent serving pools while remaining accessible through a unified routing layer.
-
-**Heterogeneous Infrastructure:** Organizations typically operate multiple hardware generations, and different clusters may be built around different generations of GPUs or accelerators, cost profiles, or workload requirements. For example, one cluster may host large frontier models on top of the line GPUs, while another serves smaller workloads on legacy hardware. Multi-Cluster Routing provides a framework for managing these resources as part of a unified serving platform.
-
-**Operational Isolation:** Teams often require independent operational boundaries for ownership, compliance, security, or lifecycle-management reasons. Multi-Cluster Routing allows independent deployments to remain autonomous while still participating in a shared inference fabric.
 
 ## Looking Ahead
 
