@@ -573,6 +573,9 @@ alexey:
   title: Senior Technical Staff Member, IBM
   url: https://github.com/roytman
   image_url: https://avatars.githubusercontent.com/u/1816654?v=4
+  socials:
+    linkedin: aroytman
+    github: https://github.com/roytman
 
 rahul:
   name: Rahul Gurnani
