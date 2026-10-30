@@ -330,6 +330,14 @@ poonamlamba:
   image_url: https://avatars.githubusercontent.com/u/5097648?v=4
   socials:
     linkedin: https://www.linkedin.com/in/poonamlamba/
+
+kfswain:
+  name: Kellen Swain
+  title: Just Some Dude, Google
+  image_url: https://github.com/kfswain.png
+  socials:
+    github: https://github.com/kfswain
+
 maroonayoub-redhat:
   name: Maroon Ayoub
   title: Senior Principal Machine Learning Engineer, Red Hat
