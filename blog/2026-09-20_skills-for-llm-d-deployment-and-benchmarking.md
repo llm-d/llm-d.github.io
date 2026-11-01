@@ -2,7 +2,7 @@
 title: "Code Assistant Skills for Accelerated llm-d Development, Evaluation and Configuration"
 description: "Reusable skills help coding assistants configure, deploy, and benchmark llm-d using existing tools and operational guidance."
 slug: skills-for-accelerated-llm-d-development-evaluation-and-configuration
-date: 2026-09-20T09:00
+date: 2026-11-01T09:00
 
 authors:
 
