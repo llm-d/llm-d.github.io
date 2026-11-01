@@ -44,7 +44,6 @@ Developer-supporting skills include:
   - [run-llm-d-benchmark](https://github.com/llm-d-incubation/llm-d-skills/tree/main/skills/run-llm-d-benchmark): Executes benchmark workloads against a deployed llm-d stack to collect performance metrics.
   - [compare-llm-d-configurations](https://github.com/llm-d-incubation/llm-d-skills/tree/main/skills/compare-llm-d-configurations): Automates A/B evaluation by deploying, benchmarking, tearing down, and comparing multiple llm-d configurations.
   - [clear-kv-cache-tiers-in-llm-d-deployment](https://github.com/llm-d-incubation/llm-d-skills/tree/main/skills/clear-kv-cache-tiers-in-llm-d-deployment): Clears KV cache state across GPU, CPU, and filesystem offload tiers without disrupting API availability, enabling repeatable experiments.
-  - [kv-cache-pressure-load-designer](https://github.com/llm-d-incubation/llm-d-skills/pull/44) (work in progress): Generates workloads whose active requests need more KV cache memory than the GPUs can hold.
 
 The complete collection of available skills is maintained in the [llm-d Skills repository](https://github.com/llm-d-incubation/llm-d-skills).    
 
