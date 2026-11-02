@@ -1,6 +1,6 @@
 ---
 title: "Multi-Tenant and Multi-Priority Model Serving with llm-d"
-description: "A recommended architecture for sharing one GPU pool across many teams and priorities with llm-d: durable per-tenant queues, quota and rate-limit gates, six-lane strict priority scheduling, and a defined degradation policy at saturation, powered by llm-d-async."
+description: "A recommended architecture for sharing one GPU pool across many teams and priorities with llm-d: durable per-tenant queues, quota and rate-limit gates, six-lane strict priority scheduling, and a defined degradation policy at saturation, powered by llm-d Async."
 slug: multi-tenant-multi-priority-model-serving-llm-d
 date: 2026-09-22T10:00
 authors:
@@ -12,7 +12,7 @@ tags: [blog, scheduling, inference, multi-tenancy]
 
 You have multiple teams consuming multiple models, with use-cases of varying importance — and one pool of expensive GPU hardware to serve them all. You need to impose quotas and priorities so that no team starves another and no batch job exhausts the cluster.
 
-In this write-up we walk through a recommended architecture for this scenario built on the llm-d open-source stack, focusing on the [llm-d-async](https://github.com/llm-d/llm-d-async) component: an asynchronous dispatch processor that provides quota management, rate limiting, and strict priority scheduling in front of your inference gateways.
+In this write-up we walk through a recommended architecture for this scenario built on the llm-d open-source stack, focusing on the [llm-d Async](https://github.com/llm-d/llm-d-async) component: an asynchronous dispatch processor that provides quota management, rate limiting, and strict priority scheduling in front of your inference gateways.
 
 <!-- truncate -->
 
@@ -23,42 +23,42 @@ Large Language Model (LLM) serving on modern accelerators is a massive capital e
 To maximize ROI, hardware must be shared. However, dynamic sharing of large models introduces three critical engineering challenges:
 
 1. **The Noisy Neighbor Problem:** A single team launching a massive document-extraction batch (e.g., 100,000 documents) can instantly saturate the inference engine's prefill capacity, causing the interactive chat applications of other teams to experience catastrophic latency spikes or HTTP 429 timeouts.
-2. **Priority Starvation:** In a shared FIFO queue, low-priority background jobs (offline evaluations, embeddings backfills) land ahead of critical real-time requests, starving the high-priority SLA lanes.
+2. **Priority Starvation:** In a shared FIFO queue, low-priority background jobs (offline evaluations, embeddings backfills) land ahead of critical real-time requests, starving the high-priority lanes.
 3. **Control-Plane Coupling:** Synchronous HTTP gateways hold client connections open through long prefill and decode cycles. Under load, slowness cascades backward into client microservices as connection exhaustion and retry storms.
 
 ## The Recommended Architecture: Decoupled & Gated Dispatch
 
-The llm-d stack decouples ingestion from execution with a durable queue layer and an intelligent async dispatch processor:
+By combining a durable queue layer with an intelligent async dispatch processor, the llm-d stack resolves these shared-pool bottlenecks by cleanly decoupling ingestion from execution:
 
 <div style="text-align:center; margin:20px 0">
-  <img src="/img/blogs/multitenant-async/architecture.jpg" alt="Four-tier architecture: Team Alpha chat and Team Beta document extraction write to per-tenant queues in the persistent backlog layer (GCP Pub/Sub or Redis); the llm-d-async dispatch processor polls them under budget through redis-quota gates and the tier-priority merge policy, stamping priorities and objectives; requests are posted to the llm-d-router / EPP infrastructure gateway for saturation and admission control, then served by vLLM replicas in a shared GKE GPU/TPU compute pool" style="max-width:640px; width:100%; height:auto" />
+  <img src="/img/blogs/multitenant-async/architecture.jpg" alt="Four-tier architecture: Team Alpha chat and Team Beta document extraction write to per-tenant queues in the persistent backlog layer (GCP Pub/Sub or Redis); the llm-d Async dispatch processor polls them under budget through redis-quota gates and the tier-priority merge policy, stamping priorities and objectives; requests are posted to the llm-d Router / EPP infrastructure gateway for saturation and admission control, then served by vLLM replicas in a shared GKE GPU/TPU compute pool" style="max-width:640px; width:100%; height:auto" />
 </div>
 
-This four-tier architecture provides complete isolation, high utilization, and predictable SLAs:
+This four-tier architecture provides complete isolation, high utilization, and predictable QoS levels:
 
 ### Tier 1: The Persistent Backlog Layer (Queue-per-Tenant)
 
 Instead of teams hitting the inference gateway directly, requests are written to tenant-specific or workload-specific queues using a durable message broker (like GCP Pub/Sub or Redis). If Team Beta submits 100,000 batch requests, they accumulate safely in `beta-batch` with zero impact on the serving pods' memory. Producers disconnect immediately and pick up results later from a result queue.
 
-### Tier 2: llm-d-async (Gated Dispatch)
+### Tier 2: llm-d Async (Gated Dispatch)
 
 The processor consumes from all queues concurrently, but not blindly. Each queue passes through dispatch gates (quota, rate limit, capacity) and a merge policy (priority scheduling) before a worker forwards the request to the gateway. This is where isolation is enforced, and the rest of this post is mostly about this tier.
 
-### Tier 3: llm-d-router / EPP (Router-Side Admission Control)
+### Tier 3: llm-d Router (Router-Side Admission Control)
 
-The llm-d Router sits in front of the model servers and arbitrates in-flight traffic using flow control and saturation detection, driven by real-time engine signals such as vLLM's `num_requests_waiting`. Crucially, this telemetry is exported as Prometheus metrics — and llm-d-async's Prometheus-backed gates poll those same metrics to throttle dequeuing, closing an end-to-end backpressure loop: engine → router metrics → dispatch budget → queue.
+The llm-d Router sits in front of the model servers and arbitrates in-flight traffic using flow control and saturation detection, driven by real-time engine signals such as vLLM's `num_requests_waiting`. Crucially, this telemetry is exported as Prometheus metrics — and llm-d Async's Prometheus-backed gates poll those same metrics to throttle dequeuing, closing an end-to-end backpressure loop: engine → router metrics → dispatch budget → queue.
 
 ### Tier 4: The Shared Compute Pool
 
-vLLM model servers on cost-optimized Kubernetes nodes (e.g., GKE), kept densely utilized by the mix of interactive and batch traffic that the upstream tiers admit.
+Shared model serving instances kept densely utilized across interactive and batch workloads admitted by upstream tiers.
 
 ## The Isolation Pillars
 
-To achieve true SLA isolation, your llm-d-async configuration relies on four core mechanisms:
+To achieve true QoS isolation, your llm-d Async configuration relies on four core mechanisms:
 
-### Pillar 1: Quota and Rate-Limiting Gates (`redis-quota`)
+### Pillar 1: Quota and Rate-Limiting Gates
 
-To stop noisy neighbors, llm-d-async supports a Redis-backed distributed quota gate keyed on any request metadata attribute (a team ID, a user ID). Each gate runs in one of two modes: `rate-limit` (requests per time window) or `concurrency` (simultaneous in-flight requests):
+To stop noisy neighbors, llm-d Async supports a Redis-backed distributed quota gate (`redis-quota`) keyed on any request metadata attribute (a team ID, a user ID). Each gate runs in one of two modes: `rate-limit` (requests per time window) or `concurrency` (simultaneous in-flight requests):
 
 ```json
 {
@@ -80,9 +80,9 @@ What happens when a team exceeds its quota depends on `gating_mode`:
 - **`blocking`** — over-quota messages simply stop being dequeued. They sit safely on the broker, invisible to the serving pods, until quota frees up.
 - **`classifying`** — over-quota messages still flow, but are tagged `overflow` instead of `reserved`. This tag is the input to the next pillar, and it's what turns a blunt rate limiter into a work-conserving scheduler: overflow traffic may still run when the cluster has spare capacity, but never at the expense of anyone's reserved share.
 
-### Pillar 2: The `tier-priority` Merge Policy (Six-Lane Scheduling)
+### Pillar 2: Multi-Lane Priority Scheduling
 
-Each queue declares an SLA tier via its labels (`interactive`, `async`, or `batch`), so a tenant's traffic is split across queues by urgency. The merge policy combines that per-queue tier with the per-request classification from Pillar 1 into six strict priority lanes:
+Each queue declares a QoS tier via its labels (`interactive`, `async`, or `batch`), so a tenant's traffic is split across queues by urgency. The `tier-priority` merge policy combines that per-queue tier with the per-request classification from Pillar 1 into six strict priority lanes:
 
 | Lane | Priority |
 | :-- | :-- |
@@ -95,16 +95,16 @@ Each queue declares an SLA tier via its labels (`interactive`, `async`, or `batc
 
 When a worker frees up, lanes drain in strict order, with round-robin fairness among queues within a lane. An interactive chat request inside its quota always dispatches ahead of a document-extraction batch — and a team that has blown through its quota drops below every other team's reserved traffic, rather than being rejected outright.
 
-Merging happens per worker pool, not globally: queues are grouped by `worker_pool_id`, and each pool gets its own independent merged channel. A saturated Llama pool blocks only its own channel; the Qwen pool next to it keeps dispatching. That per-pool topology is the mechanism behind the isolation claims, not an aspiration.
+Merging happens per worker pool, not globally: queues are grouped by `worker_pool_id`, and each pool gets its own independent merged channel. A saturated pool for one model blocks only its own channel; the pool for another model next to it keeps dispatching. That per-pool topology is the mechanism behind the isolation claims, not an aspiration.
 
 ### Pillar 3: Propagating Priority to the Gateway
 
 Scheduling doesn't stop at dispatch. The merge policy stamps two headers onto the outgoing request so the gateway's flow control continues the policy inside the serving tier:
 
-- **`x-llm-d-inference-objective`** — the lane's `InferenceObjective`, mapped via `lane_objectives` (e.g., `reserved-interactive` → `premium-latency`, `overflow-batch` → `best-effort`). The llm-d router uses this to apply the matching priority and SLO treatment.
+- **`x-llm-d-inference-objective`** — the lane's `InferenceObjective`, mapped via `lane_objectives` (e.g., `reserved-interactive` → `premium-latency`, `overflow-batch` → `best-effort`). The llm-d Router uses this to apply the matching priority and SLO treatment.
 - **`x-llm-d-inference-fairness-id`** — the tenant identity, read from the same metadata attribute the quota gate keys on, so the identity the gateway arbitrates on is exactly the one quota was accounted against. (Prefer opaque tenant IDs over emails — this value can end up in gateway access logs.)
 
-### Pillar 4: Behavior at Saturation (`tier-priority-admission`)
+### Pillar 4: Behavior at Saturation
 
 The most important moments in a multi-tenant cluster are the moments there's no capacity left. The `tier-priority-admission` gate wraps a saturation signal (e.g., a `prometheus-saturation` inner gate watching the pool's saturation metric) and issues a three-way verdict when the pool is full:
 
@@ -195,7 +195,7 @@ Now, when Beta's nightly run floods `beta-batch` with 100,000 requests: they que
 
 We measured the two-team scenario above on a dedicated GKE cluster to see what each layer actually buys you.
 
-**Setup.** Two NVIDIA A100 40GB nodes, each running one vLLM v0.19.1 replica of Qwen3-8B (`--max-model-len 4000`), behind the llm-d Router (standalone mode). llm-d-async v0.10.0, Redis, and kube-prometheus-stack run on CPU nodes. Prometheus scrapes the router every 10 s. The load generator runs in-cluster.
+**Setup.** Two NVIDIA A100 40GB nodes, each running one vLLM v0.19.1 replica of Qwen3-8B (`--max-model-len 4000`), behind the llm-d Router (standalone mode). llm-d Async v0.10.0, Redis, and kube-prometheus-stack run on CPU nodes. Prometheus scrapes the router every 10 s. The load generator runs in-cluster.
 
 **Tenants.**
 
@@ -208,7 +208,7 @@ We measured the two-team scenario above on a dedicated GKE cluster to see what e
 
 1. **Direct to the router, no flow control.** Default scheduling plugins. This is what most people run today.
 2. **Direct to the router with flow control.** The six `InferenceObjective` priority bands from the multi-tenant guide, Beta sending `reserved-batch`, saturation detected by the guide's `concurrency-detector` with `maxConcurrency` set at the measured knee (64 per replica).
-3. **Queued through llm-d-async.** The exact configuration from this post: `redis-quota` in classifying mode, the `tier-priority` merge policy, and `tier-priority-admission` over `prometheus-saturation` (threshold 0.8) on a 128-worker pool, dispatching into the same flow-control router as door 2.
+3. **Queued through llm-d Async.** The exact configuration from this post: `redis-quota` in classifying mode, the `tier-priority` merge policy, and `tier-priority-admission` over `prometheus-saturation` (threshold 0.8) on a 128-worker pool, dispatching into the same flow-control router as door 2.
 
 In every run Alpha's TTFT is identical before Beta starts (p50 61 ms, p99 about 90 ms) and returns to that level within seconds of Beta draining. The table reports the window while Beta's backlog is in flight.
 
@@ -220,20 +220,20 @@ In every run Alpha's TTFT is identical before Beta starts (p50 61 ms, p99 about 
 | 2. Direct + flow control | 1x (128) | 424 ms (7.1x) | 3,649 ms | 0 | 308 s | 3,625 |
 | 2. Direct + flow control | 3x (384) | 427 ms (7.0x) | 3,763 ms | 0 | 308 s | 3,641 |
 | 2. Direct + flow control | 10x (1,280) | 468 ms (7.8x) | 3,810 ms | 10,568 | 307 s | 3,660 |
-| 3. llm-d-async, 128 workers (mean of 3 runs) | whole backlog at once | 480 ms (7.8x) | 5,532 ms | 0 | 392 s | 3,013 |
-| 3. llm-d-async, 96 workers | whole backlog at once | 89 ms (1.5x) | 1,923 ms | 0 | 445 s | 2,740 |
-| 3. llm-d-async, 64 workers | whole backlog at once | 90 ms (1.5x) | 637 ms | 0 | 400 s | 2,971 |
+| 3. llm-d Async, 128 workers (mean of 3 runs) | whole backlog at once | 480 ms (7.8x) | 5,532 ms | 0 | 392 s | 3,013 |
+| 3. llm-d Async, 96 workers | whole backlog at once | 89 ms (1.5x) | 1,923 ms | 0 | 445 s | 2,740 |
+| 3. llm-d Async, 64 workers | whole backlog at once | 90 ms (1.5x) | 637 ms | 0 | 400 s | 2,971 |
 
 **What the numbers say.**
 
 - **Without admission control, the interactive tenant's latency scales with the size of the batch.** At 3x, Alpha's median TTFT is 61 times its idle value. At 10x, vLLM holds a waiting queue of about 1,000 requests and Alpha waits over a minute for its first token. Beta is perfectly happy throughout: the batch drains in under 5 minutes in every baseline run. That asymmetry is the noisy neighbor problem in one row.
 - **Flow control bounds the damage, but it does not remove it, and it moves the pain to Beta.** Alpha's TTFT is the same at 1x, 3x, and 10x, which is exactly what priority bands are for. But the bound sits at 7 to 8x idle, because once the pool's in-flight count reaches the detector's cap, even priority-100 requests wait for a slot at the gateway (the router's own `flow_control_request_queue_duration_seconds` metric reports a mean of 376 ms for Alpha across these runs). And at 10x, Beta's 4,000 requests cost 14,568 attempts: 10,568 were rejected with 429 when the batch band filled, and Beta's client absorbed the retry storm.
-- **Queuing the batch removes the rejections and the retry storm entirely.** Through llm-d-async, all 4,000 requests complete with zero 429s, zero client retries, and zero failures, and Beta's producer disconnected the moment it published. With the same concurrency-detector router, Alpha sits at the same 7 to 8x floor as door 2, so the async tier inherits the router's gating behavior rather than fixing it. It also drains about 25% slower (392 s versus 307 s): 128 workers overshoot the router's cap before the 10 s Prometheus scrape reports it, so the saturation gate closes late and reopens all at once, and the pool oscillates instead of running flat out.
+- **Queuing the batch removes the rejections and the retry storm entirely.** Through llm-d Async, all 4,000 requests complete with zero 429s, zero client retries, and zero failures, and Beta's producer disconnected the moment it published. With the same concurrency-detector router, Alpha sits at the same 7 to 8x floor as door 2, so the async tier inherits the router's gating behavior rather than fixing it. It also drains about 25% slower (392 s versus 307 s): 128 workers overshoot the router's cap before the 10 s Prometheus scrape reports it, so the saturation gate closes late and reopens all at once, and the pool oscillates instead of running flat out.
 
 **Metering the batch below saturation is the lever that isolation actually turns on.** The async tier is the only place in the stack where batch admission can be shaped before it reaches the gateway. Dispatching Beta with 96 workers instead of 128 drops Alpha's median TTFT to 89 ms (1.5x idle); with 64 workers it is 90 ms with a p99 of 637 ms, the best tail in the whole study. The price is drain time: the same 4,000 requests take 400 to 445 s instead of about 300 s, with the pool at roughly 75 to 80% of its peak output. That trade is explicit and tunable per pool, which is the point. (96 workers drained slightly slower than 64 because 96 batch requests plus Alpha's traffic still brushed the router's cap, so the saturation gate kept cycling; 64 never touched it.)
 
 <div style="text-align:center; margin:20px 0">
-  <img src="/img/blogs/multitenant-async/ttft-chart.svg" alt="Bar chart of the interactive tenant's TTFT p50 and p99 during the batch burst for every configuration, log scale: no flow control climbs from 132 ms to 66 s as the batch grows; flow control with the concurrency detector holds 424 to 468 ms; llm-d-async with 96 or 64 workers holds 89 to 90 ms; flow control with the utilization detector jumps to 11 to 16 s at 3x and 10x while llm-d-async on the same router stays at 111 to 164 ms" style="width:100%; height:auto" />
+  <img src="/img/blogs/multitenant-async/ttft-chart.svg" alt="Bar chart of the interactive tenant's TTFT p50 and p99 during the batch burst for every configuration, log scale: no flow control climbs from 132 ms to 66 s as the batch grows; flow control with the concurrency detector holds 424 to 468 ms; llm-d Async with 96 or 64 workers holds 89 to 90 ms; flow control with the utilization detector jumps to 11 to 16 s at 3x and 10x while llm-d Async on the same router stays at 111 to 164 ms" style="width:100%; height:auto" />
 </div>
 
 **Detector choice matters more than the front door for the direct path.** We repeated doors 2 and 3 with the router's default `utilization-detector` (vLLM queue depth and KV-cache pressure) instead of the concurrency detector.
@@ -243,10 +243,10 @@ In every run Alpha's TTFT is identical before Beta starts (p50 61 ms, p99 about 
 | 2. Direct + flow control | 1x (128) | 167 ms (2.7x) | 2,098 ms | 0 | 297 s | 3,740 |
 | 2. Direct + flow control | 3x (384) | 11,469 ms (188.0x) | 26,249 ms | 0 | 433 s | 2,737 |
 | 2. Direct + flow control | 10x (1,280) | 15,687 ms (253.0x) | 42,375 ms | 14,453 | 435 s | 2,767 |
-| 3. llm-d-async, 128 workers | whole backlog at once | 164 ms (2.7x) | 2,668 ms | 0 | 304 s | 3,684 |
-| 3. llm-d-async, 96 workers | whole backlog at once | 111 ms (1.9x) | 1,609 ms | 0 | 331 s | 3,440 |
+| 3. llm-d Async, 128 workers | whole backlog at once | 164 ms (2.7x) | 2,668 ms | 0 | 304 s | 3,684 |
+| 3. llm-d Async, 96 workers | whole backlog at once | 111 ms (1.9x) | 1,609 ms | 0 | 331 s | 3,440 |
 
-The reactive detector is generous at 1x, letting Alpha through at 2.7x idle. At 3x and 10x it fails: the burst reaches vLLM before the telemetry shows it, a waiting queue of over 100 forms, and the router then holds everyone, including Alpha, whose median TTFT climbs to 11 to 16 seconds. Routing Beta through llm-d-async on the same router avoids that failure completely: the dispatcher never presents the router with a burst, so Alpha stays at 2.7x idle with the whole backlog draining at full pool throughput. The queue makes the router's admission control work as designed no matter which detector you picked.
+The reactive detector is generous at 1x, letting Alpha through at 2.7x idle. At 3x and 10x it fails: the burst reaches vLLM before the telemetry shows it, a waiting queue of over 100 forms, and the router then holds everyone, including Alpha, whose median TTFT climbs to 11 to 16 seconds. Routing Beta through llm-d Async on the same router avoids that failure completely: the dispatcher never presents the router with a burst, so Alpha stays at 2.7x idle with the whole backlog draining at full pool throughput. The queue makes the router's admission control work as designed no matter which detector you picked.
 
 **Caveats.** One model, one pool, one hardware configuration, one prompt mix. Alpha calls the router directly in all setups, so its TTFT reflects the gateway and the engine rather than the queue; an interactive tenant that also went through `alpha-chat` would see completion latency instead of streaming TTFT. The absolute floor for Alpha is set by vLLM itself: at 130-plus concurrent sequences the engine's own scheduling adds roughly 2x to first-token latency on this hardware, so "within a few percent of idle" is not reachable while the pool is fully utilized.
 
@@ -268,7 +268,7 @@ Every gate decision and queue is measurable, which is what makes tenant disputes
 By deploying this gated-dispatch architecture, platform engineering teams can expect the following results:
 
 1. **Higher GPU utilization from a single shared pool:** Running one dense, shared GPU/TPU pool rather than dedicated clusters per team removes the idle capacity that static partitioning locks up. How much you save scales with how asymmetric your teams' utilization is; in the benchmark above, a batch tenant filled the capacity an interactive tenant left unused without the interactive tenant paying for it.
-2. **Bounded interactive latency under any size of backlog:** In our measurements, a batch backlog offered at 10x the pool's saturation concurrency pushed the interactive tenant's median time-to-first-token (TTFT) past one minute on a plain router. Queued through llm-d-async with the batch metered at 50 to 75% of saturation, the same backlog completed with zero rejections while interactive TTFT stayed within 1.5x of idle at the median and under 2 s at p99, and the bound did not depend on how large the backlog was.
+2. **Bounded interactive latency under any size of backlog:** In our measurements, a batch backlog offered at 10x the pool's saturation concurrency pushed the interactive tenant's median time-to-first-token (TTFT) past one minute on a plain router. Queued through llm-d Async with the batch metered at 50 to 75% of saturation, the same backlog completed with zero rejections while interactive TTFT stayed within 1.5x of idle at the median and under 2 s at p99, and the bound did not depend on how large the backlog was.
 3. **Decoupled System Reliability:** Slowdowns or outages on the model servers do not cascade to client microservices. Client applications simply write requests directly to their respective backlog queues and decouple immediately, remaining completely insulated from downstream inference pressure. In the benchmark, the direct batch client needed 14,568 attempts to land 4,000 requests through a saturated gateway; the queued client published once and disconnected.
 
 ## Getting Started
