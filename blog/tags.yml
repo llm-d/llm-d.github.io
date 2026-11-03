@@ -177,3 +177,8 @@ rl:
   label: RL
   permalink: /rl
   description: Reinforcement learning and post-training on llm-d
+
+gke:
+  label: GKE
+  permalink: /gke
+  description: Google Kubernetes Engine deployments and benchmarks
