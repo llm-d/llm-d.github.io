@@ -303,31 +303,7 @@ kubectl apply -n ${NAMESPACE} \
   -k ${REPO_ROOT}/guides/models/glm-5-2/modelserver/gpu/sglang/deployments/benchmark/hicache-fs/p1w1d1w1
 ```
 
-## Where this goes next
-
-1. **Same-cluster engine A/B and router-visible ZMQ KV events:** Running vLLM `p1w1d1w1` on the same GKE A3 Ultra RoCE cluster under the current affinity-filter router will isolate engine-level performance from fabric and routing differences, while publishing ZMQ block events from SGLang's Rust server mode and HiCache controller will let `llm-d` replace `approx-prefix-cache-producer` with `precise-prefix-cache-producer` across L1, L2, and L3.
-2. **Multi-replica and 2-node `DEP16` benchmarks (`p2w1d1w2`, `p1w2d1w2`, `p2w2d2w2`):** Scaling prefill to multiple replicas sharing one `hicache-fs` RWX volume and widening pools to `DEP16` (`964,608` L1 tokens/rank) will quantify full-length (`1M`-token) trace performance and saturate multi-node decode pools.
-
-<!-- reading-time-exclude:start -->
-## Appendix: Deployment and benchmark details
-
-### Software and hardware stack
-
-All SGLang measurements ran on Google Kubernetes Engine (`1.36.4-gke.2377000`) in `us-central1`:
-
-| **Layer** | **Component / Version** | **Configuration** |
-| :--- | :--- | :--- |
-| **Compute nodes** | GKE A3 Ultra (`a3-ultragpu-8g`, `us-central1-b`) | `2` nodes (`16x NVIDIA H200 140.4 GiB HBM3e`, `224` vCPU, `2.95 TiB` RAM, `8x` ConnectX-7 RoCE NICs via DRANET) |
-| **Model server** | SGLang `lmsysorg/sglang:v0.5.23-cu130` | `zai-org/GLM-5.2-FP8`, `DEP8` (`--tp-size 8 --attn-dp-size 8 --ep-size 8`), `SGLANG_RUST_SERVER=1`, `--page-size 64`, prefill `--mem-fraction-static 0.90 --chunked-prefill-size 16384 --max-prefill-tokens 2048`, decode `--mem-fraction-static 0.945 --cuda-graph-max-bs-decode 48` |
-| **Attention & MoE** | FlashMLA + DeepEP v2 (`deepep_v2`) | `--kv-cache-dtype fp8_e4m3`, `--dsa-prefill-backend flashmla_kv`, `--dsa-decode-backend flashmla_kv`, `--deepep-v2-mode direct` (single-node `DEP8`) / `hybrid` (two-node `DEP16`) |
-| **Speculative decoding** | EAGLE MTP (3 steps) | `--speculative-algorithm EAGLE --speculative-num-steps 3 --speculative-eagle-topk 1 --speculative-num-draft-tokens 4 --speculative-moe-a2a-backend none` |
-| **P/D KV transfer** | Mooncake Transfer Engine | `--disaggregation-transfer-backend mooncake`, `WITH_NVIDIA_PEERMEM=0` (`DMA-BUF` RDMA registration on COS), SGLang `300 s` default disaggregation timeouts (`900 s` during the 4-arm matched sweeps and in `benchmark/baseline/p1w1d1w1`; `deployments/p1w1d1w1` revalidated at `c128` `900 s` under `300 s` with `0` errors) |
-| **L2 host DRAM** | SGLang HiCache (`components/hicache`) | `--enable-hierarchical-cache --hicache-size 100` (`98.35 GiB/rank` w/ indexer; `150` = `147.53 GiB/rank` for paused-session runs) `--hicache-io-backend direct --hicache-mem-layout page_first_direct` |
-| **Shared L3 storage** | SGLang `HiCacheFile` (`components/hicache-fs`) | `llm-d-kv-cache-storage` RWX PVC (`9,000 GiB` Google Cloud Managed Lustre testbed volume, `1000 MB/s/TiB` tier), `--hicache-storage-backend file --hicache-write-policy write_through --hicache-storage-prefetch-policy wait_complete`, `SGLANG_HICACHE_FILE_BACKEND_MIN_FREE_SPACE=500Gi` |
-| **Routing & orchestration** | `llm-d-router-standalone` (`v0`) + GAIE `v1.6.2` + LWS `1.0.0` | `DisaggregatedSet` (`enableDisaggregatedSet=true`), `router/sglang.values.yaml` (`lruCapacityPerServer: 34235`, `peakPrefillThroughput: 3975`) |
-| **Benchmarking** | AIPerf `0.12.0` + Multi-turn Weka Trace Replay | In-cluster `n2-standard-48` client pod targeting `http://glm-5-2-epp:80/v1`; dataset `semianalysisai/cc-traces-weka-062126` |
-
-### AIPerf command (`900s` matched protocol)
+Every load-sweep number in this post comes from the same [AIPerf](https://github.com/ai-dynamo/aiperf) invocation, run from inside the cluster against the router Service and swept across concurrency:
 
 ```bash
 aiperf profile \
@@ -347,4 +323,8 @@ aiperf profile \
   --no-gpu-telemetry \
   --ui 'simple'
 ```
-<!-- reading-time-exclude:end -->
+
+## Where this goes next
+
+1. **Same-cluster engine A/B and router-visible ZMQ KV events:** Running vLLM `p1w1d1w1` on the same GKE A3 Ultra RoCE cluster under the current affinity-filter router will isolate engine-level performance from fabric and routing differences, while publishing ZMQ block events from SGLang's Rust server mode and HiCache controller will let `llm-d` replace `approx-prefix-cache-producer` with `precise-prefix-cache-producer` across L1, L2, and L3.
+2. **Multi-replica and 2-node `DEP16` benchmarks (`p2w1d1w2`, `p1w2d1w2`, `p2w2d2w2`):** Scaling prefill to multiple replicas sharing one `hicache-fs` RWX volume and widening pools to `DEP16` (`964,608` L1 tokens/rank) will quantify full-length (`1M`-token) trace performance and saturate multi-node decode pools.
