@@ -20,14 +20,10 @@ tags: [blog, disaggregation, scheduling, multimodal, inference, vllm]
 
 ## TLDR
 
-llm-d-router disaggregates prefill and decode (and, for multimodal input, encoding)
-through a sidecar container that runs on the decode pod. The Coordinator is an
-alternative that runs the same disaggregation from a standalone service in front of the
-Inference Gateway, with no pod-local sidecars at all. Both go through the same Gateway,
-the same Endpoint Picker (EPP), and the same GAIE `ext_proc` protocol. What changes is
-*where* request orchestration is driven from, and *when* each pod gets picked: one EPP
-call per phase, made right before that phase runs, instead of one scheduling cycle
-picking every pod up front.
+llm-d-router uses a decode-pod sidecar for prefill/decode disaggregation. The
+Coordinator runs this standalone in front of the Gateway, eliminating sidecars entirely.
+Both use the GAIE `ext_proc` protocol, but orchestration shifts from a single upfront EPP
+cycle to one dynamic call per phase.
 
 Moving orchestration off the pod buys composability, and it lands on whoever builds
 serving flows rather than on whoever deploys them. A new processing stage is a small,
@@ -279,7 +275,7 @@ decision — the same EPP knowledge decides either way.
 
 Tokenization happens more often than the phase count suggests. Depending on
 configuration, the encode and prefill EPPs tokenize the prompt themselves in order to
-pick a pod, since prefix-cache-aware scoring needs token IDs rather than text. Then the
+pick a pod, since precise-prefix-cache-aware scoring needs token IDs rather than text. Then the
 request reaches the vLLM engine and the same prompt is tokenized a second time. Multiply
 that by the number of phases and a single request can be tokenized several times over,
 all of it producing the identical token array.
