@@ -751,3 +751,11 @@ shimib:
   image_url: https://avatars.githubusercontent.com/u/2115093?v=4
   socials:
     github: https://github.com/shimib
+
+jacobmurry:
+  name: Jacob Murry
+  title: Software Engineer, Google
+  url: https://github.com/jtechapps
+  image_url: https://avatars.githubusercontent.com/u/7438798?v=4
+  socials:
+    github: https://github.com/jtechapps
