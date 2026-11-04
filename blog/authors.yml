@@ -620,3 +620,53 @@ ryanlee:
   image_url: https://github.com/ryannova.png
   socials:
     github: https://github.com/ryannova
+
+keelinmcdonell:
+  name: Keelin McDonell
+  title: Product Manager, Google
+  image_url: https://avatars.githubusercontent.com/u/1154024?v=4
+  socials:
+    github: https://github.com/keelinmcdonell
+
+ashokchandrasekar:
+  name: Ashok Chandrasekar
+  title: Staff Software Engineer, Google
+  image_url: https://avatars.githubusercontent.com/u/1829544?v=4
+  socials:
+    linkedin: ashokchandrasekar
+    github: https://github.com/achandrasekar
+
+anishshah:
+  name: Anish Shah
+  title: Software Engineer, Google
+  image_url: https://avatars.githubusercontent.com/u/3175743?v=4
+  socials:
+    github: https://github.com/AnishShah
+
+joeywang:
+  name: Joey Wang
+  title: Software Engineer, Google
+  image_url: https://avatars.githubusercontent.com/u/257918665?v=4
+  socials:
+    github: https://github.com/joeywan-google
+
+syedaanjum:
+  name: Syeda Anjum
+  title: Cloud Solution Architect, Google
+  image_url: https://avatars.githubusercontent.com/u/104458278?v=4
+  socials:
+    github: https://github.com/syeda-anjum
+
+gopalasurya:
+  name: Gopala Suryanarayana
+  title: Product Manager, Google
+  image_url: https://github.com/identicons/gopalasurya.png
+  socials:
+    linkedin: https://www.linkedin.com/in/gopalasurya/
+
+newtonjain:
+  name: Newton Jain
+  title: Product Manager, Google
+  image_url: https://avatars.githubusercontent.com/u/7623829?v=4
+  socials:
+    github: https://github.com/newtonjain
