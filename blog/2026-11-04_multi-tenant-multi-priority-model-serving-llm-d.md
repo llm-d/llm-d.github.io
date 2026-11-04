@@ -5,6 +5,7 @@ slug: multi-tenant-multi-priority-model-serving-llm-d
 date: 2026-11-04T10:00
 authors:
   - shimib
+  - jacobmurry
 tags: [blog, scheduling, inference, multi-tenancy]
 ---
 
@@ -118,7 +119,7 @@ This is the difference between "we rate limit" and "we have a defined, tiered de
 
 Team Alpha runs a customer-facing chat product; team Beta runs nightly document extraction. Both share one vLLM pool.
 
-Queue configuration (`--transport redis-sortedset`):
+Transport configuration (`--transport redis-sortedset --transport-config-file queues.json`):
 
 ```json
 {
@@ -261,7 +262,7 @@ Multi-tenancy isn't only about scheduling; it's about what happens when things f
 
 ## Observability
 
-Every gate decision and queue is measurable, which is what makes tenant disputes tractable. The processor exports Prometheus metrics including `async_gate_decisions_total` (why requests were refused, per queue), `async_dispatch_budget` (how open each gate currently is), `async_broker_backlog` and `async_queue_depth`, `async_deadline_proximity_millis` (backlog at risk of expiring), `async_inflight_requests`, `async_tokens_total`, and end-to-end latency histograms — with Grafana dashboards for backlog, in-process load, token usage, and deadline proximity available out of the box. "Show me the gate refusing Team Beta at 02:00" is a query, not an investigation.
+Every gate decision and queue is measurable, which is what makes tenant disputes tractable. The processor exports Prometheus metrics under the `llm_d_async_async_` prefix, including `gate_decisions_total` (why requests were refused, per queue), `dispatch_budget` (how open each gate currently is), `broker_backlog` and `queue_depth`, `deadline_proximity_millis` (backlog at risk of expiring), `inflight_requests`, `tokens_total`, and end-to-end latency histograms — with Grafana dashboards for backlog, in-process load, token usage, and deadline proximity available out of the box. "Show me the gate refusing Team Beta at 02:00" is a query, not an investigation.
 
 ## Business and Operational Outcomes
 
