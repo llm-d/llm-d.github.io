@@ -118,8 +118,18 @@ Or set `LLMD_REPO=/path/to/llm-d`.
 ## Deployment
 
 Production deploys to **GitHub Pages** via [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)
-on push to `main` (sync → build → publish). PR previews may use Netlify
-([`netlify.toml`](netlify.toml)) with the same sync + build steps.
+on push to `main` (sync → build → publish), and when `llm-d/llm-d` fires
+`repository_dispatch` `docs-updated` after a docs merge.
+
+**Docs PR previews:** when a pull request in `llm-d/llm-d` touches docs paths,
+that repo dispatches `docs-pr-preview` here. [`.github/workflows/docs-pr-preview.yml`](.github/workflows/docs-pr-preview.yml)
+syncs the PR head, builds the site, deploys a Netlify alias
+(`docs-pr-<number>`), and comments the URL on the docs PR. Requires secrets
+`NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`, and optionally `LLM_D_PR_COMMENT_TOKEN`
+on this repository.
+
+Website PRs in *this* repo can still use Netlify Deploy Previews via
+[`netlify.toml`](netlify.toml) (syncs `llm-d/llm-d@main`).
 
 ## Optional config
 

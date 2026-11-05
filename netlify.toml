@@ -1,6 +1,7 @@
-# Netlify is used for PR deploy previews (production deploys go to GitHub Pages via
-# .github/workflows/deploy.yml). The build syncs docs from llm-d/llm-d, then builds
-# the single Docusaurus site. Remove this file if the repo is no longer on Netlify.
+# Netlify Deploy Previews for PRs opened against *this* website repo.
+# Cross-repo docs PR previews from llm-d/llm-d use Actions + `netlify deploy --alias`
+# (.github/workflows/docs-pr-preview.yml), not this file.
+# Production deploys go to GitHub Pages via .github/workflows/deploy.yml.
 [build]
   command = "npm ci && make llmd-site && ./bin/llmd-site sync main && ./bin/llmd-site build"
   publish = "build"
