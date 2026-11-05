@@ -24,6 +24,10 @@ To eliminate these bottlenecks at launch, we worked with **Inferact** (vLLM) and
 
 <!-- truncate -->
 
+:::note
+These recipes run here on Google Cloud (GKE), but llm-d's routing, scheduling, and disaggregation layer is accelerator- and cloud-independent. The same configuration pattern applies on other accelerators and clouds; only the device-allocation and KV-transfer connectors change.
+:::
+
 ## Architectural Blueprint: How `llm-d` Serves Kimi K3.1 Pro
 
 To sustain high concurrency across Kimi K3.1 Pro's ~2.8T total parameters and 1M context length (`max_position_embeddings=1048576`) without restarting servers or reloading weights as traffic fluctuates, our Day-0 recipes combine **vLLM** and **SGLang** base engines with four core capabilities in **llm-d** (`v0.10.0+` agentic-serving):
