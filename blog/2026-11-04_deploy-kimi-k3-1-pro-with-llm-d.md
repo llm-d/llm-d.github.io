@@ -1,6 +1,6 @@
 ---
 title: "Serving Moonshot AI's Kimi K3.1 Pro with llm-d across TPUs and GPUs"
-description: "Day-0 distributed serving recipes for Moonshot AI's 2.8T-parameter Kimi K3.1 Pro at 1M context using llm-d across Ironwood TPU v7x (SGLang) and NVIDIA GB300/GB200 GPUs (vLLM), on Google Cloud."
+description: "Day-0 distributed serving recipes for Moonshot AI's 2.8T-parameter Kimi K3.1 Pro at 1M context using llm-d across Ironwood TPU v7x (SGLang) and NVIDIA GB300 GPUs (vLLM), on Google Cloud."
 slug: deploy-kimi-k3-1-pro-with-llm-d
 date: 2026-11-04T09:00
 authors:
@@ -23,7 +23,7 @@ Running multi-trillion-parameter Mixture-of-Experts (MoE) models in production s
 
 At this footprint, the model weights alone surpass the High-Bandwidth Memory (HBM) capacity of any single machine, requiring multi-node Tensor and Expert Parallelism across high-bandwidth interconnects. Compounding the hardware footprint, long-horizon agentic sessions expose the limits of stateless Kubernetes load balancing: 1M-token KV caches rapidly exhaust accelerator HBM, uncoordinated routing forces replicas to recompute identical multi-turn prefixes, and compute-heavy prefill bursts stall ongoing token generation.
 
-To eliminate these bottlenecks at launch, we worked with **Inferact** (vLLM) and **RadixArk** (SGLang) to deliver Day-0 distributed serving recipes on **llm-d**. Running **llm-d** as a unified, Kubernetes-native inference control plane, the same stack serves Kimi K3.1 Pro across both **TPUs** (**Ironwood TPU v7x**) and **NVIDIA GPUs** (**GB300 NVL72** and **GB200 NVL72**), here on Google Cloud (**A4X-Max** and **A4X**). Because the control plane is accelerator- and cloud-independent, platform teams gain a portable serving stack that handles state-aware KV routing, hierarchical memory offloading, and prefill/decode disaggregation out of the box.
+To eliminate these bottlenecks at launch, we worked with **Inferact** (vLLM) and **RadixArk** (SGLang) to deliver Day-0 distributed serving recipes on **llm-d**. Running **llm-d** as a unified, Kubernetes-native inference control plane, the same stack serves Kimi K3.1 Pro across both **TPUs** (**Ironwood TPU v7x**) and **NVIDIA GPUs** (**GB300 NVL72**), here on Google Cloud (**A4X-Max**). Because the control plane is accelerator- and cloud-independent, platform teams gain a portable serving stack that handles state-aware KV routing, hierarchical memory offloading, and prefill/decode disaggregation out of the box.
 
 <!-- truncate -->
 
@@ -48,7 +48,7 @@ Both the GPU (`vLLM`) and TPU (`SGLang`) configurations live in the unified [`gu
 
 ### 1. Prepare GKE Prerequisites & Stage the 1.56 TB Checkpoint
 
-- **Cluster, Networking & CRDs:** Follow the [`kimi-k3-1` Prerequisites](https://github.com/llm-d/llm-d/blob/main/guides/models/kimi-k3-1/README.md#prerequisites) and [GKE Provider Guide](https://github.com/llm-d/llm-d/blob/main/docs/infrastructure/providers/gke/README.md) to provision either multi-node GPU pools (A4X-Max GB300 NVL72 or A4X GB200 NVL72 with NVIDIA DRA `ComputeDomain` and DRANet RDMA) or two Ironwood TPU v7x (`tpu7x` `2x2x4`, 4 hosts × 4 chips each, ~800 GiB host RAM/node, Workload Identity) node pools. Install the Gateway API Inference Extension (`v1`) CRDs, the [LeaderWorkerSet controller](https://github.com/llm-d/llm-d/blob/main/docs/infrastructure/model-server-orchestration.md) (`v0.11.1+`, passing `--set enableDisaggregatedSet=true` for GPU P/D), and the [`llm-d-hf-token` secret](https://github.com/llm-d/llm-d/blob/main/helpers/hf-token.md).
+- **Cluster, Networking & CRDs:** Follow the [`kimi-k3-1` Prerequisites](https://github.com/llm-d/llm-d/blob/main/guides/models/kimi-k3-1/README.md#prerequisites) and [GKE Provider Guide](https://github.com/llm-d/llm-d/blob/main/docs/infrastructure/providers/gke/README.md) to provision either multi-node GPU pools (A4X-Max GB300 NVL72 with NVIDIA DRA `ComputeDomain` and DRANet RDMA) or two Ironwood TPU v7x (`tpu7x` `2x2x4`, 4 hosts × 4 chips each, ~800 GiB host RAM/node, Workload Identity) node pools. Install the Gateway API Inference Extension (`v1`) CRDs, the [LeaderWorkerSet controller](https://github.com/llm-d/llm-d/blob/main/docs/infrastructure/model-server-orchestration.md) (`v0.11.1+`, passing `--set enableDisaggregatedSet=true` for GPU P/D), and the [`llm-d-hf-token` secret](https://github.com/llm-d/llm-d/blob/main/helpers/hf-token.md).
 - **One-Time Checkpoint Staging:** At 1.56 TB (MXFP4 experts), Kimi K3.1 Pro exceeds standard node boot disks. Follow [Stage the Weights](https://github.com/llm-d/llm-d/blob/main/guides/models/kimi-k3-1/README.md#stage-the-weights) to copy the checkpoint once into a regional GCS bucket and hydrate a `ReadOnlyMany` [Hyperdisk ML](https://cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/hyperdisk-ml) PVC (`kimi-k3-1-models`, mounted at `/models`) via the GKE Volume Populator.
 
 ### 2. Deploy the llm-d Router
