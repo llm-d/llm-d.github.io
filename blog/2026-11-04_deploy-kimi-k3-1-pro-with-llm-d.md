@@ -14,7 +14,7 @@ authors:
 tags: [blog, inference, agentic-inference, kv-cache, disaggregation, heterogeneous, vllm, sglang]
 ---
 
-# Day 0: Deploy Moonshot AI's Kimi K3.1 Pro with llm-d on Google Cloud TPUs & GPUs
+# Day 0: Serving Moonshot AI's Kimi K3.1 Pro with llm-d across TPUs and GPUs
 
 Running multi-trillion-parameter Mixture-of-Experts (MoE) models in production shifts the primary engineering bottleneck from model weights to distributed systems orchestration. With **Moonshot AI's Kimi K3.1 Pro** (`moonshotai/Kimi-K3.1-Pro`), infrastructure engineers must accommodate a **~2.8-trillion-parameter footprint** (~104B active parameters per token across 896 routed experts), a **1M-token context window**, and a hybrid 93-layer attention stack (69 Kimi Delta Attention layers paired with 24 Gated Multi-head Latent Attention layers).
 
