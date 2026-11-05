@@ -46,12 +46,19 @@ html, body { margin: 0; padding: 0; background: transparent; }
 .nbox .ntag{font-family:'IBM Plex Mono', monospace; font-size:clamp(8.5px,.95vw,9.5px); color:var(--muted2);}
 .nbox .ndesc{font-family:'IBM Plex Mono', monospace; font-size:clamp(8.5px,.9vw,9.5px); color:var(--muted2); margin-top:2px; line-height:1.28;}
 .nbox .ndesc b{color:var(--accent2); font-weight:600;}
-.nbox .ndots{display:flex; flex-wrap:wrap; gap:3px; margin-top:auto; padding-top:4px;}
-.ndots .ddot{width:6px; height:6px; border-radius:50%; flex:0 0 auto; transition:opacity .15s, transform .15s;}
+.nbox .ndots{display:flex; flex-wrap:wrap; gap:3px; margin-top:auto; padding-top:5px;}
+/* Each supporting dataset is a small named chip, so a reader never has to match colours. */
+.ndots .ddot{display:inline-flex; align-items:center; gap:3px; font-family:'IBM Plex Mono', monospace;
+  font-size:clamp(8.5px,.9vw,9.5px); line-height:1; color:var(--text); padding:2px 5px 2px 4px;
+  border-radius:20px; border:1px solid var(--border); background:rgba(255,255,255,.04);
+  white-space:nowrap; max-width:100%; transition:opacity .15s;}
+.ndots .ddot::before{content:""; width:7px; height:7px; border-radius:50%; background:var(--c); flex:0 0 auto;}
+.ndots .ddot.partial{color:var(--muted2); border-style:dashed; font-style:italic;}
+.ndots .ddot.partial::before{opacity:.45;}
 .ntree.filtering .nbox{transition:opacity .15s, border-color .15s; opacity:.4;}
 .ntree.filtering .nbox.has-match{opacity:1; border-color:var(--accent2);}
-.ntree.filtering .ndots .ddot{opacity:.25; transform:scale(.85);}
-.ntree.filtering .ndots .ddot.match{opacity:1; transform:scale(1.35);}
+.ntree.filtering .ndots .ddot{opacity:.3;}
+.ntree.filtering .ndots .ddot.match{opacity:1; border-color:var(--accent2);}
 .nstack::before, .nstack::after{content:""; position:absolute; border:1.5px solid var(--border); border-radius:7px; background:var(--panel); z-index:0;}
 .nstack::before{inset:4px 4px -4px -4px; opacity:.32;}
 .nstack::after{inset:2px 2px -2px -2px; opacity:.5; z-index:1;}
@@ -71,7 +78,14 @@ html, body { margin: 0; padding: 0; background: transparent; }
 
 @media (max-width:640px){
   .ngen{flex-wrap:wrap;}
-  .nslot{flex:1 1 100%;}
+  /* The slots and boxes carry inline flex sizes for the wide layout; on a phone they must
+     wrap instead of shrinking to a few pixels, so these override them. */
+  .nslot{flex:1 1 100% !important;}
+  .nslot.spacer{display:none;}
+  .nslot > .nbox{flex:1 1 140px !important; min-width:140px !important;}
+  /* In the wide layout a box fills its slot's height; once slots wrap that makes boxes
+     overflow onto the legend, so let each box take its own height. */
+  .nbox{height:auto;}
 }
 
 @media (max-width:560px){
@@ -164,19 +178,20 @@ html, body { margin: 0; padding: 0; background: transparent; }
       </div>
     </div>
     <div class="diaglegend" id="legend2"></div>
-    <div class="snote">"None capture this" — no dataset in this comparison records that field today. A faded dot means partial support. Two entries need a caveat: Baseten's tool-related gaps are inapplicable rather than omitted — it replays <code>/v1/completions</code>, an endpoint with no tool-calling surface to record — and SWE-smith's answers describe its richest <code>tool</code> split, since its <code>xml</code> and <code>ticks</code> splits flatten tool calls into prose. Click a dataset to isolate which boxes it fills; click again to clear.</div>
+    <div class="snote">Each box lists the datasets that record that field. A dashed, faded, italic name means partial support (hover it for details). "None capture this" means no dataset here records that field. Two caveats: Baseten has no tool fields because it replays <code>/v1/completions</code>, which has no tool calling to record. SWE-smith is shown for its <code>tool</code> split, the richest one; its <code>xml</code> and <code>ticks</code> splits turn tool calls into prose. Click a dataset in the legend to highlight its fields, and click again to clear.</div>
   </div>
 
   <script>
   (function(){
     // Order matches the comparison table above: WEKA, SWE-smith, TraceLab, Mooncake, Baseten, Exgentic.
     var DS = {
-      weka:{label:'WEKA/AgentX', color:'#5b9dd9', origin:'human'},
-      swes:{label:'SWE-smith', color:'#e0a94f', origin:'benchmark'},
-      tl:{label:'TraceLab', color:'#9aa4b6', origin:'human'},
-      moon:{label:'Mooncake', color:'#e0685f', origin:'human'},
-      bt:{label:'Baseten', color:'#6ed0a8', origin:'human'},
-      exg:{label:'Exgentic', color:'#d98fd0', origin:'benchmark'},
+      // short: the name on the chips inside the boxes, which are narrow.
+      weka:{label:'WEKA/AgentX', short:'WEKA', color:'#5b9dd9', origin:'human'},
+      swes:{label:'SWE-smith', short:'SWE-smith', color:'#e0a94f', origin:'benchmark'},
+      tl:{label:'TraceLab', short:'TraceLab', color:'#9aa4b6', origin:'human'},
+      moon:{label:'Mooncake', short:'Mooncake', color:'#e0685f', origin:'human'},
+      bt:{label:'Baseten', short:'Baseten', color:'#6ed0a8', origin:'human'},
+      exg:{label:'Exgentic', short:'Exgentic', color:'#d98fd0', origin:'benchmark'},
     };
 
     function renderDots(root){
@@ -191,10 +206,10 @@ html, body { margin: 0; padding: 0; background: transparent; }
           if (!d) return;
           var dot = document.createElement('span');
           dot.setAttribute('data-key', key);
-          dot.className = 'ddot';
-          dot.style.background = d.color;
-          dot.style.opacity = isPartial ? '0.5' : '1';
-          dot.title = d.label + (isPartial ? ' (partial)' : '');
+          dot.className = 'ddot' + (isPartial ? ' partial' : '');
+          dot.style.setProperty('--c', d.color);
+          dot.textContent = d.short;
+          dot.title = d.label + (isPartial ? ' (partial support)' : '');
           el.appendChild(dot);
         });
       });
@@ -250,7 +265,7 @@ html, body { margin: 0; padding: 0; background: transparent; }
 
       var hint = document.createElement('span');
       hint.className = 'litem hint';
-      hint.textContent = 'click a dataset to isolate it';
+      hint.textContent = 'click a dataset to highlight its fields';
       el.appendChild(hint);
     }
 
