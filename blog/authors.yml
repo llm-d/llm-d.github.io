@@ -671,3 +671,17 @@ newtonjain:
   image_url: https://avatars.githubusercontent.com/u/7623829?v=4
   socials:
     github: https://github.com/newtonjain
+
+inferact:
+  name: Inferact Team
+  image_url: https://avatars.githubusercontent.com/u/239198591?v=4
+  socials:
+    github: https://github.com/Inferact
+    website: https://inferact.ai/
+
+radixark:
+  name: RadixArk Team
+  image_url: https://avatars.githubusercontent.com/u/223053390?v=4
+  socials:
+    github: https://github.com/radixark
+    website: https://www.radixark.com/
