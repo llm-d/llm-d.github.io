@@ -620,3 +620,75 @@ ryanlee:
   image_url: https://github.com/ryannova.png
   socials:
     github: https://github.com/ryannova
+
+keelinmcdonell:
+  name: Keelin McDonell
+  title: Product Manager, Google
+  image_url: https://avatars.githubusercontent.com/u/1154024?v=4
+  socials:
+    github: https://github.com/keelinmcdonell
+
+ashokchandrasekar:
+  name: Ashok Chandrasekar
+  title: Staff Software Engineer, Google
+  image_url: https://avatars.githubusercontent.com/u/1829544?v=4
+  socials:
+    linkedin: ashokchandrasekar
+    github: https://github.com/achandrasekar
+
+anishshah:
+  name: Anish Shah
+  title: Software Engineer, Google
+  image_url: https://avatars.githubusercontent.com/u/3175743?v=4
+  socials:
+    github: https://github.com/AnishShah
+
+joeywang:
+  name: Joey Wang
+  title: Software Engineer, Google
+  image_url: https://avatars.githubusercontent.com/u/257918665?v=4
+  socials:
+    github: https://github.com/joeywan-google
+
+syedaanjum:
+  name: Syeda Anjum
+  title: Cloud Solution Architect, Google
+  image_url: https://avatars.githubusercontent.com/u/104458278?v=4
+  socials:
+    github: https://github.com/syeda-anjum
+
+gopalasurya:
+  name: Gopala Suryanarayana
+  title: Product Manager, Google
+  image_url: https://avatars.githubusercontent.com/u/47865694?v=4
+  socials:
+    linkedin: https://www.linkedin.com/in/gopalasurya/
+    github: https://github.com/gopalasuryaa
+
+newtonjain:
+  name: Newton Jain
+  title: Product Manager, Google
+  image_url: https://avatars.githubusercontent.com/u/7623829?v=4
+  socials:
+    github: https://github.com/newtonjain
+
+christopherpirillo:
+  name: Christopher Pirillo
+  title: Staff Software Engineer, Google
+  image_url: https://avatars.githubusercontent.com/u/9355389?v=4
+  socials:
+    github: https://github.com/Chris113113
+
+inferact:
+  name: Inferact Team
+  image_url: https://avatars.githubusercontent.com/u/239198591?v=4
+  socials:
+    github: https://github.com/Inferact
+    website: https://inferact.ai/
+
+radixark:
+  name: RadixArk Team
+  image_url: https://avatars.githubusercontent.com/u/223053390?v=4
+  socials:
+    github: https://github.com/radixark
+    website: https://www.radixark.com/
