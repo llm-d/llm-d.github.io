@@ -73,9 +73,7 @@ Explore the complete configuration guides and deployment manifests in our open-s
 - **vLLM & SGLang Kimi K3.1 Pro Recipes:**
   - **vLLM:** [https://github.com/vllm-project/vllm-torchtpu/tree/kimi-k31pro](https://github.com/vllm-project/vllm-torchtpu/tree/kimi-k31pro)
   - **SGLang:** [https://lmsysorg.mintlify.app/cookbook/autoregressive/Moonshotai/Kimi-K3.1-Pro](https://lmsysorg.mintlify.app/cookbook/autoregressive/Moonshotai/Kimi-K3.1-Pro#hw=b300&pdMode=unified&strategy=low-latency&spec=dflash&hicache=off)
-- **Google Cloud TPU Recipes (Ironwood TPU v7x):**
-  - **vLLM:** [https://github.com/AI-Hypercomputer/tpu-recipes/tree/main/inference/ironwood/vLLM](https://github.com/AI-Hypercomputer/tpu-recipes/tree/main/inference/ironwood/vLLM)
-  - **SGLang:** [https://github.com/sgl-project/sglang-torchtpu/tree/main/sglang_tpu](https://github.com/sgl-project/sglang-torchtpu/tree/main/sglang_tpu)
+- **Google Cloud TPU Recipes (Ironwood TPU v7x):** [https://github.com/AI-Hypercomputer/tpu-recipes](https://github.com/AI-Hypercomputer/tpu-recipes)
 - **Google Cloud GPU Recipes (A4X-Max GB300):** [https://github.com/AI-Hypercomputer/gpu-recipes](https://github.com/AI-Hypercomputer/gpu-recipes)
 
 ## What's next
