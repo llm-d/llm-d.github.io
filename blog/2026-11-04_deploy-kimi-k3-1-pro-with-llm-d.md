@@ -11,6 +11,7 @@ authors:
   - syedaanjum
   - gopalasurya
   - newtonjain
+  - christopherpirillo
   - inferact
   - radixark
 tags: [blog, inference, agentic-inference, kv-cache, disaggregation, heterogeneous, vllm, sglang]
