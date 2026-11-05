@@ -681,7 +681,7 @@ christopherpirillo:
 
 inferact:
   name: Inferact Team
-  image_url: https://avatars.githubusercontent.com/u/239198591?v=4
+  image_url: /img/authors/inferact.png
   socials:
     github: https://github.com/Inferact
     website: https://inferact.ai/
