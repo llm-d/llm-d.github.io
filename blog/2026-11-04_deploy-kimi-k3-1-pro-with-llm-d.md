@@ -70,6 +70,9 @@ Once the `DisaggregatedSet` or `LeaderWorkerSet` reports `Available`, run the sm
 Explore the complete configuration guides and deployment manifests in our open-source repositories:
 
 - **llm-d Agentic Serving & Multi-Tier KV Guides:** [https://github.com/llm-d/llm-d/tree/main/guides/models/kimi-k3-1](https://github.com/llm-d/llm-d/tree/main/guides/models/kimi-k3-1)
+- **vLLM & SGLang Kimi K3.1 Pro Recipes:**
+  - **vLLM:** [https://github.com/vllm-project/vllm-torchtpu/tree/kimi-k31pro](https://github.com/vllm-project/vllm-torchtpu/tree/kimi-k31pro)
+  - **SGLang:** [https://lmsysorg.mintlify.app/cookbook/autoregressive/Moonshotai/Kimi-K3.1-Pro](https://lmsysorg.mintlify.app/cookbook/autoregressive/Moonshotai/Kimi-K3.1-Pro#hw=b300&pdMode=unified&strategy=low-latency&spec=dflash&hicache=off)
 - **Google Cloud TPU Recipes (Ironwood TPU v7x):**
   - **vLLM:** [https://github.com/AI-Hypercomputer/tpu-recipes/tree/main/inference/ironwood/vLLM](https://github.com/AI-Hypercomputer/tpu-recipes/tree/main/inference/ironwood/vLLM)
   - **SGLang:** [https://github.com/sgl-project/sglang-torchtpu/tree/main/sglang_tpu](https://github.com/sgl-project/sglang-torchtpu/tree/main/sglang_tpu)
