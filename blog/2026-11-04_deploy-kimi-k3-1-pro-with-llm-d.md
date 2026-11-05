@@ -74,3 +74,16 @@ Explore the complete configuration guides and deployment manifests in our open-s
   - **vLLM:** [https://github.com/AI-Hypercomputer/tpu-recipes/tree/main/inference/ironwood/vLLM](https://github.com/AI-Hypercomputer/tpu-recipes/tree/main/inference/ironwood/vLLM)
   - **SGLang:** [https://github.com/sgl-project/sglang-torchtpu/tree/main/sglang_tpu](https://github.com/sgl-project/sglang-torchtpu/tree/main/sglang_tpu)
 - **Google Cloud GPU Recipes (A4X-Max GB300):** [https://github.com/AI-Hypercomputer/gpu-recipes](https://github.com/AI-Hypercomputer/gpu-recipes)
+
+## What's next
+
+We are expanding the library of model-centric well-lit paths and broadening accelerator and cloud coverage for multi-trillion-parameter MoE serving. Expect more Day-0 recipes, tighter P/D and wide-EP integration, and additional KV-offload backends.
+
+If you are serving frontier models in production, come build with us:
+
+- **Slack:** [llm-d.ai/slack](https://llm-d.ai/slack)
+- **GitHub:** [github.com/llm-d](https://github.com/llm-d)
+- **Community call:** every Wednesday at 12:30pm ET
+- **Follow along:** on X, Bluesky, LinkedIn, and YouTube
+
+Come build with us.
