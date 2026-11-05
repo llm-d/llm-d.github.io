@@ -83,7 +83,7 @@ If you are serving frontier models in production, come build with us:
 
 - **Slack:** [llm-d.ai/slack](https://llm-d.ai/slack)
 - **GitHub:** [github.com/llm-d](https://github.com/llm-d)
-- **Community call:** every Wednesday at 12:30pm ET
-- **Follow along:** on X, Bluesky, LinkedIn, and YouTube
+- **Community call:** [every Wednesday at 12:30pm ET](https://red.ht/llm-d-public-calendar)
+- **Follow along:** on [X](https://x.com/_llm_d_), [Bluesky](https://bsky.app/profile/llm-d.ai), [LinkedIn](https://www.linkedin.com/company/llm-d), and [YouTube](https://www.youtube.com/@llm-d-project)
 
 Come build with us.
