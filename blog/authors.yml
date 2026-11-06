@@ -730,3 +730,36 @@ radixark:
   socials:
     github: https://github.com/radixark
     website: https://www.radixark.com/
+
+tyuchn:
+  name: Yuchen Tian
+  title: Software Engineer, Google
+  url: https://github.com/tyuchn
+  image_url: https://avatars.githubusercontent.com/u/37302248?v=4
+  socials:
+    github: https://github.com/tyuchn
+
+nishjain:
+  name: Nishtha Jain
+  title: Software Engineering Manager, Google
+  email: nishjain@google.com
+  socials:
+    linkedin: https://www.linkedin.com/in/nishthaj
+
+zetxqx:
+  name: Bob Tian
+  title: Software Engineer, Google
+  url: https://github.com/zetxqx
+  image_url: https://avatars.githubusercontent.com/u/118311804?v=4
+  socials:
+    github: https://github.com/zetxqx
+
+sagearc:
+  name: Sage Ahrac
+  title: Research Engineer, IBM Research
+  url: https://github.com/sagearc
+  image_url: https://avatars.githubusercontent.com/u/80211083?v=4
+  socials:
+    github: https://github.com/sagearc
+    linkedin: sagi-ahrac
+    website: https://sage.ml
