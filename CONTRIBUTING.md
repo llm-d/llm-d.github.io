@@ -153,7 +153,7 @@ For blog posts, landing pages, and website configuration:
    ```
 
 3. **Make Changes**
-   - Blog posts: `blog/`
+   - Blog posts: `blog/` (see [BLOG_GUIDELINES.md](./BLOG_GUIDELINES.md) for house style and the review flow)
    - Landing page: `src/landing/` (then `npm run landing:css` if styles change)
    - Community index/events: `community/index.mdx`, `community/events.mdx`
    - Website config: `docusaurus.config.js`
