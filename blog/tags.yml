@@ -201,3 +201,18 @@ rl:
   label: RL
   permalink: /rl
   description: Reinforcement learning and post-training on llm-d
+
+long-context:
+  label: Long Context
+  permalink: /long-context
+  description: Serving long-context and long-session workloads
+
+large-models:
+  label: Large Models
+  permalink: /large-models
+  description: Serving very large and mixture-of-experts models
+
+mori:
+  label: MoRI
+  permalink: /mori
+  description: MoRI (Modular RDMA Interface) for KV transfer and expert parallelism
