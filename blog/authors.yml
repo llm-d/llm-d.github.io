@@ -727,7 +727,7 @@ shikhapatel:
   name: Shiksha Patel
   url: https://github.com/shikamd123
   email: shiksha.patel@amd.com
-  image_url: https://avatars.githubusercontent.com/u/172528909?v=4
+  image_url: /img/blogs/shiksha-patel.jpg
   socials:
     github: https://github.com/shikamd123
 
@@ -735,7 +735,7 @@ ravigupta:
   name: Ravi Gupta
   url: https://github.com/raviguptaamd
   email: ravi.gupta@amd.com
-  image_url: https://avatars.githubusercontent.com/u/209147131?v=4
+  image_url: /img/blogs/ravi-gupta.jpg
   socials:
     github: https://github.com/raviguptaamd
 
