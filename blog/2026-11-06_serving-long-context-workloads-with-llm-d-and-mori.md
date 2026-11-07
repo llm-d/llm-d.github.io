@@ -1,5 +1,5 @@
 ---
-title: "Enabling AMD MoRI in llm-d for RDMA KV Transfer and Expert Parallelism, with a GLM-5.3 Long-Context Case Study on MI355X"
+title: "AMD MoRI with llm-d: Long-Context GLM-5.3 on MI355X"
 description: "AMD MoRI carries RDMA KV transfer and expert parallelism in llm-d, with a GLM-5.3 long-context case study on AMD Instinct MI355X."
 slug: serving-long-context-workloads-with-llm-d-and-mori
 date: 2026-11-06T09:00
@@ -12,7 +12,7 @@ authors:
 tags: [blog, inference, agentic-inference, long-context, large-models, kv-cache, disaggregation, vllm, mori]
 ---
 
-# Enabling AMD MoRI in llm-d for RDMA KV Transfer and Expert Parallelism, with a GLM-5.3 Long-Context Case Study on MI355X
+# AMD MoRI with llm-d: Long-Context GLM-5.3 on MI355X
 
 Serving a large mixture-of-experts (MoE) model with llm-d moves two kinds of data between GPUs. With
 prefill/decode disaggregation (P/D), the KV cache that prefill computes has to reach the decode GPUs.
