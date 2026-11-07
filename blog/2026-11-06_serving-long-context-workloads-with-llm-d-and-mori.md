@@ -85,9 +85,13 @@ Deployment details are in the
 [ROCm vLLM and MoRI recipe](https://rocm.docs.amd.com/projects/ai-ecosystem/en/latest/inference/distributed/vllm-mori-recipe.html)
 and [Appendix: MoRI details](#appendix-mori-details).
 
-<img src="/img/blogs/long-context-mori/llmd-mori-scale.png" alt="Figure 1. llm-d P/D and wide-EP with AMD MoRI. A filled dot marks the side that starts each KV transfer, and the lower panel shows the two EP options." style={{width: '100%', height: 'auto'}} />
+<div style="text-align:center; margin:20px 0">
+  <img src="/img/blogs/long-context-mori/llmd-mori-scale.png" alt="Figure 1. llm-d P/D and wide-EP with AMD MoRI. A filled dot marks the side that starts each KV transfer, and the lower panel shows the two EP options." style="width:100%; height:auto" />
+</div>
 
-<img src="/img/blogs/long-context-mori/llmd-mori-stack-v.png" alt="Figure 2. The software stack under llm-d with MoRI, from request routing at the top to the GPUs at the bottom. MORI-SHMEM serves MoRI-EP; MoRI-IO posts its RDMA work from the host." style={{width: '100%', height: 'auto'}} />
+<div style="text-align:center; margin:20px 0">
+  <img src="/img/blogs/long-context-mori/llmd-mori-stack-v.png" alt="Figure 2. The software stack under llm-d with MoRI, from request routing at the top to the GPUs at the bottom. MORI-SHMEM serves MoRI-EP; MoRI-IO posts its RDMA work from the host." style="width:100%; height:auto" />
+</div>
 
 ### Where MoRI plugs into llm-d
 
@@ -97,7 +101,9 @@ gained opt-in `--moriio-*` flags for WRITE and multi-pod roles, and vLLM gained 
 and the MoRI-EP all-to-all backend. Figure 3 lays the same pieces out for one node per role and for two
 pods per role.
 
-<img src="/img/blogs/long-context-mori/llmd-mori-deploy.png" alt="Figure 3. (a) 1P1D with expert parallelism inside each node; (b) 2P2D with each role spanning two pods, so MoRI-EP crosses pods over RDMA. The router pieces are the gateway, the EPP and the decode-side sidecar." style={{width: '100%', height: 'auto'}} />
+<div style="text-align:center; margin:20px 0">
+  <img src="/img/blogs/long-context-mori/llmd-mori-deploy.png" alt="Figure 3. (a) 1P1D with expert parallelism inside each node; (b) 2P2D with each role spanning two pods, so MoRI-EP crosses pods over RDMA. The router pieces are the gateway, the EPP and the decode-side sidecar." style="width:100%; height:auto" />
+</div>
 
 ### A request, step by step (READ)
 
@@ -113,7 +119,9 @@ numbers match Figure 4.
 7. **Handshake and READ.** Decode handshakes on first contact, then starts an RDMA READ of its blocks.
 8. **Stream.** Decode streams tokens back through the sidecar and Envoy.
 
-<img src="/img/blogs/long-context-mori/call-flow.png" alt="Figure 4. A READ request through llm-d and MoRI-IO. Only step 7 moves KV; reading only the missing blocks needs the recipe patch." style={{width: '100%', height: 'auto'}} />
+<div style="text-align:center; margin:20px 0">
+  <img src="/img/blogs/long-context-mori/call-flow.png" alt="Figure 4. A READ request through llm-d and MoRI-IO. Only step 7 moves KV; reading only the missing blocks needs the recipe patch." style="width:100%; height:auto" />
+</div>
 
 Because decode reads from whichever rank prefill names, a second prefill instance (2P1D) needs no extra
 routing state.
@@ -134,7 +142,9 @@ sidecar's default, while vLLM's connector defaults to WRITE, so the guide sets `
 | Order of the two legs | prefill, then decode | prefill, then decode | both together |
 | Transfer overlaps prefill compute | no | no | yes |
 
-<img src="/img/blogs/long-context-mori/moriio-handshake.png" alt="Figure 5. MoRI-IO handshakes for (a) READ and (b) WRITE, following vLLM's MoRI-IO connector and the llm-d sidecar. The dotted bracket in (b) marks the two legs that parallel dispatch sends together." style={{width: '100%', height: 'auto'}} />
+<div style="text-align:center; margin:20px 0">
+  <img src="/img/blogs/long-context-mori/moriio-handshake.png" alt="Figure 5. MoRI-IO handshakes for (a) READ and (b) WRITE, following vLLM's MoRI-IO connector and the llm-d sidecar. The dotted bracket in (b) marks the two legs that parallel dispatch sends together." style="width:100%; height:auto" />
+</div>
 
 Neither WRITE mode was measured in this work.
 
@@ -174,7 +184,9 @@ tokens in context and keep adding to them. When one session sends a new 30k-toke
 server, the gaps in every other stream jump from under 50 ms to 300–400 ms while that prefill runs
 (Figure 6). P/D processes long new prompts on GPUs that are not streaming tokens.
 
-<img src="/img/blogs/long-context-mori/f1-prefill-stalls.png" alt="Figure 6. Client-observed delay between streamed chunks during one round of 256k +30k (48 P/D and 24 colocated requests). The colocated band at 300–400 ms is prefill sharing engine steps with decode. Streaming starts at about 37 s, after the first responses; the P/D gaps of 500–640 ms fall at 37–41 s and 74–75 s, when groups of requests joined the decode batch." style={{width: '100%', height: 'auto'}} />
+<div style="text-align:center; margin:20px 0">
+  <img src="/img/blogs/long-context-mori/f1-prefill-stalls.png" alt="Figure 6. Client-observed delay between streamed chunks during one round of 256k +30k (48 P/D and 24 colocated requests). The colocated band at 300–400 ms is prefill sharing engine steps with decode. Streaming starts at about 37 s, after the first responses; the P/D gaps of 500–640 ms fall at 37–41 s and 74–75 s, when groups of requests joined the decode batch." style="width:100%; height:auto" />
+</div>
 
 > **Scope and caveats.** These are untuned first runs of one model on one hardware and software
 > configuration. They are not peak performance, not a benchmark, and not a comparison of products or
@@ -246,7 +258,9 @@ We first measured how far P/D isolates decode from long prefills. In colocated s
 prefill shares engine steps with decode, and expert parallelism keeps the GPUs in lockstep. A new
 30k-token turn therefore slows every session on that four-GPU replica.
 
-<img src="/img/blogs/long-context-mori/pair-f3-f2.png" alt="Figure 7. 256k +30k: (a) engine inter-token latency percentiles, mean of two deployments per layout; (b) SLO-gated throughput by ITL p99 target. p50 and p90 fall in the ≤50 ms bucket and are drawn at its edge." style={{width: '100%', height: 'auto'}} />
+<div style="text-align:center; margin:20px 0">
+  <img src="/img/blogs/long-context-mori/pair-f3-f2.png" alt="Figure 7. 256k +30k: (a) engine inter-token latency percentiles, mean of two deployments per layout; (b) SLO-gated throughput by ITL p99 target. p50 and p90 fall in the ≤50 ms bucket and are drawn at its edge." style="width:100%; height:auto" />
+</div>
 
 Engine ITL p99 was 71–73 ms with P/D (Figure 7) versus 316–322 ms for the expert-parallel colocated
 control. Stall share, the fraction of gaps slower than 150 ms, was 0.01–0.08% versus 1.3–1.4%. Engine
@@ -265,7 +279,9 @@ colocated expert-parallel serving reached ITL p99 of about 190 ms, TTFT p90 of 7
 did not measure chunks below 1,024 tokens, and these one-node runs used a subset of the recipe's vLLM
 changes.
 
-<img src="/img/blogs/long-context-mori/pair-f4-f5.png" alt="Figure 8. Per-workload results: (a) P/D tok/s/GPU divided by the colocated control's; (b) throughput versus per-user speed, lines joining P/D to its control." style={{width: '100%', height: 'auto'}} />
+<div style="text-align:center; margin:20px 0">
+  <img src="/img/blogs/long-context-mori/pair-f4-f5.png" alt="Figure 8. Per-workload results: (a) P/D tok/s/GPU divided by the colocated control's; (b) throughput versus per-user speed, lines joining P/D to its control." style="width:100%; height:auto" />
+</div>
 
 Across all workloads (Figure 8, Appendix B), P/D delivered 0.66–0.92× the colocated control's
 tok/s/GPU. On the five warm workloads measured with missing-block READ, P/D engine ITL p99 stayed below
@@ -505,7 +521,9 @@ request exercises KV transfer; harness settings are in the MAD recipe.
 | 256k | ~24.0 GB |
 | 512k | ~48.1 GB |
 
-<img src="/img/blogs/long-context-mori/f6-memory-capacity.png" alt="Figure A1. P/D memory per GPU, with the 83 GB model load split into weights and MoRI-EP heap, and sessions per GPU in an 80 GB KV budget." style={{width: '100%', height: 'auto'}} />
+<div style="text-align:center; margin:20px 0">
+  <img src="/img/blogs/long-context-mori/f6-memory-capacity.png" alt="Figure A1. P/D memory per GPU, with the 83 GB model load split into weights and MoRI-EP heap, and sessions per GPU in an 80 GB KV budget." style="width:100%; height:auto" />
+</div>
 
 The 93,912 bytes per token include the multi-token-prediction (MTP) layer. They are 79 layers (78
 model layers plus MTP) × 1,152 bytes of BF16 compressed multi-head latent attention (MLA) state. To
