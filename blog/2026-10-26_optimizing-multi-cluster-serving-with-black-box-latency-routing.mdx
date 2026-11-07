@@ -1,0 +1,157 @@
+---
+title: "Optimizing multi-cluster serving with black-box latency routing"
+description: "Enterprises need a unified serving layer that can route inference requests across clusters, regions, and third-party services, while accounting for differences in latency, capacity, and availability."
+slug: optimizing-multi-cluster-serving-with-black-box-latency-routing
+date: 2026-10-26T09:00
+
+authors:
+  - mohammadnassar
+  - ronenkat
+
+tags: [blog, multi-cluster, scheduling, inference]
+---
+
+# Optimizing multi-cluster serving with black-box latency routing
+
+**TL;DR.** Enterprises need a unified serving layer that can route inference requests across clusters, regions, and third-party services, while accounting for differences in latency, capacity, and availability. Traditional approaches often require access to internal queue metrics, custom integrations, cross-cluster monitoring, and additional security permissions.
+
+The llm-d latency scorer avoids this complexity by treating each inference pool as a black box. Using observed TTFT and the router’s in-flight request count, it predicts latency and routes requests toward the best-performing pool. This supports local, remote, and SaaS endpoints without exposing internal metrics, granting cross-cluster monitoring access, or deploying pool-specific integrations. Our experiments show the scorer matches the llm-d telemetry based queue-depth scorer, and in our example evaluation, the scorer cuts more than 47% in p95 TTFT versus the inflight count scorer, and more versus a random distribution on non-equal size cluster pool capacities.
+
+<!-- truncate -->
+
+Enterprise AI serving platforms must support both model diversity and deployment diversity. Multiple models address different application requirements, while multiple serving locations improve scalability, availability, and resiliency. In llm-d, these capabilities are enabled through multiple inference pools distributed across one or more clusters.
+
+To support intelligent request routing, the llm-d router leverages the Endpoint Picker Pipeline (EPP). EPP evaluates candidate endpoints, computes a score for each, and selects the optimal target for the request. Although originally designed to route traffic among model-serving nodes such as vLLM or SGLang instances, EPP is a general-purpose framework that can also route across inference pools spanning different clusters, geographic locations, or hosted models.
+
+**Reminder:** Upon receiving an inference request, EPP processes candidate endpoints through a routing profile consisting of **filters**, **scorers**, and a **picker**. Filters remove endpoints that cannot satisfy the request, scorers rank the eligible candidates based on the active routing policy, and the picker selects the endpoint that will ultimately serve the request. More details can be found [here](https://llm-d.ai/docs/architecture/core/router/epp/scheduling).
+
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/latency-aware-routing/epp-scheduling.webp" alt="An inference request passes through the EPP scheduling stages, filters, then scorers, then a picker, which outputs the selected endpoint" style={{width: '100%', height: 'auto'}} />
+</div>
+
+The new llm-d router hub provides a unified entry point for routing inference requests across multiple inference pools. It uses EPP to evaluate candidate pools and select the most appropriate target based on request attributes and observed endpoint metrics. In this blog, we introduce a new latency-observing endpoint scorer that supports **latency-aware routing** across inference pools. The scorer treats endpoints as black boxes and therefore does not require endpoint-specific integration. This design allows it to observe and compare latency across local, remote, and third-party endpoints. Latency-aware routing can be applied to several deployment patterns. For example, an llm-d deployment can balance requests across inference pools that serve the same model in different geographic locations, as in an AI Grid architecture. It can also route requests across different models that are capable of producing an appropriate response, as in model-routing scenarios.
+
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/latency-aware-routing/hub-same-model.webp" alt="Clients send requests to the llm-d router hub, where a proxy calls the hub EPP over ext-proc; the hub routes to three inference pools serving llama-3.3-70b, one local in us-east and two remote in eu-west and ap-south" style={{display: 'block', margin: '0 auto', width: '80%', height: 'auto'}} />
+  <img src="/img/blogs/latency-aware-routing/hub-different-models.webp" alt="Clients send requests to the llm-d router hub, where a proxy calls the hub EPP over ext-proc; the hub routes to three inference pools serving different models, local Qwen3-235B-A22B, local Llama-3.3-70B and remote Llama-3.1-8B" style={{display: 'block', margin: '24px auto 0', width: '72%', height: 'auto'}} />
+</div>
+
+**AI Grid and model-routing scenarios** AI Grid architectures connect multiple inference pools, GPU clusters, regions, and model deployments into a single logical serving layer. The grid dynamically determines where to execute each inference request based on factors such as latency, capacity, cost, and availability. In this environment, latency-aware routing is important for optimizing both the user experience and overall system utilization. A key requirement is support for different types of inference pools. These can include local pools managed by the llm-d router, remote pools, and third-party pools. In the future, they may also include SaaS-based inference services. Existing latency-aware mechanisms cannot support this full range of deployment types. For example, queue-based and predictive latency scorers depend on metrics collected directly from the inference pool. Such metrics are generally unavailable for third-party pools and may also be difficult or impractical to collect from remote pools.
+
+Model routing presents a related use case. It involves a two-step decision. First, the router identifies the models that qualify to handle the request. It then selects an inference pool serving one of those models based on factors such as latency, cost, and availability. The latency scorer supports the second step by helping the router select among the pools serving the best-qualified models. It also provides a mechanism for balancing load across inference pools and utilizing available serving capacity wherever it exists. These scenarios present many of the same challenges as AI Grid deployments.
+
+Although this blog focuses on the latency scorer, the scorer can be combined with additional filters and scorers to address other routing requirements. These can include session affinity and steering requests toward inference pools with a higher likelihood of KV-cache hits.
+
+**Implementing latency-aware routing** The intuition behind latency-aware routing is straightforward. The llm-d router hub observes how each inference pool behaves over time by recording request latency metrics, including time to first token (TTFT), and using those observations to estimate the expected TTFT of future requests. When a new request arrives, the router considers the observed performance and current request load of each eligible pool. It then calculates a latency-based preference score for every candidate. Pools with available capacity and lower expected TTFT receive higher scores, while pools with higher expected TTFT receive lower scores. Based on these scores, the router directs eligible requests, such as requests without session-affinity constraints, toward the pool expected to provide the best latency. This allows applications to take advantage of available capacity across multiple inference pools without requiring pool-specific metrics or integration. A deep dive into the latency estimation is available as technical content at the end of the blog.
+
+Figure &lt;label&gt; shows the end-to-end flow through the latency plugin. When a new request arrives (on the left), the data producer retrieves the current number of in-flight requests and the latency anchor points for each candidate endpoint. Each anchor point includes a TTFT value and its corresponding in-flight request count. Using this data, the scorer predicts the TTFT that the request is likely to experience if routed to each endpoint. It then ranks the candidate endpoints so that the endpoint with the lowest predicted TTFT becomes the preferred destination. The plugin tracks each request through its PreRequest and ResponseProcessor hooks. It records the request's TTFT together with the number of in-flight requests observed when the request was dispatched. These observations are stored in a ring buffer (bounding memory usage across varying load levels).
+
+The data-layer collector periodically aggregates the observations into TTFT percentiles and their associated load values, producing the anchor points used by the scorer. This periodic aggregation allows the model to adapt to changing load and latency conditions. The collector maintains the long-term service floor separately from the recent low and typical operating points. It does so by recording the service-floor estimate for each aggregation interval and applying trimming to the resulting history. This allows the plugin to learn the inference pool's baseline behavior under low load while still adapting the other anchor points to recent operating conditions. Together, these mechanisms ensure that up-to-date load and latency information is available when evaluating candidate inference pools for each incoming request.
+
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/latency-aware-routing/latency-plugin-flow.webp" alt="A request passes the DataProducer, which reads load and TTFT, then the Scorer, which ranks endpoints, then PreRequest, which records the dispatch, and reaches the model server. The response passes the ResponseProcessor, which records TTFT into the latency and load data. A Collector reads and updates that data to compute latency statistics" style={{width: '100%', height: 'auto'}} />
+</div>
+
+**Evaluating prediction accuracy.** To make effective routing decisions, the latency scorer must estimate how the TTFT of an inference pool changes as its load changes. We evaluated the accuracy of the latency model by comparing predicted TTFT with measured TTFT. The first experiment used a Qwen3-32B deployment running on an inference pool with two NVIDIA H100 GPUs. We applied a series of load ramps and compared the predicted and measured TTFT values. As shown in Figure &lt;label&gt;, the predicted curve closely follows the observed behavior across both low-load and high-load regimes. In particular, the model captures the sharp increase in TTFT as the inference pool approaches saturation. For routing purposes, the most important result is that the model captures the relative latency trends and inflection points that distinguish faster pools from slower ones. This provides a reliable signal for ranking candidate inference pools.
+
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/latency-aware-routing/prediction-qwen3-32b.webp" alt="Line chart of predicted and actual TTFT for Qwen3-32B on a log scale over about 4,000 seconds, while the request rate steps from 1 to 6 requests per second and back to 1; the two lines track each other through the rise from under 0.5 seconds to about 200 seconds and back, with the prediction dipping less at the transitions between steps" style={{width: '85%', height: 'auto'}} />
+</div>
+
+We repeated the experiment with a Qwen3-8B deployment and observed similar agreement between predicted and measured TTFT. This indicates that the approach can generalize across models of different sizes.
+
+**Evaluating adaptability with partial information.** Next, we evaluate the scorer's ability to adapt when the llm-d router hub processes only a subset of the requests received by each inference pool. In these scenarios, the pools also receive direct requests that do not pass through the hub. Therefore, the hub has only a partial view of the total requests handled by each pool. This experiment demonstrates whether the latency scorer can adapt its routing decisions based on observed TTFT, even when the hub does not directly observe all the requests contributing to pool load.
+
+**Experiment setup** We deploy two llm-d inference pools, Pool A and Pool B, serving the same model, Gemma-4-26B-A4B-it. Each pool runs on a single NVIDIA H100 GPU. A single llm-d router hub provides a shared endpoint that can route requests to either pool. To evaluate the scorer's adaptability, we generate two types of traffic:
+
+* **Hub-routed traffic**, which is sent to the router hub and can be directed to either inference pool.
+* **Direct traffic**, which is sent directly to Pool A or Pool B without passing through the router hub.
+
+The hub does not observe the direct requests. However, these requests affect the latency of the pools and therefore influence the TTFT observed for requests routed through the hub. The table summarizes the traffic distribution for each scenario. For every traffic source, we run a separate inference-perf instance that generates requests according to a Poisson arrival process. Each request contains approximately 2,048 input tokens and requests approximately 256 output tokens. The table reports the generated load for three traffic sources: the hub endpoint, which can route requests to both pools; the direct endpoint for Pool A; and the direct endpoint for Pool B.
+
+| Step name | Hub only | Hub + A | Hub + B | Hub + A +B |
+|---|---|---|---|---|
+| Hub routed requests/s | 10 | 10 | 10 | 10 |
+| Pool A direct requests/s | | 10 | | 10 |
+| Pool B direct requests/s | | | 10 | 10 |
+
+**Results.** Figure &lt;label&gt; shows how the hub distributes its requests between Pool A and Pool B in each scenario. When the pools receive comparable external load, as in the **Hub only** and **Hub + A + B** scenarios, the scorer distributes hub-routed traffic approximately evenly between them. In the **Hub + A + B** scenario, each pool also receives 10 requests per second directly. The scorer makes routing decisions only for the additional 10 requests per second sent through the hub. Because both pools receive the same direct traffic, their observed behavior is similar, and the hub distributes its requests approximately evenly. When direct traffic is sent to only one pool, as in the **Hub + A** and **Hub + B** scenarios, the scorer detects the resulting difference in observed TTFT and directs most hub-routed requests toward the less-loaded pool. Approximately 10% of the hub-routed requests are still sent to the more heavily loaded pool. This traffic includes exploration requests that allow the scorer to continue measuring the pool's latency and determine whether its operating conditions have changed.
+
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/latency-aware-routing/partial-visibility-split.webp" alt="Stacked bar chart of the share of hub-routed requests per pool: Hub only, Pool A 49% and Pool B 51%; Hub + A, 10% and 90%; Hub + B, 91% and 9%; Hub + A + B, 52% and 48%" style={{width: '85%', height: 'auto'}} />
+</div>
+
+These results demonstrate that the latency scorer can infer changes in pool load indirectly from observed TTFT. Although the scorer has no direct visibility into traffic that bypasses the hub, it identifies the pool expected to provide lower latency and adapts its routing decisions accordingly.
+
+**Evaluating a multi-cluster deployment.** Next, we evaluate the latency scorer in a multi-cluster deployment consisting of two llm-d inference pools running Nemotron-3-Super-120B-A12B on NVIDIA H100 GPUs.
+
+**Experiment setup** For this evaluation, we deploy Nemotron-3-Super-120B-A12B with FP8 precision and a tensor-parallelism degree of two (TP=2) across two llm-d inference pools. The smaller pool uses two H100 GPUs, while the larger pool uses six H100 GPUs. This asymmetric configuration allows us to evaluate routing across pools with different serving capacities. We deploy an additional llm-d router hub with the latency observer plugin and use it to compare several routing policies. The smaller pool contains 25% of the total GPU resources, while the larger pool contains 75%. Assuming capacity scales proportionally with the allocated GPU resources, an ideal traffic distribution would therefore send approximately 25% of the requests to the smaller pool and 75% to the larger pool.
+
+We compare four routing policies:
+
+* **TTFT-aware scorer**: the latency scorer introduced in this blog. It predicts the TTFT for each candidate pool using latency and load observations collected by the router hub.
+* **Active-requests scorer**: selects the inference pool with the fewest in-flight requests.
+* **Queue-depth scorer**: selects the inference pool with the shortest queue, based on metrics collected directly from each pool. This policy requires access to pool-specific metrics.
+* **Random routing**: selects an inference pool uniformly at random.
+
+We use *aiperf* with ShareGPT conversations as the workload. Requests arrive according to a Poisson process, with generated request rates ranging from 15 to 50 requests per second. The combined sustainable throughput of the two pools is approximately 33 requests per second. The two highest offered rates therefore push the deployment beyond saturation.
+
+**Comparison with observation-based routing.** We first compare the TTFT-aware scorer with the other policies that do not rely on metrics exported by the inference pools.
+
+Figure &lt;label&gt; shows the actual number of requests per second (y axis) served by llm-d router hub for various request rate loads (x axis). At lower generated loads, every routing policy keeps pace with the incoming requests. Their performance begins to diverge as the generated load approaches and exceeds the deployment's sustainable capacity. At a generated rate of 50 requests per second, TTFT-aware routing achieves a throughput of **32.8** requests per second, compared with **26.1** requests per second for the active-requests scorer. This represents an approximately **26%** throughput improvement. Both results are based on eight runs. Random routing achieves a throughput of 18.4 requests per second.
+
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/latency-aware-routing/mc-throughput.webp" alt="Line chart of requests served per second against the generated request rate, 15 to 50: TTFT-aware rises to about 33, active-requests peaks near 27 and ends at 26, random levels off near 18" style={{width: '85%', height: 'auto'}} />
+</div>
+
+The tail-latency figure shows the 95th-percentile TTFT for each routing policy. At a generated rate of 50 requests per second, TTFT-aware routing reduces p95 TTFT from 130 seconds with the active-requests scorer to 69 seconds, a reduction of approximately 47%. It also reduces p99 TTFT from 145 seconds to 77 seconds, also an approximately 47% reduction.
+
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/latency-aware-routing/mc-p95.webp" alt="Line chart of p95 TTFT against the generated request rate for TTFT-aware, active-requests and random routing; at 50 requests per second TTFT-aware is at 69 seconds and active-requests at 130 seconds" style={{width: '85%', height: 'auto'}} />
+</div>
+
+The traffic distribution figure, showing the distribution of requests between pools, explains the performance difference. The active-requests scorer sends 35% of requests to the smaller pool, even though that pool represents only 25% of the total GPU resources. In other words, the smaller pool receives approximately 1.4 times its proportional share. The active-requests scorer considers only the number of in-flight requests. It does not account for how quickly each pool processes those requests. Consequently, the same in-flight request count can represent substantially different load levels for pools with different serving capacities. In comparison, TTFT-aware routing sends 27% of requests to the smaller pool, approximately 1.08 times its proportional share. This distribution is much closer to the assumed capacity-proportional split of 25% and 75%.
+
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/latency-aware-routing/mc-share.webp" alt="Three pie charts of the share of requests sent to the 2-GPU and 6-GPU pools: TTFT-aware 27% and 73%, active-requests 35% and 65%, optimal 25% and 75%" style={{width: '85%', height: 'auto'}} />
+</div>
+
+**Comparison with queue-depth routing.** We next compare the TTFT-aware scorer with the queue-depth scorer. Unlike the TTFT-aware scorer, the queue-depth scorer requires access to queue metrics exported by each inference pool, which requires additional setups and security considerations for fetching the metrics. Figure &lt;label&gt; shows the actual served request rate vs. generated load. At a generated rate of 50 requests per second, queue-depth routing achieves a throughput of 33.1 requests per second, closely matching the 32.8 requests per second achieved by TTFT-aware routing. The two policies also provide similar tail latency, with both producing a p95 TTFT of 69 seconds.
+
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/latency-aware-routing/mc-queue-throughput.webp" alt="Line chart of requests served per second against the generated request rate for TTFT-aware and queue-depth routing; the two lines nearly overlap and reach about 33 at 50 requests per second" style={{width: '85%', height: 'auto'}} />
+</div>
+
+The tail-latency figure results show that the TTFT-aware scorer can match the queue-depth scorer without depending on metrics from the inference pools.
+
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/latency-aware-routing/mc-queue-p95.webp" alt="Line chart of p95 TTFT against the generated request rate for TTFT-aware and queue-depth routing; both reach 69 seconds at 50 requests per second" style={{width: '85%', height: 'auto'}} />
+</div>
+
+The request-distribution figure further shows that both scorers produce traffic splits close to the assumed capacity-proportional distribution. The queue-depth scorer sends 30% of requests to the smaller pool, approximately 1.2 times its proportional share. The TTFT-aware scorer sends 27% to the smaller pool, approximately 1.08 times its proportional share. The queue-depth scorer reaches its decision by reading each pool's queue length from exported metrics. In contrast, the TTFT-aware scorer derives a comparable routing signal from the latency and load observations collected by the router hub itself.
+
+<div style={{textAlign: 'center', margin: '20px 0'}}>
+  <img src="/img/blogs/latency-aware-routing/mc-queue-share.webp" alt="Three pie charts of the share of requests sent to the 2-GPU and 6-GPU pools: TTFT-aware 27% and 73%, queue-depth 30% and 70%, optimal 25% and 75%" style={{width: '85%', height: 'auto'}} />
+</div>
+
+**Summary.** The latency scorer allows the llm-d router hub to make informed routing decisions without requiring access to inference-pool internals, hence avoiding network access and security challenges. It treats every pool as a black box and learns from observed traffic, enabling consistent routing across local, remote, and third-party endpoints and multiple models. Even with partial visibility, the scorer adapts to changes in pool load and directs requests toward the pool expected to provide the best latency. This turns observed performance into a practical routing signal and lays the groundwork for AI Grid, SaaS, and model-routing scenarios.
+
+**Additional technical content**
+
+**Deep dive into latency estimation** The latency plugin consists of two components: an observer and a scorer. The latency observer maintains a short-term history of inference-pool latency and load, and computes load-related statistics for each pool. The latency scorer uses these statistics to predict the TTFT of a new request and produce a corresponding routing score. For each request, the latency observer records the time to first token (TTFT) and the inference pool's load when the request is dispatched, expressed as the number of in-flight requests. TTFT indicates how long the inference pool takes to begin producing output. The recorded load provides the context needed to associate the observed TTFT with queueing delay, which typically increases with load. As more requests are already in flight, a newly arriving request is likely to wait longer before it can begin execution. The observer computes three core statistics, referred to as anchor points, for each inference pool:
+
+* The **service floor**: an estimate of the pool's TTFT when there is no meaningful queueing. By default, the service floor is calculated as the 10th percentile of TTFT observations collected over a long-term window. It approximates the combination of network latency and the pool's baseline prefill time.
+* The **low operating point**: an estimate of the pool's TTFT under relatively low load. By default, it is calculated as the 25th percentile of TTFT observations collected over a recent time window.
+* The **typical operating point**: an estimate of the pool's typical TTFT under its recent operating conditions. By default, it is calculated as the median, or 50th percentile, of TTFT observations collected over a recent time window.
+
+For each anchor point, the plugin also records the corresponding number of in-flight requests. Together, the TTFT and in-flight request count define a load-latency point. The scorer uses segmented linear interpolation between these anchor points to predict the TTFT that a newly arriving request is likely to experience. The scorer selects the interpolation segment based on the inference pool's current load.
+
+* When the current load is below the in-flight request count associated with the low operating point, the scorer interpolates between the service floor and the low operating point.
+* When the current load is higher, it interpolates between the low and typical operating points.
+* If the low and typical operating points are too close to define a meaningful interpolation segment, the scorer instead interpolates between the service floor and the typical operating point.
+
+Using three anchor points allows the model to capture the nonlinear increase in TTFT that commonly occurs as an inference pool approaches saturation. A single line connecting the service floor and the typical operating point can cut across this curve and underestimate latency at intermediate loads. The low operating point allows the estimated curve to bend, so that the higher-load segment more closely reflects the slope observed under the pool's actual operating conditions. Additional details about the algorithm are available in the scorer README.
+
+For every incoming request, the scorer evaluates each candidate endpoint using its current load and selected anchor points. It then applies linear interpolation to estimate the TTFT that the request would experience if routed to that endpoint. The scorer normalizes these predicted TTFT values into routing scores. The candidate with the lowest predicted TTFT receives the highest score, while the candidate with the highest predicted TTFT receives the lowest score. This allows the router to rank candidate endpoints dynamically for each request based on observed conditions rather than static assumptions.
+
+Cold starts and under-observed endpoints are handled through exploration. If none of the candidate endpoints has sufficient observations, they receive equal scores, allowing the router to distribute requests among them and begin collecting measurements. If some endpoints have sufficient observations and another does not, the scorer directs a small, configurable fraction of requests toward exploration. During an exploration decision, an under-observed pool is promoted to the highest score, allowing the picker to route a probe request to it. As measurements are collected, the endpoint becomes calibrated and is ranked according to its observed behavior, like any other candidate.
