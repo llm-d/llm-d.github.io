@@ -593,7 +593,7 @@ gyliu513:
 prateekkumar:
   name: Prateek Kumar
   title: Senior Member Technical Staff, AMD AI Group
-  image_url: https://avatars.githubusercontent.com/u/85689959?v=4
+  image_url: /img/blogs/prateek-kumar.jpg
   socials:
     linkedin: prateek1709
     github: https://github.com/PrateekKumar1709
@@ -666,14 +666,6 @@ keelinmcdonell:
   socials:
     github: https://github.com/keelinmcdonell
 
-ashokchandrasekar:
-  name: Ashok Chandrasekar
-  title: Staff Software Engineer, Google
-  image_url: https://avatars.githubusercontent.com/u/1829544?v=4
-  socials:
-    linkedin: ashokchandrasekar
-    github: https://github.com/achandrasekar
-
 anishshah:
   name: Anish Shah
   title: Software Engineer, Google
@@ -730,3 +722,28 @@ radixark:
   socials:
     github: https://github.com/radixark
     website: https://www.radixark.com/
+
+shikhapatel:
+  name: Shiksha Patel
+  url: https://github.com/shikamd123
+  email: shiksha.patel@amd.com
+  image_url: /img/blogs/shiksha-patel.jpg
+  socials:
+    github: https://github.com/shikamd123
+
+ravigupta:
+  name: Ravi Gupta
+  url: https://github.com/raviguptaamd
+  email: ravi.gupta@amd.com
+  image_url: /img/blogs/ravi-gupta.jpg
+  socials:
+    github: https://github.com/raviguptaamd
+
+vincentcave:
+  name: Vincent Cave
+  email: Vincent.Cave@amd.com
+
+anshuraina:
+  name: Anshu Raina
+  email: Anshu.Raina@amd.com
+  image_url: /img/blogs/anshu-raina.jpg
