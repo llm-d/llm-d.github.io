@@ -4,7 +4,11 @@ description: "AMD MoRI carries RDMA KV transfer and expert parallelism in llm-d,
 slug: serving-long-context-workloads-with-llm-d-and-mori
 date: 2026-11-06T09:00
 authors:
+  - shikhapatel
+  - ravigupta
   - prateekkumar
+  - vincentcave
+  - anshuraina
 tags: [blog, inference, agentic-inference, long-context, large-models, kv-cache, disaggregation, vllm, mori]
 ---
 
