@@ -22,8 +22,9 @@ tags: [blog, disaggregation, scheduling, multimodal, inference, vllm]
 
 llm-d-router uses a decode-pod sidecar for prefill/decode disaggregation. The
 Coordinator runs this standalone in front of the Gateway, eliminating sidecars entirely.
-Both use the GAIE `ext_proc` protocol, but orchestration shifts from a single upfront EPP
-cycle to one dynamic call per phase.
+In both designs pod selection still runs through the EPP over the GAIE `ext_proc`
+protocol, but orchestration shifts from a single upfront EPP cycle to one dynamic
+call per phase.
 
 Moving orchestration off the pod buys composability, and it lands on whoever builds
 serving flows rather than on whoever deploys them. A new processing stage is a small,
