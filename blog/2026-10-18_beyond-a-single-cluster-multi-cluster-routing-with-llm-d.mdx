@@ -20,7 +20,7 @@ As demand for inference grows, a single cluster is no longer enough. Enterprises
 
 Enterprises need a unified serving layer that can leverage all available inference capacity, regardless of where it is deployed. Requests should use local clusters when they offer the best locality, latency, or data governance, while seamlessly reaching remote clusters when additional capacity, specialized hardware, regional coverage, or failover is required. Applications should not need to understand the underlying infrastructure topology or implement complex cross-cluster routing logic. At the same time, different clusters should retain their operational independence while exposing their combined capacity through a unified routing layer. It aligns with the vision of **distributed AI serving**: transforming independent inference deployments into a unified serving fabric.
 
-The new **llm-d Router Hub** extends llm-d routing from a single cluster to distributed inference environments. The Router Hub provides a unified entry point for inference requests and adds the ability to select among multiple destination inference clusters. Each cluster still runs an instance of llm-d-router to perform endpoint selection.
+The new **experimental llm-d Router Hub** extends llm-d routing from a single cluster to distributed inference environments. The Router Hub provides a unified entry point for inference requests and adds the ability to select among multiple destination inference clusters. Each cluster still runs an instance of llm-d-router to perform endpoint selection.
 
 <!-- truncate -->
 
@@ -31,7 +31,7 @@ Within each cluster, llm-d continues to evaluate serving endpoints and select th
   <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 1. The Router Hub picks a cluster, and that cluster's local llm-d router picks a model server.</em></p>
 </div>
 
-This layered routing model allows enterprises to combine local and remote inference capacity across clusters, geographies, and infrastructure providers. Applications retain a simple, consistent serving interface, while the platform gains the flexibility to expand capacity, improve availability, and optimize request placement without exposing infrastructure complexity.
+This layered routing model enables enterprises to begin combining local and remote inference capacity across clusters, geographies, and infrastructure providers. Applications retain a simple, consistent serving interface, while the platform gains the flexibility to expand capacity, improve availability, and optimize request placement without exposing infrastructure complexity.
 
 ## Examples of Multi-Cluster Scenarios
 
@@ -49,24 +49,24 @@ Multi-Cluster Routing enables several deployment patterns that are becoming incr
 
 The llm-d router hub faces new challenges when picking clusters. Cluster-level decisions need to consider factors such as network latency, regional placement, and available capacity across deployments, while endpoint selection continues to focus on choosing the best serving instance within a cluster.
 
-In its recent release, llm-d introduces a Router Hub, a new deployment option and cluster-level features. Rather than extending a single router across multiple clusters, llm-d adds a dedicated global routing layer responsible for cluster selection.
+As part of its emerging multi-cluster capabilities, llm-d introduces the Router Hub, a new deployment option that enables cluster-level routing across independent deployments. Rather than extending a single router across multiple clusters, llm-d adds a dedicated global routing layer responsible for cluster selection.
 
 The llm-d router hub acts as a global routing layer for distributed inference deployments. It evaluates available serving clusters and determines where a request should go. Once a cluster is selected, the request is forwarded to that cluster's local llm-d router, which performs endpoint selection exactly as it would in a traditional deployment. This allows existing llm-d routing and scheduling mechanisms to remain unchanged within each cluster while extending routing across the broader deployment.
 
 This creates a clear separation between two different scheduling problems. The llm-d router hub determines how to best utilize distributed inference capacity across clusters, while the local router focuses on selecting the most appropriate serving endpoint within the chosen vLLM or SGLang deployment.
 
-The architectural approach supports the clear separation of cluster operations and distinct failure domains, and simplifies multi-cluster management. In addition, with Multi-Cluster Routing, cluster selection becomes part of the scheduling process, allowing llm-d to evaluate clusters before endpoint selection begins. This transforms Multi-Cluster Routing from a connectivity feature into a distributed scheduling framework capable of operating across an entire fleet of inference deployments.
+The architectural approach supports the clear separation of cluster operations and distinct failure domains, and simplifies multi-cluster management. In addition, with Multi-Cluster Routing, cluster selection becomes part of the scheduling process, allowing llm-d to evaluate clusters before endpoint selection begins. This establishes the foundation for a distributed scheduling framework capable of operating across an entire fleet of inference deployments.
 
 <div style={{textAlign: 'center', margin: '20px 0'}}>
   <img src="/img/blogs/multi-cluster-routing/router-hub-scheduling.webp" alt="A request enters the llm-d Router Hub from above and passes a filter, a scorer that reads metrics from clusters A, B and C, and a picker; the hub then sends it to one of the three clusters" style={{width: '85%', height: 'auto'}} />
   <p style={{fontSize: '0.9em', marginTop: '8px'}}><em>Figure 2. Inside the Router Hub, clusters go through the same filter, score and pick steps that endpoints go through inside a cluster, with each cluster's metrics feeding the scorer.</em></p>
 </div>
 
-The Multi-Cluster [Routing guide](https://github.com/llm-d/llm-d/pull/2600/) (available in llm-d github) shows how to deploy two llm-d inference pools across two Kubernetes clusters and route requests between them using the llm-d Router Hub. It includes a complete example showing cluster registration, routing-policy configuration, and traffic verification across serving clusters.
+The experimental Multi-Cluster [Routing guide](https://github.com/llm-d/llm-d/pull/2600/) (available in llm-d github) shows how to deploy two llm-d inference pools across two Kubernetes clusters and route requests between them using the llm-d Router Hub. It includes a complete example showing cluster registration, routing-policy configuration, and traffic verification across serving clusters.
 
 ## Looking Ahead
 
-With Multi-Cluster Routing llm-d extends beyond the boundaries of a single cluster introducing a new scheduling layer spanning multiple deployments. By enabling cluster selection before endpoint selection, it provides a foundation for operating distributed inference infrastructure as a unified serving platform.
+With experimental Multi-Cluster Routing, llm-d can extend beyond the boundaries of a single cluster introducing a new scheduling layer spanning multiple deployments. By enabling cluster selection before endpoint selection, it provides a foundation for operating distributed inference infrastructure as a unified serving platform.
 
 Once multiple clusters can serve a request, a natural question emerges: how should the system choose among them? In a follow-up post, we'll explore how latency-aware routing builds on Multi-Cluster Routing to evaluate routing candidates and guide cluster selection decisions.
 
