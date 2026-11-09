@@ -189,21 +189,15 @@ Across clean non-streaming runs, the median change from tracing off to 100% samp
 | Mean latency | +0.015% | +0.079% |
 | p99 latency | -0.091% | +0.181% |
 
-No workload shape produced a tracing effect larger than the variation between runs. Long inputs (8000 tokens) and long outputs (1000 tokens) increase model time per request without changing the number of EPP spans per request, so tracing becomes an even smaller fraction of end-to-end latency. Streaming did not change the result. Most of the EPP's spans are created while the request is scheduled, before any response is produced, so the delivery mode has little effect on how much tracing work the EPP does.
+The 800 requests/s and concurrency-128 stages are not included, because the load generator reached its own connection limit at every ratio, including tracing off. No other workload shape produced a tracing effect larger than the variation between runs. Long inputs (8000 tokens) and long outputs (1000 tokens) increase model time per request without changing the number of EPP spans per request, so tracing becomes an even smaller fraction of end-to-end latency. Streaming did not change the result. Most of the EPP's spans are created while the request is scheduled, before any response is produced, so the delivery mode has little effect on how much tracing work the EPP does.
 
-## What did not work, and why it matters
+## Limits of this study
 
-Several parts of the study did not go as planned. They are worth knowing before running a similar study.
+**Single runs.** Each fixed-load cell ran once. That is enough to rule out large effects, but not to estimate sub-percent ones, as the live 10% run shows.
 
-**The load generator ran out of connections before the EPP did.** The 800 requests/s and concurrency-128 stages failed at every sampling ratio, including tracing off, with `httpx.ConnectError: All connection attempts failed`. The EPP, gateway, and simulator stayed healthy throughout. The client hit its connection limit. Because the failure was identical with and without tracing, it says nothing about tracing, and we excluded those stages. It does mean tracing at sustained extreme concurrency remains unmeasured.
+**Configured versus effective ratio.** The sampler is parent-based: when a request arrives with a sampled `traceparent`, the EPP records it whatever `samplerArg` says. A traced gateway, payload processor, or client can turn a 10% EPP into a 100% EPP. We did not record Collector span counts in the final runs, so the ratios in this post are configured values. [Running tracing in production](#running-tracing-in-production) shows how to check the effective ratio.
 
-**An AIPerf sweep could not be used.** An earlier sweep with AIPerf had request errors in every run, and model execution dominated its latency and throughput. With errors in every cell and the EPP's contribution hidden under model time, it could not separate tracing from anything else, so we excluded it and used GuideLLM against the simulator instead.
-
-**One run per cell is not enough for sub-percent effects.** The live 10% cell was 8% to 11% faster than tracing off, and CPU moved in both directions between runs. A single run per configuration can rule out large effects but cannot estimate small ones. Three matched repetitions per cell are needed to put confidence intervals on the request-level numbers.
-
-**The configured ratio is not necessarily the effective ratio.** The sampler is parent-based: when a request arrives with a sampled `traceparent`, the EPP records it whatever `samplerArg` says. A traced gateway, payload processor, or client can turn a 10% EPP into a 100% EPP. The saved metrics from the final runs did not include Collector span counts, so the 1%, 10%, and 100% ratios in this post are configured values that we did not verify independently. The reproduction procedure now includes that check; see [Running tracing in production](#running-tracing-in-production).
-
-**CPU throttling was not observable.** The throttling query, based on `container_cpu_cfs_throttled_periods_total`, returned no series in every run. That does not show that throttling was zero, so we cannot say whether the 100% tail increase involved CFS throttling.
+**Scope.** The study covers one EPP replica on the default inference-scheduling path. It does not cover precise prefix-cache scoring, P/D disaggregation, or sustained load above 400 requests/s, and it did not measure CPU throttling of the EPP container.
 
 ## Running tracing in production
 
@@ -263,7 +257,7 @@ The study did not measure Collector or backend cost. At 100% sampling, every req
 
 ## Reproduce it
 
-The deployment values, GuideLLM scripts, Prometheus queries, pprof collection script, and full analysis are in the llm-d-router repository under [`test/perf/config/studyanalysis/epp_tracing_overhead`](https://github.com/llm-d/llm-d-router/tree/main/test/perf/config/studyanalysis/epp_tracing_overhead), added in [llm-d-router#3068](https://github.com/llm-d/llm-d-router/pull/3068). The [analysis](https://github.com/llm-d/llm-d-router/blob/main/test/perf/config/studyanalysis/epp_tracing_overhead_analysis.md) contains every number in this post.
+The deployment values, GuideLLM scripts, Prometheus queries, pprof collection script, and full analysis are in the llm-d-router repository under [`test/perf/config/studyanalysis/epp_tracing_overhead`](https://github.com/llm-d/llm-d-router/tree/main/test/perf/config/studyanalysis/epp_tracing_overhead). The [analysis](https://github.com/llm-d/llm-d-router/blob/main/test/perf/config/studyanalysis/epp_tracing_overhead_analysis.md) contains every number in this post.
 
 The procedure is:
 
@@ -288,7 +282,7 @@ This study answers the question for the default inference-scheduling path with o
 - **Repetitions.** Three matched runs per fixed-load cell, to put confidence intervals on the request-level numbers.
 - **Verified ratios.** Span counts from the Collector for every cell, so configured and effective ratios can be compared directly.
 - **Heavier scheduling paths.** Precise prefix-cache scoring and P/D disaggregation add spans per request (`produce_precise_prefix_cache`, `index_lookup`, `pick_disagg_profile`) and, on the precise path, an HTTP call to the engine's render endpoint inside the trace. The per-request tracing cost there is likely higher than on the path measured here.
-- **Extreme concurrency.** A load generator that can sustain more than 800 requests/s and concurrency 128 without exhausting its own connections.
+- **Higher load.** Sustained 800 requests/s and concurrency 128, which this study did not reach.
 - **Collector and backend cost.** The EPP is one part of the cost of tracing. The Collector and the trace store scale with sampled request rate and need their own measurements.
 
 Results from other deployments, hardware, and scheduling configurations are welcome as issues and discussions on GitHub and in the llm-d observability channels.
