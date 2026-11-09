@@ -722,3 +722,19 @@ radixark:
   socials:
     github: https://github.com/radixark
     website: https://www.radixark.com/
+
+albertoperdomo2:
+  name: Alberto Perdomo
+  title: AI Systems Performance Engineer, Red Hat
+  image_url: https://avatars.githubusercontent.com/u/62241095?v=4
+  socials:
+    github: https://github.com/albertoperdomo2
+    linkedin: albertoperdomo2
+
+rdoddaia:
+  name: Ramesh Doddaiah
+  title: Senior Principal Software Engineer, Red Hat
+  image_url: https://avatars.githubusercontent.com/u/284761970?v=4
+  socials:
+    github: https://github.com/rdoddaia
+    linkedin: rameshdoddaiah
