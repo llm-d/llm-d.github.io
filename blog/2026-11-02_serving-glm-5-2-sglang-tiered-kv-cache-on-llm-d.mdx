@@ -1,6 +1,6 @@
 ---
 title: "Serving GLM-5.2 on SGLang with llm-d: Wide-EP, Host DRAM, and Shared Storage"
-description: "How SGLang v0.5.23 with llm-d's Wide-EP P/D architecture, HiCache host DRAM, and rank-independent shared L3 storage performs on H200 GPUs for long-context agentic workloads."
+description: "How SGLang v0.5.23 with llm-d's Wide-EP P/D architecture, HiCache host DRAM, and rank-independent shared L3 storage performs on H200 GPUs — and when shared storage is worth its write-through cost."
 slug: serving-glm-5-2-sglang-tiered-kv-cache-on-llm-d
 date: 2026-11-02T09:00
 
@@ -24,61 +24,33 @@ export const Figure = ({src, alt, children, size = 'standard'}) => (
 
 # Serving GLM-5.2 on SGLang with llm-d: Wide-EP, Host DRAM, and Shared Storage
 
-In [Serving GLM-5.2 for Agentic Workloads on llm-d](/blog/serving-glm-5-2-agentic-workloads-on-llm-d), we showed how `llm-d` serves [GLM-5.2-FP8](https://huggingface.co/zai-org/GLM-5.2-FP8) (744B total parameters, 39B active, 78 layers) on NVIDIA H200 GPUs by combining wide expert parallelism (`DEP`), prefill/decode (`P/D`) disaggregation, prefix-cache-aware routing, Multi-Token Prediction (`MTP`), and CPU DRAM offloading. That post closed by pointing to the next architectural step: extending the KV cache hierarchy beyond per-node CPU DRAM to shared network storage so paused agent sessions, cross-rank spills, and restarted or scaled-out prefill replicas can restore saved KV state instead of recomputing repository-scale prompts.
+Interactive coding agents re-read repository-scale context on almost every turn, pause from seconds to nearly an hour while tests run or developers review diffs, and launch bursts of parallel subagents that share the same repository prefix. In [Serving GLM-5.2 for Agentic Workloads on llm-d](/blog/serving-glm-5-2-agentic-workloads-on-llm-d), we showed why GPU HBM fills up after only a handful of those sessions and how offloading evicted KV blocks to host DRAM keeps active conversations responsive. Yet host DRAM is still tied to one pod and one attention rank: whenever a prefill pod restarts, a Spot node is preempted, a pool scales out, or subagent bursts spill onto cold ranks, local memory starts empty and returning turns stall behind tens of seconds of GPU recomputation.
 
-This post puts that stack into practice and benchmarks it end to end on the **SGLang** variant of the [GLM-5.2 well-lit path](https://github.com/llm-d/llm-d/tree/main/guides/models/glm-5-2) (`MODEL_SERVER=sglang`), running SGLang `v0.5.23` on two 8-GPU NVIDIA H200 nodes (`p1w1d1w1`, 16 GPUs total) behind the `llm-d` inference router. Using SGLang's Hierarchical Cache (**HiCache**) on the prefill pool, we evaluate a three-tier KV cache hierarchy under data-parallel attention (`DEP8`: attention `TP=1, DP=8, EP=8`):
+Extending the KV cache to shared network storage decouples saved prefixes from individual pods and ranks, at the cost of background write-through traffic and network lookups during normal serving. This post puts that stack into practice on the **SGLang** variant of the [GLM-5.2 well-lit path](https://github.com/llm-d/llm-d/tree/main/guides/models/glm-5-2), running [GLM-5.2-FP8](https://huggingface.co/zai-org/GLM-5.2-FP8) on two 8-GPU NVIDIA H200 nodes (`16` GPUs total) behind the `llm-d` inference router, in two parts:
 
-* **L1 GPU HBM:** Per-rank high-bandwidth memory on each prefill GPU (`261,376` tokens per rank, `2.09M` tokens per node at `--mem-fraction-static 0.90`), paired with `383,552` tokens per rank (`3.07M` per node at `0.945`) on decode.
-* **L2 host DRAM:** Per-rank pinned host memory managed by SGLang HiCache (`98.4 GiB/rank` default via `--hicache-size 100` = `15.44M` tokens per node, scaling to `147.5 GiB/rank` via `--hicache-size 150` = `23.16M` tokens per node) using `direct` PCIe Gen5 DMA transfers (`page_first_direct`).
-* **Shared L3 storage:** SGLang HiCache's file storage backend (`--hicache-storage-backend file`) backed by a `ReadWriteMany` PersistentVolumeClaim (`hicache-fs`), providing a single deduplicated cache pool shared across all attention-DP ranks and prefill replicas. The backend's client-side metadata cache is enabled, so each rank remembers which pages already exist (scanned at startup and updated on every write and read) instead of asking the filesystem's metadata server for every page.
-
-Every load-sweep claim in this post uses the [AIPerf](https://github.com/ai-dynamo/aiperf) `900s` benchmark protocol (`--scenario inferencex-agentx-mvp --public-dataset semianalysis_cc_traces_weka_with_subagents --max-context-length 142000`) and the paused multi-turn conversation design from the [earlier vLLM GLM-5.2 post](/blog/serving-glm-5-2-agentic-workloads-on-llm-d), which gives a common workload protocol for an indicative comparison with those vLLM wide-EP runs.
+1. **Supporting GLM-5.2 Wide-EP on SGLang with `llm-d`:** how per-rank Rust HTTP servers, data-parallel attention with `deepep_v2` MoE dispatch, FlashMLA with DeepSeek Sparse Attention indexing, Mooncake `DMA-BUF` RDMA, and 3-step Multi-Token Prediction (`MTP`) fit together on `DEP8`.
+2. **Tiered KV offloading and when shared storage is worth it:** benchmarking SGLang's Hierarchical Cache (**HiCache**) across GPU HBM (`L1`), host DRAM (`L2`), and a shared `ReadWriteMany` filesystem (`Shared L3`) under sustained load, paused multi-turn conversations, and cold-DRAM or pod-restart recovery.
 
 <!-- truncate -->
 
 <!-- reading-time-exclude:start -->
 <details className="alert alert--success">
-<summary><strong>TL;DR: memory fit, HiCache L2 + EAGLE MTP gains, indicative vLLM comparison, and Shared L3 recovery</strong></summary>
+<summary><strong>TL;DR: SGLang Wide-EP stack, MTP gains, HiCache L2 scaling, and when Shared L3 pays off</strong></summary>
 
-* **Wide-EP (`DEP8`) gives every prefill GPU its own L1 KV pool: `261,376` tokens per GPU (`2.09M` per node) at `--mem-fraction-static 0.90`, plus `383,552` tokens per decode GPU at `0.945`.** Because GLM-5.2's MLA cache cannot be sharded by `TP`, data-parallel attention is what makes per-node KV capacity add up across the eight GPUs; host DRAM and shared storage then extend it by one to two orders of magnitude.
+* **Wide-EP (`DEP8`) gives each prefill GPU its own `261K`-token `L1` KV pool (`2.09M` tokens per node), extended by one to two orders of magnitude across host DRAM and shared storage.** Data-parallel attention avoids duplicating GLM-5.2's unshardable MLA cache across all eight GPUs, while per-rank Rust HTTP listeners and Mooncake `DMA-BUF` RDMA keep prefix-aware routing and prefill-to-decode transfers scalable.
 
-* **HiCache L2 host DRAM prevents L1 thrashing past concurrency 32 and raises `c128` output `3.94x`.** Without L2 offloading, server hit rate collapses to `6.0%` at `c128` (`174.2 s` median TTFT); adding `98.4 GiB/rank` (`--hicache-size 100`) of L2 DRAM over direct PCIe DMA holds hit rates at `85.3%–94.8%` and reaches **`1,256.8 tok/s` output at `c128` (`20.09 s` TTFT)**.
+* **3-step EAGLE Multi-Token Prediction (`MTP`) halves decode inter-token latency (`34.9 ms` → `16.4 ms` at `c128`) and raises output `1.15x–1.62x` at matched concurrency.** Under a `30 tok/s/user` interactivity floor, `no-mtp` tops out at concurrency `16` (`164.4 tok/s`), whereas MTP sustains `39.2 tok/s/user` through concurrency `64` (`1,085.1 tok/s` — **`6.6x` higher interactive output comparing `c64` against `c16`**).
 
-* **3-step EAGLE MTP halves decode latency and quadruples interactive concurrency.** Accepting `~2.97` tokens per verification step keeps end-to-end throughput above `30 tok/s/user` through concurrency `64` (`1,085.1 tok/s`), delivering **`6.6x` the interactive output** of the `no-mtp` baseline (`164.4 tok/s` at `c16`).
+* **HiCache `L2` host DRAM (`98.4 GiB/rank` over direct PCIe DMA) prevents `L1` thrashing past concurrency `32` and raises `c128` output `3.94x`.** Without host offloading, server hit rate collapses to `6.0%` at `c128` (`174.2 s` median TTFT); adding `L2` DRAM holds hit rates at `85.3%–94.8%` and reaches **`1,256.8 tok/s` output at `c128` (`20.1 s` TTFT)**.
 
-* **In an indicative cross-cluster comparison against the July vLLM runs, 16-GPU SGLang lowers `c128` median TTFT by 36% (`20.1 s` vs. `31.2 s`), while wider vLLM pools deliver higher raw output.** The two studies ran on different clusters, fabrics, build vintages, and router configs (GKE RoCE + Mooncake + current affinity-filter router vs. CoreWeave InfiniBand + NIXL + earlier dual-scorer router), while 16-GPU vLLM produced `19%` higher raw `c128` output (`1,501 tok/s`) and 2-node `DEP16` pools scaled further.
-
-* **Rank-independent Shared L3 storage (`hicache-fs`) cuts cold-DRAM recovery TTFT by `49%–57%`, trading `+14%–33%` median TTFT under sustained load (`+38%–43%` with paused sessions).** When sessions land on cold DP ranks or restarted prefill pods with empty DRAM, restoring prefixes from the shared RWX volume drops 16-session median TTFT from `38.8 s` to **`16.8 s` (`2.31x` faster)**, making DRAM-only `hicache` best for single steady-state replicas and `hicache-fs` suited to multi-replica, Spot, or restart-tolerant pools.
+* **Rank-independent `Shared L3` storage (`hicache-fs`) cuts cold-DRAM recovery TTFT by `49%–57%`, trading `+14%–33%` median TTFT under sustained load (`+38%–43%` on warm paused sessions).** When sessions land on cold DP ranks or restarted prefill pods with empty DRAM, restoring prefixes from the shared RWX volume drops 16-session median TTFT from `38.8 s` to **`16.8 s` (`2.31x` faster)** — making DRAM-only `hicache` best for single steady-state replicas and `hicache-fs` suited to multi-replica, Spot, or restart-tolerant pools.
 
 </details>
 <!-- reading-time-exclude:end -->
 
-## The shape of agentic traffic
+## Supporting GLM-5.2 Wide-EP on SGLang with `llm-d`
 
-As analyzed in the [vLLM GLM-5.2 post](/blog/serving-glm-5-2-agentic-workloads-on-llm-d#the-shape-of-agentic-traffic), interactive coding agents spend almost all of their token budget re-reading growing repository state across tool executions and subagent waves. In the [`semianalysisai/cc-traces-weka-062126`](https://huggingface.co/datasets/semianalysisai/cc-traces-weka-062126) production Claude Code trace corpus (`393` sessions, `98,827` requests: `56,798` main-agent turns and `42,029` subagent calls across `1,697` parallel fan-out groups), each turn appends a tool result or diff to the prior conversation prefix:
-
-| **Main-agent metric (`cc-traces-weka-062126`)** | **p50** | **p90** | **p99** |
-| :--- | :--- | :--- | :--- |
-| Input tokens per request (full corpus, 393 sessions) | 254K | 651K | 898K |
-| Input tokens per request (`<=142K` single-node `DEP8` subset) | 54.4K | 100.2K | 131.7K |
-| Output tokens per response | 616 | 3,502 | 10,346 |
-| Input-length growth from prior turn | 1,728 | 5,440 | 124.6K |
-| Post-response think gap (after prior turn completes) | 5.1 s | 2.3 min (140 s) | 55.9 min (3,354 s) |
-| Turns per session | 65 | 330 | 1,390 |
-| Prefix overlap with best earlier turn | 99.45% | 99.91% | 100.0% |
-| Subagent group fan-out size (`1,697` groups) | 16 | 47 | 175 |
-
-*Note on corpus versions and gap definitions:* This table summarizes all `393` sessions in the public `cc-traces-weka-062126` release and measures the **post-response think gap** (`next_arrival - prev_completion`). The earlier vLLM post summarized an initial `219`-session release (`195K` median input, `317` median output) and reported **inter-call wall-clock arrival gaps** (`2 s` p50 / `24 s` p90 / `11.4 min` p99). Both `900s` AIPerf sweeps replay the identical `semianalysis_cc_traces_weka_with_subagents` preset, and our paused-session replay uses the earlier `2.1 s` / `25.8 s` target pause schedule for comparability.
-
-Three workload characteristics directly shape the KV cache design:
-
-1. **Prefill dominates compute whenever prefixes miss cache.** Over `95.5%` of main-agent turns reuse at least `90%` of their prompt verbatim from an earlier turn, reading `50K–250K` input tokens to emit `~300–600` output tokens.
-2. **Inter-turn pauses span three orders of magnitude.** Quick CLI tool calls return in `2–5 seconds`, whereas test-suite runs, human code reviews, and developer context switches stretch pauses from minutes to nearly an hour (`55.9 min` p99), long enough for active traffic to evict idle sessions from GPU HBM and eventually host DRAM.
-3. **Subagent bursts and load balancing force cross-rank reads.** Over `42%` of requests arrive in concurrent subagent fan-out groups (`16` parallel requests at p50, `47` at p90) sharing a parent repository context across multiple data-parallel attention ranks.
-
-## How the SGLang wide-EP deployment works
-
-The SGLang GLM-5.2 recipe in [`guides/models/glm-5-2/modelserver/gpu/sglang`](https://github.com/llm-d/llm-d/tree/main/guides/models/glm-5-2/modelserver/gpu/sglang) deploys disaggregated prefill and decode pools via a Kubernetes `DisaggregatedSet` (two `LeaderWorkerSet` groups) fronted by the `llm-d` inference router (`Endpoint Picker` + Envoy):
+The SGLang GLM-5.2 recipe in [`guides/models/glm-5-2/modelserver/gpu/sglang`](https://github.com/llm-d/llm-d/tree/main/guides/models/glm-5-2/modelserver/gpu/sglang) deploys disaggregated prefill and decode pools through a Kubernetes `DisaggregatedSet` (two `LeaderWorkerSet` groups) behind the `llm-d` inference router (`Endpoint Picker` + Envoy):
 
 <Figure
   src="/img/blogs/glm52-sglang-tiered-kv/topology-tiered-architecture.png"
@@ -88,30 +60,24 @@ The SGLang GLM-5.2 recipe in [`guides/models/glm-5-2/modelserver/gpu/sglang`](ht
   <strong>Figure 1: SGLang Wide-EP architecture and three-tier KV cache on llm-d.</strong> The <code>llm-d</code> Endpoint Picker routes requests directly to individual per-rank Rust HTTP listeners (<code>:8000–8007</code>). Prefill ranks manage L1 GPU HBM, L2 host DRAM (<code>98.4–147.5 GiB/rank</code> via direct PCIe DMA), and a shared L3 RWX storage volume, then transfer KV and DSA indexer pages to decode over Mooncake DMA-BUF RDMA.
 </Figure>
 
-Five components work together in the SGLang `v0.5.23` stack on 8-GPU H200 nodes (tested on GKE A3 Ultra `a3-ultragpu-8g` with 8x ConnectX-7 RoCE NICs via Dynamic Resource Allocation):
+Five components work together in the SGLang `v0.5.23` stack on 8-GPU H200 nodes (tested on GKE A3 Ultra with 8x ConnectX-7 RoCE NICs via Dynamic Resource Allocation):
 
-* **Per-rank Rust HTTP listeners + `sglang-processor` (`SGLANG_RUST_SERVER=1`):** Rather than funneling 8 GPUs through one Python FastAPI process, each attention-DP rank runs its own Rust HTTP server (`:8000–8007` on prefill, `:8200–8207` behind the local `routing-proxy` on decode) with native Rust chat-template rendering and tokenization (`sglang-processor` in `v0.5.23`). All eight ports are registered in the `InferencePool` so the inference router dispatches directly to the rank holding the warm prefix.
-* **`deepep_v2` `hybrid` MoE dispatch:** Both pools run data-parallel attention with expert parallelism (`--tp-size 8 --attn-dp-size 8 --ep-size 8` on 1-node `DEP8`, or `16` on 2-node `DEP16`) using `--moe-a2a-backend deepep_v2 --deepep-v2-mode hybrid`, which dispatches over NVLink within a single node and combines inter-node NCCL GIN RDMA with NVLink across multi-node groups.
-* **FlashMLA + DeepSeek Sparse Attention (`DSA`) lightning indexer:** GLM-5.2 pairs compressed FP8 MLA KV state (`--kv-cache-dtype fp8_e4m3`) with a 22-layer DSA lightning indexer (`--dsa-prefill-backend flashmla_kv --dsa-decode-backend flashmla_kv`, `page_size=64`). Both the MLA latent cache and the DSA indexer cache travel together across L1, L2, L3, and P/D RDMA transfers.
-* **Mooncake GPUDirect RDMA with Linux `DMA-BUF`:** Prefill streams KV and indexer blocks to decode via the Mooncake transfer engine (`--disaggregation-transfer-backend mooncake`). Setting `WITH_NVIDIA_PEERMEM=0` registers HBM tensors through `ibv_reg_dmabuf_mr` on Container-Optimized OS with the NVIDIA open kernel driver, sustaining zero transfer errors across multi-hour load sweeps.
-* **3-step EAGLE Multi-Token Prediction (`MTP`):** Both roles run 3-step EAGLE speculative decoding (`--speculative-algorithm EAGLE --speculative-num-steps 3 --speculative-num-draft-tokens 4 --speculative-moe-a2a-backend none`).
+* **Per-rank Rust HTTP listeners and `sglang-processor`:** Rather than funneling eight GPUs through one Python HTTP server, each attention-DP rank exposes its own Rust HTTP listener (`:8000–8007` on prefill, `:8200–8207` behind the local `routing-proxy` on decode) with native Rust chat-template rendering and tokenization. Registering all eight ports in the `InferencePool` lets the inference router steer returning turns directly to the rank holding the warm prefix.
+* **Data-parallel attention (`DEP8`) with `deepep_v2` `hybrid` MoE dispatch:** As detailed in the [earlier GLM-5.2 post](/blog/serving-glm-5-2-agentic-workloads-on-llm-d#fitting-repository-scale-sessions-in-memory), GLM-5.2's Multi-Head Latent Attention (`MLA`) stores one shared latent vector per token that standard tensor parallelism would duplicate across all eight GPUs. Running data-parallel attention alongside expert parallelism (`TP=1, DP=8, EP=8` on one node, or `16` across two nodes) partitions MoE weights across GPUs while giving every rank an independent KV pool, using `deepep_v2` `hybrid` to dispatch tokens over NVLink within a node and NCCL GIN RDMA across nodes.
+* **FlashMLA and DeepSeek Sparse Attention (`DSA`) indexing:** GLM-5.2 pairs FP8 MLA KV state with a 22-layer DSA lightning indexer in 64-token pages. Both the MLA cache and the DSA indexer cache move together across `L1`, `L2`, `L3`, and prefill-to-decode RDMA transfers.
+* **Mooncake GPUDirect RDMA over Linux `DMA-BUF`:** Prefill streams KV and indexer blocks to decode via the Mooncake transfer engine. Setting `WITH_NVIDIA_PEERMEM=0` registers GPU memory through `ibv_reg_dmabuf_mr`, sustaining error-free GPUDirect RDMA on Container-Optimized OS with the NVIDIA open kernel driver without legacy `nvidia_peermem`.
+* **3-step Multi-Token Prediction (`MTP`) via EAGLE:** Both pools drive GLM-5.2's built-in 1-layer NextN draft head through SGLang's 3-step EAGLE speculative-decoding loop, proposing three draft tokens per decode step and verifying four tokens in one target forward pass.
 
-## Fitting repository-scale sessions in memory under `DEP8`
+### Memory fit across GPU HBM, host DRAM, and shared storage
 
-### Why data-parallel attention (`DEP8`) replaces `TP=8`
-
-GLM-5.2's Multi-Head Latent Attention (`MLA`) compresses each token's KV state into a single shared latent vector instead of per-head K and V tensors. Standard tensor parallelism (`TP=8`) cannot shard that single latent across heads, so it **replicates identical copies of the MLA KV cache across all 8 GPUs**, shrinking effective node KV capacity by `8x`. Under `DEP8` (`TP=1, DP=8, EP=8` on attention), MoE expert weights are partitioned across all 8 GPUs while each GPU maintains an **independent KV pool** for the sessions routed to its port.
-
-### Per-GPU HBM breakdown and multi-tier token capacity
-
-To keep capacity arithmetic consistent across tiers, all memory figures below use **binary units (`KiB`, `MiB`, `GiB`, `TiB`)**. Note two SGLang conventions when reading raw logs and flags: SGLang's startup log prints `"GB"` for GPU HBM pools that are actually computed in binary `GiB` (`bytes / 2^30`, so `14.03 GiB / 261,376 tokens = 56.3 KiB/tok`), whereas `--hicache-size` (`HICACHE_SIZE_GB_PER_RANK`) specifies **decimal `GB` (`10^9` bytes)** for the host MLA+MTP KV pool before adding the DSA indexer pool (`--hicache-size 100` pins `93.13 GiB` MLA+MTP KV + `5.22 GiB` DSA indexer = `98.35 GiB/rank` at `53.4 KiB/tok`, making the MLA+MTP host pool about `7%` smaller than a binary `100 GiB/rank` cache).
+On a single 8-GPU `DEP8` prefill node, `261,376` `L1` tokens per rank comfortably fits our `142,000`-token per-request admission cap with `119K` tokens of spare headroom, yet the entire node holds only `2.09M` tokens in HBM — roughly 20 to 35 repository-scale sessions before active turns start evicting one another. Adding pinned host DRAM via HiCache expands node capacity by an order of magnitude (`17.5M–25.3M` tokens), and mounting a shared `ReadWriteMany` volume (`9,000 GiB` Google Cloud Managed Lustre instance in our testbed) adds a `~163M`-token deduplicated pool shared across all ranks and replicas:
 
 <Figure
   src="/img/blogs/glm52-sglang-tiered-kv/hbm-and-tier-capacity.png"
   alt="Measured SGLang per-GPU HBM breakdown on DEP8 and DEP16 alongside multi-tier token capacity"
   size="wide"
 >
-  <strong>Figure 2: Measured SGLang HBM allocation and multi-tier prefix capacity on H200.</strong> Left: SGLang startup allocations on H200 (<code>140.4 GiB</code> usable HBM/GPU) for <code>DEP8</code> prefill (<code>0.90</code> = <code>261K</code> tokens/rank), <code>DEP8</code> decode (<code>0.945</code> = <code>384K</code> tokens/rank), and 2-node <code>DEP16</code> (<code>0.85</code> = <code>965K</code> tokens/rank). Right: effective prefill token capacity from L1 HBM (with the <code>~182K/rank = 1.46M/node</code> vLLM <code>DEP8</code> reference from the July run) through L2 host DRAM and the shared L3 pool.
+  <strong>Figure 2: Measured SGLang HBM allocation and multi-tier prefix capacity on H200.</strong> Left: SGLang startup allocations on H200 (<code>140.4 GiB</code> usable HBM/GPU) for <code>DEP8</code> prefill (<code>0.90</code> = <code>261K</code> tokens/rank), <code>DEP8</code> decode (<code>0.945</code> = <code>384K</code> tokens/rank), and 2-node <code>DEP16</code> (<code>0.85</code> = <code>965K</code> tokens/rank). Right: effective prefill token capacity from per-node L1 HBM through L2 host DRAM and the shared L3 pool.
 </Figure>
 
 | **Memory Tier (binary units)** | **Per `DEP8` Rank (1x H200)** | **Per `DEP8` Node (8x H200)** | **Exact Allocation Breakdown (from SGLang startup logs)** |
@@ -124,22 +90,49 @@ To keep capacity arithmetic consistent across tiers, all memory figures below us
 | **Prefill L2 host DRAM (`--hicache-size 150`)** | **2,894,464 tokens** (`45,226` pages, `147.53 GiB`) | **23,155,712 tokens** (`361,808` pages, `1,180.2 GiB`) | `139.70 GiB` (`150.0 GB`) pinned MLA+MTP KV + `7.83 GiB` (`8.4 GB`) DSA indexer (`25.25M` L1+L2/node) |
 | **Shared L3 storage (`hicache-fs`)** | Shared RWX namespace (`3.42 MiB` / 64-tok page) | **~163M tokens** on a `9,000 GiB` volume (after the `500 GiB` free-space floor) | Two files per 64-token page: `3.24 MiB` `.bin` (MLA+MTP KV) + `0.18 MiB` `.indexer.bin` (DSA indexer) |
 
-At `--mem-fraction-static 0.90`, `261,376` L1 tokens per `DEP8` prefill rank (compared with `~182K` reported in the earlier vLLM `DEP8` run, where differences in runtime profiling workspace and MoE buffer reservations likely account for the gap) accommodates the `142,000`-token single-request admission cap with `119K` tokens of spare L1 headroom per rank.
+*Unit note:* All table values use binary units (`KiB`, `MiB`, `GiB`, `TiB`). SGLang's startup log prints `"GB"` for GPU HBM pools that are computed in binary `GiB` (`14.03 GiB / 261,376 tokens = 56.3 KiB/tok`), whereas `--hicache-size` (`HICACHE_SIZE_GB_PER_RANK`) specifies decimal `GB` (`10^9` bytes) for the host MLA+MTP pool before adding the DSA indexer pool (`--hicache-size 100` pins `93.13 GiB` MLA+MTP KV + `5.22 GiB` indexer = `98.35 GiB/rank`).
 
-## Tiered KV offloading under sustained load (`900s` stages)
+### EAGLE Multi-Token Prediction (`MTP`) on 16x H200
 
-We run `aiperf profile --scenario inferencex-agentx-mvp` (`--max-context-length 142000`, `900s` profiling window per concurrency after warmup, `0` failed requests across every run) across concurrency `16, 32, 64, 128` on three `16`-GPU `p1w1d1w1` arms:
+To isolate what 3-step speculative decoding contributes on the SGLang Wide-EP stack before varying storage tiers, we run the `900s` [AIPerf](https://github.com/ai-dynamo/aiperf) `inferencex-agentx-mvp` sweep (`142K`-token admission cap on the [`cc-traces-weka-062126`](https://huggingface.co/datasets/semianalysisai/cc-traces-weka-062126) Claude Code trace corpus, `0` failed requests across all runs) on `16`-GPU `p1w1d1w1` with `98.4 GiB/rank` of `L2` host DRAM enabled in both arms — comparing `p1w1d1w1` (`EAGLE MTP`) against `benchmark/no-mtp/p1w1d1w1` (`No-MTP`):
 
-1. **`L1 GPU HBM only` (`baseline`):** no host tier (`261.4K` L1 tokens/rank).
-2. **`L1 + L2 Host DRAM` (`p1w1d1w1` default):** `98.4 GiB/rank` of pinned host DRAM behind L1 (`2.19M` L1+L2 tokens/rank).
-3. **`L1 + L2 + Shared L3` (`hicache-fs`):** adds write-through persistence of every host page to a shared RWX filesystem (`9,000 GiB` Google Cloud Managed Lustre testbed volume), and waits for storage prefetches on a hit so a matched prefix is restored rather than recomputed.
+<Figure
+  src="/img/blogs/glm52-sglang-tiered-kv/mtp-frontier.png"
+  alt="Throughput versus user interactivity frontier and median inter-token latency with and without EAGLE MTP on SGLang"
+  size="wide"
+>
+  <strong>Figure 3: Output throughput and streaming speed with and without EAGLE MTP on 16x H200.</strong> Left: accepting <code>~2.97</code> tokens per verification step shifts the throughput-interactivity frontier up and right, sustaining <code>&gt;=30 tok/s/user</code> through <code>c64</code> (<code>1,085.1 tok/s</code>) versus only <code>c16</code> without MTP (<code>164.4 tok/s</code>). Right: median ITL drops by roughly half at every concurrency level.
+</Figure>
+
+| **Concurrency (`900s`, `98.4 GiB` L2 in both)** | **`No-MTP` Output (`tok/s`)** | **`EAGLE MTP` Output (`tok/s`)** | **`No-MTP` ITL p50 (`ms`)** | **`EAGLE MTP` ITL p50 (`ms`)** | **`No-MTP` E2E (`tok/s/user`)** | **`EAGLE MTP` E2E (`tok/s/user`)** | **`No-MTP` / `MTP` TTFT p50 (`s`)** |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **`c16`** | `164.4` | **`188.8` (`1.15x`)** | `21.30` | **`11.08` (`1.92x` faster)** | `35.6` | **`61.7` (`1.73x`)** | `2.98` / `3.05` |
+| **`c32`** | `436.4` | **`708.5` (`1.62x`)** | `27.81` | **`14.33` (`1.94x` faster)** | `29.1` *(below 30)* | **`53.1` (`1.82x`)** | `3.08` / `3.16` |
+| **`c64`** | `767.9` | **`1,085.1` (`1.41x`)** | `32.18` | **`15.71` (`2.05x` faster)** | `24.4` | **`39.2` (`1.61x`)** | `3.21` / `3.77` |
+| **`c128`** | `1,032.9` | **`1,256.8` (`1.22x`)** | `34.92` | **`16.41` (`2.13x` faster)** | `16.0` | **`19.6` (`1.23x`)** | `11.66` / `20.09` |
+
+Across all four stages, GLM-5.2's MTP head averages **`2.97` accepted tokens per verification step**, cutting median inter-token latency by **48%–53%** and raising total output by **`1.15x–1.62x` at matched concurrency** (`1.41x` at `c64`). The larger practical gain appears when enforcing a **`30 tok/s/user` interactivity bar**: without MTP, per-user throughput drops below `30 tok/s/user` past `c16` (`164.4 tok/s`), whereas MTP sustains `39.2 tok/s/user` at `c64` (`1,085.1 tok/s`) — **`6.6x` higher interactive output comparing `c64` with MTP against `c16` without MTP**.
+
+At `c128`, `no-mtp` reports a lower median TTFT (`11.66 s` vs. `20.09 s`) even though it finishes fewer turns and produces `18%` less output. Because slower decode keeps simulated users in generation more than twice as long, fewer of the 128 users return to the prefill queue at the same time (and disabling the draft head also skips draft-layer work during prefill), illustrating why lower TTFT alone does not indicate better overall performance.
+
+## Tiered KV offloading: host DRAM and the Shared L3 trade-off
+
+With the `16`-GPU `p1w1d1w1` Wide-EP stack and EAGLE MTP held fixed, we evaluate three prefill cache configurations to separate what local host DRAM solves from where shared storage pays off:
+
+1. **`L1 GPU HBM only` (`benchmark/baseline/p1w1d1w1`):** GPU memory only (`261.4K` tokens/rank).
+2. **`L1 + L2 Host DRAM` (`p1w1d1w1` default):** adds pinned host DRAM behind `L1` via direct PCIe Gen5 DMA (`page_first_direct`).
+3. **`L1 + L2 + Shared L3` (`benchmark/hicache-fs/p1w1d1w1`):** adds write-through persistence of host pages to a shared `ReadWriteMany` filesystem (`9,000 GiB` Managed Lustre volume) with HiCache's client-side metadata cache enabled so each rank remembers pages it has already written or read, and waits for storage prefetches on a hit so matched prefixes are restored rather than recomputed.
+
+Because a steady-state load sweep only exercises warm local memory, we test all three configurations across **sustained concurrency**, **paused multi-turn sessions**, and **cold-DRAM recovery**.
+
+### 1. Sustained high-concurrency load (`900s` stages)
 
 <Figure
   src="/img/blogs/glm52-sglang-tiered-kv/tiered-offloading-scaling.png"
   alt="Four-panel comparison of L1-only, L1+L2 Host DRAM, and L1+L2+Shared L3 across concurrency 16 to 128"
   size="wide"
 >
-  <strong>Figure 3: HiCache L2 and Shared L3 keep the 16-GPU SGLang layout scaling through concurrency 128.</strong> Without L2 offloading, L1 HBM thrashes past concurrency 32, collapsing output to <code>319 tok/s</code> and driving median TTFT to <code>174.2 s</code> at <code>c128</code>. Adding <code>98.4 GiB/rank</code> L2 host DRAM scales output <code>3.94x</code> to <code>1,257 tok/s</code>, while <code>write_through</code> to Shared L3 stays within <code>8%–9%</code> of L2 output while trading <code>14%–33%</code> higher median TTFT for persistent cross-rank state.
+  <strong>Figure 4: HiCache L2 and Shared L3 across concurrency 16 to 128 on 16x H200.</strong> Without L2 offloading, L1 HBM thrashes past concurrency 32, collapsing output to <code>319 tok/s</code> and driving median TTFT to <code>174.2 s</code> at <code>c128</code>. Adding <code>98.4 GiB/rank</code> L2 host DRAM raises <code>c128</code> output <code>3.94x</code> to <code>1,257 tok/s</code>, while write-through Shared L3 stays within <code>8%–9%</code> of L2 output while trading <code>14%–33%</code> higher median TTFT for persistent cross-rank state.
 </Figure>
 
 | **16-GPU `p1w1d1w1` (`900s`, `142K` cap)** | **Conc** | **Reqs (`err`)** | **Theo / Server Hit** | **TTFT p50 / p90 (s)** | **ITL p50 / p90 (ms)** | **Turn p50 / p90 (s)** | **Input Tok/s** | **Output Tok/s** | **E2E Tok/s/User** |
@@ -157,120 +150,63 @@ We run `aiperf profile --scenario inferencex-agentx-mvp` (`--max-context-length 
 | **`L1 + L2 + Shared L3`** | `64` | `1,447 (0)` | `93.2%` / **`92.9%`** | **`5.00`** / `24.55` | `15.35` / `18.63` | **`12.55`** / `39.91` | `85,030` | **`999.0`** | `33.3` |
 | **`L1 + L2 + Shared L3`** | `128` | `1,555 (0)` | `93.1%` / **`90.3%`** | **`26.03`** / `58.58` | `16.15` / `19.75` | **`34.07`** / `72.90` | `96,247` | **`1,139.7`** | `16.7` |
 
-Three clear patterns emerge across the 12 `900s` runs:
+Three clear patterns emerge across the 12 runs:
 
-1. **The `2.09M`-token L1 HBM pool holds up through `c32`, then hits a cliff at `c64` (`38.1%` hit) and `c128` (`6.0%` hit).** With `261K` L1 tokens per rank, `baseline` comfortably serves `16–32` concurrent sessions (`2–4` per rank, `747.3 tok/s` output and `3.10 s` TTFT at `c32`). At `c64` (`8` sessions/rank, `~3.2M–4.5M` active tokens), active conversations evict one another between turns: server hit rate drops to `38.1%`, median TTFT jumps **17.8x** (`3.10 s -> 55.28 s`), and aggregate output falls backward to `456.0 tok/s`. At `c128`, L1 hit rate collapses to `6.0%`, median TTFT hits `174.19 s`, and output drops to `319.0 tok/s` while decode sits mostly idle (`11.15 ms` ITL, average decode batch `1.23`).
-2. **HiCache L2 (`98.4 GiB/rank`) turns the `c64–c128` cliff into smooth scaling (`2.38x` and `3.94x` output).** Expanding node capacity to `17.53M` tokens keeps server hit rate at **`90.2%` (`c64`) and `88.5%` (`c128`)**. At `c64`, median TTFT drops **14.7x** (`55.28 s -> 3.77 s`) and output rises **2.38x** (`456.0 -> 1,085.1 tok/s`, `39.2 tok/s/user` end-to-end). At `c128`, input throughput reaches **`108,304 tok/s`** (`4.51x` baseline) and output reaches **`1,256.8 tok/s`** (`3.94x` baseline).
-3. **`Shared L3` (write-through) stays within `8%–9%` of L2 output while raising median TTFT by `14%–33%`.** Across the sweep, `hicache-fs` persisted **`1,059,497` files (`529,748` pages = `33.9M` unique tokens = `1.77 TiB` on disk)** and completed `70` live cross-rank L3 prefetches when load-balancing spilled subagent branches to sibling DP ranks (`35` prefetches / `1.69M` tokens at `c128`), lifting server hit rate above L2-only at `c32` (`85.3% -> 91.6%`), `c64` (`90.2% -> 92.9%`), and `c128` (`88.5% -> 90.3%`). Median TTFT still rises by **`+14%` at `c16` (`3.49` vs. `3.05 s`), `+26%` at `c32` (`3.98` vs. `3.16 s`), `+33%` at `c64` (`5.00` vs. `3.77 s`), and `+30%` at `c128` (`26.03` vs. `20.09 s`)** (with similar `p90` shifts) despite the higher hit rate, for three reasons:
-   * **Write-through backups compete with restores.** Every newly written host page is also written to storage by a per-rank background thread, which shares host memory bandwidth and Python execution time with the thread that restores pages from host DRAM to the GPU.
-   * **Storage lookups for pages nobody has written yet.** Whenever a request carries pages that are not in host DRAM, the scheduler first checks whether they exist on the shared filesystem. The client-side metadata cache answers for pages a rank has already seen, but a brand-new page still costs one metadata lookup per 64-token page over the network before it can be prefilled.
-   * **A cross-rank hit waits for the network read.** When a spilled subagent turn finds its prefix in Shared L3 instead of local DRAM, prefill waits for the remote read to finish (`~1.4 GiB/s` per rank from Lustre vs. `~42 GiB/s` from host DRAM over PCIe) in exchange for skipping GPU recomputation.
+1. **`L1` HBM holds up through `c32`, then thrashes at `c64` and `c128`.** While 16 to 32 active sessions fit inside the `2.09M`-token node `L1` pool (`3.1 s` median TTFT), scaling to `c64` and `c128` causes active conversations to evict one another between turns. Server hit rate falls to `38.1%` and then `6.0%`, median TTFT climbs to `174.2 s`, and total output drops backward to `319.0 tok/s` while decode sits mostly idle.
+2. **`L2` host DRAM turns that cliff into smooth scaling (`3.94x` `c128` output).** Adding `98.4 GiB/rank` of pinned host DRAM holds server hit rates at `85.3%–94.8%` across the full sweep. At `c64`, median TTFT drops from `55.3 s` to `3.77 s` while output more than doubles to `1,085.1 tok/s`; at `c128`, input throughput reaches `108,304 tok/s` and total output reaches `1,256.8 tok/s` — saturating the single `DEP8` prefill node (`98.8%` of processed tokens are input tokens).
+3. **Write-through `Shared L3` stays within `8%–9%` of `L2` output while adding `14%–33%` to median TTFT.** Across the sweep, `hicache-fs` persisted `33.9M` unique tokens (`1.77 TiB`) to shared storage and completed `70` live cross-rank restores when load balancing spilled subagent branches onto sibling DP ranks, lifting hit rates slightly above `L2`-only from `c32` through `c128`. Median TTFT still rises by `14%–33%` across stages for three reasons:
+   * **Write-through backups compete with restores.** A background thread on each rank writes newly created host pages to storage, sharing host memory bandwidth and Python execution time with DRAM-to-GPU restores.
+   * **Brand-new pages still check the filesystem.** The client-side metadata cache avoids network calls for pages a rank has already seen, but every unseen 64-token page still pays one remote metadata lookup before prefill proceeds.
+   * **Cross-rank L3 hits wait on network reads.** When a spilled subagent turn restores its prefix from shared storage rather than local DRAM, prefill waits for the network read (`~1.4 GiB/s` per rank vs. `~42 GiB/s` over local PCIe) in exchange for skipping GPU recomputation.
 
-## EAGLE Multi-Token Prediction (`MTP`) attribution
+### 2. Paused multi-turn conversations (`100, 200, 350` sessions on 16 GPUs)
 
-To isolate what 3-step EAGLE speculative decoding contributes on SGLang when L2 offloading is active in both runs, we compare `p1w1d1w1` (`EAGLE MTP + 98.4 GiB L2`) against `benchmark/no-mtp/p1w1d1w1` (`No-MTP + 98.4 GiB L2`) across the same `900s` `142K`-cap concurrency sweep:
-
-<Figure
-  src="/img/blogs/glm52-sglang-tiered-kv/mtp-frontier.png"
-  alt="Throughput versus user interactivity frontier and median inter-token latency with and without EAGLE MTP on SGLang"
-  size="wide"
->
-  <strong>Figure 4: Output throughput and streaming speed with and without EAGLE MTP on 16x H200.</strong> Left: accepting <code>~2.97</code> tokens per decode verification step shifts the throughput-interactivity frontier up and right, keeping per-user end-to-end throughput above <code>30 tok/s/user</code> through <code>c64</code> (<code>4x</code> the concurrency and <code>6.6x</code> the total output of <code>no-mtp</code>). Right: median ITL drops by half across every concurrency level (<code>21.3–34.9 ms -&gt; 11.1–16.4 ms</code>).
-</Figure>
-
-| **Concurrency (`900s`, `98.4 GiB` L2 in both)** | **`No-MTP` Output (`tok/s`)** | **`EAGLE MTP` Output (`tok/s`)** | **`No-MTP` ITL p50 (`ms`)** | **`EAGLE MTP` ITL p50 (`ms`)** | **`No-MTP` E2E (`tok/s/user`)** | **`EAGLE MTP` E2E (`tok/s/user`)** | **`No-MTP` / `MTP` TTFT p50 (`s`)** |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`c16`** | `164.4` | **`188.8` (`1.15x`)** | `21.30` | **`11.08` (`1.92x` faster)** | `35.6` | **`61.7` (`1.73x`)** | `2.98` / `3.05` |
-| **`c32`** | `436.4` | **`708.5` (`1.62x`)** | `27.81` | **`14.33` (`1.94x` faster)** | `29.1` *(below 30)* | **`53.1` (`1.82x`)** | `3.08` / `3.16` |
-| **`c64`** | `767.9` | **`1,085.1` (`1.41x`)** | `32.18` | **`15.71` (`2.05x` faster)** | `24.4` | **`39.2` (`1.61x`)** | `3.21` / `3.77` |
-| **`c128`** | `1,032.9` | **`1,256.8` (`1.22x`)** | `34.92` | **`16.41` (`2.13x` faster)** | `16.0` | **`19.6` (`1.23x`)** | `11.66` / `20.09` |
-
-Across all four stages, SGLang's 3-step EAGLE draft head (`--speculative-num-steps 3 --speculative-num-draft-tokens 4`) averages **`2.91–3.04` accepted tokens per verification step (`2.97` mean)**, cutting median ITL by **48%–53%** (`34.92 ms -> 16.41 ms` at `c128`). Without MTP, per-user end-to-end throughput drops below the `30 tok/s/user` interactivity bar as soon as concurrency reaches `32` (`29.1 tok/s/user`), limiting interactive serving on 16 GPUs to `c16` (`164.4 tok/s`). With EAGLE MTP, the same 16 GPUs sustain **`39.2 tok/s/user` at `c64` while producing `1,085.1 tok/s` (`6.6x` more interactive output)**.
-
-Notice one Closed-Loop Little's Law subtlety at `c128`: `no-mtp` shows a lower median TTFT (`11.66 s` vs. `20.09 s`) even though `EAGLE MTP` completes more turns (`1,753` vs. `1,630`) and delivers `22%` higher output. Because each `no-mtp` request spends `2.13x` longer in the decode pool (`34.9 ms/tok` vs. `16.4 ms/tok`, holding an average decode batch of `5.12` vs. `2.90`), fewer of the `128` closed-loop users cycle back into the prefill queue at once, and disabling the `5.04 GiB` MTP draft model also removes draft-layer forward work during prefill chunks.
-
-## Indicative comparison with vLLM wide-EP runs
-
-Both studies run the same `900s` `aiperf` `inferencex-agentx-mvp` workload (`--max-context-length 142000`, 3-step MTP, and per-rank CPU/host DRAM offloading) on 8-GPU H200 nodes. However, the vLLM figures come from the [July GLM-5.2 post](/blog/serving-glm-5-2-agentic-workloads-on-llm-d) rather than the same cluster, so **four confounds make this comparison indicative rather than a controlled head-to-head**:
-
-* **Cluster, fabric, and KV transport:** GKE A3 Ultra with ConnectX-7 RoCE + Mooncake (`DMA-BUF`) for SGLang versus CoreWeave CKS with InfiniBand + NIXL (`IBGDA`) for vLLM.
-* **Engine build vintage:** October SGLang `v0.5.23-cu130` versus a three-month-older July vLLM build.
-* **Inference router policy:** SGLang used the current prefix-cache-affinity filter + token-load scorer, whereas the July vLLM runs predate that change and used the earlier dual GPU+CPU prefix-cache and active-request scorers (vLLM numbers under the current router policy are not yet available).
-* **Host cache sizing:** SGLang's `--hicache-size 100` pins `93.13 GiB` MLA+MTP KV (`98.35 GiB` with DSA indexer) per rank, about `7%` smaller than vLLM's binary `100 GiB/rank` CPU cache.
-
-Running vLLM `p1w1d1w1` on the same GKE RoCE cluster under the current router is the direct next step to isolate pure engine differences. With those caveats clear, placing the operating points side by side highlights where the 16-GPU SGLang recipe is strong today and where wider pools scale further:
-
-<Figure
-  src="/img/blogs/glm52-sglang-tiered-kv/sglang-vs-vllm-frontier.png"
-  alt="Indicative four-panel comparison of SGLang on GKE RoCE and the July vLLM wide-EP runs on H200"
-  size="wide"
->
-  <strong>Figure 5: Indicative comparison of SGLang vs. vLLM wide-EP runs on H200.</strong> Top: across <code>DEP8</code> prefill runs at <code>c128</code>, SGLang 16-GPU (<code>P8·D8</code>) reaches <code>20.1 s</code> median TTFT and <code>19.6 tok/s/user</code> E2E versus <code>31.2 s</code> and <code>15.6 tok/s/user</code> in the July 16-GPU vLLM run (and close to the 24-GPU <code>P8·D16</code> run's <code>20.9 s</code> / <code>18.2 tok/s/user</code>). Bottom-left: per-decode-GPU output vs. E2E user speed. Bottom-right: sweep ITL is comparable (<code>14.3–16.4 ms</code> on SGLang's prefill-bound 8-GPU <code>DEP8</code> decoder vs. <code>13.5–17.1 ms</code> on vLLM's 16-GPU <code>DEP16</code> decoder).
-</Figure>
-
-| **Deployment (`900s`, `142K` cap, MTP + host offload)** | **GPUs (Layout)** | **`c128` TTFT p50 (`s`)** | **`c128` E2E (`tok/s/user`)** | **`c128` Total Output (`tok/s`)** | **`c128` Output / Decode GPU** | **Sweep ITL p50 (`c32–c128`)** |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **vLLM `p1w1d1w1`** *(July IB + prior router)* | `16` (`P DEP8 · D DEP8`) | `31.2` | `15.6` | `1,501` | `187.6` | — |
-| **vLLM `p1w1d1w2`** *(July IB + prior router)* | `24` (`P DEP8 · D DEP16`) | `20.9` | `18.2` | `3,233` | `202.1` | — |
-| **vLLM `p1w2d1w2`** *(July IB + prior router)* | `32` (`P DEP16 · D DEP16`) | `2.38` | `35.0` | `5,647` | `352.9` | `13.5–17.1 ms` |
-| **SGLang `p1w1d1w1` (`L1 + L2`, GKE RoCE + current router)** | **`16` (`P DEP8 · D DEP8`)** | **`20.09` (`-36%` vs. 16G)** | **`19.6` (`+26%` vs. 16G)** | `1,256.8` | `157.1` | `14.3–16.4 ms` |
-
-### Observations on `DEP8` latency, E2E responsiveness, and sweep ITL
-1. **Lower `DEP8` queueing latency on 16 GPUs (`20.09 s` vs. `31.2 s` TTFT, `19.6` vs. `15.6 tok/s/user`):** On `p1w1d1w1` at `c128`, SGLang's median TTFT is `36%` lower than the July 16-GPU vLLM run and essentially tied with the 24-GPU `p1w1d1w2` run (`20.09 s` vs. `20.9 s`, within stage-to-stage variance). Several factors contribute together: SGLang's `1.44x` larger `DEP8` L1 KV pool (`261K` vs. `182K` tokens/rank, keeping `630K` more hot tokens in HBM per prefill node), per-rank Rust HTTP listeners (`sglang-processor`) + direct PCIe DMA (`page_first_direct`), and the newer prefix-cache-affinity + token-load router policy.
-2. **Comparable `~14–17 ms` sweep ITL under different decoder loads:** Across `c32–c128`, SGLang's 8-GPU `DEP8` decode pool records `14.33–16.41 ms` median ITL with CUDA-graphed 3-step EAGLE (`2.97` accepted tokens/step), comparable to the `13.5–17.1 ms` median ITL reported on vLLM's 16-GPU `DEP16` decoder in `p1w2d1w2`. Note, however, that these two decoders carry very different active batches at `c128`: SGLang's single `DEP8` prefill node bottlenecks the loop (`2.90` average active decode requests), whereas `p1w2d1w2`'s `DEP16` prefill feeds `3.5x–4.5x` higher aggregate output through its 16-GPU decoder (`5,647` vs. `1,256.8 tok/s`).
-
-### Where vLLM's wider pools deliver higher raw output
-At `c128`, the July 16-GPU vLLM run produced **`19%` higher raw aggregate output (`1,501` vs. `1,256.8 tok/s`**, or `187.6` vs. `157.1 tok/s` per decode GPU). Widening decode to 2-node `DEP16` (`24` GPUs, `p1w1d1w2`) reached `3,233 tok/s` (`202.1 tok/s` per decode GPU), and widening both pools to `DEP16` (`32` GPUs, `p1w2d1w2`, keeping the active working set in HBM) reached `5,647 tok/s` at `2.38 s` median TTFT. On our 16-GPU SGLang `p1w1d1w1` layout at `c128`, the single `DEP8` prefill node is saturated at `108,304` input `tok/s` (`98.8%` of all processed tokens are input tokens); adding a second prefill replica (`p2w1d1w2`) or widening to `DEP16` (`p1w2d1w2`, `p2w2d2w2`, all included in the SGLang recipe overlays) is how SGLang removes that single-node prefill ceiling.
-
-## Paused multi-turn sessions and cold-DRAM recovery from Shared L3
-
-The `900s` AIPerf load sweep stresses active concurrency, while two real-world agentic regimes test capacity and persistence directly: **hundreds of ongoing conversations pausing between tool calls** (`~100K–105K` mean input tokens per turn) and **cold-DRAM events** (cross-rank spillover, multi-replica scale-out, or prefill pod restarts where local L1 and L2 start completely empty). To stay comparable with the earlier GLM-5.2 post's paused-conversation experiment, our multi-turn replay generator uses the same inter-turn pause distribution (`2.1 s` median / `25.8 s` p90 target; `2.3 s` median / `27.9 s` p90 realized in the 200-session window).
+To test idle prefix retention between tool executions and developer reviews, we replay `100`, `200`, and `350` concurrent multi-turn Weka sessions (`~101K` mean input tokens per turn) using the inter-turn pause distribution from the [earlier GLM-5.2 study](/blog/serving-glm-5-2-agentic-workloads-on-llm-d) (`2.3 s` median / `27.9 s` p90 realized pause) with `147.5 GiB/rank` (`--hicache-size 150`) of `L2` host DRAM:
 
 <Figure
   src="/img/blogs/glm52-sglang-tiered-kv/paused-conversations-shared-l3.png"
   alt="Paused multi-turn session TTFT across 100 to 350 sessions and cold-DRAM recovery from Shared L3 storage"
   size="wide"
 >
-  <strong>Figure 6: Paused agentic sessions and cold-DRAM recovery from Shared L3 storage.</strong> Left: on 16-GPU <code>p1w1d1w1</code>, <code>147.5 GiB/rank</code> (<code>--hicache-size 150</code>, <code>25.25M</code> L1+L2 tokens/node) cuts median TTFT from <code>221–230 s</code> to <code>5.4–5.5 s</code> across 100–200 paused sessions (<code>96.6%</code> in-memory hit) before crossing the single-node L2 ceiling at 350 sessions (<code>36.9 s</code> on DRAM-only; <code>82.2 s</code> cold-seed stall with <code>write_through</code> L3). Right: when sessions hit cold DP ranks or restarted pods with empty DRAM, Shared L3 restores <code>97.2%–97.8%</code> of the prefix and cuts median TTFT by <code>49%–57%</code>.
+  <strong>Figure 5: Paused agentic sessions and cold-DRAM recovery from Shared L3 storage.</strong> Left: on 16-GPU <code>p1w1d1w1</code>, <code>147.5 GiB/rank</code> L2 DRAM cuts median TTFT from <code>221–230 s</code> to <code>5.4–5.5 s</code> across 100–200 paused sessions before crossing the single-node DRAM ceiling at 350 sessions. Right: when sessions hit cold DP ranks or restarted pods with empty DRAM, Shared L3 restores <code>97.2%–97.8%</code> of the prefix and cuts median TTFT by <code>49%–57%</code>.
 </Figure>
-
-### 1. Ongoing paused multi-turn conversations (`100, 200, 350` sessions on 16 GPUs)
 
 | **Paused Multi-Turn Replay (`p1w1d1w1`, `~101K` ISL, `2.3s / 27.9s` pause)** | **Active Sessions (`Working Set`)** | **`L1 HBM only` TTFT p50 (`Hit %`)** | **`L1 + L2 (147.5 GiB)` TTFT p50 (`Hit %`)** | **`L1 + L2 + Shared L3` TTFT p50 (`Hit %`)** | **`L1 + L2` Restore Rate & ITL p50** |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`100` paused sessions** | `~10.3M` tok (`fits 25.25M L1+L2`) | `221.21 s` (`2.0%`) | **`5.46 s` (`96.57%`)** | `7.55 s` (`96.54%`) | `2.82 TiB` @ **`11.41 GiB/s`** · `8.05 ms` ITL |
 | **`200` paused sessions** | `~19.9M` tok (`fits 25.25M L1+L2`) | `229.53 s` (`0.7%`) | **`5.39 s` (`96.53%`)** | `7.71 s` (`96.59%`) | `2.69 TiB` @ **`11.21 GiB/s`** · `8.22 ms` ITL |
-| **`350` paused sessions** | `~34.7M` tok (`exceeds 25.25M L1+L2`) | `213.68 s` (`1.4%`) | **`36.89 s` (`62.13%`)** | `82.21 s` (`17.43%`, `55` turns — seed stall) | `0.30 TiB` @ `1.06 GiB/s` · `6.99 ms` ITL |
+| **`350` paused sessions** | `~34.7M` tok (`exceeds 25.25M L1+L2`) | `213.68 s` (`1.4%`) | **`36.89 s` (`62.13%`)** | `82.21 s*` (`17.43%`, only `55` turns finished) | `0.30 TiB` @ `1.06 GiB/s` · `6.99 ms` ITL |
 
-*Note on `Hit %`:* SGLang's `#cached-token` counter reports all prompt tokens satisfied from cache (`L1 + L2 + L3`) without GPU recomputation. Thus `96.5%–96.6%` here reflects L2 host-DRAM restores, and is not directly comparable to the GPU-HBM-only cache hit metric reported in the vLLM post.
+*Note on `Hit %`:* SGLang's `#cached-token` counter reports all prompt tokens satisfied from cache (`L1`, `L2`, or `L3`) without GPU recomputation.
 
-Three behaviors stand out across the three tiers:
+* **`L2` host DRAM keeps 200 paused `~100K`-token sessions interactive on 16 GPUs.** Across `100` and `200` sessions, `96.5%–96.6%` of prompt tokens restore from host DRAM at over `11 GiB/s` sustained, holding median TTFT near `5.4 s` versus `221–230 s` on `L1` alone. At `350` sessions (`~34.7M` active tokens), the working set outgrows a single prefill node's `25.25M`-token `L1+L2` pool, dropping the hit rate to `62.1%` (`36.89 s` TTFT).
+* **On warm `100–200` sessions, write-through `Shared L3` adds `38%–43%` median TTFT with zero `L3` reads.** Because active prefixes remain in local DRAM, storage never serves a read hit here, yet persisting each turn's `~3.5K` newly appended tokens in the background reduces effective DRAM-to-GPU restore throughput by roughly `20%` (`7.55–7.71 s` vs. `5.39–5.46 s` TTFT).
+* **At `350` cold-seeded sessions, `Shared L3` hit a file-creation stall — and the `82.21 s` median understates it because only `55` turns finished.** Bursting `350` uncached `~100K`-token sessions at once creates roughly `1.1M` new `.bin` and `.indexer.bin` files in a single flat directory, saturating per-rank file creation while host pages stay pinned until their storage writes finish. Whereas the `100`- and `200`-session runs completed `435–570` turns in `~250 s`, **only `55` turns finished during the `449 s` window at `350` sessions** while the remaining `~84%` of sessions stayed queued behind pinned host pages — so `82.21 s` reflects only the earliest completions rather than the full stall.
 
-* **`L1 + L2` (`--hicache-size 150` = `147.5 GiB/rank`, `25.25M` L1+L2 tokens/node) serves 200 paused `~100K`-token sessions on 16 GPUs at `5.39 s` median TTFT (`42.6x` faster than `L1-only`'s `229.5 s`) and `8.22 ms` median ITL**, restoring `2.69 TiB` of cached KV + indexer state across PCIe Gen5 at **`11.21 GiB/s` sustained** (`227,815` effective input `tok/s`). At `350` sessions (`~34.7M` active tokens), the working set exceeds a single prefill node's `25.25M`-token L1+L2 pool, dropping in-memory hit rate to `62.1%` (`36.89 s` TTFT, still `5.8x` faster than `L1-only`).
-* **On warm `100–200` paused sessions, enabling `Shared L3` (write-through) adds `38%–43%` median TTFT (`7.55` and `7.71 s` vs. `5.46` and `5.39 s`) at the exact same `96.5%–96.6%` hit rate (`0` L3 reads).** Every turn appends `~3.5K` new tokens, so each turn also writes new pages to storage in the background and, because those pages are new, probes the filesystem for them (the client-side metadata cache only short-circuits pages that already exist). That background work competes with the restores from host DRAM to the GPU and lowers their effective throughput by `~20%` (`11.41 -> 9.14 GiB/s` at 100 sessions; `11.21 -> 8.86 GiB/s` at 200 sessions).
-* **At `350` sessions, `Shared L3` (write-through) hit a cold-seeding bottleneck (`82.21 s` median TTFT, `17.43%` hit, only `55` turns completed in `449 s`).** Seeding `350 x ~100K` cold tokens in a single burst creates `~1.1M` new `.bin` and `.indexer.bin` files in a flat directory that already holds millions, which saturates per-rank file creation on the filesystem; host pages stay pinned until their storage write finishes, so subsequent turns could neither evict nor reuse host DRAM cleanly.
+### 3. Cold-DRAM spillover and pod-restart recovery from Shared L3
 
-### 2. Cold-DRAM spillover and pod-restart recovery from Shared L3
-
-Unlike local NVMe (which starts cold whenever a request lands on another replica or a pod is rescheduled onto a fresh node), Shared L3 (`hicache-fs`) decouples prefix survival from pod and node lifecycles. Because GLM-5.2's MLA KV cache is identical on every attention-DP rank, HiCache's file backend stores each 64-token page once under a rank-independent name, so any DP rank or prefill replica that mounts the volume can restore it:
+Where `Shared L3` pays off is whenever local `L1` and `L2` memory is empty — during cross-rank spillover, prefill scale-out, Spot node replacement, or rolling restarts. Because GLM-5.2's MLA KV state is identical across attention-DP ranks, HiCache's file backend writes each 64-token page once under a rank-independent key, allowing any DP rank or replacement prefill pod mounting the `ReadWriteMany` volume to restore it directly:
 
 | **Cold-DRAM Scenario (`0` tokens in L1 or L2)** | **Cold Recompute (No L3)** | **Shared L3 Restore (`hicache-fs`)** | **Warm L1/L2 Hit (Same Rank)** | **Data Restored from Shared L3** |
 | :--- | :--- | :--- | :--- | :--- |
 | **Cross-rank / post-restart (`16` sessions, `~92K` ISL, `conc=8`)** | `38.84 s` TTFT (`0.0%` hit, `17.3K` in `tok/s`) | **`16.82 s` TTFT (`-57%`, `2.31x` faster, `33.8K` in `tok/s`)** | `5.68 s` TTFT (`103.2K` in `tok/s`) | **`69.7 GiB` (`74.8 GB`, `1.44M` tok, `97.8%` hit, `16/16` sessions)** |
 | **Full-pod cold-DRAM burst (`64` sessions, `~130K` ISL, `conc=16`)** | `236.00 s` TTFT (`0.0%` hit, `13.9K` in `tok/s`) | **`121.12 s` TTFT (`-49%`, `2.09x` throughput, `29.0K` in `tok/s`)** | `12.97 s` TTFT (`203.2K` in `tok/s`) | **`355.1 GiB` (`381.3 GB`, `7.10M` tok, `97.2%` hit, `56` L3 prefetches)** |
 
-We also verified **prefill pod deletion and replacement** (`kubectl delete pod` on `wide-ep-sglang-glm-5-2-*-prefill-0`): as soon as the replacement pod became Ready with empty HBM and host DRAM, replaying a `59,904`-token session through the `llm-d` inference router immediately restored all `59,840` aligned prefix tokens from Shared L3 (`HiCache prefetch success: completed=59840 matched=0 loaded=59840`).
+We also verified **live prefill pod deletion and replacement** (`kubectl delete pod` on the prefill `LeaderWorkerSet` pod): as soon as the replacement pod became Ready with empty HBM and host DRAM, replaying a `59,904`-token session through the `llm-d` inference router immediately restored all `59,840` page-aligned prefix tokens from `Shared L3` (`HiCache prefetch success: completed=59840 matched=0 loaded=59840`) without recomputing the prompt.
 
-## Sizing `L2` host DRAM and `Shared L3` for agentic workloads
+## When is Shared L3 worth it? Sizing `L2` and `L3`
 
-On an 8-GPU H200 (`a3-ultragpu-8g`, `2.95 TiB` host RAM) `DEP8` prefill node with `PREFILL_MEM_FRACTION_STATIC=0.90` (`4,084` GPU blocks/rank), each unit of `HICACHE_SIZE_GB_PER_RANK` (`10^9` bytes of MLA+MTP KV) adds `19,297` tokens (`301.5` 64-token blocks) of pinned MLA+MTP KV cache (`0.931 GiB`) plus `53.4 MiB` of DSA indexer cache per rank (`7.87 GiB` total node RAM per unit):
+Putting the steady-state overhead and cold-recovery numbers together gives a clear rule for deciding which tiers to enable:
+
+* **Stop at `L1 + L2` host DRAM (`hicache`) on single steady-state prefill replicas.** When one prefill pod holds the active working set in host RAM (`<= 25M` tokens) and restarts are rare, omitting `hicache-fs` avoids the `+14%–33%` sustained-load (`+38%–43%` paused-session) write-through TTFT overhead.
+* **Add `Shared L3` (`hicache-fs`) when prefixes must survive across pods, nodes, or long idle gaps.** Multi-replica prefill pools (`p2w1d1w2`, `p2w2d2w2`), Spot or preemptible GPU nodes, rolling upgrades, large subagent fan-outs that spill across ranks or replicas, and multi-hour session pauses that evict host DRAM all benefit from cutting cold-DRAM TTFT roughly in half (`38.8 s` → `16.8 s`). When seeding a cold volume, ramp traffic gradually rather than bursting hundreds of uncached `100K`-token sessions simultaneously.
 
 | Recommended Agentic Scenario | `HICACHE_SIZE_GB_PER_RANK` | L2 Tokens / Rank (`64`-tok blocks) | Node L2 RAM in `GiB` (KV + DSA Indexer) | Router `lruCapacityPerServer` (`L1 + L2`) |
 | :--- | :--- | :--- | :--- | :--- |
 | **Low concurrency** (`<= 16–32` active `~55K–85K`-token sessions/node) whose working set fits inside the `2.09M` L1 GPU HBM tokens | `0` (`baseline`) | `0` (`0`) | `0 GiB` | `4084` (`DEP8`) / `15072` (`DEP16`) |
 | **Sustained high concurrency** (`64–128` active sessions/node; `17.53M` L1+L2 tokens/node). Fits inside the `1200Gi` request / `1600Gi` limit | `100` (recipe default) | `1,929,664` (`30,151`) | `745.1 + 41.8 GiB` (**`786.8 GiB`**) | `34235` (`DEP8`) / `45223` (`DEP16`) |
 | **Long-pause interactive coding** (`150–250` concurrent `~100K`-token sessions/node; `25.25M` L1+L2 tokens/node). Raise pod memory to `1500Gi` / `1800Gi` | `150` (paused-session option) | `2,894,464` (`45,226`) | `1,117.6 + 62.6 GiB` (**`1,180.2 GiB`**) | `49310` (`DEP8`) / `60298` (`DEP16`) |
-| **Multi-replica prefill pools** (`p2w1d1w2`, `p2w2d2w2`), **Spot/preemptible nodes, rolling restarts, subagent fan-out spills, and multi-hour pauses** (`p99 = 55.9 min`). Omit on single steady-state replicas to avoid the write-through TTFT cost (`+14%–33%` under sustained load, `+38%–43%` with paused sessions) | `+ hicache-fs` (Shared L3) | Shared RWX volume (`3.42 MiB/page`) | Shared across all replicas (`~19.6M` tok / `1 TiB`) | Keep at `L1 + L2` (`34235` or `49310`) |
+| **Multi-replica prefill pools** (`p2w1d1w2`, `p2w2d2w2`), **Spot/preemptible nodes, rolling restarts, subagent fan-out spills, and multi-hour pauses**. Omit on single steady-state replicas to avoid the write-through TTFT cost (`+14%–33%` under sustained load, `+38%–43%` with paused sessions) | `+ hicache-fs` (Shared L3) | Shared RWX volume (`3.42 MiB/page`) | Shared across all replicas (`~19.6M` tok / `1 TiB`) | Keep at `L1 + L2` (`34235` or `49310`) |
 
 :::tip Keep `lruCapacityPerServer` sized to `L1 + L2` when Shared L3 is enabled
 `approx-prefix-cache-producer` tracks **per-rank** locality so `prefix-cache-affinity-filter` steers returning sessions back to the exact DP rank holding their prefix in DRAM (`5.4 s` TTFT vs. `16.8 s` from Shared L3). Because the Shared L3 volume is equally accessible from every rank and replica, keeping `lruCapacityPerServer` matched to `L1 + L2` preserves fast DRAM hits whenever pages remain in memory while Shared L3 automatically serves spills, cold starts, and restarts.
@@ -326,5 +262,5 @@ aiperf profile \
 
 ## Where this goes next
 
-1. **Same-cluster engine A/B and router-visible ZMQ KV events:** Running vLLM `p1w1d1w1` on the same GKE A3 Ultra RoCE cluster under the current affinity-filter router will isolate engine-level performance from fabric and routing differences, while publishing ZMQ block events from SGLang's Rust server mode and HiCache controller will let `llm-d` replace `approx-prefix-cache-producer` with `precise-prefix-cache-producer` across L1, L2, and L3.
-2. **Multi-replica and 2-node `DEP16` benchmarks (`p2w1d1w2`, `p1w2d1w2`, `p2w2d2w2`):** Scaling prefill to multiple replicas sharing one `hicache-fs` RWX volume and widening pools to `DEP16` (`964,608` L1 tokens/rank) will quantify full-length (`1M`-token) trace performance and saturate multi-node decode pools.
+1. **Router-visible ZMQ KV events across cache tiers:** Publishing block-level cache events from SGLang's Rust server mode and HiCache controller will let the `llm-d` inference router replace `approx-prefix-cache-producer` with `precise-prefix-cache-producer` across `L1`, `L2`, and `L3`.
+2. **Multi-replica scale-out trajectories and 2-node `DEP16` pools (`p2w1d1w2`, `p1w2d1w2`, `p2w2d2w2`):** Measuring live TTFT trajectories across rolling prefill restarts and replica scale-out events on shared `hicache-fs` storage, alongside widening pools to `DEP16` (`964,608` L1 tokens/rank) to evaluate full-length (`1M`-token) agentic traces.
