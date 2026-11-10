@@ -3,8 +3,11 @@ package manifest
 import (
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
+
+var localeName = regexp.MustCompile(`^[a-z]{2,3}(?:-[A-Za-z0-9]+)*$`)
 
 // Validate checks manifest invariants.
 func (m *Manifest) Validate() error {
@@ -24,6 +27,21 @@ func (m *Manifest) Validate() error {
 		}
 		if ext := strings.ToLower(filepath.Ext(gm)); ext != ".yaml" && ext != ".yml" {
 			return fmt.Errorf("sources.llm-d.guides_manifest must be a .yaml file, got %q", gm)
+		}
+	}
+	tr := m.Sources.LLMD.Translations
+	if len(tr.Locales) > 0 && tr.Root == "" {
+		return fmt.Errorf("sources.llm-d.translations.root is required when locales are configured")
+	}
+	if tr.Root != "" {
+		clean := filepath.ToSlash(filepath.Clean(tr.Root))
+		if filepath.IsAbs(tr.Root) || clean == "." || clean == ".." || strings.HasPrefix(clean, "../") {
+			return fmt.Errorf("sources.llm-d.translations.root must be a repo-relative directory, got %q", tr.Root)
+		}
+	}
+	for _, locale := range tr.Locales {
+		if !localeName.MatchString(locale) {
+			return fmt.Errorf("invalid translation locale %q", locale)
 		}
 	}
 

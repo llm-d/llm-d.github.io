@@ -81,6 +81,7 @@ Or set `LLMD_REPO=/path/to/llm-d`.
 
 ```
 ├── docs/                  # Synced dev docs (gitignored) — "dev" version at /docs/dev
+├── i18n/zh-Hans/          # Reviewed Chinese release docs; current/ is generated on sync
 ├── docs-sync.yaml         # Sync manifest (sources, community mirror pages)
 ├── source-refs.yaml       # Immutable source refs each frozen release pins its links to
 ├── versioned_docs/        # Frozen releases (0.7–0.10) + versioned_sidebars/ + versions.json
@@ -100,6 +101,13 @@ Or set `LLMD_REPO=/path/to/llm-d`.
 
 - **Dev docs** — `docs/` is mirrored from `llm-d/llm-d` by `./bin/llmd-site sync`.
   Sidebar labels and order come from `docs/menu-config.json` (synced with the docs).
+- **Chinese docs** — The locale menu switches between English and 简体中文. Sync reads
+  reviewed pages from `llm-d/llm-d` under `translations/zh-Hans/docs/` into the
+  generated `i18n/zh-Hans/docusaurus-plugin-content-docs/current/` directory.
+  Pages without a current translation fall back to English. A translated page
+  is skipped when its recorded English source blob differs or it is marked
+  `translation_status: stale`. The current docs are at `/zh-Hans/docs/dev`;
+  release translations are committed under `i18n/zh-Hans/docusaurus-plugin-content-docs/version-<x.y>/`.
 - **Versioning** — Latest release (newest entry in `versions.json`) at `/docs`; older at
   `/docs/<x.y>`; unreleased dev at `/docs/dev`. Released versions are frozen snapshots
   under `versioned_docs/`: each uses its own `menu-config.json` for the sidebar, and its

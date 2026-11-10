@@ -85,8 +85,30 @@ function splitFrontMatter(content) {
   return m ? [m[0], content.slice(m[0].length)] : ['', content];
 }
 
-export function makeDocsPreprocessor({ docsDir, syncMap: syncMapOverride } = {}) {
+function rewriteHomeMarkdownLinks(content, relFile, route) {
+  const fromDir = path.posix.dirname(relFile);
+  let inFence = false;
+  return content.split('\n').map((line) => {
+    if (FENCE_RE.test(line)) { inFence = !inFence; return line; }
+    if (inFence) return line;
+    return line.replace(LINK_RE, (full, bang, label, raw, tail) => {
+      if (bang) return full;
+      const url = raw.replace(/^<|>$/g, '');
+      if (/^[a-z][a-z0-9+.-]*:/i.test(url) || url.startsWith('/')) return full;
+      const [target, suffix = ''] = url.split(/(?=[#?])/, 2);
+      const resolved = path.posix.normalize(path.posix.join(fromDir, target));
+      return /^(?:\.\.\/)*getting-started\/README\.mdx?$/.test(resolved)
+        ? `[${label}](${route}${suffix}${tail})`
+        : full;
+    });
+  }).join('\n');
+}
+
+export function makeDocsPreprocessor({ docsDir, latestVersion, translationLocales = [], syncMap: syncMapOverride } = {}) {
   const map = syncMapOverride || loadSyncMap(docsDir);
+  const translationRoots = translationLocales.map((locale) =>
+    path.join(path.dirname(docsDir), 'i18n', locale, 'docusaurus-plugin-content-docs', 'current')
+  );
   const GH_TREE = `${map.repo}/tree/${map.ref}`;
   const GH_RAW = `${map.repo}/raw/${map.ref}`;
   // repo-relative source path -> docs-relative site file
@@ -190,9 +212,18 @@ export function makeDocsPreprocessor({ docsDir, syncMap: syncMapOverride } = {})
   };
 
   return ({ filePath, fileContent }) => {
-    if (!filePath.startsWith(docsDir + path.sep)) return fileContent;
+    const sourceDocsDir = [docsDir, ...translationRoots].find((dir) => filePath.startsWith(dir + path.sep));
+    if (!sourceDocsDir) {
+      const versionedRoot = path.join(path.dirname(docsDir), 'versioned_docs') + path.sep;
+      if (!filePath.startsWith(versionedRoot)) return fileContent;
+      const rel = path.relative(versionedRoot, filePath).split(path.sep).join('/');
+      const match = rel.match(/^version-([^/]+)\/(.+)$/);
+      if (!match) return fileContent;
+      const route = match[1] === latestVersion ? '/docs' : `/docs/${match[1]}`;
+      return rewriteHomeMarkdownLinks(fileContent, match[2], route);
+    }
     const isMdx = filePath.endsWith('.mdx');
-    const docsRelFile = path.relative(docsDir, filePath).split(path.sep).join('/');
+    const docsRelFile = path.relative(sourceDocsDir, filePath).split(path.sep).join('/');
     const dir = path.posix.dirname(docsRelFile);
     const source = map.pages[docsRelFile];
     const mapped = Boolean(source);
@@ -200,7 +231,8 @@ export function makeDocsPreprocessor({ docsDir, syncMap: syncMapOverride } = {})
     const ctx = { base, dir, mapped };
 
     const [frontMatter, body] = splitFrontMatter(fileContent);
-    let content = body.replace(/https?:\/\/llm-d\.ai\/img\//g, '/img/');
+    let content = rewriteHomeMarkdownLinks(body, docsRelFile, '/docs/dev')
+      .replace(/https?:\/\/llm-d\.ai\/img\//g, '/img/');
     content = content.replace(
       /((?:to|href)=")\/([a-z-]+)(?=["#/])/g,
       (full, pre, sec) => {
