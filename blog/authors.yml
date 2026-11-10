@@ -489,6 +489,27 @@ rachelbrill:
   socials:
     linkedin: rachel-tzoref-brill-6645a11
 
+dolevadas:
+  name: Dolev Adas
+  title: Research Staff Member, IBM  
+  image_url: /img/blogs/dolevadas.webp
+  socials:
+    linkedin: dolev-felman-adas-7a4a0565
+
+oshritfeder:
+  name: Oshrit Feder
+  title: Research Staff Member, IBM
+  image_url: /img/blogs/oshritfeder.webp
+  socials:
+    linkedin: oshrit-feder-7171b42  
+
+sharonkeidarbarner:
+  name: Sharon Keider-Barner
+  title: Manager, AI Inferencing Optimizations 
+  image_url: /img/blogs/sharonkeidarbarner.webp
+  socials:
+    linkedin: sharon-keidar-barner-0884181
+
 ezrasilvera:
   name: Ezra Silvera
   title: Senior Technical Staff Member, IBM
@@ -543,6 +564,23 @@ alexnails:
     linkedin: alex-nails
     github: https://github.com/alexnails
 
+yangligt2:
+  name: Yang Li
+  title: Software Engineer, Google
+  url: https://github.com/yangligt2
+  image_url: https://avatars.githubusercontent.com/u/210760644?v=4
+  email: yangligt@google.com
+  socials:
+    github: https://github.com/yangligt2
+
+ashokchandrasekar:
+  name: Ashok Chandrasekar
+  title: Staff Software Engineer, Google
+  image_url: /img/blogs/ashokchandrasekar.webp
+  socials:
+    linkedin: ashokchandrasekar
+    github: https://github.com/achandrasekar
+    
 gyliu513:
   name: Guangya Liu
   title: Executive Director, JPMorgan Chase
@@ -641,3 +679,67 @@ gitMichal:
   image_url: /img/blogs/michalshmu.webp
   socials:
     linkedin: michal-shmueli-scheuer-4b357a12
+
+keelinmcdonell:
+  name: Keelin McDonell
+  title: Product Manager, Google
+  image_url: https://avatars.githubusercontent.com/u/1154024?v=4
+  socials:
+    github: https://github.com/keelinmcdonell
+
+anishshah:
+  name: Anish Shah
+  title: Software Engineer, Google
+  image_url: https://avatars.githubusercontent.com/u/3175743?v=4
+  socials:
+    github: https://github.com/AnishShah
+
+joeywang:
+  name: Joey Wang
+  title: Software Engineer, Google
+  image_url: https://avatars.githubusercontent.com/u/257918665?v=4
+  socials:
+    github: https://github.com/joeywan-google
+
+syedaanjum:
+  name: Syeda Anjum
+  title: Cloud Solution Architect, Google
+  image_url: https://avatars.githubusercontent.com/u/104458278?v=4
+  socials:
+    github: https://github.com/syeda-anjum
+
+gopalasurya:
+  name: Gopala Suryanarayana
+  title: Product Manager, Google
+  image_url: https://avatars.githubusercontent.com/u/47865694?v=4
+  socials:
+    linkedin: https://www.linkedin.com/in/gopalasurya/
+    github: https://github.com/gopalasuryaa
+
+newtonjain:
+  name: Newton Jain
+  title: Product Manager, Google
+  image_url: https://avatars.githubusercontent.com/u/7623829?v=4
+  socials:
+    github: https://github.com/newtonjain
+
+christopherpirillo:
+  name: Christopher Pirillo
+  title: Staff Software Engineer, Google
+  image_url: https://avatars.githubusercontent.com/u/9355389?v=4
+  socials:
+    github: https://github.com/Chris113113
+
+inferact:
+  name: Inferact Team
+  image_url: /img/authors/inferact.png
+  socials:
+    github: https://github.com/Inferact
+    website: https://inferact.ai/
+
+radixark:
+  name: RadixArk Team
+  image_url: https://avatars.githubusercontent.com/u/223053390?v=4
+  socials:
+    github: https://github.com/radixark
+    website: https://www.radixark.com/
