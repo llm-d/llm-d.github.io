@@ -1,0 +1,292 @@
+---
+title: "What Does Tracing Cost the EPP? Measuring OpenTelemetry Overhead in llm-d"
+description: "A load study of Endpoint Picker tracing at 0%, 1%, 10%, 50%, and 100% sampling, on a simulated pool and on live vLLM: where the overhead comes from, how we measured it, what we found, and how to run tracing in production."
+slug: epp-tracing-overhead-in-llm-d
+date: 2026-11-09T09:00
+
+authors:
+  - albertoperdomo2
+  - rdoddaia
+
+tags: [blog, observability, llm-d]
+---
+
+# What Does Tracing Cost the EPP? Measuring OpenTelemetry Overhead in llm-d
+
+[End-to-End and Fine-Grained Tracing in llm-d](/blog/end-to-end-and-fine-grained-tracing-in-llm-d) described how one OpenTelemetry trace follows a request from the Gateway through the Endpoint Picker (EPP), the KV-cache index, the P/D proxy, and vLLM, and how fine-grained spans expose the scheduling decisions that metrics cannot. That post recommends parent-based ratio sampling at 10% for production traffic. A recommendation like that is only useful if operators know what it costs.
+
+The question matters more for the EPP than for most components. The EPP sits on the request path: every request waits for it to filter, score, and pick an endpoint before a model server sees it. A model server spends tens or hundreds of milliseconds per request, so a few extra microseconds of instrumentation there are invisible. The EPP's scheduling decision takes about 50 microseconds at the median, so the same instrumentation is a much larger fraction of its work. If tracing slowed the scheduler, every request would pay, sampled or not.
+
+This post describes how we measured that cost. We ran the EPP with tracing off and at sampling ratios from 0% to 100%, under fixed load, against a simulated model pool and against live vLLM. We recorded request latency at the client, latency inside the EPP, and CPU profiles of the EPP process. The study, its deployment files, and its load scripts are in the llm-d-router repository, so the results can be reproduced and extended.
+
+<!-- truncate -->
+
+:::tip Blog key takeaways
+
+- **10% sampling showed no measurable end-to-end cost.** Throughput, mean latency, and tail latency at 10% stayed within the run-to-run variation of tracing off, on both the simulator and live vLLM.
+- **100% sampling has a cost inside the EPP.** Tracing code accounted for 3.2% to 4.4% of sampled EPP CPU. Scheduler p99 rose from 139 to 259 microseconds on the simulator and from 125 to 187 microseconds on live vLLM, while scheduler p50 moved by less than 2 microseconds.
+- **That cost is small against model latency.** The largest scheduler p99 increase was about 0.12 ms. End-to-end p99 moved by at most 3% in any fixed-load cell, and the median change across the full workload sweep was below 0.2%.
+- **Run 10% in production and 100% for bounded diagnosis.** Configure an OTLP Collector before enabling tracing, and check the effective sampling ratio, because the parent-based sampler follows incoming trace context.
+
+:::
+
+<div style={{textAlign: 'center', margin: '24px 0'}}>
+  <img src="/img/blogs/epp-tracing-overhead/figure1-cost-layers.svg" alt="Where tracing cost appears in the EPP: a sampling decision on every request, span recording on sampled requests, and batching and export in background goroutines" style={{width: '95%', height: 'auto'}} />
+  <p style={{textAlign: 'center', fontSize: '0.9em', marginTop: '8px'}}><em><strong>FIGURE 1</strong>: Tracing work in the EPP happens at three points. The sampling decision runs for every request, span recording scales with the sampling ratio, and batching and export run in a background goroutine.</em></p>
+</div>
+
+## Where tracing overhead comes from
+
+When `router.tracing.enabled` is true, the EPP installs an OpenTelemetry tracer provider with a parent-based trace-ID ratio sampler and a batch span processor that exports over OTLP/gRPC. In the chart, the sampler and ratio are `router.tracing.sampling.sampler` and `router.tracing.sampling.samplerArg`, which default to `parentbased_traceidratio` and `0.1`. For a traced request, the EPP produces a small tree: the `request` span, a `request_orchestration` span, and under it one subtree per scheduler profile with `filter_endpoints`, `scoring` with one `scorer.<type>` child per configured scorer, and `pick_endpoints`. Each span carries `llm_d.*` attributes such as endpoint counts and score statistics.
+
+The cost of that instrumentation arrives at three points:
+
+1. **The sampling decision, on every request.** Starting a span consults the sampler. With a parent-based sampler, an incoming sampled `traceparent` header means the request is sampled. Without one, the sampler hashes the trace ID against the configured ratio. An unsampled request still gets a span object, but a non-recording one: it records no timestamps or attributes and is never exported. This layer is cheap and its cost does not depend on the ratio.
+2. **Span recording, on sampled requests.** A sampled span records start and end times, builds its attributes, and is handed to the batch processor when it ends. This work runs on the request goroutine and allocates memory, so its cost grows with the sampling ratio and with the number of spans per request.
+3. **Batching and export, off the request path.** The batch span processor queues finished spans and a background goroutine serializes and sends them to the Collector. This does not block a request directly, but it uses CPU on the same EPP process, and the allocations from layer 2 add garbage-collection work.
+
+This model gives three testable predictions. At 0%, only layer 1 runs, so the cost should be indistinguishable from tracing off. The median scheduling decision should barely move at any ratio, because recording a few spans adds little to a single request. The tail and total CPU should move at 100%, where every request records spans and the background export and garbage collection compete with request handling. The study was designed to check those predictions.
+
+## How we measured it
+
+### Topology
+
+The study used the llm-d [optimized-baseline](/docs/well-lit-paths/foundations/optimized-baseline) inference-scheduling topology: an Istio Gateway, one EPP replica, and a pool of eight model-server replicas. One EPP replica keeps every request on the same process, so its CPU, latency histograms, and profiles describe all of the measured traffic.
+
+We ran the same EPP against two model pools:
+
+| Pool | Model server | Purpose |
+| :--- | :--- | :--- |
+| **Simulator** | `llm-d-inference-sim` v0.11.2 with a constant 20 ms time to first token and 1 ms per output token | Removes model execution as the main source of variance, so changes in the EPP are easier to see |
+| **Live** | vLLM v0.27.0 serving `Qwen/Qwen3-0.6B`, eight replicas with one GPU each | Checks that the result holds with real inference, real queuing, and real response sizes |
+
+Software versions were llm-d v0.9.0, the llm-d-router chart and EPP v0.10.0, and GuideLLM 0.7.3. Every traced configuration exported OTLP to an OpenTelemetry Collector that forwarded spans to Jaeger.
+
+### Configurations
+
+| Configuration | EPP settings |
+| :--- | :--- |
+| Off | `router.tracing.enabled: false` |
+| 0% | Tracing enabled, `samplerArg: "0.0"`. The SDK, sampler, and exporter run but no request is sampled |
+| 1%, 10%, 50%, 100% | Tracing enabled, `sampler: parentbased_traceidratio`, `samplerArg` of `0.01`, `0.1`, `0.5`, or `1.0` |
+| 100% + pprof | 100% with `enable-pprof`, used only for CPU and heap profiles |
+
+The tracing-off and 0% configurations are different controls. Tracing off measures the EPP with no OpenTelemetry SDK at all. The 0% case isolates layer 1, the cost of having the SDK installed and making a sampling decision per request.
+
+We installed the EPP with Helm from scratch for every configuration and waited for it to become ready before starting load. Upgrading in place would carry warm caches, connection pools, and garbage-collector state from one variant into the next.
+
+### Workloads
+
+The primary workload was GuideLLM at a fixed 400 requests/s with Poisson arrivals, 200 input tokens, 100 output tokens, and non-streaming responses, for 300 seconds. We used a fixed offered rate instead of a throughput sweep so that every configuration served the same load. Latency differences between configurations then reflect the EPP and not a difference in how hard each run was pushed. This fixed cell ran for off, 1%, 10%, and 100% on both pools.
+
+A broader sweep then checked whether the result depended on the workload shape. It covered offered rates of 25, 100, 400, and 800 requests/s, closed-loop concurrency of 1, 32, and 128, and token shapes of 200/1, 200/100, 200/1000, and 8000/100 (input/output), each in non-streaming and streaming mode, under tracing off, 0%, 1%, 10%, 50%, and 100%.
+
+### Measurements
+
+We collected three independent views of the same runs:
+
+1. **Client view, from GuideLLM:** request throughput, mean, p50, p95, and p99 end-to-end latency, and request errors.
+2. **EPP view, from Prometheus:** the EPP's own duration histograms (`llm_d_epp_scheduler_e2e_duration_seconds`, `llm_d_epp_request_processing_duration_seconds`, and `llm_d_epp_response_processing_duration_seconds`) at p50, p95, and p99, plus EPP CPU and memory, scraped every 10 seconds over the benchmark window.
+3. **Process view, from pprof:** a 30-second CPU profile and a heap profile of the EPP at 100% sampling, collected 60 seconds into a separate run.
+
+The profiled run is excluded from every latency comparison, because CPU profiling adds its own overhead to the process being measured.
+
+## End-to-end results
+
+On the simulator, most of the end-to-end latency is the configured model time: 20 ms to first token plus 100 output tokens at 1 ms each is about 120 ms of the observed 138 ms.
+
+| Tracing | Throughput (req/s) | Mean (ms) | p50 (ms) | p95 (ms) | p99 (ms) | EPP CPU (cores) | EPP memory (MiB) | Errors |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Off | 401.51 | 138.34 | 138.08 | 142.06 | 148.06 | 0.818 | 116.0 | 0 |
+| 1% | 401.51 | 138.40 | 138.12 | 141.96 | 148.08 | 0.842 | 107.8 | 0 |
+| 10% | 401.52 | 138.35 | 138.05 | 141.99 | 148.51 | 0.762 | 109.0 | 0 |
+| 100% | 401.53 | 138.57 | 138.17 | 142.26 | 150.48 | 0.839 | 115.3 | 0 |
+
+On live vLLM:
+
+| Tracing | Throughput (req/s) | Mean (ms) | p50 (ms) | p95 (ms) | p99 (ms) | EPP CPU (cores) | EPP memory (MiB) | Errors |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Off | 401.39 | 274.72 | 268.75 | 336.19 | 397.60 | 1.195 | 336.4 | 0 |
+| 1% | 401.37 | 276.43 | 270.32 | 338.09 | 400.80 | 1.216 | 329.7 | 2 |
+| 10% | 401.39 | 252.60 | 248.23 | 299.13 | 365.21 | 1.083 | 330.0 | 0 |
+| 100% | 401.39 | 275.12 | 269.12 | 333.46 | 409.28 | 1.239 | 338.0 | 0 |
+
+<div style={{textAlign: 'center', margin: '24px 0'}}>
+  <img src="/img/blogs/epp-tracing-overhead/figure2-e2e-latency-change.svg" alt="Change in end-to-end mean, p50, p95, and p99 latency relative to tracing off at 1%, 10%, and 100% sampling, on the simulator and on live vLLM" style={{width: '98%', height: 'auto'}} />
+  <p style={{textAlign: 'center', fontSize: '0.9em', marginTop: '8px'}}><em><strong>FIGURE 2</strong>: Change in end-to-end latency relative to tracing off at 400 requests/s, with the 100% values labeled. On live vLLM, the 10% run was 8% to 11% faster than tracing off, which shows the size of the variation between single runs.</em></p>
+</div>
+
+Both pools sustained the offered 400 requests/s at every ratio. Compared with tracing off, 100% sampling changed:
+
+- simulator mean latency by +0.16%, p95 by +0.14%, and p99 by +1.63%;
+- live mean latency by +0.14%, p95 by -0.81%, and p99 by +2.94%.
+
+### Reading single-run results
+
+The intermediate ratios do not form a trend, and two cells show why the comparison needs care. The live 10% run was 8% to 11% faster than tracing off at every percentile. Tracing cannot make the EPP faster, so this is run-to-run variation in vLLM and the cluster, and it is larger than any effect tracing had on end-to-end latency. Average EPP CPU also moved in both directions: the simulator 10% run used 6.8% less CPU than tracing off. The live 1% cell had two HTTP 503 responses, so it is not a clean comparison.
+
+Because each fixed-load cell ran once, we did not treat sub-percent request-latency differences as effects. The end-to-end view supports one conclusion: at these loads, no sampling ratio produced a change large enough to stand out from the variation between runs. To see what tracing does, we had to look inside the EPP.
+
+## Inside the EPP
+
+The EPP's own histograms isolate its work from the gateway, network, and model server. The values below are means of 10-second Prometheus `histogram_quantile` samples over the benchmark window, in microseconds.
+
+| Pool | Tracing | Scheduler p50 | Scheduler p95 | Scheduler p99 | Request processing p99 | Response processing p99 |
+| :--- | :--- | ---: | ---: | ---: | ---: | ---: |
+| Simulator | Off | 50.66 | 96.26 | 138.80 | 1443.50 | 234.35 |
+| Simulator | 1% | 50.66 | 96.26 | 141.39 | 1482.78 | 236.37 |
+| Simulator | 10% | 50.72 | 96.37 | 152.15 | 1455.23 | 234.43 |
+| Simulator | 100% | 51.34 | 97.55 | 258.63 | 1605.64 | 238.77 |
+| Live | Off | 50.65 | 96.23 | 125.18 | 1799.18 | 242.69 |
+| Live | 1% | 50.78 | 96.47 | 138.82 | 1810.55 | 243.39 |
+| Live | 10% | 50.50 | 95.94 | 109.30 | 1379.12 | 234.52 |
+| Live | 100% | 52.68 | 103.36 | 187.11 | 1808.30 | 242.85 |
+
+<div style={{textAlign: 'center', margin: '24px 0'}}>
+  <img src="/img/blogs/epp-tracing-overhead/figure3-scheduler-latency.svg" alt="EPP scheduler p50 and p99 latency in microseconds by sampling ratio" style={{width: '98%', height: 'auto'}} />
+  <p style={{textAlign: 'center', fontSize: '0.9em', marginTop: '8px'}}><em><strong>FIGURE 3</strong>: Scheduler latency inside the EPP by sampling ratio. The median stays near 50 microseconds at every ratio, and p99 rises at 100%.</em></p>
+</div>
+
+The results match the predictions from the cost model:
+
+- **The median decision did not change.** Scheduler p50 stayed at about 50.7 microseconds and moved by less than 1 microsecond on the simulator and by 2 microseconds on live vLLM, even at 100%. Recording a handful of spans adds little to a single scheduling decision.
+- **The tail moved at 100%.** Scheduler p99 rose 86% on the simulator, from 138.8 to 258.6 microseconds, and 49% on live vLLM, from 125.2 to 187.1 microseconds. Request-processing p99 on the simulator rose 11%. A higher tail with a flat median is the pattern expected from intermittent work, such as garbage collection and export goroutines competing for CPU, rather than from a fixed cost added to every request. The profiles in the next section show the CPU side of that; we did not measure garbage-collection pauses directly.
+- **10% stayed close to tracing off.** On the simulator, scheduler p99 at 10% was 13 microseconds above tracing off. On live vLLM it was below tracing off, which again reflects variation between runs.
+
+In absolute terms, the largest increase was about 120 microseconds of scheduler p99. Against an end-to-end p99 of 148 ms on the simulator and 398 ms on live vLLM, that is below 0.1%. Clients do not see it, but the EPP does more work per request, and a deployment that runs the EPP near its CPU limit has less headroom at 100%.
+
+## Where the CPU goes
+
+The 100% pprof runs captured a 30-second CPU profile from the EPP under the same 400 requests/s load. We counted every sample whose stack contains a router tracing frame (`pkg/common/observability/tracing`) or an OpenTelemetry frame (`go.opentelemetry.io/otel`) once, so overlapping stacks are not double-counted.
+
+| Pool | Sampled EPP CPU | Tracer lookup | Batch span processor | OTLP exporter | Any tracing frame |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| Simulator | 26.81 CPU-s / 30 s | 1.04% | 1.49% | 1.34% | 4.36% |
+| Live | 36.80 CPU-s / 30 s | 0.95% | 1.30% | 1.09% | 3.15% |
+
+<div style={{textAlign: 'center', margin: '24px 0'}}>
+  <img src="/img/blogs/epp-tracing-overhead/figure4-cpu-attribution.svg" alt="Share of sampled EPP CPU in tracing frames at 100% sampling, by component" style={{width: '98%', height: 'auto'}} />
+  <p style={{textAlign: 'center', fontSize: '0.9em', marginTop: '8px'}}><em><strong>FIGURE 4</strong>: Share of sampled EPP CPU in tracing frames at 100% sampling. The component bars overlap; the union counts each sample once.</em></p>
+</div>
+
+The per-component columns are cumulative call-stack attributions, so they overlap and do not add up to the last column. Three observations follow from the profile:
+
+- **There is no single hotspot.** The cost is spread across obtaining tracers, building and ending spans, the batch processor, and OTLP serialization and export. Optimizing one function would not remove most of it.
+- **Tracer lookup is visible.** About 1% of CPU went to obtaining a tracer handle, which is separate from creating spans. In v0.10.0, instrumented code calls `tracing.Tracer()` before starting each span, and that call builds the instrumentation version and commit attributes every time. Caching the tracer per scope would remove most of that cost.
+- **The share was lower on live vLLM.** The live EPP used more total CPU for the same request rate, mainly in non-tracing work, so tracing was a smaller fraction of it.
+
+These numbers come from inside the profiled run and are not a comparison with an unprofiled baseline. They also do not assign all of the garbage-collection cost caused by trace allocations to OpenTelemetry, so the full cost may be somewhat higher. We did not profile at 10%. Layers 2 and 3 scale with the number of sampled spans, so we expect the tracing share at 10% to be roughly a tenth of these figures, but this is an estimate.
+
+## Does the workload shape change the answer?
+
+The fixed cell uses short requests at a moderate rate. Different token shapes change how long each request holds a connection and how often the EPP is invoked, so we swept the simulator pool across the rates, concurrencies, and token shapes listed above, at every sampling ratio from 0% to 100%.
+
+Across clean non-streaming runs, the median change from tracing off to 100% sampling was:
+
+| Metric | Non-streaming median change | Streaming median change |
+| :--- | ---: | ---: |
+| Throughput | -0.002% | about 0% |
+| Mean latency | +0.015% | +0.079% |
+| p99 latency | -0.091% | +0.181% |
+
+The 800 requests/s and concurrency-128 stages are not included, because the load generator reached its own connection limit at every ratio, including tracing off. No other workload shape produced a tracing effect larger than the variation between runs. Long inputs (8000 tokens) and long outputs (1000 tokens) increase model time per request without changing the number of EPP spans per request, so tracing becomes an even smaller fraction of end-to-end latency. Streaming did not change the result. Most of the EPP's spans are created while the request is scheduled, before any response is produced, so the delivery mode has little effect on how much tracing work the EPP does.
+
+## Limits of this study
+
+**Single runs.** Each fixed-load cell ran once. That is enough to rule out large effects, but not to estimate sub-percent ones, as the live 10% run shows.
+
+**Configured versus effective ratio.** The sampler is parent-based: when a request arrives with a sampled `traceparent`, the EPP records it whatever `samplerArg` says. A traced gateway, payload processor, or client can turn a 10% EPP into a 100% EPP. We did not record Collector span counts in the final runs, so the ratios in this post are configured values. [Running tracing in production](#running-tracing-in-production) shows how to check the effective ratio.
+
+**Scope.** The study covers one EPP replica on the default inference-scheduling path. It does not cover precise prefix-cache scoring, P/D disaggregation, or sustained load above 400 requests/s, and it did not measure CPU throttling of the EPP container.
+
+## Running tracing in production
+
+### Enabling tracing at 10%
+
+The router chart keeps tracing disabled by default, with a 10% parent-based ratio once enabled. A production configuration only needs to enable it and point it at a Collector:
+
+```yaml
+router:
+  tracing:
+    enabled: true
+    otelExporterEndpoint: http://otel-collector.observability.svc.cluster.local:4317
+    sampling:
+      sampler: parentbased_traceidratio
+      samplerArg: "0.1"
+```
+
+Set `OTEL_SERVICE_NAME` (through `router.epp.env`) to a name that identifies the deployment, so EPP spans from different pools can be told apart in the backend.
+
+The chart's default exporter endpoint is `http://localhost:4317`. With tracing enabled and no Collector at that address, the EPP still records sampled spans but cannot deliver them. Every measured run in this study used a Collector, so the study does not cover that configuration. Enable tracing only together with a reachable Collector.
+
+In llm-d-router v0.10.0, the version measured here, `parentbased_traceidratio` is the only accepted sampler. Any other value, or a `samplerArg` that does not parse, falls back to `parentbased_traceidratio` at 0.1 and logs an error. Releases from v0.11.0 also accept the standard `always_on`, `always_off`, `traceidratio`, and `parentbased_*` sampler names.
+
+### Verifying the effective ratio
+
+Compare the spans the Collector accepted with the requests the EPP handled over the same window:
+
+```promql
+sum(increase({
+  __name__=~"otelcol_receiver_accepted_spans(_total)?",
+  namespace="NAMESPACE", pod=~"OTEL_COLLECTOR_POD_REGEX"
+}[WINDOW]))
+/
+sum(increase(llm_d_epp_request_total{
+  namespace="NAMESPACE", pod=~"EPP_POD_REGEX"
+}[WINDOW]))
+```
+
+The result is spans per request. Measure it once at 100% to get the number of spans per fully traced request, then divide the value at your production ratio by it. The normalized result should be close to the configured `samplerArg`. A value much higher than configured means upstream components are sending sampled trace context, and the EPP is following it. If the Collector also receives spans from other components, restrict the query to the EPP's spans, for example with a Collector pipeline per service.
+
+### What to watch
+
+When raising the ratio, for example during an investigation, watch the signals that moved in this study:
+
+- **EPP CPU** (`process_cpu_seconds_total` for the EPP pod), compared with its CPU limit.
+- **Scheduler p99** (`llm_d_epp_scheduler_e2e_duration_seconds`). Expect the median to stay flat and the tail to rise.
+- **CPU throttling** for the EPP container, if your cluster exposes the CFS metrics.
+
+The study did not measure Collector or backend cost. At 100% sampling, every request produces a full span tree, and Collector CPU, network, and trace storage grow with request rate. Size those separately.
+
+### Recommendations
+
+1. **Production: parent-based ratio at 10%.** In our runs it was indistinguishable from tracing off at the client and within 13 microseconds of it at scheduler p99.
+2. **Diagnosis: 100% for bounded windows.** Budget for 3% to 4.5% more EPP CPU and a higher scheduler tail while it is on, then return to 10%.
+3. **Always pair tracing with a Collector.** Batching, noise filtering, and fan-out belong in the Collector, and the study only covers configurations that had one.
+4. **Check the effective ratio after any change upstream.** Enabling tracing at the gateway or in a client can raise the EPP's effective ratio without any change to the EPP.
+
+## Reproduce it
+
+The deployment values, GuideLLM scripts, Prometheus queries, pprof collection script, and full analysis are in the llm-d-router repository under [`test/perf/config/studyanalysis/epp_tracing_overhead`](https://github.com/llm-d/llm-d-router/tree/main/test/perf/config/studyanalysis/epp_tracing_overhead). The [analysis](https://github.com/llm-d/llm-d-router/blob/main/test/perf/config/studyanalysis/epp_tracing_overhead_analysis.md) contains every number in this post.
+
+The procedure is:
+
+1. Deploy the optimized-baseline prerequisites, the OpenTelemetry Collector and Jaeger from `deployments/telemetry.yaml`, and either the simulator or the live model pool.
+2. Install the EPP with the base router values. For a traced variant, layer `deployments/tracing/tracing-standard.values.yaml` and one `deployments/tracing/ratio-*.values.yaml` file on top.
+3. Run the primary cell:
+
+   ```sh
+   TARGET=http://GATEWAY_ADDRESS \
+     test/perf/config/studyanalysis/epp_tracing_overhead/guidellm/run.sh fixed non-streaming
+   ```
+
+4. Collect the Prometheus queries from `metrics/prometheus.md` over the benchmark window, including the span-count check.
+5. Uninstall the EPP and install the next variant. For profiles, add `deployments/tracing/pprof.values.yaml` to the 100% variant, start the same load, and run `pprof/collect.sh` after 60 seconds.
+
+The [Distributed Tracing guide](/docs/operations/observability/tracing) covers Collector and backend setup for regular deployments.
+
+## What comes next
+
+This study answers the question for the default inference-scheduling path with one EPP replica. The open items are:
+
+- **Repetitions.** Three matched runs per fixed-load cell, to put confidence intervals on the request-level numbers.
+- **Verified ratios.** Span counts from the Collector for every cell, so configured and effective ratios can be compared directly.
+- **Heavier scheduling paths.** Precise prefix-cache scoring and P/D disaggregation add spans per request (`produce_precise_prefix_cache`, `index_lookup`, `pick_disagg_profile`) and, on the precise path, an HTTP call to the engine's render endpoint inside the trace. The per-request tracing cost there is likely higher than on the path measured here.
+- **Higher load.** Sustained 800 requests/s and concurrency 128, which this study did not reach.
+- **Collector and backend cost.** The EPP is one part of the cost of tracing. The Collector and the trace store scale with sampled request rate and need their own measurements.
+
+Results from other deployments, hardware, and scheduling configurations are welcome as issues and discussions on GitHub and in the llm-d observability channels.
+
+## Closing
+
+Tracing in the EPP has a measurable cost, and this study puts numbers on it. At the recommended 10% parent-based ratio, it was not measurable at the client and stayed close to tracing off inside the EPP. At 100%, it used 3% to 4.5% of EPP CPU and raised scheduler p99 by up to about 120 microseconds, while the median decision stayed flat. Operators can keep the request-level visibility from the [tracing post](/blog/end-to-end-and-fine-grained-tracing-in-llm-d) on in production at 10%, and turn sampling up to 100% for a debugging window when they need every request.

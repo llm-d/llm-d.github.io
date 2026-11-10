@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" width="960" height="380" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs></defs>
+  <rect width="960" height="380" fill="#ffffff"/>
+  <text x="24.0" y="36.0" font-size="17" font-weight="650" fill="#0b0b0b" text-anchor="start">Tracing CPU at 100% sampling is spread across the SDK</text>
+  <text x="24.0" y="58.0" font-size="13" font-weight="400" fill="#52514e" text-anchor="start">Share of sampled EPP CPU in tracing frames, 30 s CPU profile at 400 requests/s. Component bars overlap; the union counts each sample once.</text>
+  <rect x="24.0" y="82.0" width="12.0" height="12.0" rx="3" fill="#2a78d6" stroke="none" stroke-width="1"/>
+  <text x="42.0" y="92.0" font-size="12" font-weight="400" fill="#52514e" text-anchor="start">Simulator</text>
+  <rect x="124.0" y="82.0" width="12.0" height="12.0" rx="3" fill="#eb6834" stroke="none" stroke-width="1"/>
+  <text x="142.0" y="92.0" font-size="12" font-weight="400" fill="#52514e" text-anchor="start">Live vLLM</text>
+  <line x1="220.0" y1="114.0" x2="220.0" y2="326.0" stroke="#c3c2b7" stroke-width="1"/>
+  <text x="220.0" y="344.0" font-size="11.5" font-weight="400" fill="#898781" text-anchor="middle" font-variant-numeric="tabular-nums">0%</text>
+  <line x1="352.0" y1="114.0" x2="352.0" y2="326.0" stroke="#e1e0d9" stroke-width="1"/>
+  <text x="352.0" y="344.0" font-size="11.5" font-weight="400" fill="#898781" text-anchor="middle" font-variant-numeric="tabular-nums">1%</text>
+  <line x1="484.0" y1="114.0" x2="484.0" y2="326.0" stroke="#e1e0d9" stroke-width="1"/>
+  <text x="484.0" y="344.0" font-size="11.5" font-weight="400" fill="#898781" text-anchor="middle" font-variant-numeric="tabular-nums">2%</text>
+  <line x1="616.0" y1="114.0" x2="616.0" y2="326.0" stroke="#e1e0d9" stroke-width="1"/>
+  <text x="616.0" y="344.0" font-size="11.5" font-weight="400" fill="#898781" text-anchor="middle" font-variant-numeric="tabular-nums">3%</text>
+  <line x1="748.0" y1="114.0" x2="748.0" y2="326.0" stroke="#e1e0d9" stroke-width="1"/>
+  <text x="748.0" y="344.0" font-size="11.5" font-weight="400" fill="#898781" text-anchor="middle" font-variant-numeric="tabular-nums">4%</text>
+  <line x1="880.0" y1="114.0" x2="880.0" y2="326.0" stroke="#e1e0d9" stroke-width="1"/>
+  <text x="880.0" y="344.0" font-size="11.5" font-weight="400" fill="#898781" text-anchor="middle" font-variant-numeric="tabular-nums">5%</text>
+  <text x="550.0" y="370.0" font-size="12" font-weight="400" fill="#52514e" text-anchor="middle">Share of sampled EPP CPU (%)</text>
+  <line x1="24.0" y1="274.0" x2="880.0" y2="274.0" stroke="#e1e0d9" stroke-width="1"/>
+  <text x="206.0" y="144.0" font-size="12.5" font-weight="400" fill="#52514e" text-anchor="end">Tracer lookup</text>
+  <path d="M220.0,126.0 H353.3 Q357.3,126.0 357.3,130.0 V135.0 Q357.3,139.0 353.3,139.0 H220.0 Z" fill="#2a78d6"/>
+  <text x="363.3" y="136.5" font-size="11.5" font-weight="400" fill="#52514e" text-anchor="start" font-variant-numeric="tabular-nums">1.04%</text>
+  <path d="M220.0,141.0 H341.4 Q345.4,141.0 345.4,145.0 V150.0 Q345.4,154.0 341.4,154.0 H220.0 Z" fill="#eb6834"/>
+  <text x="351.4" y="151.5" font-size="11.5" font-weight="400" fill="#52514e" text-anchor="start" font-variant-numeric="tabular-nums">0.95%</text>
+  <text x="206.0" y="194.0" font-size="12.5" font-weight="400" fill="#52514e" text-anchor="end">Batch span processor</text>
+  <path d="M220.0,176.0 H412.7 Q416.7,176.0 416.7,180.0 V185.0 Q416.7,189.0 412.7,189.0 H220.0 Z" fill="#2a78d6"/>
+  <text x="422.7" y="186.5" font-size="11.5" font-weight="400" fill="#52514e" text-anchor="start" font-variant-numeric="tabular-nums">1.49%</text>
+  <path d="M220.0,191.0 H387.6 Q391.6,191.0 391.6,195.0 V200.0 Q391.6,204.0 387.6,204.0 H220.0 Z" fill="#eb6834"/>
+  <text x="397.6" y="201.5" font-size="11.5" font-weight="400" fill="#52514e" text-anchor="start" font-variant-numeric="tabular-nums">1.30%</text>
+  <text x="206.0" y="244.0" font-size="12.5" font-weight="400" fill="#52514e" text-anchor="end">OTLP exporter</text>
+  <path d="M220.0,226.0 H392.9 Q396.9,226.0 396.9,230.0 V235.0 Q396.9,239.0 392.9,239.0 H220.0 Z" fill="#2a78d6"/>
+  <text x="402.9" y="236.5" font-size="11.5" font-weight="400" fill="#52514e" text-anchor="start" font-variant-numeric="tabular-nums">1.34%</text>
+  <path d="M220.0,241.0 H359.9 Q363.9,241.0 363.9,245.0 V250.0 Q363.9,254.0 359.9,254.0 H220.0 Z" fill="#eb6834"/>
+  <text x="369.9" y="251.5" font-size="11.5" font-weight="400" fill="#52514e" text-anchor="start" font-variant-numeric="tabular-nums">1.09%</text>
+  <text x="206.0" y="308.0" font-size="12.5" font-weight="600" fill="#0b0b0b" text-anchor="end">Any tracing frame (union)</text>
+  <path d="M220.0,290.0 H791.5 Q795.5,290.0 795.5,294.0 V299.0 Q795.5,303.0 791.5,303.0 H220.0 Z" fill="#2a78d6"/>
+  <text x="801.5" y="300.5" font-size="11.5" font-weight="600" fill="#0b0b0b" text-anchor="start" font-variant-numeric="tabular-nums">4.36%</text>
+  <path d="M220.0,305.0 H631.8 Q635.8,305.0 635.8,309.0 V314.0 Q635.8,318.0 631.8,318.0 H220.0 Z" fill="#eb6834"/>
+  <text x="641.8" y="315.5" font-size="11.5" font-weight="600" fill="#0b0b0b" text-anchor="start" font-variant-numeric="tabular-nums">3.15%</text>
+</svg>

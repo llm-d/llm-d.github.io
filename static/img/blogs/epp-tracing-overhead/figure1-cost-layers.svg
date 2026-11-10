@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#52514e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker><marker id="arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#eb6834" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker><filter id="lift" x="-10%" y="-20%" width="120%" height="150%"><feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#0b0b0b" flood-opacity="0.08"/></filter></defs>
+  <rect width="960" height="470" fill="#ffffff"/>
+  <text x="24.0" y="36.0" font-size="17" font-weight="650" fill="#0b0b0b" text-anchor="start">Where tracing work happens in the EPP</text>
+  <text x="24.0" y="58.0" font-size="13" font-weight="400" fill="#52514e" text-anchor="start">Only the sampling decision runs for every request. Span recording scales with the ratio, and export runs off the request path.</text>
+  <rect x="270.0" y="84.0" width="510.0" height="248.0" rx="12" fill="#fcfcfb" stroke="#c3c2b7" stroke-width="1"/>
+  <text x="286.0" y="104.0" font-size="10.5" font-weight="650" fill="#898781" text-anchor="start" letter-spacing="0.08em">EPP PROCESS</text>
+  <rect x="284.0" y="114.0" width="482.0" height="88.0" rx="8" fill="#2a78d6" stroke="none" stroke-width="1" fill-opacity="0.06"/>
+  <text x="754.0" y="132.0" font-size="11" font-weight="400" fill="#52514e" text-anchor="end">Request path, every request</text>
+  <rect x="284.0" y="228.0" width="482.0" height="90.0" rx="8" fill="#898781" stroke="none" stroke-width="1" fill-opacity="0.08"/>
+  <text x="754.0" y="246.0" font-size="11" font-weight="400" fill="#52514e" text-anchor="end">Background goroutine, off the request path</text>
+  <rect x="16.0" y="143.0" width="94.0" height="42.0" rx="21" fill="#ffffff" stroke="#c3c2b7" stroke-width="1" filter="url(#lift)"/>
+  <text x="63.0" y="168.5" font-size="13" font-weight="500" fill="#0b0b0b" text-anchor="middle">Client</text>
+  <rect x="140.0" y="143.0" width="94.0" height="42.0" rx="21" fill="#ffffff" stroke="#c3c2b7" stroke-width="1" filter="url(#lift)"/>
+  <text x="187.0" y="168.5" font-size="13" font-weight="500" fill="#0b0b0b" text-anchor="middle">Gateway</text>
+  <rect x="806.0" y="143.0" width="138.0" height="42.0" rx="21" fill="#ffffff" stroke="#c3c2b7" stroke-width="1" filter="url(#lift)"/>
+  <text x="875.0" y="168.5" font-size="13" font-weight="500" fill="#0b0b0b" text-anchor="middle">Model server</text>
+  <rect x="806.0" y="257.0" width="138.0" height="42.0" rx="21" fill="#ffffff" stroke="#c3c2b7" stroke-width="1" filter="url(#lift)"/>
+  <text x="875.0" y="282.5" font-size="13" font-weight="500" fill="#0b0b0b" text-anchor="middle">OTel Collector</text>
+  <rect x="312.0" y="142.0" width="180.0" height="48.0" rx="8" fill="#ffffff" stroke="#c3c2b7" stroke-width="1" filter="url(#lift)"/>
+  <text x="402.0" y="163.0" font-size="13.5" font-weight="600" fill="#0b0b0b" text-anchor="middle">Sampling decision</text>
+  <text x="402.0" y="180.0" font-size="11.5" font-weight="400" fill="#52514e" text-anchor="middle">parent-based ratio</text>
+  <circle cx="312.0" cy="142.0" r="11" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+  <text x="312.0" y="146.2" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+  <rect x="548.0" y="142.0" width="204.0" height="48.0" rx="8" fill="#ffffff" stroke="#c3c2b7" stroke-width="1" filter="url(#lift)"/>
+  <text x="650.0" y="163.0" font-size="13.5" font-weight="600" fill="#0b0b0b" text-anchor="middle">Filter, score, pick</text>
+  <text x="650.0" y="180.0" font-size="11.5" font-weight="400" fill="#52514e" text-anchor="middle">records spans if sampled</text>
+  <circle cx="548.0" cy="142.0" r="11" fill="#eb6834" stroke="#ffffff" stroke-width="2"/>
+  <text x="548.0" y="146.2" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+  <rect x="312.0" y="256.0" width="180.0" height="48.0" rx="8" fill="#ffffff" stroke="#c3c2b7" stroke-width="1" filter="url(#lift)"/>
+  <text x="402.0" y="277.0" font-size="13.5" font-weight="600" fill="#0b0b0b" text-anchor="middle">Batch span processor</text>
+  <text x="402.0" y="294.0" font-size="11.5" font-weight="400" fill="#52514e" text-anchor="middle">queues finished spans</text>
+  <circle cx="312.0" cy="256.0" r="11" fill="#1baf7a" stroke="#ffffff" stroke-width="2"/>
+  <text x="312.0" y="260.2" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+  <rect x="548.0" y="256.0" width="204.0" height="48.0" rx="8" fill="#ffffff" stroke="#c3c2b7" stroke-width="1" filter="url(#lift)"/>
+  <text x="650.0" y="277.0" font-size="13.5" font-weight="600" fill="#0b0b0b" text-anchor="middle">OTLP exporter</text>
+  <text x="650.0" y="294.0" font-size="11.5" font-weight="400" fill="#52514e" text-anchor="middle">serializes and sends over gRPC</text>
+  <path d="M110,164 H138" fill="none" stroke="#52514e" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M234,164 H310" fill="none" stroke="#52514e" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M492,166 H546" fill="none" stroke="#52514e" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M752,164 H804" fill="none" stroke="#52514e" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M492,280 H546" fill="none" stroke="#52514e" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M752,278 H804" fill="none" stroke="#52514e" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+  <path d="M600,190 V215 H402 V254" fill="none" stroke="#eb6834" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 4" marker-end="url(#arrow-accent)"/>
+  <rect x="452.0" y="207.0" width="96.0" height="16.0" rx="0" fill="#fcfcfb" stroke="none" stroke-width="1"/>
+  <text x="500.0" y="219.0" font-size="11" font-weight="400" fill="#52514e" text-anchor="middle">sampled spans</text>
+  <line x1="24.0" y1="352.0" x2="936.0" y2="352.0" stroke="#e1e0d9" stroke-width="1"/>
+  <circle cx="36.0" cy="383.0" r="11" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+  <text x="36.0" y="387.2" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+  <text x="56.0" y="388.0" font-size="13.5" font-weight="600" fill="#0b0b0b" text-anchor="start">Sampling decision</text>
+  <text x="56.0" y="412.0" font-size="12.5" font-weight="400" fill="#52514e" text-anchor="start">Runs for every request. Its cost does not</text>
+  <text x="56.0" y="431.0" font-size="12.5" font-weight="400" fill="#52514e" text-anchor="start">depend on the sampling ratio.</text>
+  <circle cx="344.0" cy="383.0" r="11" fill="#eb6834" stroke="#ffffff" stroke-width="2"/>
+  <text x="344.0" y="387.2" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+  <text x="364.0" y="388.0" font-size="13.5" font-weight="600" fill="#0b0b0b" text-anchor="start">Span recording</text>
+  <text x="364.0" y="412.0" font-size="12.5" font-weight="400" fill="#52514e" text-anchor="start">Sampled requests only. Grows with the ratio</text>
+  <text x="364.0" y="431.0" font-size="12.5" font-weight="400" fill="#52514e" text-anchor="start">and with the spans per request.</text>
+  <circle cx="652.0" cy="383.0" r="11" fill="#1baf7a" stroke="#ffffff" stroke-width="2"/>
+  <text x="652.0" y="387.2" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+  <text x="672.0" y="388.0" font-size="13.5" font-weight="600" fill="#0b0b0b" text-anchor="start">Batching and export</text>
+  <text x="672.0" y="412.0" font-size="12.5" font-weight="400" fill="#52514e" text-anchor="start">Asynchronous. Shares EPP CPU with request</text>
+  <text x="672.0" y="431.0" font-size="12.5" font-weight="400" fill="#52514e" text-anchor="start">handling and adds garbage-collection work.</text>
+</svg>

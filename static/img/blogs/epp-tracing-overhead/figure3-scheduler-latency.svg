@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 386" width="960" height="386" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs></defs>
+  <rect width="960" height="386" fill="#ffffff"/>
+  <text x="24.0" y="36.0" font-size="17" font-weight="650" fill="#0b0b0b" text-anchor="start">100% sampling raises the scheduler tail, not the median</text>
+  <text x="24.0" y="58.0" font-size="13" font-weight="400" fill="#52514e" text-anchor="start">EPP scheduler latency by sampling ratio: Prometheus histogram quantiles, mean of 10 s samples over the run.</text>
+  <text x="24.0" y="92.0" font-size="12" font-weight="600" fill="#52514e" text-anchor="start">Quantile</text>
+  <line x1="90.0" y1="88.0" x2="114.0" y2="88.0" stroke="#b9b7ae" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="102.0" cy="88.0" r="4" fill="#b9b7ae" stroke="#ffffff" stroke-width="1.5"/>
+  <text x="122.0" y="92.0" font-size="12" font-weight="400" fill="#52514e" text-anchor="start">p50</text>
+  <line x1="156.0" y1="88.0" x2="180.0" y2="88.0" stroke="#898781" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="168.0" cy="88.0" r="4" fill="#898781" stroke="#ffffff" stroke-width="1.5"/>
+  <text x="188.0" y="92.0" font-size="12" font-weight="400" fill="#52514e" text-anchor="start">p95</text>
+  <line x1="222.0" y1="88.0" x2="246.0" y2="88.0" stroke="#eb6834" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="234.0" cy="88.0" r="4" fill="#eb6834" stroke="#ffffff" stroke-width="1.5"/>
+  <text x="254.0" y="92.0" font-size="12" font-weight="400" fill="#52514e" text-anchor="start">p99</text>
+  <text x="84.0" y="122.0" font-size="13.5" font-weight="600" fill="#0b0b0b" text-anchor="start">Simulator</text>
+  <line x1="84.0" y1="320.0" x2="380.0" y2="320.0" stroke="#c3c2b7" stroke-width="1"/>
+  <text x="74.0" y="324.0" font-size="11.5" font-weight="400" fill="#898781" text-anchor="end" font-variant-numeric="tabular-nums">0</text>
+  <line x1="84.0" y1="289.3" x2="380.0" y2="289.3" stroke="#e1e0d9" stroke-width="1"/>
+  <text x="74.0" y="293.3" font-size="11.5" font-weight="400" fill="#898781" text-anchor="end" font-variant-numeric="tabular-nums">50</text>
+  <line x1="84.0" y1="258.7" x2="380.0" y2="258.7" stroke="#e1e0d9" stroke-width="1"/>
+  <text x="74.0" y="262.7" font-size="11.5" font-weight="400" fill="#898781" text-anchor="end" font-variant-numeric="tabular-nums">100</text>
+  <line x1="84.0" y1="228.0" x2="380.0" y2="228.0" stroke="#e1e0d9" stroke-width="1"/>
+  <text x="74.0" y="232.0" font-size="11.5" font-weight="400" fill="#898781" text-anchor="end" font-variant-numeric="tabular-nums">150</text>
+  <line x1="84.0" y1="197.3" x2="380.0" y2="197.3" stroke="#e1e0d9" stroke-width="1"/>
+  <text x="74.0" y="201.3" font-size="11.5" font-weight="400" fill="#898781" text-anchor="end" font-variant-numeric="tabular-nums">200</text>
+  <line x1="84.0" y1="166.7" x2="380.0" y2="166.7" stroke="#e1e0d9" stroke-width="1"/>
+  <text x="74.0" y="170.7" font-size="11.5" font-weight="400" fill="#898781" text-anchor="end" font-variant-numeric="tabular-nums">250</text>
+  <line x1="84.0" y1="136.0" x2="380.0" y2="136.0" stroke="#e1e0d9" stroke-width="1"/>
+  <text x="74.0" y="140.0" font-size="11.5" font-weight="400" fill="#898781" text-anchor="end" font-variant-numeric="tabular-nums">300</text>
+  <text x="108.0" y="340.0" font-size="12" font-weight="400" fill="#52514e" text-anchor="middle">Off</text>
+  <text x="190.7" y="340.0" font-size="12" font-weight="400" fill="#52514e" text-anchor="middle">1%</text>
+  <text x="273.3" y="340.0" font-size="12" font-weight="400" fill="#52514e" text-anchor="middle">10%</text>
+  <text x="356.0" y="340.0" font-size="12" font-weight="400" fill="#52514e" text-anchor="middle">100%</text>
+  <text x="232.0" y="366.0" font-size="12" font-weight="400" fill="#52514e" text-anchor="middle">EPP tracing sampling ratio</text>
+  <polyline points="108.0,288.9 190.7,288.9 273.3,288.9 356.0,288.5" fill="none" stroke="#b9b7ae" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="108.0" cy="288.9" r="4.5" fill="#b9b7ae" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="190.7" cy="288.9" r="4.5" fill="#b9b7ae" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="273.3" cy="288.9" r="4.5" fill="#b9b7ae" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="356.0" cy="288.5" r="4.5" fill="#b9b7ae" stroke="#ffffff" stroke-width="2"/>
+  <text x="368.0" y="292.5" font-size="12" font-weight="400" fill="#52514e" text-anchor="start">p50  51 µs</text>
+  <polyline points="108.0,261.0 190.7,261.0 273.3,260.9 356.0,260.2" fill="none" stroke="#898781" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="108.0" cy="261.0" r="4.5" fill="#898781" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="190.7" cy="261.0" r="4.5" fill="#898781" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="273.3" cy="260.9" r="4.5" fill="#898781" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="356.0" cy="260.2" r="4.5" fill="#898781" stroke="#ffffff" stroke-width="2"/>
+  <text x="368.0" y="264.2" font-size="12" font-weight="400" fill="#52514e" text-anchor="start">p95  98 µs</text>
+  <polyline points="108.0,234.9 190.7,233.3 273.3,226.7 356.0,161.4" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="108.0" cy="234.9" r="4.5" fill="#eb6834" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="190.7" cy="233.3" r="4.5" fill="#eb6834" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="273.3" cy="226.7" r="4.5" fill="#eb6834" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="356.0" cy="161.4" r="4.5" fill="#eb6834" stroke="#ffffff" stroke-width="2"/>
+  <text x="368.0" y="165.4" font-size="12" font-weight="600" fill="#0b0b0b" text-anchor="start">p99  259 µs</text>
+  <text x="368.0" y="182.4" font-size="11.5" font-weight="400" fill="#898781" text-anchor="start">+86% vs. off</text>
+  <text x="560.0" y="122.0" font-size="13.5" font-weight="600" fill="#0b0b0b" text-anchor="start">Live vLLM</text>
+  <line x1="560.0" y1="320.0" x2="856.0" y2="320.0" stroke="#c3c2b7" stroke-width="1"/>
+  <text x="550.0" y="324.0" font-size="11.5" font-weight="400" fill="#898781" text-anchor="end" font-variant-numeric="tabular-nums">0</text>
+  <line x1="560.0" y1="289.3" x2="856.0" y2="289.3" stroke="#e1e0d9" stroke-width="1"/>
+  <text x="550.0" y="293.3" font-size="11.5" font-weight="400" fill="#898781" text-anchor="end" font-variant-numeric="tabular-nums">50</text>
+  <line x1="560.0" y1="258.7" x2="856.0" y2="258.7" stroke="#e1e0d9" stroke-width="1"/>
+  <text x="550.0" y="262.7" font-size="11.5" font-weight="400" fill="#898781" text-anchor="end" font-variant-numeric="tabular-nums">100</text>
+  <line x1="560.0" y1="228.0" x2="856.0" y2="228.0" stroke="#e1e0d9" stroke-width="1"/>
+  <text x="550.0" y="232.0" font-size="11.5" font-weight="400" fill="#898781" text-anchor="end" font-variant-numeric="tabular-nums">150</text>
+  <line x1="560.0" y1="197.3" x2="856.0" y2="197.3" stroke="#e1e0d9" stroke-width="1"/>
+  <text x="550.0" y="201.3" font-size="11.5" font-weight="400" fill="#898781" text-anchor="end" font-variant-numeric="tabular-nums">200</text>
+  <line x1="560.0" y1="166.7" x2="856.0" y2="166.7" stroke="#e1e0d9" stroke-width="1"/>
+  <text x="550.0" y="170.7" font-size="11.5" font-weight="400" fill="#898781" text-anchor="end" font-variant-numeric="tabular-nums">250</text>
+  <line x1="560.0" y1="136.0" x2="856.0" y2="136.0" stroke="#e1e0d9" stroke-width="1"/>
+  <text x="550.0" y="140.0" font-size="11.5" font-weight="400" fill="#898781" text-anchor="end" font-variant-numeric="tabular-nums">300</text>
+  <text x="584.0" y="340.0" font-size="12" font-weight="400" fill="#52514e" text-anchor="middle">Off</text>
+  <text x="666.7" y="340.0" font-size="12" font-weight="400" fill="#52514e" text-anchor="middle">1%</text>
+  <text x="749.3" y="340.0" font-size="12" font-weight="400" fill="#52514e" text-anchor="middle">10%</text>
+  <text x="832.0" y="340.0" font-size="12" font-weight="400" fill="#52514e" text-anchor="middle">100%</text>
+  <text x="708.0" y="366.0" font-size="12" font-weight="400" fill="#52514e" text-anchor="middle">EPP tracing sampling ratio</text>
+  <polyline points="584.0,288.9 666.7,288.9 749.3,289.0 832.0,287.7" fill="none" stroke="#b9b7ae" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="584.0" cy="288.9" r="4.5" fill="#b9b7ae" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="666.7" cy="288.9" r="4.5" fill="#b9b7ae" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="749.3" cy="289.0" r="4.5" fill="#b9b7ae" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="832.0" cy="287.7" r="4.5" fill="#b9b7ae" stroke="#ffffff" stroke-width="2"/>
+  <text x="844.0" y="291.7" font-size="12" font-weight="400" fill="#52514e" text-anchor="start">p50  53 µs</text>
+  <polyline points="584.0,261.0 666.7,260.8 749.3,261.2 832.0,256.6" fill="none" stroke="#898781" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="584.0" cy="261.0" r="4.5" fill="#898781" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="666.7" cy="260.8" r="4.5" fill="#898781" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="749.3" cy="261.2" r="4.5" fill="#898781" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="832.0" cy="256.6" r="4.5" fill="#898781" stroke="#ffffff" stroke-width="2"/>
+  <text x="844.0" y="260.6" font-size="12" font-weight="400" fill="#52514e" text-anchor="start">p95  103 µs</text>
+  <polyline points="584.0,243.2 666.7,234.9 749.3,253.0 832.0,205.2" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="584.0" cy="243.2" r="4.5" fill="#eb6834" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="666.7" cy="234.9" r="4.5" fill="#eb6834" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="749.3" cy="253.0" r="4.5" fill="#eb6834" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="832.0" cy="205.2" r="4.5" fill="#eb6834" stroke="#ffffff" stroke-width="2"/>
+  <text x="844.0" y="209.2" font-size="12" font-weight="600" fill="#0b0b0b" text-anchor="start">p99  187 µs</text>
+  <text x="844.0" y="226.2" font-size="11.5" font-weight="400" fill="#898781" text-anchor="start">+49% vs. off</text>
+  <text x="26.0" y="228.0" font-size="12" font-weight="400" fill="#52514e" text-anchor="middle" transform="rotate(-90 26 228.0)">Scheduler latency (µs)</text>
+</svg>
