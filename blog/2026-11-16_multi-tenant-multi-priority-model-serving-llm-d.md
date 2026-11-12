@@ -2,7 +2,7 @@
 title: "Multi-Tenant and Multi-Priority Model Serving with llm-d"
 description: "A recommended architecture for sharing one GPU pool across many teams and priorities with llm-d: durable per-tenant queues, quota and rate-limit gates, six-lane strict priority scheduling, and a defined degradation policy at saturation, powered by llm-d Async."
 slug: multi-tenant-multi-priority-model-serving-llm-d
-date: 2026-11-11T10:00
+date: 2026-11-16T10:00
 authors:
   - shimib
   - jacobmurry
