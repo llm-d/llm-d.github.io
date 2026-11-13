@@ -25,10 +25,12 @@ To overcome this bottleneck, vLLM supports [Decode Context Parallelism (DCP)](ht
 In llm-d's [P/D Disaggregation architecture](https://github.com/llm-d/llm-d/tree/main/guides/pd-disaggregation), the Inference Gateway and Endpoint Picker (EPP) route incoming prompts to a compute-optimized Prefill Pool, which computes the initial KV cache and transfers it over zero-copy RDMA (NixlConnector over UCX/RoCEv2) to a memory-optimized Decode Pool. While the **Routed Experts** (90%–97.5% of total MoE parameters) are naturally partitioned 1/8 per GPU across an 8-GPU Decode node using Expert Parallelism (EP = 8), operators must choose how to parallelize the **Non-MoE** layers (Attention projections, Lightning Indexers, Shared Experts, Dense MLPs, Embeddings, and LM Head) and the **KV cache**:
 
 1. Why Standard `TP=8 + EP=8 (DCP=1)` Hits a KV Duplication & NIXL Transfer Wall:
-   Standard Tensor Parallelism partitions attention strictly along the head dimension, which can split the KV cache at most **#kv_heads ($H_{kv}$)** ways:
-   $$\text{KV Cache Duplication Factor under Standard TP} = \max\!\left(1,\; \frac{\text{TP}}{H_{kv}}\right)$$
+   Standard Tensor Parallelism partitions attention strictly along the head dimension, which can split the KV cache at most **#kv_heads** ways:
+   ```text
+   KV Cache Duplication Factor under Standard TP = max(1, TP / #kv_heads)
+   ```
    - On **4-Head GQA** (#kv_heads = 4, `Qwen3-235B-A22B-FP8`), TP=8 forces pairs of GPUs to store identical copies of each KV head (8 / 4 = 2× duplication, wasting 50% of KV HBM).
-   - On **1-Head Dense MLA** (#kv_heads = 1, `DeepSeek-R1`) and **Dynamic Sparse MLA** (**DSA**, #kv_heads = 1, `GLM-5.3`), all query heads attend directly to a single shared compressed latent KV vector ($c_t^{KV}$) via matrix absorption. Because $H_{kv} = 1$ cannot be split by head, TP=8 replicates the entire KV cache across all 8 GPUs (8 / 1 = 8× duplication, wasting 87.5% of KV HBM)!
+   - On **1-Head Dense MLA** (#kv_heads = 1, `DeepSeek-R1`) and **Dynamic Sparse MLA** (**DSA**, #kv_heads = 1, `GLM-5.3`), all query heads attend directly to a single shared compressed latent KV vector via matrix absorption. Because `#kv_heads = 1` cannot be split by head, TP=8 replicates the entire KV cache across all 8 GPUs (8 / 1 = 8× duplication, wasting 87.5% of KV HBM)!
    - Worse yet, in P/D disaggregation, every duplicated KV copy must be pulled across the network: for a single 32K-token prompt, an 8-GPU TP=8 Decode pod pulls 8× redundant KV bytes over NIXL/RoCEv2 (17.16 GiB/req on DeepSeek-R1; 13.17 GiB/req on GLM-5.3).
 
 2. Why Pure `DP=8 + EP=8 (TP=1)` Runs Out of HBM on 235B–744B Models:
@@ -71,7 +73,7 @@ flowchart TB
     end
 ```
 
-By setting $\text{DCP} = \text{TP} / H_{kv}$ (DCP=2 for 4-head GQA at TP=8; DCP=8 for 1-head Dense/Sparse MLA at TP=8; or DCP=4 for 1-head MLA/DSA in hybrid TP=4, DP=2), each GPU stores only **1 / DCP** of each sequence's KV cache blocks:
+By setting `DCP = TP / #kv_heads` (DCP=2 for 4-head GQA at TP=8; DCP=8 for 1-head Dense/Sparse MLA at TP=8; or DCP=4 for 1-head MLA/DSA in hybrid TP=4, DP=2), each GPU stores only **1 / DCP** of each sequence's KV cache blocks:
 - Zero KV Duplication: All 8 GPUs share a single KV cache pool (Scenario B) with 1× storage while keeping Non-MoE weights 1/8 sharded.
 - 2× to 8× Less Per-Step KV HBM Bandwidth: On every decode step, each GPU reads only 1 / DCP of the sequence's KV blocks from HBM, computes local FlashAttention/FlashMLA with its local Log-Sum-Exp (LSE), and merges partial outputs across DCP ranks via a lightweight NVLink LSE combine.
 - Sequence-Sharded NIXL KV Pull: When a Prefill pod finishes a prompt, each Decode GPU pulls only its assigned 1 / DCP sequence blocks over NixlConnector, eliminating redundant RDMA traffic.
