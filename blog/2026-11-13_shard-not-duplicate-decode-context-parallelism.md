@@ -4,7 +4,7 @@ description: "How sequence-sharded Decode Context Parallelism (DCP) eliminates 2
 slug: decode-context-parallelism-pd-disaggregation
 date: 2026-11-13
 authors:
-  - cchenghsiang
+  - chenghsiangchiu
   - kaushikmitra
 tags:
   - decode context parallelism
