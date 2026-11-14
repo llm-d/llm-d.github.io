@@ -29,7 +29,7 @@ To evaluate how llm-d performs under realistic production traffic relative to st
 :::info[Headline results]
 
 * **85.3%–89.7% Multimodal Prefix-Cache Hit Rate** (vs. 49.0%–63.8% on K8s Service): Across c = 8..4,096, llm-d sustains an **85.3%–89.7%** vLLM prefix-cache hit rate (89.7% at peak throughput c = 4,096), outperforming standard Kubernetes round-robin (49.0%–63.8% at c ≥ 128) by up to +36.4%—even across the 28.3% of image turns where users upload new photos on Turn 2+.
-* **+54.0% Higher Peak Token Throughput, Up to 2.60× Faster Median TTFT, and 3.94× Lower Tail TTFT (`p90`)**: At c = 4,096, llm-d delivers 121,280.2 total tokens/sec (34,233.3 output tokens/sec) compared to 78,759.3 total tokens/sec (22,246.1 output tokens/sec) on K8s Service (+54.0%). Across the sweep, llm-d cuts median TTFT (p50) by up to 2.60× (61.02 ms vs. 158.41 ms at c = 256), cuts high-concurrency tail TTFT (p90 / p99) by 3.94× / 5.51× (1,014.91 ms vs. 3,997.23 ms p90 and 2,796.55 ms vs. 15,411.12 ms p99 at c = 4,096), and reduces Decode Inter-Token Latency (ITL p50) by 34.8% (92.43 ms vs. 141.86 ms).
+* **+54.0% Higher Peak Token Throughput, Up to 2.60× Faster Median TTFT, and 3.94× Lower Tail TTFT (p90)**: At c = 4,096, llm-d delivers 121,280.2 total tokens/sec (34,233.3 output tokens/sec) compared to 78,759.3 total tokens/sec (22,246.1 output tokens/sec) on K8s Service (+54.0%). Across the sweep, llm-d cuts median TTFT (p50) by up to 2.60× (61.02 ms vs. 158.41 ms at c = 256), cuts high-concurrency tail TTFT (p90 / p99) by 3.94× / 5.51× (1,014.91 ms vs. 3,997.23 ms p90 and 2,796.55 ms vs. 15,411.12 ms p99 at c = 4,096), and reduces Decode Inter-Token Latency (ITL p50) by 34.8% (92.43 ms vs. 141.86 ms).
 * **The H200 Roofline Revelation (2.85× Effective Compute Multiplier)**: A Hardware Roofline analysis shows that at c = 4,096, both arms saturate the 16 H200 GPUs at the exact same physical compute ceiling (~360.6–362.1 Physical TFLOPS/replica). The difference is what those FLOPs are spent on: K8s Service wastes 51.4% of its physical GPU compute (185.3 TFLOPS/replica) recomputing missed prefixes and ViT image encodings, whereas llm-d spends 78.7% of its physical GPU compute (285.0 TFLOPS/replica) generating decode tokens—achieving 1,030.3 Effective Logical TFLOPS/replica (2.85× physical GPU compute) with zero extra stateful infrastructure.
 
 :::
@@ -109,25 +109,25 @@ All metrics below report the **3-iteration mean ± standard deviation** across a
 
 | Concurrency | Routing Arm | TTFT p50 (ms) | TTFT p90 (ms) | ITL p50 (ms) | Total Token Throughput (tok/s) | Output Token Throughput (tok/s) | vLLM Prefix Cache Hit (%) |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **8** | **`llm-d`** | 43.97 ± 0.56 | 93.74 ± 1.66 | **10.99 ± 0.01** | **2,464.8 ± 2.6** | **695.9 ± 0.9** | **85.5%** |
+| **8** | **llm-d** | 43.97 ± 0.56 | 93.74 ± 1.66 | **10.99 ± 0.01** | **2,464.8 ± 2.6** | **695.9 ± 0.9** | **85.5%** |
 | 8 | K8s Service | **43.34 ± 0.48** | **88.91 ± 1.82** | 11.05 ± 0.08 | 2,451.9 ± 16.2 | 692.1 ± 4.6 | 81.5% |
-| **16** | **`llm-d`** | **47.82 ± 0.25** | **103.52 ± 0.30** | **11.13 ± 0.01** | **4,771.2 ± 10.6** | **1,347.1 ± 3.1** | **85.5%** |
+| **16** | **llm-d** | **47.82 ± 0.25** | **103.52 ± 0.30** | **11.13 ± 0.01** | **4,771.2 ± 10.6** | **1,347.1 ± 3.1** | **85.5%** |
 | 16 | K8s Service | 53.77 ± 0.65 | 132.49 ± 1.04 | 11.25 ± 0.05 | 4,672.1 ± 37.8 | 1,319.1 ± 10.8 | 68.8% |
-| **32** | **`llm-d`** | 49.63 ± 0.14 | **110.22 ± 1.54** | **11.45 ± 0.02** | **8,962.5 ± 5.2** | **2,530.4 ± 1.2** | **85.5%** |
+| **32** | **llm-d** | 49.63 ± 0.14 | **110.22 ± 1.54** | **11.45 ± 0.02** | **8,962.5 ± 5.2** | **2,530.4 ± 1.2** | **85.5%** |
 | 32 | K8s Service | **48.82 ± 0.22** | 115.65 ± 0.87 | 11.70 ± 0.11 | 8,754.5 ± 99.5 | 2,471.6 ± 28.0 | 76.3% |
-| **64** | **`llm-d`** | **51.63 ± 0.08** | **124.21 ± 1.25** | **12.10 ± 0.03** | **15,980.3 ± 166.9** | **4,511.8 ± 46.8** | **85.4%** |
+| **64** | **llm-d** | **51.63 ± 0.08** | **124.21 ± 1.25** | **12.10 ± 0.03** | **15,980.3 ± 166.9** | **4,511.8 ± 46.8** | **85.4%** |
 | 64 | K8s Service | 56.11 ± 0.72 | 162.88 ± 5.45 | 12.76 ± 0.04 | 15,074.0 ± 100.3 | 4,255.7 ± 28.5 | 68.7% |
-| **128** | **`llm-d`** | **54.60 ± 0.57** | **138.64 ± 3.31** | **13.40 ± 0.02** | **24,361.2 ± 121.1** | **6,878.0 ± 34.0** | **85.3%** |
+| **128** | **llm-d** | **54.60 ± 0.57** | **138.64 ± 3.31** | **13.40 ± 0.02** | **24,361.2 ± 121.1** | **6,878.0 ± 34.0** | **85.3%** |
 | 128 | K8s Service | 114.78 ± 3.66 | 240.32 ± 5.19 | 15.27 ± 0.06 | 21,696.2 ± 216.2 | 6,125.6 ± 61.3 | 59.2% |
-| **256** | **`llm-d`** | **61.02 ± 0.23** | **163.98 ± 1.56** | **15.19 ± 0.04** | **30,996.9 ± 306.3** | **8,751.4 ± 86.2** | **85.4%** |
+| **256** | **llm-d** | **61.02 ± 0.23** | **163.98 ± 1.56** | **15.19 ± 0.04** | **30,996.9 ± 306.3** | **8,751.4 ± 86.2** | **85.4%** |
 | 256 | K8s Service | 158.41 ± 3.56 | 309.51 ± 4.89 | 20.57 ± 0.15 | 25,599.5 ± 107.2 | 7,227.6 ± 30.1 | 49.0% |
-| **512** | **`llm-d`** | **75.40 ± 0.44** | **275.41 ± 7.12** | **19.24 ± 0.15** | **50,130.4 ± 234.6** | **14,154.0 ± 65.8** | **87.3%** |
+| **512** | **llm-d** | **75.40 ± 0.44** | **275.41 ± 7.12** | **19.24 ± 0.15** | **50,130.4 ± 234.6** | **14,154.0 ± 65.8** | **87.3%** |
 | 512 | K8s Service | 166.48 ± 3.30 | 875.59 ± 19.63 | 26.72 ± 0.16 | 39,637.8 ± 285.9 | 11,191.2 ± 80.5 | 58.6% |
-| **1024** | **`llm-d`** | **111.40 ± 0.49** | **542.66 ± 17.56** | **27.99 ± 0.28** | **75,696.0 ± 1,749.2** | **21,369.5 ± 493.8** | **88.4%** |
+| **1024** | **llm-d** | **111.40 ± 0.49** | **542.66 ± 17.56** | **27.99 ± 0.28** | **75,696.0 ± 1,749.2** | **21,369.5 ± 493.8** | **88.4%** |
 | 1024 | K8s Service | 209.62 ± 4.85 | 1,711.44 ± 48.06 | 42.68 ± 0.44 | 55,687.6 ± 25.9 | 15,722.6 ± 7.4 | 60.9% |
-| **2048** | **`llm-d`** | **185.52 ± 1.60** | **824.97 ± 23.40** | **47.93 ± 0.78** | **103,354.4 ± 1,894.8** | **29,171.3 ± 536.0** | **89.2%** |
+| **2048** | **llm-d** | **185.52 ± 1.60** | **824.97 ± 23.40** | **47.93 ± 0.78** | **103,354.4 ± 1,894.8** | **29,171.3 ± 536.0** | **89.2%** |
 | 2048 | K8s Service | 308.09 ± 6.64 | 2,869.18 ± 46.81 | 75.75 ± 1.28 | 68,622.0 ± 203.2 | 19,375.5 ± 58.1 | 62.1% |
-| **4096** | **`llm-d`** | **311.85 ± 1.61** | **1,014.91 ± 25.75** | **92.43 ± 0.99** | **121,280.2 ± 2,853.3** | **34,233.3 ± 807.6** | **89.7%** |
+| **4096** | **llm-d** | **311.85 ± 1.61** | **1,014.91 ± 25.75** | **92.43 ± 0.99** | **121,280.2 ± 2,853.3** | **34,233.3 ± 807.6** | **89.7%** |
 | 4096 | K8s Service | 490.01 ± 9.07 | 3,997.23 ± 64.91 | 141.86 ± 0.54 | 78,759.3 ± 800.5 | 22,246.1 ± 226.4 | 63.8% |
 
 <div style="text-align:center; margin:20px 0">
