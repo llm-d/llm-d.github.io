@@ -116,6 +116,8 @@ const config = {
         blog: {
           path: "blog",
           routeBasePath: "blog",
+          remarkPlugins: [remarkMath],
+          rehypePlugins: [rehypeKatex],
           showReadingTime: true,
           readingTime: ({ content, defaultReadingTime, locale }) =>
             defaultReadingTime({
