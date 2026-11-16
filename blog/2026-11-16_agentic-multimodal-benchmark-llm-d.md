@@ -2,12 +2,13 @@
 title: "Benchmarking Multi-Turn Multimodal Serving in llm-d"
 description: "Evaluating llm-d's multimodal token-aware router against a standard Kubernetes Service baseline across 60 runs (concurrency 8 to 4,096) on 16× NVIDIA H200 GPUs serving Qwen3-VL-32B-Instruct on real e-commerce shopping sessions (MMShopBench) with NVIDIA AIPerf."
 slug: agentic-multimodal-benchmark-llm-d
-date: 2026-11-13
+date: 2026-11-16
 
 authors:
   - chenghsiangchiu
   - xiyue
   - kaushikmitra
+  - gluo
 
 tags: [blog, multimodal, agentic-inference, scheduling, vllm]
 ---
