@@ -1,5 +1,5 @@
 ---
-title: "Bringing First-Class SGLang Serving to llm-d: Engine-Agnostic Routing, Disaggregated Wide-EP, and Tiered KV Cache Offloading"
+title: "Bringing First-Class SGLang Serving to llm-d"
 description: "How the llm-d and SGLang communities brought first-class Kubernetes-native SGLang Wide-EP serving to llm-d, and how HiCache L2 host RAM and Shared L3 storage perform across single- and multi-replica H200 deployments."
 slug: serving-glm-5-2-sglang-tiered-kv-cache-on-llm-d
 date: 2026-11-17T09:00
@@ -25,13 +25,13 @@ export const Figure = ({src, alt, children, size = 'standard'}) => (
   </figure>
 );
 
-# Bringing First-Class SGLang Serving to llm-d: Engine-Agnostic Routing, Disaggregated Wide-EP, and Tiered KV Cache Offloading
+# Bringing First-Class SGLang Serving to llm-d
 
 In [Serving GLM-5.2 for Agentic Workloads on llm-d](/blog/serving-glm-5-2-agentic-workloads-on-llm-d), we showed how `llm-d` serves long-context coding agents on NVIDIA H200 GPUs with vLLM—combining disaggregated prefill and decode pools, wide expert parallelism, prefix- and load-aware routing, and tiered KV caching. Since then, contributors from the `llm-d` and [SGLang](https://github.com/sgl-project/sglang) communities have made **SGLang** a first-class, Kubernetes-native inference engine in `llm-d`'s [GLM-5.2 well-lit path](https://github.com/llm-d/llm-d/tree/main/guides/models/glm-5-2), the project's tested reference deployment. We also measured SGLang's multi-tier KV cache on single-replica and multi-replica clusters. This post tells that story in three parts:
 
 1. **Engine-agnostic `llm-d` architecture:** how `llm-d` decouples Kubernetes workload orchestration, prefix-affinity routing, and disaggregated serving from individual model servers so vLLM and SGLang share a common operational model.
 2. **First-class SGLang integration:** how the SGLang and `llm-d` communities adapted SGLang's Wide-EP runtime to work natively with `llm-d`'s Kubernetes routing and disaggregated serving.
-3. **Tiered KV-cache offloading (`L1` → `L2` → `Shared L3`):** how pairing SGLang's hierarchical KV cache (`HiCache`) with `llm-d`'s prefix-aware routing and Kubernetes failover keeps long agent sessions cached across host RAM and shared storage—surviving high concurrency, pod evictions, and cold restarts.
+3. **Tiered KV-cache offloading:** how pairing SGLang's hierarchical KV cache with `llm-d`'s prefix-aware routing and Kubernetes failover keeps long agent sessions cached across host RAM and shared storage—surviving high concurrency, pod evictions, and cold restarts.
 
 <!-- truncate -->
 
@@ -39,13 +39,13 @@ In [Serving GLM-5.2 for Agentic Workloads on llm-d](/blog/serving-glm-5-2-agenti
 <details className="alert alert--success">
 <summary><strong>TL;DR — What We Enabled and What Operators Can Expect</strong></summary>
 
-* **One `llm-d` platform across engines:** `llm-d` users can choose **SGLang** as their serving engine backend alongside vLLM. By swapping only the engine-specific deployment overlay and router configuration, SGLang runs on the same `DisaggregatedSet` / `LeaderWorkerSet` orchestration, per-rank `InferencePool` discovery, prefix-cache-aware routing, and verification workflow.
+* **One `llm-d` platform across engines:** `llm-d` users can choose **SGLang** as their serving engine backend alongside vLLM. By swapping only the engine-specific deployment overlay and router configuration, SGLang runs on the same `DisaggregatedSet` orchestration, per-rank `InferencePool` discovery, prefix-cache-aware routing, and verification workflow.
 
-* **Kubernetes-native SGLang Wide-EP:** In Wide-EP (`DEP`) deployments, each attention data-parallel (`DP`) rank holds its own KV cache while sharing expert weights across GPUs. To let `llm-d` route requests to the rank holding a warm prefix, we worked with the SGLang community so every DP rank acts as an independent, routable, and observable Kubernetes endpoint—even across multi-node prefill and decode pools.
+* **Kubernetes-native SGLang Wide-EP:** In Wide-EP deployments, each attention data-parallel (`DP`) rank holds its own KV cache while sharing expert weights across GPUs. To let `llm-d` route requests to the rank holding a warm prefix, we worked with the SGLang community so every DP rank acts as an independent, routable, and observable Kubernetes endpoint—even across multi-node prefill and decode pools.
 
-* **Host RAM (`L2`) eliminates the `L1` thrashing cliff:** On a 16-GPU `1P1D` deployment (`p1w1d1w1`), offloading evicted KV blocks to host RAM keeps cache hit rates at `85%–95%`, raises concurrency-`128` output **`3.94x`** (`319` → `1,257 tok/s`), and cuts median TTFT from `174.2 s` to `20.1 s`.
+* **Host RAM (`L2`) eliminates the `L1` thrashing cliff:** On a 16-GPU `1P1D` deployment, offloading evicted KV blocks to host RAM keeps cache hit rates at `85%–95%`, raises concurrency-`128` output **`3.94x`** from `319` to `1,257 tok/s`, and cuts median TTFT from `174.2 s` to `20.1 s`.
 
-* **Multi-replica scale-out (`p2w1d1w2`, `32`x H200) and `Shared L3` resilience:** Scaling out to two prefill replicas with a 2-node decode pool cuts `c128` median TTFT **`5.9x`** (`20.1 s` → `3.43 s`, `1,903 tok/s` output). Adding `Shared L3` restores **evicted sessions with `1.08M` tokens, `99.94%` hit** on the surviving replica during live pod failover — cutting survivor queue recovery time in half — and cuts cold-replica recovery TTFT by **`57%`** from `38.8 s` → `16.8 s`.
+* **Multi-replica scale-out and `Shared L3` resilience:** Scaling to `32` H200 GPUs across two prefill replicas and a 2-node decode pool cuts concurrency-`128` median TTFT **`5.9x`** from `20.1 s` to `3.43 s` at `1,903 tok/s` output. Adding `Shared L3` restores evicted sessions on the surviving replica during live pod failover—loading `1.08M` tokens at a **`99.94%` hit rate** and cutting survivor queue recovery time in half—and cuts cold-replica recovery TTFT by **`57%`** from `38.8 s` to `16.8 s`.
 
 </details>
 <!-- reading-time-exclude:end -->
@@ -60,17 +60,17 @@ In [Serving GLM-5.2 for Agentic Workloads on llm-d](/blog/serving-glm-5-2-agenti
 
 ## 1. `llm-d` Architecture and Engine-Agnostic Design
 
-A central design goal of `llm-d` is to give platform teams a unified Kubernetes control and routing layer regardless of which inference engine runs inside the serving containers. Rather than maintaining separate gateways, autoscalers, or cache-routing stacks per engine, `llm-d` separates cluster-level serving primitives from engine-specific execution (Figure 1):
+A central design goal of `llm-d` is to give platform teams a unified Kubernetes control and routing layer regardless of which inference engine runs inside the serving containers. Rather than maintaining separate gateways, autoscalers, or cache-routing stacks per engine, `llm-d` separates cluster-level serving primitives from engine-specific execution, as shown in Figure 1:
 
-* **Declarative disaggregated orchestration (`DisaggregatedSet` + `LeaderWorkerSet`):** Multi-node prefill and decode pools run as native Kubernetes workloads with coordinated gang scheduling, revision-aware rolling updates, and Dynamic Resource Allocation (`DRA`) for GPUs and RDMA NICs. Scaling from a single-replica `16`-GPU deployment (`p1w1d1w1` = 1 prefill replica of 1 node + 1 decode replica of 1 node) to multi-replica or multi-node Wide-EP layouts (`p2w1d1w2` on `32` GPUs, `p2w2d2w2` on `64` GPUs) uses the same declarative overlays and operational lifecycle across engines.
-* **Per-DP-rank `InferencePool` endpoint discovery:** Rather than exposing a multi-GPU pod as a single aggregated endpoint, `llm-d` registers each attention-DP rank as its own `InferencePool` endpoint (`DP-per-endpoint`, as detailed in the [earlier GLM-5.2 post](/blog/serving-glm-5-2-agentic-workloads-on-llm-d#fitting-repository-scale-sessions-in-memory)). This lets the router see and target each GPU's separate KV cache directly.
+* **Declarative disaggregated orchestration:** Multi-node prefill and decode pools run as native Kubernetes workloads through `DisaggregatedSet`, with coordinated gang scheduling, rolling updates, and Dynamic Resource Allocation for GPUs and RDMA NICs. Scaling from a single-replica `16`-GPU deployment to multi-replica `32`- or `64`-GPU Wide-EP pools uses the same declarative overlays and operational lifecycle across engines.
+* **Per-DP-rank `InferencePool` endpoint discovery:** Rather than exposing a multi-GPU pod as one aggregated endpoint, `llm-d` registers each attention-DP rank as its own `InferencePool` endpoint, following the design from the [earlier GLM-5.2 post](/blog/serving-glm-5-2-agentic-workloads-on-llm-d#fitting-repository-scale-sessions-in-memory). This lets the router see and target each GPU's separate KV cache directly.
 * **Pluggable `Endpoint Picker` (`EPP`) routing pipeline:** Fronted by Envoy and the Kubernetes Gateway API, the `EPP` inference router parses each request and tracks, per rank, which prefixes are cached and how many tokens are in flight. It sends prefill requests back to the rank that holds the warm prefix, spreads decode requests by active request count, and coordinates the prefill-to-decode transfer.
 
 Because `llm-d` defines these primitives—per-DP-rank endpoints, separate prefill and decode scheduling profiles, and composable Kustomize components—at the platform layer, adding SGLang did not require a parallel routing stack or custom operator workflow. Once SGLang exposed the same per-rank endpoint and disaggregation contracts, users could choose SGLang as their serving backend under `llm-d`'s Kubernetes control plane—getting out-of-the-box Wide-EP dispatch on RoCE networks and tiered KV-cache offloading with SGLang's Hierarchical Cache (`HiCache`).
 
 ## 2. First-Class SGLang Integration in `llm-d`
 
-SGLang could already run GLM-5.2 Wide-EP as a standalone server, but integrating it into `llm-d` exposed a core boundary mismatch. In a Wide-EP (`DEP`) deployment, MoE experts are shared across GPUs, while each attention-DP rank owns a separate KV cache. Because `llm-d` routes requests, tracks prefix locality, and pairs prefill with decode (`P/D`) at the per-DP-rank level, a single node-level endpoint is not enough. Every DP rank needs to act like an independent server—with its own port, its own `P/D` pairing handshake, and its own health and observability signals.
+SGLang could already run GLM-5.2 Wide-EP as a standalone server, but integrating it into `llm-d` exposed a core boundary mismatch. In a Wide-EP deployment, MoE experts are shared across GPUs, while each attention-DP rank owns a separate KV cache. Because `llm-d` routes requests, tracks prefix locality, and pairs prefill with decode (`P/D`) at the per-DP-rank level, a single node-level endpoint is not enough. Every DP rank needs to act like an independent server—with its own port, its own `P/D` pairing handshake, and its own health and observability signals.
 
 The goal of our engineering work was making SGLang's Wide-EP runtime fit cleanly into `llm-d`'s Kubernetes control plane:
 
@@ -82,11 +82,11 @@ The goal of our engineering work was making SGLang's Wide-EP runtime fit cleanly
 
 ## 3. Tiered KV-Cache Offloading and Multi-Replica Performance
 
-With SGLang running natively behind `llm-d`'s prefix-aware router, the remaining bottleneck for agentic serving is **KV-cache capacity and survival**. Using SGLang's **HiCache** on the prefill pool, we evaluate a three-tier KV-cache memory hierarchy on 8-GPU NVIDIA H200 nodes (`DEP8` prefill, tested on GKE A3 Ultra with ConnectX-7 RoCE and a `9,000 GiB` Google Cloud Managed Lustre volume):
+With SGLang running natively behind `llm-d`'s prefix-aware router, the remaining bottleneck for agentic serving is **KV-cache capacity and survival**. Using SGLang's **HiCache** on the prefill pool, we evaluate a three-tier KV-cache memory hierarchy on 8-GPU NVIDIA H200 nodes on GKE A3 Ultra with ConnectX-7 RoCE and a `9,000 GiB` Google Cloud Managed Lustre volume:
 
-* **`L1` — GPU HBM (Baseline):** Fast GPU-resident KV + DSA indexer pool (`261K` tokens per GPU, `2.09M` tokens per 8-GPU prefill pod — enough for roughly `20–30` repository-scale sessions).
-* **`L2` — Host RAM (`hicache`):** Per-rank pinned host memory (`100 GB/rank` default = `17.5M` `L1+L2` tokens/pod) transferred over direct PCIe Gen5 DMA.
-* **`L3` — Shared Storage (`hicache-fs`):** SGLang's file backend on a `ReadWriteMany` PersistentVolumeClaim (`~163M` tokens across the `9,000 GiB` volume), backed by a client-side metadata cache so each rank remembers pages it has already seen. Because GLM-5.2's MLA KV representation is identical across attention-DP ranks, page files carry no rank suffix — creating **one deduplicated cache pool shared across every rank and prefill replica**.
+* **`L1` — GPU HBM:** Fast GPU-resident KV and DSA indexer pool holding `261K` tokens per GPU, or `2.09M` tokens per 8-GPU prefill pod—enough for roughly `20–30` repository-scale sessions.
+* **`L2` — Host RAM:** Per-rank pinned host memory transferred over direct PCIe Gen5 DMA, expanding a single prefill pod to `17.5M` `L1 + L2` tokens at the `100 GB/rank` default.
+* **`L3` — Shared Storage:** SGLang's file backend on a `ReadWriteMany` PersistentVolumeClaim holding `~163M` tokens across the `9,000 GiB` volume, backed by a client-side metadata cache so each rank remembers pages it has already seen. Because GLM-5.2's MLA KV representation is identical across attention-DP ranks, page files carry no rank suffix—creating **one deduplicated cache pool shared across every rank and prefill replica**.
 
 <Figure
   src="/img/blogs/glm52-sglang-tiered-kv/hbm-and-tier-capacity.png"
@@ -96,9 +96,9 @@ With SGLang running natively behind `llm-d`'s prefix-aware router, the remaining
   <strong>Figure 2:</strong> Extending GLM-5.2 KV-cache capacity from GPU HBM to host RAM and shared storage.
 </Figure>
 
-### Extending single-node memory with Host RAM (16x H200 `p1w1d1w1`)
+### Extending single-node memory with Host RAM on 16x H200
 
-We measured how `L2` host RAM and `Shared L3` remote storage behave on the default 16-GPU single-replica layout (`p1w1d1w1`: 1x `DEP8` prefill pod + 1x `DEP8` decode pod) under the `900s` [AIPerf `inferencex-agentx-mvp` benchmark](https://github.com/ai-dynamo/aiperf/blob/main/docs/tutorials/agentx-mvp.md) on the [`cc-traces-weka-062126`](https://huggingface.co/datasets/semianalysisai/cc-traces-weka-062126) Claude Code trace corpus with a `142K` context cap, swept from concurrency `16` to `128`:
+We measured how `L2` host RAM and `Shared L3` remote storage behave on the default 16-GPU single-replica `1P1D` layout—one 8-GPU prefill pod paired with one 8-GPU decode pod—under the `900s` [AIPerf `inferencex-agentx-mvp` benchmark](https://github.com/ai-dynamo/aiperf/blob/main/docs/tutorials/agentx-mvp.md) on the [`cc-traces-weka-062126`](https://huggingface.co/datasets/semianalysisai/cc-traces-weka-062126) Claude Code trace corpus with a `142K` context cap, swept from concurrency `16` to `128`:
 
 <Figure
   src="/img/blogs/glm52-sglang-tiered-kv/tiered-offloading-scaling.png"
@@ -108,25 +108,25 @@ We measured how `L2` host RAM and `Shared L3` remote storage behave on the defau
   <strong>Figure 3:</strong> L2 host RAM eliminates the L1 thrashing cliff on a single 16-GPU replica.
 </Figure>
 
-Past concurrency `32`, active sessions exceed the `2.09M`-token `HBM` budget and evict one another (`6.0%` hit and `174.2 s` median TTFT at `c128`). Offloading to `L2` host RAM preserves `85%–95%` cache reuse across the full sweep, cuts `c128` median TTFT **`8.7x`**, and raises output **`3.94x`** — whereas enabling write-through `L3` on a single warm pod adds `~26%–30%` to median TTFT and trims `c128` output by `~9%` for no significant extra benefit.
+Past concurrency `32`, active sessions exceed the `2.09M`-token `HBM` budget and evict one another, dropping the cache hit rate to `6.0%` and pushing median TTFT to `174.2 s` at concurrency `128`. Offloading to `L2` host RAM preserves `85%–95%` cache reuse across the full sweep, cuts concurrency-`128` median TTFT **`8.7x`**, and raises output **`3.94x`**—whereas enabling write-through `L3` on a single warm pod adds `~26%–30%` to median TTFT and trims concurrency-`128` output by `~9%` for no significant extra benefit.
 
-### Multi-replica Shared L3 (32x H200 `p2w1d1w2`)
+### Multi-replica Shared L3 on 32x H200
 
-`Shared L3` pays off across multi-replica failover, pod evictions, and cold restarts. To test this, we deploy `p2w1d1w2` (two `DEP8` prefill pods and one 2-node `DEP16` decode pool). We measure both sustained load (`64` and `128` concurrent sessions) and a live failover test: with `24` active `~98K`-token sessions split across `prefill-0` (`11` sessions) and `prefill-1` (`13` sessions), we delete `prefill-0` at `t = 95 s` so `EPP` moves all `11` of its sessions onto `prefill-1`:
+`Shared L3` pays off across multi-replica failover, pod evictions, and cold restarts. To test this, we scale out to `32` H200 GPUs across two 8-GPU prefill pods and one 2-node 16-GPU decode pool. We measure both sustained load at `64` and `128` concurrent sessions and a live failover test: with `24` active `~98K`-token sessions split across `prefill-0` with `11` sessions and `prefill-1` with `13` sessions, we delete `prefill-0` at `t = 95 s` so `EPP` moves all `11` of its sessions onto `prefill-1`:
 
 <Figure
   src="/img/blogs/glm52-sglang-tiered-kv/multi-replica-shared-l3.png"
-  alt="Multi-replica Shared L3 on 32x H200 (p2w1d1w2): live pod failover and scale-out"
+  alt="Multi-replica Shared L3 on 32x H200: live pod failover and scale-out"
   size="wide"
 >
   <strong>Figure 4:</strong> Multi-replica Shared L3 on 32x H200 (<code>p2w1d1w2</code>): live pod failover and scale-out.
 </Figure>
 
-Scaling out to `p2w1d1w2` cuts `c128` median TTFT **`5.9x`** (`3.43 s`, `1,903 tok/s`). While `Shared L3` adds steady-state overhead without failures (`+26%` to `+66%` median TTFT, `<5%` to `11%` lower output), it restores **`99.94%`** of failed-over prefix tokens during pod loss and cuts cold-start TTFT by **`57%`**—so operators should run **`L1 + L2`** on steady single-replica pods and add **`Shared L3`** when resilience to Spot preemptions, upgrades, or multi-replica failover matters (full overlays are in [`guides/models/glm-5-2`](https://github.com/llm-d/llm-d/tree/main/guides/models/glm-5-2)).
+Scaling out to two prefill replicas with a 2-node decode pool cuts concurrency-`128` median TTFT **`5.9x`** to `3.43 s` at `1,903 tok/s`. While `Shared L3` adds steady-state overhead without failures—raising median TTFT by `26%` to `66%` and reducing output by `<5%` to `11%`—it restores **`99.94%`** of failed-over prefix tokens from storage instead of recomputing them, which cuts failover median TTFT by **`25%`** (`38.4 s` → `28.8 s`) and cold-start TTFT by **`57%`**. Operators should therefore run **`L1 + L2`** on steady single-replica pods and add **`Shared L3`** when resilience to Spot preemptions, upgrades, or multi-replica failover matters; full deployment overlays are in [`guides/models/glm-5-2`](https://github.com/llm-d/llm-d/tree/main/guides/models/glm-5-2).
 
 ## Running the Recipe
 
-Deploying the SGLang GLM-5.2 stack on `llm-d` takes two steps—installing the standalone inference router with [`sglang.values.yaml`](https://github.com/llm-d/llm-d/blob/main/guides/models/glm-5-2/router/sglang.values.yaml), and applying a deployment overlay from [`guides/models/glm-5-2`](https://github.com/llm-d/llm-d/tree/main/guides/models/glm-5-2) (choose one of the two options below):
+Deploying the SGLang GLM-5.2 stack on `llm-d` takes two steps—installing the standalone inference router with [`sglang.values.yaml`](https://github.com/llm-d/llm-d/blob/main/guides/models/glm-5-2/router/sglang.values.yaml), and applying one of the deployment overlays from [`guides/models/glm-5-2`](https://github.com/llm-d/llm-d/tree/main/guides/models/glm-5-2):
 
 ```bash
 export REPO_ROOT=$(realpath $(git rev-parse --show-toplevel))
@@ -161,4 +161,4 @@ On top of that integration, SGLang's `HiCache` keeps long-context agent sessions
 
 ## What’s next
 
-We are working to connect SGLang's disaggregated Rust preprocessing layer (`sglang-processor`—already shared across SGLang's router, standalone renderer, and per-rank Rust servers) with `llm-d`'s router so prompts are rendered and tokenized once at ingress without router-to-worker token drift. Pairing that shared preprocessing with per-rank Rust metrics and KV-cache event streaming across `L1`, `L2`, and `L3` will move SGLang routing in `llm-d` from approximate prefix tracking to exact, block-level cache awareness.
+We are working to connect SGLang's disaggregated Rust preprocessing layer—`sglang-processor`, which is already shared across SGLang's router, standalone renderer, and per-rank Rust servers—with `llm-d`'s router so prompts are rendered and tokenized once at ingress without router-to-worker token drift. Pairing that shared preprocessing with per-rank Rust metrics and KV-cache event streaming across `L1`, `L2`, and `L3` will move SGLang routing in `llm-d` from approximate prefix tracking to exact, block-level cache awareness.
