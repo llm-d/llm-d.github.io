@@ -768,6 +768,16 @@ tyuchn:
   socials:
     github: https://github.com/tyuchn
 
+sagearc:
+  name: Sage Ahrac
+  title: Research Engineer, IBM Research
+  url: https://github.com/sagearc
+  image_url: https://avatars.githubusercontent.com/u/80211083?v=4
+  socials:
+    github: https://github.com/sagearc
+    linkedin: sagi-ahrac
+    website: https://sage.ml
+
 nishjain:
   name: Nishtha Jain
   title: Software Engineering Manager, Google
@@ -783,12 +793,26 @@ zetxqx:
   socials:
     github: https://github.com/zetxqx
 
-sagearc:
-  name: Sage Ahrac
-  title: Research Engineer, IBM Research
-  url: https://github.com/sagearc
-  image_url: https://avatars.githubusercontent.com/u/80211083?v=4
+ShangmingCai:
+  name: Shangming Cai
+  title: Core Maintainer, SGLang
+  url: https://github.com/ShangmingCai
+  image_url: https://avatars.githubusercontent.com/u/171321666?v=4
   socials:
-    github: https://github.com/sagearc
-    linkedin: sagi-ahrac
-    website: https://sage.ml
+    github: https://github.com/ShangmingCai
+
+rainj-me:
+  name: Rain Jiang
+  title: Core Maintainer, SGLang
+  url: https://github.com/rainj-me
+  image_url: https://avatars.githubusercontent.com/u/96632942?v=4
+  socials:
+    github: https://github.com/rainj-me
+
+ahg-g:
+  name: Abdullah Gharaibeh
+  title: Senior Staff Software Engineer, Google
+  url: https://github.com/ahg-g
+  image_url: https://avatars.githubusercontent.com/u/40361897?v=4
+  socials:
+    github: https://github.com/ahg-g
