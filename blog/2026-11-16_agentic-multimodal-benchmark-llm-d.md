@@ -8,7 +8,6 @@ authors:
   - chenghsiangchiu
   - xiyue
   - kaushikmitra
-  - gluo
 
 tags: [blog, multimodal, agentic-inference, scheduling, vllm]
 ---
