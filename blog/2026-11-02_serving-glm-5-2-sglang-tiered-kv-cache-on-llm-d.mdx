@@ -78,22 +78,22 @@ The goal of our engineering work was making SGLang's Wide-EP runtime fit cleanly
 | :--- | :--- | :--- |
 | **One node-level port hid eight separate KV caches behind a single endpoint.** | Leveraged the embedded Rust HTTP server for each DP rank with per-rank warmup readiness. | Every DP rank across single- and multi-node pools is a routable `InferencePool` endpoint. |
 | **`P/D` pairing only worked on rank 0; routing to any other rank failed during the handshake.** | Replicated `P/D` pairing state across all rank listeners, carried routing metadata across OpenAI and native APIs, used standard Linux `DMA-BUF` RDMA for KV transfers, and added clean decode cancellation on prefill failure. | `EPP` can pair any prefill rank with any decode rank across nodes on standard GPU nodes. |
-| **Operators and routers lacked per-rank visibility into serving and cache hits.** | Surfaced `cached_tokens` in responses, correlated `P/D` traces and logs across nodes, and added DP-aware KV-event handling in `EPP`. | Per-endpoint visibility in logs and traces, supporting zero-scrape approximate routing today and preparing exact KV-event tracking. |
+| **Operators and routers lacked per-rank visibility into serving and cache hits.** | Exposed model and launch metadata per rank, correlated `P/D` traces and logs across nodes, and added SGLang KV-event decoding in `EPP`. | Per-endpoint visibility in logs and traces, supporting zero-scrape approximate routing today and preparing exact KV-event tracking. |
 
 ## 3. Tiered KV-Cache Offloading and Multi-Replica Performance
 
 With SGLang running natively behind `llm-d`'s prefix-aware router, the remaining bottleneck for agentic serving is **KV-cache capacity and survival**. Using SGLang's **HiCache** on the prefill pool, we evaluate a three-tier KV-cache memory hierarchy on 8-GPU NVIDIA H200 nodes on GKE A3 Ultra with ConnectX-7 RoCE and a `9,000 GiB` Google Cloud Managed Lustre volume:
 
 * **`L1` — GPU HBM:** Fast GPU-resident KV and DSA indexer pool holding `261K` tokens per GPU, or `2.09M` tokens per 8-GPU prefill pod—enough for roughly `20–30` repository-scale sessions.
-* **`L2` — Host RAM:** Per-rank pinned host memory transferred over direct PCIe Gen5 DMA, expanding a single prefill pod to `17.5M` `L1 + L2` tokens at the `100 GB/rank` default.
-* **`L3` — Shared Storage:** SGLang's file backend on a `ReadWriteMany` PersistentVolumeClaim holding `~163M` tokens across the `9,000 GiB` volume, backed by a client-side metadata cache so each rank remembers pages it has already seen. Because GLM-5.2's MLA KV representation is identical across attention-DP ranks, page files carry no rank suffix—creating **one deduplicated cache pool shared across every rank and prefill replica**.
+* **`L2` — Host RAM:** Per-rank pinned host memory transferred over direct PCIe Gen5 DMA when pages evict from `HBM`, expanding a single prefill pod to `17.5M` `L1 + L2` tokens at `98.4 GiB` per rank.
+* **`L3` — Shared Storage:** SGLang's file backend on a `ReadWriteMany` PersistentVolumeClaim—so any standard Kubernetes shared filesystem works without running a separate storage service—holding `~163M` tokens across the `9,000 GiB` volume, backed by a client-side metadata cache so each rank remembers pages it has already seen. Because GLM-5.2's MLA KV representation is identical across attention-DP ranks, page files carry no rank suffix—creating **one deduplicated cache pool shared across every rank and prefill replica**.
 
 <Figure
   src="/img/blogs/glm52-sglang-tiered-kv/hbm-and-tier-capacity.png"
   alt="Extending GLM-5.2 KV-cache capacity from GPU HBM to host RAM and shared storage"
   size="wide"
 >
-  <strong>Figure 2:</strong> Extending GLM-5.2 KV-cache capacity from GPU HBM to host RAM and shared storage.
+  <strong>Figure 2:</strong> Extending GLM-5.2 KV-cache capacity from GPU HBM to host RAM and shared storage. All memory values are in binary <code>GiB</code>: an H200 exposes <code>140.4 GiB</code> of HBM, and each <code>DEP8</code> GPU holds one-eighth of the routed MoE experts alongside replicated MLA attention and EAGLE MTP weights for <code>111.1 GiB</code> total.
 </Figure>
 
 ### Extending single-node memory with Host RAM on 16x H200
@@ -108,7 +108,7 @@ We measured how `L2` host RAM and `Shared L3` remote storage behave on the defau
   <strong>Figure 3:</strong> L2 host RAM eliminates the L1 thrashing cliff on a single 16-GPU replica.
 </Figure>
 
-Past concurrency `32`, active sessions exceed the `2.09M`-token `HBM` budget and evict one another, dropping the cache hit rate to `6.0%` and pushing median TTFT to `174.2 s` at concurrency `128`. Offloading to `L2` host RAM preserves `85%–95%` cache reuse across the full sweep, cuts concurrency-`128` median TTFT **`8.7x`**, and raises output **`3.94x`**—whereas enabling write-through `L3` on a single warm pod adds `~26%–30%` to median TTFT and trims concurrency-`128` output by `~9%` for no significant extra benefit.
+Past concurrency `32`, active sessions exceed the `2.09M`-token `HBM` budget and evict one another, dropping the cache hit rate to `6.0%` and pushing median TTFT to `174.2 s` at concurrency `128`. Offloading to `L2` host RAM preserves `85%–95%` cache reuse across the full sweep, cuts concurrency-`128` median TTFT **`8.7x`**, and raises output **`3.94x`**—whereas adding `Shared L3` on a single warm pod pays network filesystem read, metadata, and backup overhead, raising median TTFT by `~26%–30%` and trimming concurrency-`128` output by `~9%` for no significant extra benefit.
 
 ### Multi-replica Shared L3 on 32x H200
 
