@@ -12,6 +12,7 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 
 const GITHUB_REPO = 'https://github.com/llm-d/llm-d';
+const DOC_LOCALES = ["en", "zh-Hans"];
 
 // Self-adjusting versioning: derive the version map from versions.json (which
 // docusaurus writes newest-first). The newest release is served at /docs and the
@@ -80,7 +81,10 @@ const config = {
 
   i18n: {
     defaultLocale: "en",
-    locales: ["en"],
+    locales: DOC_LOCALES,
+    localeConfigs: {
+      "zh-Hans": { label: "简体中文" },
+    },
   },
 
   markdown: {
@@ -89,7 +93,7 @@ const config = {
     format: "detect",
     mermaid: true,
     // Render-time link/image/brace fixes for the pristine synced docs copy.
-    preprocessor: makeDocsPreprocessor({ docsDir }),
+    preprocessor: makeDocsPreprocessor({ docsDir, latestVersion: LATEST_VERSION, translationLocales: DOC_LOCALES.filter((locale) => locale !== "en") }),
     hooks: {
       onBrokenMarkdownLinks: "warn",
       onBrokenMarkdownImages: "warn",
@@ -255,6 +259,10 @@ const config = {
             dropdownActiveClassDisabled: true,
             // Order the dropdown releases-first (newest default at top), dev last.
             versions: [...releasedVersions, "current"],
+          },
+          {
+            type: "localeDropdown",
+            position: "right",
           },
           {
             // GitHub icon + live star count (see src/components/GithubStarsNavbarItem).

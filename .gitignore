@@ -16,6 +16,8 @@ sync-report.json
 # committed here. Released versions live in the committed versioned_docs/.
 /docs
 /static/img/docs
+# Current localized docs are generated from llm-d/translations on each sync.
+/i18n/zh-Hans/docusaurus-plugin-content-docs/current/
 
 # Community mirror pages are synced from llm-d/llm-d repo-root files. The authored
 # community pages (index.mdx, events.mdx) stay committed.

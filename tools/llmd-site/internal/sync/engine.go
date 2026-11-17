@@ -37,6 +37,9 @@ func runNative(m *manifest.Manifest, opts Options, src *upstream.Source) error {
 	// developer's uncommitted upstream edits are never discarded.
 	_ = src.Materialize("docs")
 	_ = src.Materialize("guides")
+	if root := m.Sources.LLMD.Translations.Root; root != "" && dirExists(filepath.Join(src.Root, root)) {
+		_ = src.Materialize(root)
+	}
 
 	fmt.Println("    Cleaning docs/ and static/img/docs/ ...")
 	if err := cleanDir(e.docsDir); err != nil {
@@ -62,6 +65,9 @@ func runNative(m *manifest.Manifest, opts Options, src *upstream.Source) error {
 	}
 
 	if err := e.syncLWS(); err != nil {
+		return err
+	}
+	if err := e.syncTranslations(); err != nil {
 		return err
 	}
 
