@@ -108,12 +108,6 @@ We measured how `L2` host RAM and `Shared L3` remote storage behave on the defau
   <strong>Figure 3:</strong> L2 host RAM eliminates the L1 thrashing cliff on a single 16-GPU replica.
 </Figure>
 
-| **Single-Replica `p1w1d1w1`** | **`c16` → `c128` TTFT P50 / P90 (`s`)** | **`c16` → `c128` Output (`tok/s`)** | **`c16` → `c128` Server Cache Hit** |
-| :--- | :--- | :--- | :--- |
-| **`L1` GPU HBM only** | `3.07 / 10.46` → **`174.19 / 266.75`** | `182.1` → `747.3` (`c32` peak) → **`319.0`** *(thrashing)* | `92.3%` → **`6.0%`** |
-| **`L1 + L2` Host RAM** | `3.05 / 5.85` → **`20.09 / 48.61`** | `188.8` → **`1,256.8` (`3.94x L1` at `c128`)** | `94.8%` → **`88.5%`** |
-| **`L1 + L2 + Shared L3`** | `3.49 / 8.21` → `26.03 / 58.58` | `183.8` → `1,139.7` | `94.9%` → **`90.3%`** |
-
 Past concurrency `32`, active sessions exceed the `2.09M`-token `HBM` budget and evict one another (`6.0%` hit and `174.2 s` median TTFT at `c128`). Offloading to `L2` host RAM preserves `85%–95%` cache reuse across the full sweep, cuts `c128` median TTFT **`8.7x`**, and raises output **`3.94x`** — whereas enabling write-through `L3` on a single warm pod adds `~26%–30%` to median TTFT and trims `c128` output by `~9%` for no significant extra benefit.
 
 ### Multi-replica Shared L3 (32x H200 `p2w1d1w2`)
@@ -127,13 +121,6 @@ Past concurrency `32`, active sessions exceed the `2.09M`-token `HBM` budget and
 >
   <strong>Figure 4:</strong> Multi-replica Shared L3 on 32x H200 (<code>p2w1d1w2</code>): live pod failover and scale-out.
 </Figure>
-
-| **Scenario (`32`x H200 `p2w1d1w2` unless noted)** | **`L1 + L2` (Local Pod RAM)** | **`L1 + L2 + Shared L3` (`hicache-fs`)** | **Key Takeaway** |
-| :--- | :--- | :--- | :--- |
-| **Sustained `c64`** (`900s`) | **TTFT (P50 / P90):** `3.10 / 8.36 s`<br />**Output: `1,105 tok/s`** (`91.0%` hit) | **TTFT (P50 / P90):** `3.91 / 10.55 s`<br />**Output:** `1,055 tok/s` (`92.5%` hit) | `<5%` throughput cost for cross-pod cache sharing |
-| **Sustained `c128`** (`900s`) | **TTFT (P50 / P90): `3.43 / 16.05 s`**<br />**Output: `1,903 tok/s`** (`90.7%` hit) | **TTFT (P50 / P90):** `5.69 / 24.63 s`<br />**Output:** `1,691 tok/s` (`93.4%` hit) | **`5.9x` lower TTFT** & **`+51%` output** vs. `16`-GPU `p1w1d1w1` |
-| **Live pod eviction** (`11` sessions → `prefill-1`) | **TTFT (P50):** `38.35 s` (`37.5 s` at `t=150s`)<br />**Cache Hit: `0%`** (full recompute) | **TTFT (P50): `28.76 s`** (**`3.82 s`** at `t=150s`)<br />**Cache Hit: `99.94%`** (from `L3`) | Offloads recovery to `L3` I/O; **`-25%` P50 TTFT** and cuts recovery time roughly in half |
-| **Cold replica / restart** (`16` sessions, `~92K` input tokens) | **TTFT (P50):** `38.84 s`<br />**Cache Hit: `0%`** (full recompute) | **TTFT (P50): `16.82 s` (`-57%`)**<br />**Restored: `97.8%`** of prefixes | **`2.31x` faster** cold-pod recovery |
 
 Scaling out to `p2w1d1w2` cuts `c128` median TTFT **`5.9x`** (`3.43 s`, `1,903 tok/s`). While `Shared L3` adds steady-state overhead without failures (`+26%` to `+66%` median TTFT, `<5%` to `11%` lower output), it restores **`99.94%`** of failed-over prefix tokens during pod loss and cuts cold-start TTFT by **`57%`**—so operators should run **`L1 + L2`** on steady single-replica pods and add **`Shared L3`** when resilience to Spot preemptions, upgrades, or multi-replica failover matters (full overlays are in [`guides/models/glm-5-2`](https://github.com/llm-d/llm-d/tree/main/guides/models/glm-5-2)).
 
