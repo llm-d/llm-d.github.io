@@ -349,13 +349,15 @@ The decode ladder below was run on 16 November 2026 on one replica of the same c
 
 An 8 × H200 replica with vLLM v0.27.1 was calibrated the same way the day before and is kept for reference. The B200 numbers on v0.27.1 were within 2% of these on every row.
 
-| Quantity | 8 × H200, vLLM v0.27.1 | 8 × B200, vLLM v0.28.0 | How |
-| --- | --- | --- | --- |
-| Peak prefill throughput, 8k / 32k / 128k prompt | 26,701 / 22,763 / 13,095 tok/s | 37,217 / 33,631 / 22,794 tok/s | calibration job, fresh random token-ID prompts, median of 15 (8k) or 8 |
-| α\_F at 8k, and the falloff with context, (I/8192)^p with exponent p fitted to the three prompt lengths | 0.24 of dense bf16 peak; (I/8192)^−0.26 | 0.15 of dense bf16 peak; (I/8192)^−0.18 | from the three points above |
-| C | 2,209,344 tokens, about 535 GiB | 3,403,712 tokens, about 805 GiB | engine startup log, bf16 KV |
-| α\_W | 0.70 of 38.4 TB/s, from the 1-to-4 marginal slope; not re-measured with the ladder | 1.0 of 64 TB/s from a batch of 8 up, with a fixed 6.8 ms per step (ladder below). The 1-to-4 marginal slope used earlier gave 0.53: it sits inside the fixed cost and understates the rate | slope of step time against bytes read over a steady-batch ladder of long-context decodes |
-| Prefill interference | a decode step sharing its iteration with an 8k chunk takes about 310 ms (10 ms alone) | 364 ms per step carrying a full 8k chunk at 117k context, against 20 ms with the same 18 decodes alone (ladder below); 259 ms at 131k context with 8 decodes in the October job | 18 decodes with a continuous stream of cold 117k prompts; 8 concurrent 131k-token requests in October |
+The TPU7x replica of Section 2 was calibrated on 18 November 2026: one replica of the same model at TP=16 across two tpu7x hosts, sixteen TensorCore devices over eight chips, on vLLM TPU v0.27.0 with fp8 KV, an 8k chunk, 64 sequences, 0.80 memory utilisation and 256-token blocks, and a host KV tier. Sixteen devices share eight KV heads, so each head is held on two devices. The replica's b is therefore 253,952 bytes per token, the same as the B200's bf16 KV, with each device holding 15,872.
+
+| Quantity | 8 × H200, vLLM v0.27.1 | 8 × B200, vLLM v0.28.0 | 8 × TPU7x, vLLM TPU v0.27.0, TP=16 | How |
+| --- | --- | --- | --- | --- |
+| Peak prefill throughput, 8k / 32k / 128k prompt | 26,701 / 22,763 / 13,095 tok/s | 37,217 / 33,631 / 22,794 tok/s | 23,573 / 20,591 / 12,937 tok/s | calibration job, fresh random token-ID prompts, median of 15 (8k) or 8 |
+| α\_F at 8k, and the falloff with context, (I/8192)^p with exponent p fitted to the three prompt lengths | 0.24 of dense bf16 peak; (I/8192)^−0.26 | 0.15 of dense bf16 peak; (I/8192)^−0.18 | 0.045 of the 37 PFLOP/s dense FP8 peak, where the B200's 0.15 of bf16 is 0.07 of its FP8 peak; (I/8192)^−0.19 | from the three points above |
+| C | 2,209,344 tokens, about 535 GiB | 3,403,712 tokens, about 805 GiB | 1,350,144 tokens, fp8 KV, about 320 GiB with each KV head held twice | engine startup log, bf16 KV on the GPUs |
+| α\_W | 0.70 of 38.4 TB/s, from the 1-to-4 marginal slope; not re-measured with the ladder | 1.0 of 64 TB/s from a batch of 8 up, with a fixed 6.8 ms per step (ladder below). The 1-to-4 marginal slope used earlier gave 0.53: it sits inside the fixed cost and understates the rate | 0.84 of 59 TB/s over a batch of 1 to 8, with a fixed 18.1 ms per step (ladder below); the capacity cap of 11 ends the ladder at 8 | slope of step time against bytes read over a steady-batch ladder of long-context decodes |
+| Prefill interference | a decode step sharing its iteration with an 8k chunk takes about 310 ms (10 ms alone) | 364 ms per step carrying a full 8k chunk at 117k context, against 20 ms with the same 18 decodes alone (ladder below); 259 ms at 131k context with 8 decodes in the October job | not measured | 18 decodes with a continuous stream of cold 117k prompts; 8 concurrent 131k-token requests in October |
 
 The steady-batch ladder behind the α\_W and interference rows. Each rung starts n requests of 116,684 random tokens at once, with 5,000 output tokens each, and reads the step time only inside the window where all n are decoding together with no prefill in flight. Bytes per step are the expert weights the step touches plus n contexts of KV.
 
@@ -372,6 +374,8 @@ The steady-batch ladder behind the α\_W and interference rows. Each rung starts
 | 27 | 25.62 | 1,180 | 18.4 | 25.1 |
 
 From a batch of 8 the measured step is a fixed 6.8 ms plus the bytes at the datasheet rate, within 1.1 ms at every rung. Below 8 the fixed cost is most of the step, which is why a slope taken between 1 and 4 decodes reads as slow bandwidth. The interference rung ran 18 decoders with a continuous stream of cold 117k prompts. Sixty percent of its steps carried a full 8k chunk. Those steps took 364 ms, against 352 ms of pure prefill compute for 8,192 tokens at the calibrated rate, while the decode-only steps between them stayed at 20 ms. A chunk step costs its prefill time, and the decodes in it wait. The engine layer of Section 4.2 uses the fit for decode steps and 364 ms for each chunk step.
+
+The TPU7x ladder ran the same rungs up to its capacity cap. A single decode at 1k context takes 16.1 ms. At 116,684 tokens a batch of 1, 2, 4 and 8 takes 21.2, 21.9, 22.2 and 25.9 ms. The fit is 18.1 ms fixed plus the bytes at 49.8 TB/s, 0.84 of the 59 TB/s datasheet. The fixed cost is nearly three times the B200's, and at the largest rung the HBM can hold it is still more than two thirds of the step. The interference rung was not run on this replica.
 
 ## Appendix B. The step-time bound and the ridge
 
