@@ -441,6 +441,6 @@ For the agentic workload (L = 117k, U = 7.3k, O = 386), U/O is 19. The threshold
 
 The figure draws the rule for this deployment. For each context length and U/O it shows the smallest batch at which compute dominates. Grey marks where memory dominates at every batch the HBM can hold. llm-d at 120 sessions sits in the grey: with a 0.98 hit rate, memory dominates at any batch. Every other run sits in the blue. For llm-d at 180 and 240 sessions compute takes over once nine to eleven requests share a step, and those runs had twelve and eighteen decoding. For the KV-load router, round-robin and llm-d at 300 sessions it takes over at two or three, and those runs had more than that.
 
-![figure](figures/fig2-wall-map.png)
+![the smallest decoding concurrency n at which U/O > (L + W_b(n)/(n·b))/r − 1 holds, for the B200 deployment of Appendix A (r = 11,000, the ri](/img/blogs/kv-cache-serving-efficiency/fig2-wall-map.png)
 
 *the smallest decoding concurrency n at which U/O > (L + W_b(n)/(n·b))/r − 1 holds, for the B200 deployment of Appendix A (r = 11,000, the ridge at this workload's context; W_b(n) from the expert-count formula of Appendix B, n capped by KV capacity and the engine's 64-sequence limit) · fleet runs from Section 4.3 placed by their measured hit rates (U = (1 − h)·I, h counting HBM and host-tier hits); the n beside each dot is that run's achieved batch, the mean requests decoding per replica over the steady window, not a target · compute against bandwidth only; the capacity wall is a separate condition*
