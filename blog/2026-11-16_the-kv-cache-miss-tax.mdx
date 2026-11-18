@@ -26,7 +26,7 @@ The shortfall from the ceiling splits into four factors whose product is η:
 3. **Engine**: what this engine version costs beyond an ideal one at a steady batch, measured on one replica: a fixed cost per step, and prefill chunks that stall the decodes they ride with.
 4. **Orchestration**: everything else lost at the hit rate the run had, in the layers around the engine: uneven load across replicas, turns arriving in waves, queueing, tier copies in the critical path.
 
-Each stack ran in its documented default configuration. These numbers describe this workload, fleet and configuration. They are not a general ranking of the stacks. llm-d holds its hit rate at 0.90 or above until HBM fills with the sessions it is decoding, at 240 sessions. The KV-load router and round-robin are already down to 0.76 and 0.62 at 60 and 90 sessions, with HBM a quarter full. The framework is for infrastructure engineers building or selecting serving stacks, and for vendors who want standardised performance claims.
+Each stack ran in its documented default configuration. These numbers describe this workload, fleet and configuration. They are not a general ranking of the stacks. llm-d holds its hit rate at 0.90 or above until HBM fills with the sessions it is decoding, at 240 sessions. A third-party router that balances projected KV load across replicas, called the KV-load router below, and round-robin are already down to 0.76 and 0.62 at 60 and 90 sessions, with HBM a quarter full. The framework is for infrastructure engineers building or selecting serving stacks, and for vendors who want standardised performance claims.
 
 ![B200 fleet experiment](/img/blogs/kv-cache-serving-efficiency/fig0-eta-peaks.png)
 
