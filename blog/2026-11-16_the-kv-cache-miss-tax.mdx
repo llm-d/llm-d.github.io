@@ -15,7 +15,7 @@ tags: [blog, kv-cache, scheduling, inference, sig-benchmarking]
 
 ## TL;DR
 
-The datasheet is not the ceiling a serving stack runs against. The deployment's roofline is. On the same model, an 8-GPU B200 node and an 8-chip TPU7x slice have datasheets at parity and deployment roofs 1.65x apart. This post measures that roof with two short jobs, then asks two questions of each serving stack on it. How close does it get to what the hardware allows? Where does the rest go? One ratio answers both.
+Two serving stacks on the same GPUs or TPUs and the same workload can deliver very different throughput. This post asks two questions of each stack. How close does it get to what the hardware allows? Where does the rest go? One ratio answers both. The hardware side is measured on B200 GPUs and on TPU7x chips. The stacks are compared on the B200 fleet.
 
 The ratio has four inputs: the workload's intrinsic prefix overlap, its mean input and output lengths, the model's shape, and five hardware numbers. One of the five, the prefill rate, is calibrated on the deployment with a short job. The rest come from the datasheet and the engine's startup log, and a second short job checks that the engine reaches the datasheet bandwidth (Appendix A). From these inputs we compute a **ceiling**: the most throughput, input plus output tokens per second, the hardware can sustain on that workload. At each load level, the steady-state throughput the system served, divided by the ceiling, is its **serving efficiency η**. The ceiling is specific to the workload, so η compares systems on one workload. It is not a hardware utilisation figure.
 
