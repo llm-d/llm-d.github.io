@@ -391,7 +391,7 @@ This appendix derives the ceiling R used throughout from the three costs of a st
 
 Engines run continuous batching with chunked prefill. One scheduler iteration holds up to T\_b tokens of prefill chunks plus one token for every sequence in decode, and runs them as one forward pass. Prefill and decode are not two pipelines with separate bounds. They share one iteration, and a prefill chunk lengthens the step for every decode sequence in it. The iteration is therefore the unit.
 
-With n\_p prefill tokens and n\_d decode tokens in the iteration, its duration is the larger of its compute time and its memory time. Little's law ties the counts to the request rate λ per replica at hit rate h:
+Let n\_d be the number of sequences decoding in an iteration, each contributing one token, and n\_p the uncached prefill tokens the iteration carries. At steady state Little's law gives their averages: a request rate λ per replica at hit rate h brings λ·I·(1 − h) uncached prompt tokens and λ·O decode tokens per second, so over an iteration of length t\_iter, n\_p = λ·I·(1 − h)·t\_iter and n\_d = λ·O·t\_iter. These are averages with prefill spread evenly across iterations. Real iterations alternate between a full chunk and none; that unevenness is the engine-layer cost measured in Appendix A, not part of the bound. The iteration's duration is the larger of its compute time and its memory time:
 
 $$
 t_{iter} = \max\left( \frac{2N\,(n_p + n_d)}{F},\; \frac{W_b + n_d\, b\, \bar{c} + \frac{n_p}{T_b}\, b\, I}{W} \right), \quad n_p = \lambda I (1-h)\, t_{iter}, \quad n_d = \lambda O\, t_{iter}, \quad \bar{c} = I + \tfrac{O}{2}
