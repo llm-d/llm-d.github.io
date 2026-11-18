@@ -15,7 +15,7 @@ tags: [blog, kv-cache, scheduling, inference, sig-benchmarking]
 
 ## TL;DR
 
-Two serving stacks on the same GPUs and the same workload can deliver very different throughput. This post asks two questions of each stack. How close does it get to what the hardware allows? Where does the rest go? One ratio answers both.
+The datasheet is not the ceiling a serving stack runs against. The deployment's roofline is. On the same model, an 8-GPU B200 node and an 8-chip TPU7x slice have datasheets at parity and deployment roofs 1.65x apart. This post measures that roof with two short jobs, then asks two questions of each serving stack on it. How close does it get to what the hardware allows? Where does the rest go? One ratio answers both.
 
 The ratio has four inputs: the workload's intrinsic prefix overlap, its mean input and output lengths, the model's shape, and five hardware numbers. One of the five, the prefill rate, is calibrated on the deployment with a short job. The rest come from the datasheet and the engine's startup log, and a second short job checks that the engine reaches the datasheet bandwidth (Appendix A). From these inputs we compute a **ceiling**: the most throughput, input plus output tokens per second, the hardware can sustain on that workload. At each load level, the steady-state throughput the system served, divided by the ceiling, is its **serving efficiency η**. The ceiling is specific to the workload, so η compares systems on one workload. It is not a hardware utilisation figure.
 
@@ -37,6 +37,16 @@ One caveat belongs beside the chart. The replay harness kept 86 to 92% of the co
 <!-- truncate -->
 
 ## 1. The question
+
+![One replica of Qwen3-Coder-480B-FP8 on 8 x B200 (TP=8) and on 8 x TPU7x (TP=16 across two hosts)](/img/blogs/kv-cache-serving-efficiency/fig0b-roofline-tpu-vs-gpu.png)
+
+*One replica of Qwen3-Coder-480B-FP8 on 8 x B200 (TP=8) and on 8 x TPU7x (TP=16 across two hosts) · dashed: datasheet · solid: this deployment, by the Appendix A method · both axes log*
+
+The two dashed roofs lie on top of each other. An 8 x B200 node and an 8-chip TPU7x slice have the same dense FP8 peak within 3% and HBM bandwidth within 8%. The two solid roofs do not. They are the roofs of the two deployments of Qwen3-Coder-480B-FP8 this post measured: 1.24 PFLOP/s per accelerator on B200 at TP=8, 0.75 on TPU7x at TP=16 across two hosts. The solid roof is what a serving stack runs against. It comes from two short jobs on the deployment (Appendix A): the prefill rate at the workload's context, and the bandwidth a steady decode batch reaches.
+
+Three measured things put the TPU deployment's roof further below its datasheet than the B200's. The prefill rate: one host of four chips at TP=8 prefills 4,780 tokens per second per chip, close to the B200's 4,652 per GPU, but the like-for-like replica has eight chips. Eight TPU7x chips match an 8-GPU B200 node on the three numbers that set the roof: dense FP8 peak (37 against 36 PFLOP/s), HBM bandwidth (59 against 64 TB/s) and HBM capacity (1.54 against 1.44 TB). A tpu7x host holds four chips, so eight chips is two hosts, and each chip has two TensorCores that JAX exposes as two devices, so eight chips is sixteen devices and tensor parallel runs at TP=16 where the B200 node runs at TP=8. Spreading each 8k chunk over sixteen shards on two hosts drops the rate to 2,947. The decode step: the engine's fixed cost per step is 18 ms against 6.8 on B200, which moves the ridge rather than the roof. The bandwidth: the decode ladder reaches 84% of the datasheet against 100% on B200. None of these is a property of the chip. They are properties of the sharding and of the engine build the deployment chose, and finding them is what the yardstick is for: it measures a deployment's distance from its own hardware.
+
+The roof is fixed per deployment. What remains open is how close a serving stack gets to it, and that is decided above the engine: where each request is sent, and where its KV cache is kept. The rest of this post studies that orchestration on the B200 fleet, with three routers under one yardstick and llm-d as the main subject.
 
 The GPUs are no faster for one stack than for another. What differs is how much work each stack repeats and how much of the hardware it leaves idle. Every request brings a prompt. When the stack can reuse that prompt's KV cache from an earlier turn, it skips recomputing those tokens. When it cannot, it spends GPU time on work it could have avoided.
 
@@ -75,10 +85,6 @@ In this post a workload is a trace of conversations. Each turn brings a prompt, 
 Every number from Section 2 on refers to this trace.
 
 ## 2. Compute or memory: where a run sits on the roofline
-
-![One replica of Qwen3-Coder-480B-FP8 on 8 x B200 (TP=8) and on 8 x TPU7x (TP=16 across two hosts)](/img/blogs/kv-cache-serving-efficiency/fig0b-roofline-tpu-vs-gpu.png)
-
-*One replica of Qwen3-Coder-480B-FP8 on 8 x B200 (TP=8) and on 8 x TPU7x (TP=16 across two hosts) · dashed: datasheet · solid: this deployment, by the Appendix A method · both axes log*
 
 An engine serves requests in steps. One step is one forward pass over everything scheduled in it: a chunk of prefill tokens from prompts still being processed, plus one new token for every request that is decoding. A step takes the longer of its compute time and its memory time. This post calls that the step-time bound: a roofline applied to one step. The next paragraph says why a step waits on one or the other.
 
