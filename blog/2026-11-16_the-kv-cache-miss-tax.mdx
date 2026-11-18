@@ -62,9 +62,9 @@ The two dashed roofs lie on top of each other. An 8 x B200 node and an 8-chip TP
 
 Three measured things put the TPU deployment's roof further below its datasheet than the B200's. The prefill rate: one host of four chips at TP=8 prefills 4,780 tokens per second per chip, close to the B200's 4,652 per GPU, but the like-for-like replica has eight chips. Eight TPU7x chips match an 8-GPU B200 node on the three numbers that set the roof: dense FP8 peak (37 against 36 PFLOP/s), HBM bandwidth (59 against 64 TB/s) and HBM capacity (1.54 against 1.44 TB). A tpu7x host holds four chips, so eight chips is two hosts, and each chip has two TensorCores that JAX exposes as two devices, so eight chips is sixteen devices and tensor parallel runs at TP=16 where the B200 node runs at TP=8. Spreading each 8k chunk over sixteen shards on two hosts drops the rate to 2,947. The decode step: the engine's fixed cost per step is 18 ms against 6.8 on B200, which moves the ridge rather than the roof. The bandwidth: the decode ladder reaches 84% of the datasheet against 100% on B200. None of these is a property of the chip. They are properties of the sharding and of the engine build the deployment chose, and finding them is what the yardstick is for: it measures a deployment's distance from its own hardware.
 
-Capacity is the one hardware difference that matters on this workload, and it is set aside. The TPU replica holds 11 requests of this workload in HBM, the B200 node 29, and both run a host KV tier that keeps the KV of paused sessions. The rest of this section shows that the ceiling does not depend on it once the tier is there, and Section 2 shows where it does bite: the sessions a fleet can hold before it evicts.
+Capacity is the one hardware difference that matters on this workload, and it is set aside. The TPU replica holds 11 requests of this workload in HBM, the B200 node 29, and both run a host KV tier that keeps the KV of paused sessions. The rest of this section shows that the ceiling does not depend on it once the tier is there, and Section 3 shows where it does bite: the sessions a fleet can hold before it evicts.
 
-The roof is a property of the engine as deployed, not of the chip. The rest of this section measures it on one replica. How much of the roof a serving stack reaches is decided above the engine, by where each request is sent and where its KV cache is kept. Section 2 measures that on the B200 fleet with three routers, llm-d as the main subject.
+The roof is a property of the engine as deployed, not of the chip. The rest of this section measures it on one replica. How much of the roof a serving stack reaches is decided above the engine, by where each request is sent and where its KV cache is kept. Section 3 measures that on the B200 fleet with three routers, llm-d as the main subject.
 
 ### The step-time bound
 
@@ -379,7 +379,7 @@ The TPU7x ladder ran the same rungs up to its capacity cap. A single decode at 1
 
 ## Appendix B. The step-time bound and the ridge
 
-This appendix derives the ceiling R used throughout from the three costs of a step described in Section 3. It uses the symbols of Section 2 and the calibrated inputs of Appendix A.
+This appendix derives the ceiling R used throughout from the three costs of a step described in Section 2. It uses the symbols of Section 2 and the calibrated inputs of Appendix A.
 
 ### B.1 The step-time bound
 
