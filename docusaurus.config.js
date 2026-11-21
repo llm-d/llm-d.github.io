@@ -129,6 +129,9 @@ const config = {
         blog: {
           path: "blog",
           routeBasePath: "blog",
+          // singleDollarTextMath off: dollar amounts in other posts ($0.30, $3.55) must not parse as math
+          remarkPlugins: [[remarkMath, { singleDollarTextMath: false }]],
+          rehypePlugins: [rehypeKatex],
           showReadingTime: true,
           readingTime: ({ content, defaultReadingTime, locale }) =>
             defaultReadingTime({
