@@ -15,9 +15,7 @@ tags: [blog, kv-cache, scheduling, inference, sig-benchmarking]
 
 ## TL;DR
 
-Throughput claims for LLM serving are hard to compare. Two stacks on the same accelerators and workload can deliver very different throughput, and there is no standard way to say how close either gets to what the hardware allows. This post proposes one. From five hardware numbers, the model's shape and three numbers that describe the workload, we compute a ceiling: the most input-plus-output tokens per second the hardware can sustain on that workload. Serving efficiency η is the throughput a system achieved divided by that ceiling, and the shortfall splits into four factors whose product is η.
-
-The ratio has four inputs: the workload's intrinsic prefix overlap, its mean input and output lengths, the model's shape, and five hardware numbers. One of the five, the prefill rate, is calibrated on the deployment with a short job. The rest come from the datasheet and the engine's startup log, and a second short job measures the bandwidth the engine reaches (Appendix A). From these inputs we compute a **ceiling**: the most throughput, input plus output tokens per second, the hardware can sustain on that workload. At each load level, the steady-state throughput the system served, divided by the ceiling, is its **serving efficiency η**. The ceiling is specific to the workload, so η compares systems on one workload. It is not a hardware utilisation figure.
+Throughput claims for LLM serving are hard to compare. Two stacks on the same accelerators and workload can deliver very different throughput, and there is no standard way to say how close either gets to what the hardware allows. This post proposes one. From five hardware numbers, the model's shape and three numbers that describe the workload, we compute a ceiling: the most input-plus-output tokens per second the hardware can sustain on that workload. Serving efficiency η is the throughput a system achieved divided by that ceiling, and the shortfall splits into four factors whose product is η. The ceiling is specific to the workload, so η compares systems on one workload. It is not a hardware utilisation figure. Appendix A lists the inputs and the two short calibration jobs that measure the hardware ones.
 
 The shortfall from the ceiling splits into four factors whose product is η:
 
@@ -26,7 +24,7 @@ The shortfall from the ceiling splits into four factors whose product is η:
 3. **Engine**: what this engine version costs beyond an ideal one at a steady batch, measured on one replica: a fixed cost per step, and prefill chunks that stall the decodes they ride with.
 4. **Orchestration**: everything else lost at the hit rate the run had, in the layers around the engine: uneven load across replicas, turns arriving in waves, queueing, tier copies in the critical path.
 
-The four factors are an attribution, not independent levers. At each stack's peak the client factor is below one, about 0.5 for llm-d: the sessions offered could draw only about half the ceiling. Offering more did not help. At 300 sessions llm-d's client factor rose to 0.57, but η fell from 0.29 to 0.16 as the loss moved into reuse and orchestration.
+The four factors are an attribution, not independent levers. At each stack's peak the client factor is below one, about 0.5 for llm-d: the sessions offered could draw only about half the ceiling. Offering more moved the loss into reuse and orchestration instead.
 
 As a worked example, we apply the method to three stacks on a six-replica B200 fleet running an agentic coding workload, each in its documented default configuration. The example illustrates the method; it is not a ranking of the stacks. On this workload, llm-d holds its hit rate at 0.90 or above until HBM fills with the sessions it is decoding, at 240 sessions. A third-party router that balances projected KV load across replicas, called the KV-load router below, and round-robin are already down to 0.76 and 0.62 at 60 and 90 sessions, with HBM no more than a quarter full. The framework is for infrastructure engineers building or selecting serving stacks, and for vendors who want standardised performance claims.
 
@@ -177,7 +175,7 @@ The orchestration factor is a residual. It holds what the layers around the engi
 
 One artefact of the ideal remains, at small batches. The step-time bound spreads a turn's prefill evenly across its decode steps. At a small batch that spread-out prefill fits under the step's memory time, so the ideal engine charges little for it. Recompute that the real engine did pay for then shows up in the engine and orchestration factors rather than in reuse. Round-robin at 90 sessions shows it. Its hit rate is 0.62, below llm-d at 300 sessions, yet its reuse factor is 0.70 against 0.57, and engine times orchestration 0.64. The KV-load router at 60 sessions is the same case: hit rate 0.76, yet a reuse factor of 0.89 and engine times orchestration 0.71. Low engine and orchestration factors at a small batch should therefore be read with the hit rate beside it. Section 4 has the row.
 
-Retention is not one of the factors. It sets where the peak falls: the number of sessions the system can hold before it starts evicting. It is reported beside η as a session capacity: the live sessions a stack sustained before its throughput fell, in the paragraph above and in the results summary of Section 3.3.
+Retention is not one of the factors. It sets where the peak falls: the number of sessions the system can hold before it starts evicting. It is the session capacity of the paragraph above, reported beside η in the results summary of Section 3.3.
 
 ### 3.3 Three routers on a B200 fleet
 
@@ -223,7 +221,7 @@ A session is live while it has a turn outstanding or is in its tool pause. The r
 | round-robin Service | 90 | 79 | 191k | **0.09** | 0.62 |
 | round-robin Service | 120 | 103 | 180k | 0.08 | 0.53 |
 
-Bold marks each stack's peak, the level its headline η is taken from. Sessions live is the session capacity of Section 3.2: the most each stack sustained before its throughput fell was about 217 for llm-d, 81 for the KV-load router and 79 for round-robin, against the roughly 420 the ceiling would need at the idle time the harness delivered.
+Bold marks each stack's peak, the level its headline η is taken from. Sessions live is the session capacity of Section 3.2.
 
 ![Serving efficiency against prefix hit rate for the nine runs](/img/blogs/kv-cache-serving-efficiency/fig4-eta-vs-hit-rate.png)
 
