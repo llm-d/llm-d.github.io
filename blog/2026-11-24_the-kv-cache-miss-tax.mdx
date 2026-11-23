@@ -15,7 +15,7 @@ tags: [blog, kv-cache, scheduling, inference, sig-benchmarking]
 
 ## TL;DR
 
-Two serving stacks on the same GPUs or TPUs and the same workload can deliver very different throughput. The accelerators are no faster for one stack than for another. The difference is how much work each stack repeats and how much of the hardware it leaves idle. This post asks two questions of each stack. How close does it get to what the hardware allows? Where does the rest go? One ratio answers both. The hardware side is measured on one replica of each: an 8-GPU B200 node and an 8-chip TPU7x slice. The ratio is taken against each deployment's own roof, so the hardware is factored out of it. The stacks are then compared on a six-replica B200 fleet. They share one engine, so its cost is the same for all three. What differs between them is what each serving stack costs.
+Throughput claims for LLM serving are hard to compare. Two stacks on the same accelerators and workload can deliver very different throughput, and there is no standard way to say how close either gets to what the hardware allows. This post proposes one. From five hardware numbers, the model's shape and three numbers that describe the workload, we compute a ceiling: the most input-plus-output tokens per second the hardware can sustain on that workload. Serving efficiency η is the throughput a system achieved divided by that ceiling, and the shortfall splits into four factors whose product is η.
 
 The ratio has four inputs: the workload's intrinsic prefix overlap, its mean input and output lengths, the model's shape, and five hardware numbers. One of the five, the prefill rate, is calibrated on the deployment with a short job. The rest come from the datasheet and the engine's startup log, and a second short job measures the bandwidth the engine reaches (Appendix A). From these inputs we compute a **ceiling**: the most throughput, input plus output tokens per second, the hardware can sustain on that workload. At each load level, the steady-state throughput the system served, divided by the ceiling, is its **serving efficiency η**. The ceiling is specific to the workload, so η compares systems on one workload. It is not a hardware utilisation figure.
 
@@ -26,11 +26,13 @@ The shortfall from the ceiling splits into four factors whose product is η:
 3. **Engine**: what this engine version costs beyond an ideal one at a steady batch, measured on one replica: a fixed cost per step, and prefill chunks that stall the decodes they ride with.
 4. **Orchestration**: everything else lost at the hit rate the run had, in the layers around the engine: uneven load across replicas, turns arriving in waves, queueing, tier copies in the critical path.
 
-Each stack ran in its documented default configuration. These numbers describe this workload, fleet and configuration. They are not a general ranking of the stacks. llm-d holds its hit rate at 0.90 or above until HBM fills with the sessions it is decoding, at 240 sessions. A third-party router that balances projected KV load across replicas, called the KV-load router below, and round-robin are already down to 0.76 and 0.62 at 60 and 90 sessions, with HBM no more than a quarter full. The framework is for infrastructure engineers building or selecting serving stacks, and for vendors who want standardised performance claims.
+The four factors are an attribution, not independent levers. At each stack's peak the client factor is below one, about 0.5 for llm-d: the sessions offered could draw only about half the ceiling. Offering more did not help. At 300 sessions llm-d's client factor rose to 0.57, but η fell from 0.29 to 0.16 as the loss moved into reuse and orchestration.
+
+As a worked example, we apply the method to three stacks on a six-replica B200 fleet running an agentic coding workload, each in its documented default configuration. The example illustrates the method; it is not a ranking of the stacks. On this workload, llm-d holds its hit rate at 0.90 or above until HBM fills with the sessions it is decoding, at 240 sessions. A third-party router that balances projected KV load across replicas, called the KV-load router below, and round-robin are already down to 0.76 and 0.62 at 60 and 90 sessions, with HBM no more than a quarter full. The framework is for infrastructure engineers building or selecting serving stacks, and for vendors who want standardised performance claims.
 
 ![Peak serving efficiency of llm-d, the KV-load router and round-robin on the B200 fleet](/img/blogs/kv-cache-serving-efficiency/fig0-eta-peaks.png)
 
-*B200 fleet experiment · peak over each stack's load ladder (Section 3.3) · all three stacks in their documented default configuration, untuned*
+*B200 fleet experiment · peak over each stack's load ladder (Section 3.3) · all three stacks in their documented default configuration, untuned · an illustration of the method, not a ranking*
 
 One caveat belongs beside the chart. The replay harness kept 86 to 92% of the configured sessions in flight and added idle time between turns. The client factor carries that behaviour. Section 3.3 gives the numbers.
 
@@ -58,7 +60,7 @@ The table gives the generator's settings. The means the replay delivers are lowe
 
 *One replica of Qwen3-Coder-480B-FP8 on 8 x B200 (TP=8) and on 8 x TPU7x (TP=16 across two hosts) · dashed: datasheet · solid: this deployment, by the Appendix A method · both axes log*
 
-The two dashed roofs lie on top of each other. An 8 x B200 node and an 8-chip TPU7x slice have the same dense FP8 peak within 3% and HBM bandwidth within 8%. The two solid roofs do not. They are the roofs of the two deployments of Qwen3-Coder-480B-FP8 this post measured: 1.22 PFLOP/s per accelerator on B200 at TP=8, 0.70 on TPU7x at TP=16 across two hosts. The solid roof is what a serving stack runs against. It comes from two short jobs on the deployment (Appendix A): the prefill rate at the workload's context, and the bandwidth a steady decode batch reaches.
+The two dashed roofs lie on top of each other. An 8 x B200 node and an 8-chip TPU7x slice have the same dense FP8 peak within 3% and HBM bandwidth within 8%. The two solid roofs do not. They are the roofs of the two deployments of Qwen3-Coder-480B-FP8 this post measured: 1.21 PFLOP/s per accelerator on B200 at TP=8, 0.69 on TPU7x at TP=16 across two hosts. The solid roof is what a serving stack runs against. It comes from two short jobs on the deployment (Appendix A): the prefill rate at the workload's context, and the bandwidth a steady decode batch reaches.
 
 Three measured things put the TPU deployment's roof further below its datasheet than the B200's. The prefill rate: one host of four chips at TP=8 prefills 4,780 tokens per second per chip, close to the B200's 4,652 per GPU, but the like-for-like replica has eight chips. Eight TPU7x chips match an 8-GPU B200 node on the three numbers that set the roof: dense FP8 peak (37 against 36 PFLOP/s), HBM bandwidth (59 against 64 TB/s) and HBM capacity (1.54 against 1.44 TB). A tpu7x host holds four chips, so eight chips is two hosts, and each chip has two TensorCores that JAX exposes as two devices, so eight chips is sixteen devices and tensor parallel runs at TP=16 where the B200 node runs at TP=8. Spreading each 8k chunk over sixteen shards on two hosts drops the rate to 2,947. The decode step: the engine's fixed cost per step is 18 ms against 6.8 on B200, which moves the ridge rather than the roof. The bandwidth: the decode ladder reaches 84% of the datasheet against 100% on B200. None of these is a property of the chip. They are properties of the sharding and of the engine build the deployment chose, and finding them is what the yardstick is for: it measures a deployment's distance from its own hardware.
 
@@ -74,7 +76,7 @@ In every step a GPU does two things. It reads bytes from HBM, and it does arithm
 
 ![The nine fleet runs on the measured roofline of the B200 deployment](/img/blogs/kv-cache-serving-efficiency/fig1-measured-roofline.png)
 
-*Section 3.3 runs on the B200 fleet · FLOPs per token are 2N plus attention over the resident context, bytes from the model shape and sampled engine counters (Appendix B.2); tokens restored from the host tier are not counted as recomputed · roofs for this deployment: 1.22 PFLOP/s per GPU, the calibrated prefill rate at this workload's context with attention counted (27% of the 4.5 dense FP8 datasheet peak), and the datasheet 8 TB/s, which the steady-batch ladder of Appendix A reaches · 9 runs, 3 stacks*
+*Section 3.3 runs on the B200 fleet · FLOPs per token are 2N plus attention over the resident context, bytes from the model shape and sampled engine counters (Appendix B.2); tokens restored from the host tier are not counted as recomputed · roofs for this deployment: 1.21 PFLOP/s per GPU, the calibrated prefill rate at this workload's context with attention counted (27% of the 4.5 dense FP8 datasheet peak), and the datasheet 8 TB/s, which the steady-batch ladder of Appendix A reaches · 9 runs, 3 stacks*
 
 A roofline chart places a run by two numbers. The x axis is its arithmetic intensity: the FLOPs it performed per byte read from HBM. The y axis is the FLOP/s it achieved. The hardware caps the run from two sides. The compute roof is flat, at the peak FLOP/s. The memory roof slopes. A step that does few FLOPs per byte it reads is limited by HBM, and the most FLOP/s it can reach is the bandwidth times its arithmetic intensity. That limit rises with arithmetic intensity until it meets the compute roof. The two roofs meet at the ridge. Left of the ridge, a step spends longer reading memory than computing. Right of it, longer computing.
 
@@ -150,7 +152,7 @@ Four per-turn service times enter. T is the measured time per turn. T\_ideal is 
 
 An engine that loses nothing would see each session cycle in Z + T\_ideal. The most this client could get from any server is therefore S(I + O)/(Z + T\_ideal). Little's law then gives η as a product of four factors:
 
-- **Client, S(I + O)/(Z + T\_ideal) over R.** How much of the ceiling the client asked for: what its sessions and idle time would get from an engine that loses nothing, at the batch those sessions produce. This is mostly a property of the load generator. The one way the system reaches in is through the batch: T\_ideal is evaluated at the run's own batch, and a slower engine holds more requests decoding at once. The factor is not capped. It exceeds 1 when the client offers more than the ceiling can serve. The product then still equals η, and the wait that even an engine at the ceiling would impose lands in the orchestration factor. No run in this post reaches 1. The largest is 0.57: even at 300 sessions the harness offered the fleet about half of what the ceiling could serve.
+- **Client, S(I + O)/(Z + T\_ideal) over R.** How much of the ceiling the client asked for: what its sessions and idle time would get from an engine that loses nothing, at the batch those sessions produce. It is set by the client: the sessions it runs and the idle time between their turns. At a stack's peak it also marks how many sessions the stack could take before the other factors fell (see below). The one way the system reaches in is through the batch: T\_ideal is evaluated at the run's own batch, and a slower engine holds more requests decoding at once. The factor is not capped. It exceeds 1 when the client offers more than the ceiling can serve. The product then still equals η, and the wait that even an engine at the ceiling would impose lands in the orchestration factor. No run in this post reaches 1. The largest is 0.57: even at 300 sessions the harness offered the fleet about half of what the ceiling could serve.
 - **Reuse, (Z + T\_ideal)/(Z + T\_h).** Time lost recomputing prompt tokens, either because the request went to a replica that did not hold their KV or because the KV had been evicted. It measures the effect of every decision about where KV is, routing, admission and retention alike. Section 4 separates the causes.
 - **Engine, (Z + T\_h)/(Z + T\_eng).** What this engine version costs against the ideal one, at the hit rate the run had: a fixed cost per step, and prefill chunks that stall the decodes they ride with. It is measured, not modelled.
 - **Orchestration, (Z + T\_eng)/(Z + T).** Everything else lost at that hit rate: the difference between a steady single replica and the fleet. Its known contents are uneven load across replicas, from the router or the admission gate; turns arriving in waves, so the batch swings; waits in the queue and after preemption; and host-tier copies in the critical path. It is a residual, so it also holds whatever the ladder did not measure.
@@ -161,7 +163,7 @@ Three runs of Section 3.3 show how the factors read. llm-d at 120 sessions: clie
 
 The factors multiply to η exactly. The client term is S(I + O)/(Z + T\_ideal) over R, and the other three telescope from Z + T\_ideal to Z + T. For the nine runs the product matches the measured η to within 0.03%. The residual is rounding in the recorded throughput.
 
-The factors are not independent causes. Each is a ratio of cycle times under one chosen ideal engine. The split is an attribution under that model, not a unique causal decomposition. A loss can move between reuse and the engine and orchestration factors where the idealisation misses. The note on small batches below gives the mechanism.
+The factors are not independent causes. Each is a ratio of cycle times under one chosen ideal engine. The split is an attribution under that model, not a unique causal decomposition. A loss can move between reuse and the engine and orchestration factors where the idealisation misses. The note on small batches below gives the mechanism. In particular, a client factor below one at a stack's peak is not a lever. The peak is the load past which offering more sessions lowers η: the added sessions raise the client factor but lower reuse, engine or orchestration by more, as llm-d at 300 sessions shows. The distance from the peak to the ceiling is reported beside η as a session capacity. llm-d sustained up to about 217 live sessions before throughput fell. Reaching R on this fleet would take about 420: the ceiling's 18 turns per second across the fleet, times a cycle of about 23 s.
 
 ![The ceiling split of the nine runs into achieved throughput, orchestration loss, engine loss and recompute loss](/img/blogs/kv-cache-serving-efficiency/fig3c-ceiling-split.png)
 
@@ -175,7 +177,7 @@ The orchestration factor is a residual. It holds what the layers around the engi
 
 One artefact of the ideal remains, at small batches. The step-time bound spreads a turn's prefill evenly across its decode steps. At a small batch that spread-out prefill fits under the step's memory time, so the ideal engine charges little for it. Recompute that the real engine did pay for then shows up in the engine and orchestration factors rather than in reuse. Round-robin at 90 sessions shows it. Its hit rate is 0.62, below llm-d at 300 sessions, yet its reuse factor is 0.70 against 0.57, and engine times orchestration 0.64. The KV-load router at 60 sessions is the same case: hit rate 0.76, yet a reuse factor of 0.89 and engine times orchestration 0.71. Low engine and orchestration factors at a small batch should therefore be read with the hit rate beside it. Section 4 has the row.
 
-Retention is not one of the factors. It sets where the peak falls: the number of sessions the system can hold before it starts evicting. It is reported beside η as a capacity.
+Retention is not one of the factors. It sets where the peak falls: the number of sessions the system can hold before it starts evicting. It is reported beside η as a session capacity: the live sessions a stack sustained before its throughput fell, in the paragraph above and in the results summary of Section 3.3.
 
 ### 3.3 Three routers on a B200 fleet
 
@@ -209,19 +211,19 @@ A session is live while it has a turn outstanding or is in its tool pause. The r
 
 #### Results summary
 
-| Stack | Sessions | Steady tok/s, input + output | η | Hit rate, HBM + host |
-| --- | --- | --- | --- | --- |
-| llm-d | 120 | 604k | 0.28 | 0.98 |
-| llm-d | 180 | 622k | **0.29** | 0.92 |
-| llm-d | 240 | 570k | 0.27 | 0.90 |
-| llm-d | 300 | 345k | 0.16 | 0.75 |
-| KV-load router | 60 | 253k | 0.12 | 0.76 |
-| KV-load router | 90 | 287k | **0.13** | 0.74 |
-| KV-load router | 120 | 271k | 0.13 | 0.67 |
-| round-robin Service | 90 | 191k | **0.09** | 0.62 |
-| round-robin Service | 120 | 180k | 0.08 | 0.53 |
+| Stack | Sessions | Sessions live, mean | Steady tok/s, input + output | η | Hit rate, HBM + host |
+| --- | --- | --- | --- | --- | --- |
+| llm-d | 120 | 103 | 604k | 0.28 | 0.98 |
+| llm-d | 180 | 166 | 622k | **0.29** | 0.92 |
+| llm-d | 240 | 217 | 570k | 0.27 | 0.90 |
+| llm-d | 300 | 272 | 345k | 0.16 | 0.75 |
+| KV-load router | 60 | 54 | 253k | 0.12 | 0.76 |
+| KV-load router | 90 | 81 | 287k | **0.13** | 0.74 |
+| KV-load router | 120 | 107 | 271k | 0.13 | 0.67 |
+| round-robin Service | 90 | 79 | 191k | **0.09** | 0.62 |
+| round-robin Service | 120 | 103 | 180k | 0.08 | 0.53 |
 
-Bold marks each stack's peak, the level its headline η is taken from.
+Bold marks each stack's peak, the level its headline η is taken from. Sessions live is the session capacity of Section 3.2: the most each stack sustained before its throughput fell was about 217 for llm-d, 81 for the KV-load router and 79 for round-robin, against the roughly 420 the ceiling would need at the idle time the harness delivered.
 
 ![Serving efficiency against prefix hit rate for the nine runs](/img/blogs/kv-cache-serving-efficiency/fig4-eta-vs-hit-rate.png)
 
@@ -263,18 +265,18 @@ Per-replica throughput stayed within about 10% of each level's mean. The excepti
 
 ## 4. Doing this for your own workload
 
-The procedure is four steps. Characterise the trace: I, O and ρ from an oracle replay. Calibrate the deployment: two jobs on one replica. Compute R. Then sweep the load and split the shortfall. Each step is one script in the [reproduction kit](https://github.com/kaushikmitr/llm-d/tree/a84b526e7c40b1c44704ab7489a6f63a67a574d8/docs/blog/kv-cache-serving-efficiency/reproduce), whose README walks through them. Section 3.3 is the procedure applied once.
+The procedure is four steps. Characterise the trace: I, O and ρ from an oracle replay. Calibrate the deployment: two jobs on one replica. Compute R. Then sweep the load and split the shortfall. Each step is one script in the [reproduction kit](https://github.com/kaushikmitr/llm-d/tree/eaf66483ad6d34808f16310c8d7b6775b6245f9c/docs/blog/kv-cache-serving-efficiency/reproduce), whose README walks through them. Section 3.3 is the procedure applied once.
 
 The factor below one says where the loss is. The counters recorded in the sweep say why. The table pairs each factor with the counter pattern that points to a cause and a lever. Read each row as a hypothesis to test, not as a verdict, and read its counter columns as trends along the session ladder, not as a reading from one run. A run can match more than one.
 
 | Factor below 1 | Hit rate vs ρ | HBM occupancy | Preemptions | Requests waiting | Step time vs the bound | Cause | Lever |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Client | any | any | any | any | any | Sessions idle beyond their tool pause, or too few sessions offered | Mostly the load generator; fix it before concluding anything about the stack |
+| Client | any | any | any | any | any | Too few sessions offered, or sessions idle beyond their tool pause | Offer more sessions and trim harness idle time, but only while reuse, engine and orchestration hold flat as sessions rise; if they fall, the run is past the stack's peak and the lever is in those rows |
 | Reuse | below ρ from the lightest load | not full | none | any | any | Routing: turns land on replicas that do not hold their context, or the index does not see a tier | The index and the affinity rule, before buying memory |
 | Reuse | near ρ at light load, falls as sessions are added | filling | any | any | any | Retention: paused sessions' KV is evicted | A host tier, or fewer sessions per replica |
 | Engine and orchestration | below ρ | not full | none | few | above | Recompute at a small batch: the step-time bound spreads prefill under the memory time, so the loss lands in the engine and orchestration factors rather than reuse (the KV-load router at 60 sessions and round-robin at 90, Section 3.2) | Treat it as a reuse loss: the index and the affinity rule |
 | Engine | any | any | any | any | at the measured engine's step | The engine version itself: a fixed cost per step and prefill chunks that stall the decodes they ride with (Appendix A) | Chunk size, or a newer engine; not the stack around it |
-| Orchestration | near ρ | near full | yes | yes | above the measured engine's step | Capacity: the decoding sessions' KV fills HBM | Fewer KV bytes per token, shorter contexts, a tier for everything not decoding |
+| Orchestration | near ρ | mean below full, peaks at full | yes | yes | above the measured engine's step | Capacity: the decoding batch swings above the HBM cap as turns arrive in waves, even when its mean fits (llm-d at 240 sessions: mean 18 decoding per replica, cap 29, p95 28, peak about 40) | Admission first: cap the decoding batch and let the host tier hold the rest; then fewer KV bytes per token, shorter contexts |
 | Orchestration | near ρ | not full | none | yes | above the measured engine's step | Scheduling: turns arrive in waves, or tier copies sit in the critical path | Admission, asynchronous copies |
 | Orchestration | near ρ | not full | none | none | above the measured engine's step | The engine runs below its calibrated rates | Re-calibrate on this engine version; the engine itself |
 | None | near ρ | any | any | any | at | At the ceiling | Compare deployments, not stacks |
@@ -302,11 +304,13 @@ The roofline framework reduces serving evaluation to one ratio, η. It splits th
 
 Three claims in this post have different standing. Observed: on the B200 fleet measured here, llm-d reached 0.29, the KV-load router 0.13 and round-robin 0.09. Explained: the factors attribute much of that gap to the prefix hit rate each stack kept, under the documented configurations. Proposed: the same procedure diagnoses other workloads and deployments. The first two rest on the runs of Section 3.3. The third rests on applying it elsewhere. The reproduction kit is there for that.
 
+An invitation. The reproduction kit computes the ceiling and the four factors for any stack that serves an OpenAI-compatible endpoint. We invite the teams behind other serving stacks to run it on configurations they have tuned and to report η. The per-request records and engine counters for every run in this post are published with the kit, so every number here can be recomputed.
+
 ## References
 
 - [llm-d guides](https://github.com/llm-d/llm-d/tree/main/guides): tiered-prefix-cache, p2p-kv-cache-sharing, optimized-baseline, pd-disaggregation; the [agentic-serving guide](https://github.com/llm-d/llm-d/tree/9e9a4d2b4fe6ceebd0eae6ef64de2f21f69f342a/guides/agentic-serving) at its last commit before it was folded into the Models pillar, and its blog post [Serving GLM-5.2 for Agentic Workloads on llm-d](https://llm-d.ai/blog/serving-glm-5-2-agentic-workloads-on-llm-d); [peak prefill throughput calibration](https://github.com/llm-d/llm-d/tree/main/guides/recipes/router/calibration)
 - [llm-d-router](https://github.com/llm-d/llm-d-router): prefix-cache-affinity-filter, token-load-scorer, precise-prefix-cache-producer, p2p-source-producer
-- [Reproduction kit for this post](https://github.com/kaushikmitr/llm-d/tree/a84b526e7c40b1c44704ab7489a6f63a67a574d8/docs/blog/kv-cache-serving-efficiency/reproduce): deployment manifests, calibration jobs, harness, analysis scripts and results
+- [Reproduction kit for this post](https://github.com/kaushikmitr/llm-d/tree/eaf66483ad6d34808f16310c8d7b6775b6245f9c/docs/blog/kv-cache-serving-efficiency/reproduce): deployment manifests, calibration jobs, harness, analysis scripts and results
 - [inference-perf](https://github.com/kubernetes-sigs/inference-perf), the load generator
 
 ## Appendix A. Inputs and calibration
@@ -417,9 +421,9 @@ Two corrections apply. With a distribution of output lengths the resident contex
 
 The ridge is the point where the two measured roofs of Section 2 meet. In FLOP per byte it is the compute roof divided by the memory roof, F/W, about 150 on this deployment. Appendix B.3 states the same crossing in token units, r = (W/b)/R\_pf: the number of KV tokens the memory system reads in the time the compute prefills one token. At this workload's 117k context, r is about 11,000.
 
-Both roofs use one FLOP convention. A token's FLOPs are 2N for the linear layers plus its attention over the context, 4 · layers · query heads · head dim · L. At 117k context that is 4.3 × 10¹¹ FLOPs per token, about six times 2N. The compute roof is the calibrated prefill rate at 128k, 22,794 tokens per second for the eight-GPU replica, times that count: 9.8 PFLOP/s for the replica, which is 1.22 PFLOP/s per GPU. The arithmetic intensity of each run in the chart is computed with the same count. The step-time bound of B.1 does not count attention FLOPs explicitly. It keeps the 2N convention and lets the calibrated prefill rate fall with context instead. Its F is therefore α\_F F\_peak (I/8192)^p, and that is why Appendix A quotes α\_F as 0.15 of the bf16 peak at 8k. The two conventions give the same ridge: 150 FLOP/B × b × r = 4.3 × 10¹¹ FLOPs per token.
+Both roofs use one FLOP convention. A token's FLOPs are 2N for the linear layers plus its attention over the context, 4 · layers · query heads · head dim · L. At 117k context that is 4.3 × 10¹¹ FLOPs per token, about six times 2N. The compute roof is the calibrated prefill rate at 128k, 22,794 tokens per second for the eight-GPU replica, times that count: 9.7 PFLOP/s for the replica, which is 1.21 PFLOP/s per GPU. The arithmetic intensity of each run in the chart is computed with the same count. The step-time bound of B.1 does not count attention FLOPs explicitly. It keeps the 2N convention and lets the calibrated prefill rate fall with context instead. Its F is therefore α\_F F\_peak (I/8192)^p, and that is why Appendix A quotes α\_F as 0.15 of the bf16 peak at 8k. The two conventions give the same ridge: 150 FLOP/B × b × r = 4.3 × 10¹¹ FLOPs per token.
 
-Every quantity in this appendix is per replica of eight GPUs unless it says per GPU. b = 253,952 bytes is the KV of one token across the whole model: 2 · 62 layers · 8 KV heads · 128 · 2 bytes. At TP=8 each GPU holds one of the eight KV heads, 31,744 bytes per token, with no replication. W = 8 × 8 TB/s = 64 TB/s is the datasheet bandwidth of the eight GPUs together, which the ladder of Appendix A shows the engine reaching from a batch of eight. C = 3,403,712 tokens is the KV capacity the engine reports for the replica. Each GPU holds its 31,744-byte shard of every one of those tokens, so C · b is 805 GiB across the replica, about 101 GiB per GPU. With these values, r = (64 × 10¹² / 253,952) / 22,794 = 252 × 10⁶ / 22,794 ≈ 11,060. Dividing both W and b by eight leaves r unchanged. The FLOP/B ridge is likewise the same per GPU and per replica: 1.22 PFLOP/s over 8 TB/s equals 9.76 PFLOP/s over 64 TB/s, about 150 either way.
+Every quantity in this appendix is per replica of eight GPUs unless it says per GPU. b = 253,952 bytes is the KV of one token across the whole model: 2 · 62 layers · 8 KV heads · 128 · 2 bytes. At TP=8 each GPU holds one of the eight KV heads, 31,744 bytes per token, with no replication. W = 8 × 8 TB/s = 64 TB/s is the datasheet bandwidth of the eight GPUs together, which the ladder of Appendix A shows the engine reaching from a batch of eight. C = 3,403,712 tokens is the KV capacity the engine reports for the replica. Each GPU holds its 31,744-byte shard of every one of those tokens, so C · b is 805 GiB across the replica, about 101 GiB per GPU. With these values, r = (64 × 10¹² / 253,952) / 22,794 = 252 × 10⁶ / 22,794 ≈ 11,060. Dividing both W and b by eight leaves r unchanged. The FLOP/B ridge is likewise the same per GPU and per replica: 1.21 PFLOP/s over 8 TB/s equals 9.71 PFLOP/s over 64 TB/s, about 150 either way.
 
 The rule of Appendix B.3 follows from r. Per output token, a request costs 1 + U/O prefill tokens of compute and L tokens of KV read. Compute dominates when 1 + U/O exceeds L/r. The weight stream enters as a shared read. A step with n sequences reads W\_b(n) bytes of weights once, which is W\_b(n)/(n·b) tokens' worth of KV per sequence, so L becomes L + W\_b(n)/(n·b). Appendix B.3 draws that threshold for several n. Because the prefill rate falls with context, r grows with L. At the 8k calibration context r would be about 6,800. That raises the agentic threshold at a batch of 29 from 15 to about 26, above the workload's 19, and would call the ceiling memory-bound. Which side the ceiling falls on therefore depends on calibrating the prefill rate at the workload's own context, which is why Appendix A does.
 
