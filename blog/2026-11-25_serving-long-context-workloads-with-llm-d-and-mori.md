@@ -15,6 +15,26 @@ authors:
   - onilgunawardana
   - pengsun
   - emadbarsoum
+  - name: Nili Guy
+    title: IBM Research
+    url: https://github.com/nilig
+    image_url: /img/blogs/niliguy.webp
+    socials:
+      linkedin: nilig
+      github: nilig
+  - name: Maroon Ayoub
+    title: Red Hat
+    url: https://github.com/vMaroon
+    image_url: /img/blogs/maroonayoub.webp
+    socials:
+      linkedin: v-maroon
+      github: https://github.com/vMaroon
+  - name: Robert Shaw
+    title: Red Hat
+    image_url: https://avatars.githubusercontent.com/u/114415538?v=4
+    socials:
+      linkedin: robert-shaw-1a01399a
+      github: https://github.com/robertgshaw2-redhat
 tags: [blog, inference, agentic-inference, long-context, large-models, kv-cache, disaggregation, vllm, mori]
 ---
 
