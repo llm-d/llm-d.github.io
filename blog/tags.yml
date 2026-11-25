@@ -211,3 +211,18 @@ gke:
   label: GKE
   permalink: /gke
   description: Google Kubernetes Engine deployments and benchmarks
+
+long-context:
+  label: Long Context
+  permalink: /long-context
+  description: Serving long-context and long-session workloads
+
+large-models:
+  label: Large Models
+  permalink: /large-models
+  description: Serving very large and mixture-of-experts models
+
+mori:
+  label: MoRI
+  permalink: /mori
+  description: MoRI (Modular RDMA Interface) for KV transfer and expert parallelism
