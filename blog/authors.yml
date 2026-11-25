@@ -822,7 +822,11 @@ shikhapatel:
 vincentcave:
   name: Vincent Cave
   title: AMD
+  url: https://github.com/vcave
   email: Vincent.Cave@amd.com
+  image_url: https://github.com/vcave.png
+  socials:
+    github: https://github.com/vcave
 
 ravigupta:
   name: Ravi Gupta
@@ -836,6 +840,7 @@ ravigupta:
 anshuraina:
   name: Anshu Raina
   title: AMD
+  url: https://rocm.blogs.amd.com/authors/anshu-raina.html
   email: Anshu.Raina@amd.com
   image_url: /img/blogs/anshu-raina.jpg
 
