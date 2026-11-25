@@ -2,14 +2,14 @@
 title: "MoRI in llm-d: P/D Disaggregation and Expert Parallelism for Long Context with GLM-5.3 on MI355X"
 description: "AMD MoRI carries RDMA KV transfer and expert parallelism in llm-d, with a long-context case study of amd/GLM-5.3-Quark-MXFP4-AttnFP8 on AMD Instinct™ MI355X GPUs."
 slug: serving-long-context-workloads-with-llm-d-and-mori
-date: 2026-11-06T09:00
+date: 2026-11-25T09:00
 authors:
   - shikhapatel
+  - ravigupta
   - prateekkumar
   - vincentcave
-  - ravigupta
-  - anshuraina
   - nitinsingh
+  - anshuraina
   - chaitanyalolla
   - aswinmathews
   - onilgunawardana
